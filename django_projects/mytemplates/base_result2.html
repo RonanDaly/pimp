@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+
+{% load compound_tags %}
+<html>
+	<head>
+		<title>PiMP</title>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-migrate.min.js"></script>
+
+
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<link rel="shortcut icon" href="{{ STATIC_URL }}img/logo_blue_white_result.png">
+
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" media="screen"/>
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/bootstrap2.css" media="screen"/>
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/slider.css" media="screen"/>
+		<!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-image-gallery.min.css">
+    	<link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.fileupload-ui.css">
+    	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/jquery.dataTables.css" media="screen" />
+    	<link rel="stylesheet" href="{{ STATIC_URL }}css/result.css">
+    	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/bootstrap-modal.css" media="screen" />
+    	
+		<script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap-modalmanager.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables.columnFilter.js"></script>
+		<script src="{{ STATIC_URL }}js/highcharts4.js"></script>
+		<script src="{{ STATIC_URL }}js/highcharts-more4.js"></script>
+		<script src="{{ STATIC_URL }}js/exporting4.js"></script>
+		<script src="{{ STATIC_URL }}js/drilldown.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/FixedHeader.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-slider.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/pimp_analysis_results_components.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/gp_chart.js"></script>
+    	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
+    	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+		<style type="text/css">
+			h1.unimg{
+				position: relative;
+				background: transparent;
+				background-image: url({{ STATIC_URL }}img/logo_blue_white.jpg);
+				background-repeat:no-repeat;
+				background-size: 170px 145px;
+				width: 170px;
+				height: 145px;
+				left: 0px;
+				}
+			div.gpimg{
+				position: absolute;
+				background: transparent;
+				background-image: url({{ STATIC_URL }}img/logo_white.png);
+				background-repeat:no-repeat;
+				background-size: 100px 68px;
+				width: 100px;
+				height: 68px;
+				right: 10px;
+				top:50px;
+				}
+			#close-right-summary-panel {
+				top: 10px;
+				/*right: 20px;*/
+				height: 16px;
+				width: 16px;
+				float: left;
+				cursor: pointer;
+				background-image: url({{ STATIC_URL }}img/plus-icon2.png);
+			}
+
+			#close-right-summary-panel:hover {
+				background-image: url({{ STATIC_URL }}img/plus-icon-black.png);
+			}
+		</style>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/prefixfree.min.js"></script>
+		<script type="text/javascript">
+		var oTable;
+		var giRedraw = false;
+		var averageExport = false;
+		var ppm = 3;
+		var rtwindow = 120;
+		var rightPanelPreference = "summary";
+		var fullScreen = false; 
+		var right_panel = true; 
+		var staticUrl = "{{ STATIC_URL }}";
+		var metexploreInfoUrl = "{% url 'get_metexplore_info' project.id analysis.id %}";
+
+		var memberList = [{% for member in member_list %}"{{ member.name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+		var sampleList = [{% for sublist in sample_list %}[{% for sample in sublist %}"{{ sample.name }}"{% if not forloop.last %},{% endif %}{% endfor %}]{% if not forloop.last %},{% endif %}{% endfor %}];
+
+		function kegg_map_modal(map) {
+
+				var $modal = $('#full-width');
+
+				var chartWidth = $modal.width()-10;
+
+				var chartHeight = $(window).height()-400;
+
+				var modalLabel = $modal.find('#myModalLabel');
+				var modalBody = $modal.find('.modal-body');
+				
+				$(modalLabel).empty();
+				$(modalBody).empty();
+
+				$(modalLabel).text("Kegg map");
+
+				var frame = $('<iframe id="frame" src="http://www.kegg.jp/kegg-bin/show_pathway?map00473/C00022%09pink,pink/C00133%09pink,pink/C00041%09pink,pink/C00993%09pink,pink" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+				$(frame).appendTo($modal.find('.modal-body'));
+				
+				$modal.modal();
+
+			}
+
+
+		$(document).ready(function() {
+
+			// ***********************************************************************************************
+			// ********************************** Sparkline plot generation **********************************
+			// ***********************************************************************************************
+
+			cell_chart();
+			set_click_actions(staticUrl,metexploreInfoUrl);
+			set_navbar();
+			var idTable = set_idtable();
+			var pathwayTable = set_pathwaytable();
+			var peakTable = set_peaktable();
+			var comparisonTable = set_comparisontable();
+
+
+			// ***********************************************************************************************
+			// ******************************** End sparkline plot generation ********************************
+			// ***********************************************************************************************
+
+			$('#home-side-nav').affix();
+
+			// PCA CHART CREATION
+			$('#pca_test').highcharts({
+				credits : {
+						enabled : false
+				},
+	            chart: {
+	                type: 'scatter',
+	                zoomType: 'xy',
+	                height: 500,
+	                width: 500,
+	            },
+	            title: {
+	                text: 'PCA'
+	            },
+	            subtitle: {
+	                text: 'Click and drag in the plot area to zoom in'
+	            },
+	            xAxis: {
+	                title: {
+	                    enabled: true,
+	                    text: 'PC 1'
+	                },
+	                startOnTick: true,
+	                endOnTick: true,
+	                showLastLabel: true
+	            },
+	            yAxis: {
+	                title: {
+	                    text: 'PC 2'
+	                }
+	            },
+	            legend: {
+	                backgroundColor: '#FFFFFF',
+	                borderWidth: 1
+	            },
+	            plotOptions: {
+	                scatter: {
+	                    marker: {
+							symbol: 'circle',
+	                        radius: 4,
+	                        states: {
+	                            hover: {
+	                                enabled: true,
+	                                lineColor: 'rgb(100,100,100)'
+	                            }
+	                        }
+	                    },
+	                    states: {
+	                        hover: {
+	                            marker: {
+	                                enabled: false
+	                            }
+	                        }
+	                    },
+	                    tooltip: {
+	                        headerFormat: '<b>{series.name}</b><br>',
+	                        pointFormat: '{point.name}<br>pc1: {point.x:.1f}<br>pc2: {point.y:.1f}'
+	                    }
+	                }
+	            },
+	            series: [{% for serie in pca_data_point.2 %}{
+	                name: '{{ serie.0 }}',
+	                data: [{% for point in serie %}
+		                		{% if not forloop.first %}
+		                			{ 
+		                				name: '{{ point.0 }}',
+		                				x: {{ point.1 }},
+		                				y: {{ point.2 }}
+		                			}{% if not forloop.last %},{% endif %}
+		                		{% endif %}
+		                	{% endfor %}
+		                	]
+		                }{% if not forloop.last %},{% endif %}
+		                {% endfor %}
+		                ]
+        	});
+
+			{% for comparison in comparisons %}
+			$('#comparison{{ comparison.id }}-volcano-plot').highcharts({
+				credits : {
+						enabled : false
+				},
+	            chart: {
+	                type: 'scatter',
+	                zoomType: 'xy',
+	                height: 500,
+	                width: 500,
+	            },
+	            title: {
+	                text: '{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }} volcano plot'
+	            },
+	            subtitle: {
+	                text: 'Click and drag in the plot area to zoom in'
+	            },
+	            xAxis: {
+	                title: {
+	                    enabled: true,
+	                    text: 'log2 Fold Change'
+	                },
+	                startOnTick: true,
+	                endOnTick: true,
+	                showLastLabel: true
+	            },
+	            yAxis: {
+	                title: {
+	                    text: '-log10 adjusted P-Value'
+	                }
+	            },
+	            legend: {
+	                backgroundColor: '#FFFFFF',
+	                borderWidth: 1
+	            },
+	            plotOptions: {
+	                scatter: {
+	                	turboThreshold: 0,
+	                    marker: {
+            				symbol: 'circle',
+	                        radius: 4,
+	                        states: {
+	                            hover: {
+	                                enabled: true,
+	                                lineColor: 'rgb(100,100,100)'
+	                            }
+	                        }
+	                    },
+	                    states: {
+	                        hover: {
+	                            marker: {
+	                                enabled: false
+	                            }
+	                        }
+	                    },
+	                    tooltip: {
+	                        headerFormat: '<b>{series.name}</b><br>',
+	                        pointFormat: '{point.name}<br>Log2 Fold Change: {point.x:.1f}<br>-log10 P-value: {point.y:.1f}'
+	                    }
+	                }
+	            },
+	            series: [{
+	                name: 'Adj. P-value > 0.05',
+	                data: [{% for peak in peak_comparison_list %} 
+		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
+		                			{% if compinfo.adjPvalue > 0.05 %}
+		                			{
+		                				name: 'Peak {{ peak.secondaryId }}',
+		                				x: {{ compinfo.logFC  }},
+		                				y: {{ compinfo|minuslogten }},
+		                			}{% if not forloop.last %},{% endif %}
+		                			{% endif %}
+		                		{% endwith %}
+		                	{% endfor %}
+		                	]
+		            },
+		            {
+	                name: 'Adj. P-value &lt; 0.05',
+	                data: [{% for peak in peak_comparison_list %} 
+		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
+		                			{% if compinfo.adjPvalue < 0.05 %}
+		                			{
+		                				name: 'Peak {{ peak.secondaryId }}',
+		                				x: {{ compinfo.logFC  }},
+		                				y: {{ compinfo|minuslogten }},
+		                			}{% if not forloop.last %},{% endif %}
+		                			{% endif %}
+		                		{% endwith %}
+		                	{% endfor %}
+		                	]
+		            },
+            	]
+        	});
+			{% endfor %}
+			
+
+			idTable.$('tr').click( function () {
+
+				// get data from the row clicked as an array
+			    var data = idTable.fnGetData( this );
+
+			    // remove any row selection from the table
+			    $(idTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(idTable.dataTableSettings[0].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				// send info to update right panel
+				updateIdentificationRightPanel(data,headerInfo,innerSidePanel);
+			});
+
+
+			pathwayTable.$('tr').click( function () {
+
+				// get data from the row clicked as an array
+			    var data = pathwayTable.fnGetData( this );
+
+			    map = $(this).attr("map");
+
+			    // remove any row selection from the table
+			    $(pathwayTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(pathwayTable.dataTableSettings[1].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				var rowInfo = data;
+
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+				updateRightPanel(rowInfo,headerInfo,innerSidePanel);
+				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+				data = calculPathwayCoverage(rowInfo,headerInfo);
+				chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				var chart1 = $('<div class="span12" style="margin-left:0px;">');
+				pieChart(chartWidth, chart1, data, 400);
+				$(kegg).appendTo($(innerSidePanel));
+				$(chart1).appendTo($(innerSidePanel));
+
+				$('#kegg-map-icon').click( function (){
+					var $modal = $('#full-width');
+
+					var chartWidth = $modal.width()-10;
+
+					var chartHeight = $(window).height()-400;
+
+					var modalLabel = $modal.find('#myModalLabel');
+					var modalBody = $modal.find('.modal-body');
+				
+					$(modalLabel).empty();
+					$(modalBody).empty();
+
+					$(modalLabel).text("Kegg map");
+
+					var frame = $('<iframe id="frame" src="http://www.kegg.jp/kegg-bin/show_pathway?'+map+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+					$(frame).appendTo($modal.find('.modal-body'));
+				
+					$modal.modal();
+				});
+
+			});
+
+
+			peakTable.$('tr').click( function () {
+				// get data from the row clicked as an array
+				var averageChart = false;
+				var peaksChart = false;
+			    var data = peakTable.fnGetData( this );
+
+			    // remove any row selection from the table
+			    $(peakTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(peakTable.dataTableSettings[2].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
+				rowInfo = [data[0],data[1],data[2],data[data.length-1]];
+
+				// send info to update right panel
+				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$(loadingPan).appendTo($(innerSidePanel));
+				var ajax_data = {"id":rowInfo[0]};
+
+				var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						$(loadingPan).before($(averageIntensityChart));
+
+						averageChart = true;
+						if (averageChart && peaksChart){
+							$(loadingPan).remove();
+						}
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+				// Debug uncomment from here
+		        var data = {"id":rowInfo[0],"ppm":ppm,"rtwindow":rtwindow};
+
+				var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: data,
+		            success: function(response){
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var peakChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						createPeaksChromatogram(chartWidth, peakChart, response);
+
+						$(loadingPan).before($(peakChart));
+
+						peaksChart = true;
+						if (averageChart && peaksChart){
+							$(loadingPan).remove();
+						}
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+				// Debug uncomment to here
+			});
+
+
+			comparisonTable.$('tr').click( function () {
+				// get data from the row clicked as an array
+			    var data = comparisonTable.fnGetData( this );
+
+			    // remove any row selection from the table
+			    $(comparisonTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(comparisonTable.dataTableSettings[3].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				rowInfo = data;
+				headerInfoToPass = headerInfo;
+
+				// send info to update right panel
+				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$(loadingPan).appendTo($(innerSidePanel));
+				var ajax_data = {"id":rowInfo[0]};
+
+				var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: ajax_data,
+		            success: function(response){
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						$(loadingPan).before($(averageIntensityChart));
+						$(loadingPan).remove();
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+		        var url = "{% url 'get_compounds_from_peak_id' project.id analysis.id %}";
+
+		        $.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: ajax_data,
+		            success: function(response){
+		            	var compoundTitle = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Compounds</h5></div>');
+		            	var newDom = '';
+
+		            	for (var i=0;i<response.length;i++){
+		            		if (response[i].length > 1){
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			for (var j=1; j<response[i].length; j++){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;background-color: #EBF6FF"><p style="padding-left:10px;padding-top: 8px;">alias: '+response[i][j]+'</p></div>';
+		            			}
+		            		}
+		            		else {
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            		}
+		            	}
+		            	var scrollBox = $('<div class="span12" style="overflow: auto;margin-left:0px;max-height:300px;background-color:white;border-left: 1px solid whitesmoke;margin-bottom: 30px;" ></div>');
+		            	$(compoundTitle).appendTo($(innerSidePanel));
+		            	$(newDom).appendTo($(scrollBox));
+		            	$(scrollBox).appendTo($(innerSidePanel));
+		            	
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+		    });
+
+			{% for comparison in comparisons %}
+				var comparisonTable{{ comparison.id }} = $('#comparison{{ comparison.id }}-table').dataTable( {
+					"sDom": '<"comparison-table_wrapper_toolbar"li>rtp',
+					"bPaginate": true,
+					"sPaginationType": "full_numbers",
+					"iDisplayLength": 100,
+					"aLengthMenu": [ 100, 250, 500, 1000 ],
+			}).columnFilter({ 	sPlaceHolder: "head:after",
+								sRangeFormat: "Min {from} Max {to}",
+					aoColumns: [ 	{ type: "text" },
+				    	 			{ type: "number-range" },
+                                    { type: "number-range" },
+                                    { type: "number-range" },
+                                    { type: "number-range" }
+						]
+
+			});
+			{% endfor %}
+
+			{% for comparison in comparisons %}
+			comparisonTable{{ comparison.id }}.$('tr').click( function () {
+				// get data from the row clicked as an array
+			    var data = comparisonTable{{ comparison.id }}.fnGetData( this );
+
+			    // remove any row selection from the table
+			    $(comparisonTable{{ comparison.id }}.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(comparisonTable{{ comparison.id }}.dataTableSettings[{{ forloop.counter0 }}+4].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				rowInfo = data;
+				headerInfoToPass = headerInfo;
+
+				// send info to update right panel
+				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$(loadingPan).appendTo($(innerSidePanel));
+				var ajax_data = {"id":rowInfo[0],"comparison":{{ comparison.id }} };
+
+				var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: ajax_data,
+		            success: function(response){
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						$(loadingPan).before($(averageIntensityChart));
+						$(loadingPan).remove();
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+		        var url = "{% url 'get_compounds_from_peak_id' project.id analysis.id %}";
+
+		        $.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	var compoundTitle = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Compounds</h5></div>');
+		            	var newDom = '';
+
+		            	for (var i=0;i<response.length;i++){
+		            		if (response[i].length > 1){
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			for (var j=1; j<response[i].length; j++){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;background-color: #EBF6FF"><p style="padding-left:10px;padding-top: 8px;">alias: '+response[i][j]+'</p></div>';
+		            			}
+		            		}
+		            		else {
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            		}
+		            	}
+		            	var scrollBox = $('<div class="span12" style="overflow: auto;margin-left:0px;max-height:300px;background-color:white;border-left: 1px solid whitesmoke;margin-bottom: 30px;" ></div>');
+		            	$(compoundTitle).appendTo($(innerSidePanel));
+		            	$(newDom).appendTo($(scrollBox));
+		            	$(scrollBox).appendTo($(innerSidePanel));
+		            	
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+		    });
+			{% endfor %}
+
+
+			// Add search handler for search on idTable only
+			$("#search").keyup( function () {
+			// Filter on the column (the index) of this element
+				// idTable.fnFilterAll(this.value);
+				$("#search2-input").val(String(this.value));
+				idTable.fnFilter(this.value);
+				pathwayTable.fnFilter(this.value);
+				peakTable.fnFilter(this.value);
+				comparisonTable.fnFilter(this.value);
+				{% for comparison in comparisons %}
+				comparisonTable{{ comparison.id }}.fnFilter(this.value);
+				{% endfor %}
+			});
+
+			$("#search2-input").keyup( function () {
+			// Filter on the column (the index) of this element
+				$("#search").val(String(this.value));
+				idTable.fnFilter(this.value);
+				pathwayTable.fnFilter(this.value);
+				peakTable.fnFilter(this.value);
+				comparisonTable.fnFilter(this.value);
+				{% for comparison in comparisons %}
+				comparisonTable{{ comparison.id }}.fnFilter(this.value);
+				{% endfor %}
+			});
+
+			function calculPathwayCoverage(data,names){
+				var annotated = parseInt(data[3])*100/parseInt(data[2]);
+				var identified = parseInt(data[4])*100/parseInt(data[2]);
+				var notcoveredNumber = parseInt(data[2])-(parseInt(data[3])+parseInt(data[4]));
+				var notcovered = notcoveredNumber*100/parseInt(data[2]);
+				var serie = [['Annotated',annotated],['Not covered',notcovered],['Identified',identified]];
+				return serie;
+			}
+
+			function pieChart(chartWidth, div, data, height){
+				$(div).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	width: chartWidth,
+		            	height: height,
+		            	backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false
+		            },
+		            title: {
+		                text: 'Map coverage'
+		            },
+		            tooltip: {
+		        	    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+		            },
+		            plotOptions: {
+		                pie: {
+		                    allowPointSelect: true,
+		                    cursor: 'pointer',
+		                    dataLabels: {
+		                        enabled: false
+		                    },
+		                    showInLegend: true
+		                }
+		            },
+		            series: [{
+		                type: 'pie',
+		                name: 'Pathway coverage',
+		                data: data
+		            }]
+		        });
+			}
+
+			function updateIdentificationRightPanel(rowInfo, header, innerSidePanel){
+				$(innerSidePanel).empty();
+				var averageChart = false;
+				var peaksChart = false;
+				var newDetailsDom = '';
+				var newSummaryDom = '';
+				var db = null;
+				var dbId = null;
+				var summaryPanel = $('<div class="span12" id="identificationSideSummaryPanel" style="margin:0px;"></div>');
+				var detailsPanel = $('<div class="span12" id="identificationSideDetailsPanel" style="margin:0px;"></div>');
+				var summaryIdentificationPanelButton = $('<div class="span6 right-side-panel-button" id="summaryIdentification" style="margin:0px;width:50%;"><span>Summary</span></div>');
+				var detailsIdentificationPanelButton = $('<div class="span6 right-side-panel-button" id="detailsIdentification" style="margin:0px;width:50%;"><span>Details</span></div>');
+				buttonDiv = $('<div class="span12" style="margin:0px;"></div>');
+				$(summaryIdentificationPanelButton).appendTo($(buttonDiv));
+				$(detailsIdentificationPanelButton).appendTo($(buttonDiv));
+				var summaryloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
+				var detailsloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
+				$(detailsloadingPan).appendTo($(detailsPanel));
+				$(summaryloadingPan).appendTo($(summaryPanel));
+				$(buttonDiv).appendTo($(innerSidePanel));
+
+				if (rightPanelPreference == "summary"){
+					$(detailsPanel).hide();
+					$('#summaryIdentification').addClass('active');
+				}
+				else {
+					$(summaryPanel).hide();
+					$('#detailsIdentification').addClass('active');
+				}
+				$('#summaryIdentification').click(function (e) {
+  					e.preventDefault();
+  					$('#identificationSideDetailsPanel').hide();
+  					$('#identificationSideSummaryPanel').show();
+  					$(this).addClass('active');
+  					$('#detailsIdentification').removeClass('active');
+  				});
+				$('#detailsIdentification').click(function (e) {
+  					e.preventDefault();
+  					$('#identificationSideDetailsPanel').show();
+  					$('#identificationSideSummaryPanel').hide();
+  					$(this).addClass('active');
+  					$('#summaryIdentification').removeClass('active');
+  				});
+
+				$(detailsPanel).appendTo($(innerSidePanel));
+				$(summaryPanel).appendTo($(innerSidePanel));
+
+				var data = {"id":rowInfo[1]};
+
+				var url = "{% url 'get_compound_info' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: data,
+		            success: function(response){
+		            	var database_info = {};
+		            	for (var i=2;i<response.length;i++){
+		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
+		            	}
+		            	newSummaryDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
+		            	newDetailsDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
+		            	for (var index in database_info){
+		            		newSummaryDom += '<option value="'+index+'">'+index+'</option>';
+		            		newDetailsDom += '<option value="'+index+'">'+index+'</option>';
+		            	}
+		            	newSummaryDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Identification</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>';
+		            	newDetailsDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Identification</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">inchikey</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+response[1]+'</div>';
+		            	$(summaryloadingPan).before($(newSummaryDom));
+		            	$(detailsloadingPan).before($(newDetailsDom));
+		            	name = database_info[String($('select.db_selector').val())][0];
+		            	var structureDom;
+		            	$('.compound_name').text(name);
+		            	if ($('select.db_selector').val() == "hmdb"){
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            	}
+		            	else if ($('select.db_selector').val() == "kegg"){
+		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+		            	}
+		            	else if ($('select.db_selector').val() == "lipidmaps"){
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            	}
+		            	else {
+		            		structureDom = $('<p>Structure not available</p>');
+		            	}
+		            	structureDiv = $('.structure');
+		            	$(structureDom).appendTo($(structureDiv));
+		            	$('select.db_selector').change(function (){
+		            		name = database_info[$(this).val()][0];
+		            		$('.compound_name').text(name);
+		            		$('select.db_selector').val($(this).val());
+		            		if ($(this).val() == "hmdb"){
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+			            	}
+			            	else if ($(this).val() == "kegg"){
+			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+			            	}
+			            	else if ($(this).val() == "lipidmaps"){
+		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            		}
+			            	else {
+			            		structureDom = $('<p>Structure not available</p>');
+			            	}
+			            	$(structureDiv).empty();
+			            	$(structureDom).appendTo($(structureDiv));
+			            });
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+				var data = {"id":rowInfo[1]};
+
+				var url = "{% url 'get_peak_info' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: data,
+		            success: function(response){
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var chartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
+						var chartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, chartSummary, response);
+						averageIntensityChartFromCompound(chartWidth, chartDetail, response);
+
+						$(summaryloadingPan).before($(chartSummary));
+						$(detailsloadingPan).before($(chartDetail));
+
+						averageChart = true;
+						if (averageChart && peaksChart){
+							$(summaryloadingPan).remove();
+							$(detailsloadingPan).remove();
+						}
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+				// Debug uncomment from here
+		        var data = {"id":rowInfo[1],"ppm":ppm,"rtwindow":rtwindow};
+
+				var url = "{% url 'get_peaks_from_compound' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: data,
+		            success: function(response){
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var peakChartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
+						var peakChartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						createPeaksChromatogram(chartWidth, peakChartSummary, response);
+						createPeaksChromatogram(chartWidth, peakChartDetail, response);
+
+						$(summaryloadingPan).before($(peakChartSummary));
+						$(detailsloadingPan).before($(peakChartDetail));
+
+						peaksChart = true;
+						if (averageChart && peaksChart){
+							$(summaryloadingPan).remove();
+							$(detailsloadingPan).remove();
+						}
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+			// debug uncomment to here
+			}
+
+			function createPeaksChromatogram(chartWidth, div, response){
+
+            	polarity = response[0][0]
+            	retentionTime = response[0][1]
+            	mass = response[0][2]
+            	// Begining of chart
+            	$(div).highcharts({
+            		credits : {
+						enabled : false
+					},
+		        	chart: {
+		                zoomType: 'x',
+		                // spacingRight: 20,
+		                width: chartWidth,
+		                height: 400,
+		                backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		                events: {
+							click: function (event) {
+                				event.preventDefault();
+		                        if(($(event.target)[0].textContent) != "Reset zoom"){
+		                        	peaksChromatogramPopUp(mass, retentionTime, response);
+		                        }
+		                    }
+						}
+		            },
+		            title: {
+		                text: 'Peak chromatogram'
+		            },
+		            subtitle: {
+		                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+		            },
+		            exporting: {
+			           	enabled: true,
+			        },
+		            xAxis: {
+		                title: {
+		                    text: 'Retention time (s)'
+		                },
+                		showLastLabel: true
+		            },
+		            yAxis: {
+		                title: {
+		                    text: 'Relative abundance'
+		                },
+		            },
+		            tooltip: {
+		                shared: true,
+		                headerFormat: '',
+		                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+		            },
+		            legend: {
+		                enabled: true
+		            },
+		    		plotOptions: {
+		                area: {
+		                    marker: {
+		                        enabled: false,
+		                        symbol: 'circle',
+		                        radius: 2,
+		                        states: {
+		                            hover: {
+		                                enabled: true
+		                            }
+		                        }
+		                    },
+		                    lineWidth: 1,
+		                    shadow: false,
+		                    states: {
+		                        hover: {
+		                            lineWidth: 1
+		                        }
+		                    },
+		                    threshold: null
+		                },
+		                series: {
+            				fillOpacity: 0.1
+            			}
+		            },
+		            series: [{
+		                type: 'area',
+		                name: response[1][0],
+		                data : response[1][1]
+		            }]
+	    		});
+				for (var i=2;i<response.length;i++){
+        			$(div).highcharts().addSeries({
+        				type: 'area',
+	                	name: response[i][0],
+	                	data : response[i][1]
+        			});	
+        		}
+    			for (var i=0;i<$(div).highcharts().series.length;i++){
+    				if ($(div).highcharts().series[i].data.length == 0) {
+    					$(div).highcharts().series[i].hide();
+    				}
+    			}
+            	// End of chart
+			}
+
+			function averageIntensityChartFromCompound(chartWidth, div, data){
+				var categories = [];
+				var average = [];
+				var errorBar = [];
+				var drilldownSeries = [];
+				var drilldownData = [];
+				for (var i=0;i<data.length;i++){
+					categories.push(data[i][0]);
+					average.push({
+						name: data[i][0],
+						// id: data[i][0],
+						y: data[i][1],
+						drilldown: data[i][0]+"1"
+					});
+					drilldownData = [];
+					for (var j=0;j<data[i][3][0].length;j++){
+						drilldownData.push({
+							name: data[i][3][1][j],
+							y: data[i][3][0][j]
+						});
+					}
+					drilldownSeries.push({
+						name: data[i][0],
+						id: data[i][0]+"1",
+						data: drilldownData
+					});
+					erroBarPoint = [data[i][1]-data[i][2],data[i][1]+data[i][2]]
+					errorBar.push(erroBarPoint);
+				}
+				$(div).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	type: 'column',
+		            	width: chartWidth,
+		            	backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		                events: {
+							click: function (event) {
+                				event.preventDefault();
+		                        if(($(event.target)[0].textContent) != "Reset zoom" && ($(event.target)[0].textContent) != "◁ Back to Intensity"){
+		                        	averagePopUp(categories, average, errorBar);
+		                        }
+		                    }
+						}
+
+		            },
+		            title: {
+		                text: 'Intensity comparison',
+		            },
+		            exporting: {
+			           	enabled: averageExport,
+			        },
+		            xAxis: {
+		            	type: 'category',
+						labels: {
+                    		rotation: -45,
+                    		align: 'right'
+                    	}
+					},
+					yAxis: [{ // Secondary yAxis
+						title: {
+							text: 'Relative abundance',
+						},
+						labels: {
+							formatter: function() {
+								return this.value.toExponential();
+							},
+						},
+					}],
+					legend: {
+                    	enabled: false
+                	},
+		            tooltip: {
+		        	    shared: true,
+		        	    valueDecimals: 2
+		            },
+		            series: [{
+					    // showInLegend: false,
+						name: 'Intensity',
+						// color: '#4572A7',
+						type: 'column',
+						data: average,
+						// tooltip: {
+						// 	pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
+						// }
+					}, { 
+						name: 'Standard deviation',
+						type: 'errorbar',
+						data: errorBar,
+						tooltip: {
+						// 	// formatter:function(a,b,c){
+						// 	// 	'<span style="font-weight: bold; color: {series.color}"></span>:<br/>'
+						// 	// },
+							pointFormat:'' //'<span style="font-weight: bold; color: {series.color}">{series.name}</span>:<br/>'
+						}
+					}],
+					drilldown: {
+            			series: drilldownSeries
+            		}
+		        });
+
+			}
+
+			function updateRightPanel(rowInfo, header, innerSidePanel){
+				$(innerSidePanel).empty();
+				var newDom = "";
+				for (var i=0;i<rowInfo.length;i++){
+					if (header[i] == "Coverage"){
+						newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'%</p></div>';
+					}
+					else {
+					newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'</p></div>';
+					}
+				}
+				$(newDom).appendTo($(innerSidePanel));
+			}
+
+			function averagePopUp(categories, average, errorBar){
+				var $modal = $("#full-width");
+				
+				var modalBody = $modal.find('.modal-body');
+				var modalFooter = $modal.find('.modal-footer');
+				var modalHeader = $modal.find('.modal-header');
+
+
+
+
+				$(modalHeader).empty();
+				$(modalLabel).empty();
+				$(modalBody).empty();
+				$(modalFooter).empty();
+
+				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
+				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
+				var modalLabel = $modal.find('#myModalLabel');
+				$(modalLabel).text("Intensity comparison");
+				var chartWidth = $modal.width(); 
+				$(modalBody).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	width: chartWidth,
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		            },
+		            title: {
+		                text: 'Intensity comparison',
+		            },
+		            exporting: {
+			           	enabled: true,
+			           	filename: 'intensity_comparison'
+			        },
+		            xAxis: {
+						categories: categories,
+						labels: {
+                    		rotation: -45,
+                    		align: 'right'
+                    	}
+					},
+					yAxis: [{ // Secondary yAxis
+						title: {
+							text: 'Relative abundance',
+						},
+						labels: {
+							formatter: function() {
+								return this.value;
+							},
+						},
+					}],
+		            tooltip: {
+		        	    shared: true,
+		        	    valueDecimals: 2
+		            },
+		            series: [{
+					    showInLegend: false,
+						name: 'Intensity',
+						// color: '#4572A7',
+						type: 'column',
+						data: average,
+						tooltip: {
+							pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
+						}
+					}, { 
+						name: 'Standard deviation',
+						type: 'errorbar',
+						data: errorBar,
+						tooltip: {
+							pointFormat:'' //'<span style="font-weight: bold; color: {series.color}">{series.name}</span>:<br/>'
+						}
+					}]
+		        });
+				$modal.modal();
+			}
+
+			function peaksChromatogramPopUp(mass, retentionTime, response){
+				var $modal = $("#full-width");
+				var modalBody = $modal.find('.modal-body');
+				var modalFooter = $modal.find('.modal-footer');
+				var modalHeader = $modal.find('.modal-header');
+
+				$(modalHeader).empty();
+				$(modalLabel).empty();
+				$(modalBody).empty();
+				$(modalFooter).empty();
+
+				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
+				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
+				var modalLabel = $modal.find('#myModalLabel');
+				$(modalLabel).text("Peaks chromatogram - RT: "+parseFloat(retentionTime).toFixed(1)+" (s) - RT window: "+rtwindow+" (s)");
+				var chartWidth = $modal.width()/4;
+				var j = 0;
+				for (var i=1;i<response.length;i++){
+					if (j==0){
+						var row = $('<div class="row" style="margin-left:0px;margin-bottom:0px"></div>');
+					}
+					var div = $('<div class="span3" style="margin:0px;width:'+chartWidth+'px"></div>');
+					$(div).highcharts({
+	            		credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                width: chartWidth,
+			                height: 300,
+			                backgroundColor: '#ffffff',
+			                plotBackgroundColor: null,
+			                plotBorderWidth: null,
+			                plotShadow: false,
+			            title: {
+			                text: 'Peak chromatogram'
+			            },
+			            subtitle: {
+			                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: 'Peak_' + response[i][0] + "_chromatogram_rt_" + parseFloat(retentionTime).toFixed(3),
+			            },
+			            xAxis: {
+			                title: {
+			                    text: 'Retention time (s)'
+			                },
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Relative abundance'
+			                },
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '',
+			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+			            },
+			            legend: {
+			                enabled: true
+			            },
+			    		plotOptions: {
+			                area: {
+			                    marker: {
+			                        enabled: false,
+			                        symbol: 'circle',
+			                        radius: 2,
+			                        states: {
+			                            hover: {
+			                                enabled: true
+			                            }
+			                        }
+			                    },
+			                    lineWidth: 1,
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                series: {
+                				fillOpacity: 0.1
+	            			}
+			            },
+			            series: [{
+			                type: 'area',
+			                name: response[i][0],
+			                data : response[i][1]
+			            }]
+			        	}
+		    		});
+					$(div).appendTo($(row));
+					j += 1;
+					if (i == response.length-1 && j != 4){
+						$(row).appendTo($(modalBody));
+					}
+					if (j == 4){
+						$(row).appendTo($(modalBody));
+						j = 0;
+					}
+				}
+				$(modalBody).css('overflow', 'auto');
+				var windowHeight = $(window).height() - (25 * $(window).height() / 100);
+				$(modalBody).css('max-height', windowHeight);
+				$modal.modal();
+			}
+
+		});
+		</script>
+	</head>
+	<body style="padding-top:0px;" data-spy="scroll" data-target=".bs-docs-sidenav">
+		<div id="main-pimp-navbar" class="navbar navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            			<span class="icon-bar"></span>
+            			<span class="icon-bar"></span>
+            			<span class="icon-bar"></span>
+					</a>
+					<a class="brand" href="">PiMP</a>
+					<div class="nav-collapse">
+						<ul class="nav">
+							{% if user.is_authenticated %}
+							<li><a href="{% url 'project_summary' %}">My projects</a></li>
+							<li><a href="{% url 'profile' %}">My account</a></li>
+							<li><a href="{% url 'auth_logout' %}">logout</a></li>
+							{% else %}
+							<li><a href="{% url 'auth_login' %}">Login</a></li>
+							<li><a href="{% url 'registration_register' %}">Register</a></li>
+							{% endif %}
+							<li><a href="{% url 'about' %}">About</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<header id="subheader" class="subhead" style="padding-top:40px">
+			<div id="serch-banner" class="container" style="padding:5px;">
+				<div class="span2">
+					<a href=""><img src="{{ STATIC_URL }}img/PiMP_logo.png" alt="index"></a>
+				</div>
+				<div class="span6" style="margin-top: 27px;">
+					<form class="navbar-search pull-left">
+  						<input type="text" class="search-query" placeholder="Search" id="search">
+						<img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;">
+					</form>
+				</div>
+				<div class="span3" style="margin-top: 32px;">
+					<p style="float:right;">{{ user.first_name }} {{ user.last_name }}</p>
+				</div>
+			</div>
+			<div class="navtable" style="background-color:#f5f5f5;width:100%;padding:0px;text-align:center;height:40px;">
+				<div id="polyomics_logo" style="float:left;background-color:#276EEE;height:40px;width:43px;display:none;"><img src="{{ STATIC_URL }}img/logo_white_small.png" alt="polyomics" style="margin-top: 4px;margin-right: 1px;"></div>
+				<div id="tool_button"><img src="{{ STATIC_URL }}img/tool_icon.png" alt="tools"><span id="tool_button_text">Tools</span><img src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
+				<ul id="tabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
+					<li id="summary-li" style="float:left;margin:0px;height:37px;"><a href="#summary" style="float:left;margin:0px;">Summary</a></li>
+					<li id="identification-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#identification" style="float:left;">Identification</a></li>
+					<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Pathway</a></li>
+					<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
+					<li id="peaks-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#peaks" style="float:left;">Peaks</a></li>
+					<li class="dropdown" style="float:left;margin:0px;height:37px;margin-left:20px;">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">More<b id="nav-bar-caret" class="caret"></b></a>
+						<ul class="dropdown-menu" id="dropdown-comparison-menu" style="min-width:100px;">
+							{% for comparison in comparisons %}
+								<li id="comparison{{ comparison.id }}-li" style="margin:0px;"><a href="#comparison{{ comparison.id }}" class="dropdown-comparison-menu-a" style="float:left;">{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</a></li>
+					        {% endfor %}
+						</ul>
+					</li>
+				</ul>
+				<div id="search2" style="position: absolute;margin-left: 15px;display:none;right: 65px;top: 0px;">
+					<input type="text" class="search-query" style="margin-top: 5px;width: 95px;font-size: 13px;" placeholder="Search" id="search2-input"></div>
+				<div id="right-side-button"><img id="right-arrow" class="show-right" src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
+			</div>
+		</header>
+		<div id="tool_menu_bar" class="left_menu">
+			<div class="tool_menu_inner">
+				<div class="home_button" id="home_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/home.png" alt="tools" ><span id="tool_button_text">Home</span></div>
+				</div>
+				<div class="inner_button" id="preferences"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/preference_icon.png" alt="tools" ><span id="tool_button_text">Preferences</span></div>
+				</div>
+				<div class="inner_button" id="enlarge"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/fullscreen_icon.png" alt="tools" ><span id="tool_button_text">Full screen</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/cluster_icon.png" alt="tools" ><span id="tool_button_text">Cluster</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/sort_icon.png" alt="tools" ><span id="tool_button_text">Sort</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/pca_icon.png" alt="tools" ><span id="tool_button_text">PCA</span></div>
+				</div>
+				<div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">MetExplore</span></div>
+				</div>
+				<div class="side_footer">
+					<span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span>
+				</div>
+			</div>
+		</div>
+		<div id="main-container" class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:175px;z-index:6;">
+			<div class="tab-content" id="general-tab-content">
+				<div id="home" class="tab-pane  active">
+					<div class="row" style="margin:0px;">
+						<div class="span12" style="width:100%;margin:0px;">
+							<div class='home-title' style='text-align:center;background-color:whitesmoke;'>
+								<h2 style="margin-top:0px">PiMP data exploration environment</h2>
+								<h3 style="margin-bottom:0px;">User guide</h3>
+							</div>
+						</div>
+					</div>
+					<div class="row" style="margin-left:0px;">
+						<div class="row-fluid">
+							<div class="span3 bs-docs-sidebar" style="">
+								<div id="home-side-nav" class="bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="140">
+									<div class="row-fluid">
+										<div class="span12">
+											<ul  class="nav nav-list">
+											  <li class="nav-header">Navigation</li>
+											  <li class="active"><a href="#">General</a></li>
+											  <li><a href="#">Tools</a></li>
+											  <li><a href="#">Summary Panel</a></li>
+											  <li><a href="#">Data Panels</a></li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="span9" style="float:right;">
+								<!-- Just for test -->
+								<div class="row-fluid">
+									<h3>Introduction</h3>
+									<p>The data exploration environment is a single page interface that allow you to navigate, interpret and export your data. The page is organized in two main components, a static navigation panel at the top of the page, and the data panel. The content of the latter is dependent to the navigation panel and give access to the data itself.</p>
+									<h3>Navigation panel</h3>
+									<p>The navigation panel is organized around three main components, the general navigation bar common to the entire website, the search component, and the navigation bar.</p>
+									<h3>Navigation bar</h3>
+									<p>The navigation bar gives access to the tool side bar, and the different data panels to visualise your results.</p>
+									<h3>Tools</h3>
+									<p>The tool navigation bar allows you to achieve diverse operations from setting your preferences (e.g. Preferences, Full screen) to perfoming operations on your data (e.g. Metxeplore).</p>
+									<div style="margin-left:30px;">
+									<h4>Cluster</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Sort</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>PCA</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									</div>
+									<h3>Summary Panel</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h3>Data Panels</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<div style="margin-left:30px;">
+									<h4>Identification</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Pathway</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Comparison</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Peaks</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									</div>
+								</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="summary" class="tab-pane">
+					<div class="row" style="margin:0px;">
+						<div class="span12" style="width:100%;margin:0px;">
+							<div class='home-title' style='text-align:center;background-color:whitesmoke;'>
+								<h2 style="margin-top:0px">PiMP summary report</h2>
+								<h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+							</div>
+						</div>
+					</div>
+					<div class="row" style="margin-left:0px;">
+						<div class="row-fluid">
+							<div class="span3 bs-docs-sidebar" style="">
+									<div id="home-side-nav" class="bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="140">
+										<div class="row-fluid">
+											<div class="span12">
+												<ul  class="nav nav-list">
+												  <li class="nav-header">Navigation</li>
+												  <li class="active"><a href="#">Introduction</a></li>
+												  <li><a href="#">LCMS</a></li>
+												  <li><a href="#">Data processing</a></li>
+												  <li><a href="#">Normalization/transformation</a></li>
+												  <li><a href="#">Quality Control</a></li>
+												  <li><a href="#">Results</a></li>
+												  <li><a href="#">Disclaimer</a></li>
+												</ul>
+											</div>
+										</div>
+									</div>
+							</div>
+							<div class="span9" style="float:right;">
+								<!-- Just for test -->
+								<div class="row-fluid">
+									<h3>Introduction</h3>
+									<p>A metabolomic analysis was performed on {{ sample_list|samplelistlength }} samples, consisting of {{ member_list|length }} groups called {% for member in member_list %}{% if not forloop.first and not forloop.last %},{% elif forloop.last %} and{% endif %} {{ member.name }}{% endfor %}.</p>
+
+									{% with member_list|sampletable as sampledescriptiontable %}
+										<table class="summary-table">
+											<thead>
+										        <tr>
+										            <th style="border-top: 2px solid rgba(255, 255, 255, 0);"></th>
+										            {% for member in member_list %}
+										            <th>{{ member.name }}</th>
+										            {% endfor %}
+										        </tr>
+										    </thead>
+										    <tbody>
+										    	{% for row in sampledescriptiontable %}
+										    	<tr>
+										    		<th>Replicate {{ forloop.counter }}</th>
+										    		{% for samplename in row %}
+										    			{% if samplename %}
+										    				<td>{{ samplename }}</td>
+										    			{% else %}
+										    				<td></td>
+										    			{% endif %}
+										    		{% endfor %}
+										    	</tr>
+										    	{% endfor %}
+											</tbody>
+										</table>
+									{% endwith %}
+
+									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed as described below:
+										<ul>
+											{% for comparison in comparisons %}
+											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
+											{% endfor %}
+										</ul>
+									</p>
+
+
+									<div style="margin-left:30px;">
+										<h4>Description & hypothesis</h4>
+										{% if project.description %}
+										<p>{{ project.description }}</p>
+										{% else %}
+										<p>Data not available</p>
+										{% endif %}
+									</div>
+
+									<h3>LCMS</h3>
+									<p>Samples were separated using a <b>ZIC-HILIC/ZIC-pHILIC</b> column.</p>
+									<p>The solvents used were:
+										<ul>
+											<li>A: water with 20mM ammonium carbonate.</li>
+											<li>B: acetonitrile.</li>
+										</ul>
+									</p>
+									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p> 
+									<p>The chromatography system was coupled to an orbitrap <b>Exactive/Q-Exactive</b> running at <b>50,000/70,000</b> resolution in positive/negative switching mode.</p>
+
+									<h3>Data processing</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<div style="margin-left:30px;">
+										<h4>Softwares and libraries</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+										<h4>Peak picking</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+										<h4>Retention time correction</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+										<h4>Filters</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+										<h4>Identification</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									</div>
+
+									<h3>Normalization/transformation</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									
+									<h3>Quality Control</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<div class="" id="pca_test"></div>
+
+									<h3>Results</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<div style="margin-left:30px;">
+										<h4>Identification</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+										<h4>Comparison</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+										{% for comparison,comparison_hits in comparison_hits_list.items %}
+										<h5>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</h5>
+
+											{% if comparison_hits.0 and comparison_hits.1 %}
+												{% if comparison_hits.0|length > 10 %}
+													<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
+												{% else %}
+													<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+												{% endif %}
+												<table class="summary-table">
+													<thead>
+												        <tr>
+												            <th>Compound</th>
+												            <th>Peak</th>
+												            <th>Log FC</th>
+												            <th>P-Value</th>
+												            <th>Adj. P-Value</th>
+												            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
+													        <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
+												            <th>Intensity</th>
+												        </tr>
+												    </thead>
+												    <tbody>
+												    	{% for compound in comparison_hits.0|slice:":10" %}
+												    	<tr>
+												    		<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
+												    		<td>{{ compound.0.peak.secondaryId }}</td>
+												    		<td>{{ compound.0.logFC|floatformat:"-5" }}</td>
+												    		<td>{{ compound.0.pValue|floatformat:"-5" }}</td>
+												    		<td>{{ compound.0.adjPvalue|floatformat:"-5" }}</td>
+												    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
+													    	<td>{{  compound.2.1.1|floatformat:"0" }}</td>
+												    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
+												    	</tr>
+												    	{% endfor %}
+												    </tbody>
+												</table>
+												{% if comparison_hits.1|length > 10 %}
+													<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
+												{% else %}
+													<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+												{% endif %}
+												<table class="summary-table">
+														<thead>
+													        <tr>
+													            <th>Peak</th>
+													            <th>Log FC</th>
+													            <th>P-Value</th>
+													            <th>Adj. P-Value</th>
+													            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
+													        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
+													            <th>Intensity</th>
+													        </tr>
+													    </thead>
+													    <tbody>
+													    	{% for compound in comparison_hits.1|slice:":10" %}
+													    	<tr>
+													    		<th>{{ compound.0.peak.secondaryId }}</th>
+													    		<td>{{ compound.0.logFC|floatformat:"-5" }}</td>
+												    			<td>{{ compound.0.pValue|floatformat:"-5" }}</td>
+												    			<td>{{ compound.0.adjPvalue|floatformat:"-5" }}</td>
+												    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
+													    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
+													    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
+													    	</tr>
+													    	{% endfor %}
+													    </tbody>
+													</table>
+											
+											{% elif comparison_hits.0 and not comparison_hits.1 %}
+												{% if comparison_hits.0|length > 10 %}
+													<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
+												{% else %}
+													<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+												{% endif %}
+												<table class="summary-table">
+														<thead>
+													        <tr>
+													            <th>Compound</th>
+													            <th>Peak</th>
+													            <th>Log FC</th>
+													            <th>P-Value</th>
+													            <th>Adj. P-Value</th>
+													            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
+													            <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
+													            <th>Intensity</th>
+													        </tr>
+													    </thead>
+													    <tbody>
+													    	{% for compound in comparison_hits.0|slice:":10" %}
+													    	<tr>
+														    	<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
+													    		<td>{{ compound.0.peak.secondaryId }}</td>
+													    		<td>{{ compound.0.logFC|floatformat:"-5" }}</td>
+													    		<td>{{ compound.0.pValue|floatformat:"-5" }}</td>
+													    		<td>{{ compound.0.adjPvalue|floatformat:"-5" }}</td>
+													    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
+													    		<td>{{  compound.2.1.1|floatformat:"0" }}</td>
+													    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
+													    	</tr>
+													    	{% endfor %}
+													    </tbody>
+													</table>
+												<p>No statistically significant annotated peak has been found for this comparison.Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+
+											{% elif not comparison_hits.0 and comparison_hits.1 %}
+											<p>No statistically significant identified compound has been found for this comparison.Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+
+												{% if comparison_hits.1|length > 10 %}
+													<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
+												{% else %}
+													<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+												{% endif %}
+												<table class="summary-table">
+														<thead>
+													        <tr>
+													            <th>Peak</th>
+													            <th>Log FC</th>
+													            <th>P-Value</th>
+													            <th>Adj. P-Value</th>
+													            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
+													        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
+													            <th>Intensity</th>
+													        </tr>
+													    </thead>
+													    <tbody>
+													    	{% for compound in comparison_hits.1|slice:":10" %}
+													    	<tr>
+													    		<th>{{ compound.0.peak.secondaryId }}</th>
+													    		<td>{{ compound.0.logFC|floatformat:"-5" }}</td>
+												    			<td>{{ compound.0.pValue|floatformat:"-5" }}</td>
+												    			<td>{{ compound.0.adjPvalue|floatformat:"-5" }}</td>
+												    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
+													    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
+													    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
+													    	</tr>
+													    	{% endfor %}
+													    </tbody>
+													</table>
+
+											{% else %}
+											<p>No statistically significant change has been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+
+											{% endif %}
+
+										<p>The volcano plot below display significance versus fold-change on the y- and x-axes, respectively. This specific plot is constructed by plotting the negative log (base 10) of the <b>adjusted p-value</b> on the y-axis.</p>
+										<p>For more information on the <b>p-value</b> please refer to the single comparison tab on the top right of the window</p>
+										<div class="volcano-plot" id="comparison{{ comparison.id }}-volcano-plot"></div>
+										{% endfor %}
+
+										<h4>Pathway</h4>
+										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									</div>
+									<h3>Disclaimer</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+								</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="identification" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="identification-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						                  <th>Compound id</th>
+						                  <th>ID</th>
+						                  <th>Peak id</th>
+						                  <th>Name</th>
+						                  <th>Formula</th>
+						                  <th>ppm</th>
+						                  <th>Identification</th>
+						                  <th>Polarity</th>
+						                </tr>
+						              </thead>
+						              <tbody>
+					              		{% for m in compounds|slice:":4000" %}
+					              		<tr><td>{{ m.secondaryId }}</td>
+					              			<td>{{ m.id }}</td>
+					              			<td>{{ m.peak.secondaryId }}</td>
+					              			<td>{{ m.repositorycompound_set.all|compoundname }}</td>
+					              			<td>{{ m.formula }}</td>
+					              			<td>{{ m.ppm }}</td>
+					              			<td>{% ifequal m.identified "False" %}Annotated{% else %}Identified{% endifequal %}</td>
+					              			<td>{{ m.peak.polarity }}</td>
+						              	</tr>
+						              	{% endfor %}
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="pathway" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="pathway-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						                  <th>Name</th>
+						                  <th>ID</th>
+						                  <th>Number compounds</th>
+						                  <th>Annotated</th>
+						                  <th>Identified</th>
+						                  <th>Coverage</th>
+						                </tr>
+						              </thead>
+						              <tbody>
+						              	{% for pathway in pathway_list %}
+						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
+						              		<td>{{ pathway.0.id }}</td>
+						              		<td>{{ pathway.0.compoundNumber }}</td>
+						              		<td>{{ pathway.2 }}</td>
+						              		<td>{{ pathway.1 }}</td>
+						              		<td>{{ pathway.3 }}</td></tr>
+						              	{% endfor %}
+						              </tbody>
+						              <!-- test -->
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="comparison" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="comparison-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						               	  <th>Peak id</th>
+						                  {% for comparison in comparisons %}
+						                  <th>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }} (logfc)</th>
+						                  {% endfor %}
+						                 </tr>
+						              </thead>
+						              <tbody>
+						              	{% for peak in peak_comparison_list %}
+						              	<tr><td>{{ peak.secondaryId }}</td>
+						              		{% for comp in peak.peakdtcomparison_set.all %}
+						              		 <td>{% if comp.logFC != 0 %}{{ comp.logFC }}{% else %}NA{% endif %}</td>
+						              		 {% endfor %}
+						              	</tr>
+						                {% endfor %}	
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="peaks" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="peak-table" class="table table-striped">
+						              <thead>
+						                <tr>
+
+						               	  <th rowspan="2">Peak id</th>
+						                  <th rowspan="2">Mass</th>
+						                  <th rowspan="2">RT</th>
+						                  {% for member in member_list %}
+						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
+						                  {% endfor %}
+						                  <th rowspan="2">Polarity</th>
+						                 </tr>
+						                 <tr>
+						                  {% for sublist in sample_list %}
+						                  	{% for sample in sublist %}
+						                  	<th rowspan="1">{{ sample.name }}</th>
+						                  	{% endfor %}
+						                  {% endfor %}
+						                </tr>
+						              </thead>
+						              <tbody>
+						              	{% for peak,intensityLists in peak_table.items %}
+						              	<tr><td>{{ peak.secondaryId }}</td>
+						              		<td>{{ peak.mass }}</td>
+						              		<td>{{ peak.rt }}</td>
+						              		{% for intensityList in intensityLists %}
+						              		 {% for intensity in intensityList %}
+						              		 <td>{% if intensity.intensity != 0 %}{{ intensity.intensity }}{% else %}NA{% endif %}</td>
+						              		 {% endfor %}
+						                  	{% endfor %}
+						                  	<td>{{ peak.polarity }}</td></tr>
+						                {% endfor %}	
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				{% for comparison in comparisons %}
+    			<div id="comparison{{ comparison.id }}" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="comparison{{ comparison.id }}-table" class="table table-striped">
+						              <thead>
+						              	<tr class="row-filter">
+						               	  <th class="column-filter" style="width: 20%;clear:both;vertical-align:top;">ID</th>
+						                  <th class="column-filter" style="width: 20%;clear:both;vertical-align:top;"></th>
+						                  <th class="column-filter" style="width: 20%;clear:both;vertical-align:top;"></th>
+						                  <th class="column-filter" style="width: 20%;clear:both;vertical-align:top;"></th>
+						                  <th class="column-filter" style="width: 20%;clear:both;vertical-align:top;"></th>
+						                 </tr>
+						                <tr>
+						               	  <th>Peak id</th>
+						                  <th>Log FC</th>
+						                  <th>P-value</th>
+						                  <th>Adjusted P-value</th>
+						                  <th>Log Odds</th>
+						                 </tr>
+						              </thead>
+						              <tbody>
+						              	{% for peak in peak_comparison_list %}
+						              	<tr><td>{{ peak.secondaryId }}</td>
+						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
+						              		<td>{{ compinfo.logFC }}</td>
+						              		<td>{{ compinfo.pValue }}</td>
+						              		<td>{{ compinfo.adjPvalue }}</td>
+						              		<td>{{ compinfo.logOdds }}</td>
+						              		{% endwith %}
+						              	</tr>
+						                {% endfor %}	
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>			
+				{% endfor %}
+			</div>
+		</div>
+		<div id="full-width" class="modal container hide fade" tabindex="-1" style="top: 10%">
+			  <div class="modal-header">
+			    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			    <h3 id="myModalLabel">Kegg test</h3>
+			  </div>
+			  <div class="modal-body" style="padding: 0px;">
+			  </div>
+			  <div class="modal-footer">
+			    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+			  </div>
+		</div>
+	</body>
+</html>

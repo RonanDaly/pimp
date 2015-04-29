@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/registration_form.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div class="row-fluid" id="main-container">
+	<div class="span12" style="margin-left:0px;">
+		<form class="form-signin" method="POST">
+			{% csrf_token %}
+			<h2 class="form-signin-heading">Create your project</h2>
+			<span style="color:red; font-size:11px">
+				{{ form.title.errors }}
+			</span>
+			{{ form.title }}
+			<span style="color:red; font-size:11px">
+				{{ form.description.errors }}
+			</span>
+			{{ form.description }}
+			<button class="btn btn-large btn-primary" type="submit">Create project</button>
+		</form>
+	</div>
+</div>
+{% else %}
+<p>Please log in or register to create project</p>
+{% endif %}
+{% endblock %}

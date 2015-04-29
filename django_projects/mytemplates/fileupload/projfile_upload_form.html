@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load upload_tags %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="span8"><h1>Upload file to {{ project }}</h1></div>
+        {% if not new_project %}
+        <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
+        {% endif %}
+    </div>
+    <form id="fileupload" method="post" action="." enctype="multipart/form-data" data-sequential-uploads="true">{% csrf_token %}
+        <div class="row fileupload-buttonbar">
+            <div class="span7">
+                <span class="btn btn-primary fileinput-button">
+                    <i class="icon-plus icon-white"></i>
+                    <span>Add files...</span>
+                    <input type="file" name="file" multiple>
+                </span>
+                <button type="submit" class="btn btn-success start">
+                    <i class="icon-upload icon-white"></i>
+                    <span>Start upload</span>
+                </button>
+                <button type="reset" class="btn btn-warning cancel">
+                    <i class="icon-ban-circle icon-white"></i>
+                    <span>Cancel upload</span>
+                </button>
+                <button type="button" class="btn btn-danger delete">
+                    <i class="icon-trash icon-white"></i>
+                    <span>Delete files</span>
+                </button>
+                <input type="checkbox" class="toggle">
+            </div>
+            <div class="span5 fileupload-progress fade">
+                <div class="progress progress-success progres-striped active">
+                    <div class="bar" style="width:0%"></div>
+                </div>
+                <div class="progress-extended">&nbsp;</div>
+            </div>
+        </div>
+        <div id="dropzone" class="span12 fade well">
+            <div class="row" style="margin:0px"><p style="text-align: center;">Drop zone</p></div>
+            <div class="row" style="margin:0px"><div class="span1" style="margin: 0 auto;float:none;">
+                <span id="upload-arrow" class="fileinput-button" style="margin: 0 auto;float:none;" data-toggle="tooltip" title="Add files..." data-placement="right">
+                    <input type="file" name="file" multiple="">
+                </span><!a id="upload-arrow" style="margin: 0 auto;"><!/a></div>
+            </div>
+        </div>
+        <div class="fileupload-loading"></div>
+        <table class="table table-striped"><tbody class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></tbody></table>
+    </form>
+    <div class="fileupload-content">
+        <table class="files"></table>
+        <div class="fileupload-progressbar"></div>
+    </div>
+    <!-- <div>
+        {% if pictures %}
+        <h2>Already uploaded</h2>
+        <table class="table table-striped">
+            {% for picture in pictures %}
+            <tr>
+                <td class="preview">
+                    <img src="{{ picture.file.url }}">
+                </td>
+                <td class="name">{{ picture.slug }}</td>
+                <td class="delete">
+                    <a class="btn btn-danger" href="{% url 'upload-delete' picture.id %}">
+                        <i class="icon-trash icon-white"></i>
+                        <span>Delete</span>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p>(Removing from this list is left as an exercise to the reader)</p>
+        {% endif %}
+    </div> -->
+</div>
+<!-- modal-gallery is the modal dialog used for the image gallery -->
+<div id="modal-gallery" class="modal modal-gallery hide fade" data-filter=":odd">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3 class="modal-title"></h3>
+    </div>
+    <div class="modal-body"><div class="modal-image"></div></div>
+    <div class="modal-footer">
+        <a class="btn modal-download" target="_blank">
+            <i class="icon-download"></i>
+            <span>Download</span>
+        </a>
+        <a class="btn btn-success modal-play modal-slideshow" data-slideshow="5000">
+            <i class="icon-play icon-white"></i>
+            <span>Slideshow</span>
+        </a>
+        <a class="btn btn-info modal-prev">
+            <i class="icon-arrow-left icon-white"></i>
+            <span>Previous</span>
+        </a>
+        <a class="btn btn-primary modal-next">
+            <span>Next</span>
+            <i class="icon-arrow-right icon-white"></i>
+        </a>
+    </div>
+</div>
+
+<div id="myModalCancel" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel">Warning!</h3>
+    </div>
+    <div class="modal-body">
+        <p>Every change you may have made be will lost.</p>
+        <p>Are you sure you want to continue?</p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Ok</a>
+    </div>
+</div>
+<div id="myModalStop" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Files uploaded</h3>
+  </div>
+  <div class="modal-body">
+    <p>Your files have been uploaded with success!</p>
+    <p>Do you wish to continue uploading files?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Continue</button>
+    <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Finish</a>
+  </div>
+</div>
+<div id="myModalEmpty" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Upload summary</h3>
+  </div>
+  <div class="modal-body">
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Continue</button>
+    {% if new_project %}
+    <a class="btn btn-primary" href="{% url 'projfile_attribute' project.id %}">Finish</a>
+    {% else %}
+    <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Finish</a>
+    {% endif %}
+  </div>
+</div>
+{% upload_js %}
+
+<!script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"><!/script>
+<!link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/bootstrap/css/bootstrap2.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+<script src="{{ STATIC_URL }}js/jquery.ui.widget.js"></script>
+<script src="{{ STATIC_URL }}js/tmpl.min.js"></script>
+<script src="{{ STATIC_URL }}js/load-image.min.js"></script>
+<script src="{{ STATIC_URL }}js/canvas-to-blob.min.js"></script>
+<!script src="{{ STATIC_URL }}js/bootstrap.min.js"><!/script>
+<script src="{{ STATIC_URL }}js/bootstrap-image-gallery.min.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.iframe-transport.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.fileupload.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.fileupload-fp.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.fileupload-ui.js"></script>
+<script src="{{ STATIC_URL }}js/locale.js"></script>
+<script src="{{ STATIC_URL }}js/main.js"></script>
+<script src="{{ STATIC_URL }}js/csrf.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+$('#upload-arrow').mouseenter(function (){
+        $('#upload-arrow').tooltip('show');
+      })
+      $('#upload-arrow').mouseleave(function (){
+        $('#upload-arrow').tooltip('hide');
+      })
+});
+$(document).bind('dragover', function (e) {
+    var dropZone = $('#dropzone'),
+        timeout = window.dropZoneTimeout;
+    if (!timeout) {
+        dropZone.addClass('in');
+    } else {
+        clearTimeout(timeout);
+    }
+    var found = false,
+        node = e.target;
+    do {
+        if (node === dropZone[0]) {
+            found = true;
+            break;
+        }
+        node = node.parentNode;
+    } while (node != null);
+    if (found) {
+        dropZone.addClass('hover');
+    } else {
+        dropZone.removeClass('hover');
+    }
+    window.dropZoneTimeout = setTimeout(function () {
+        window.dropZoneTimeout = null;
+        dropZone.removeClass('in hover');
+    }, 100);
+});
+$(document).bind('drop dragover', function (e) {
+    e.preventDefault();
+});
+// $('#fileupload').bind('fileuploadcompleted', function (e, data) {
+//     $('#myModalStop').modal();
+// });
+// ------------------------------------------------------------
+// $('#fileupload').bind('fileuploadfailed', function (e, data) {
+//     alert("cancel " + data.files[data.index].name);
+// });
+// -------------------------------------------------------------
+// $('#fileupload').bind('processfail', function (e, data) {
+//     console.log('Processing ' + data.files[data.index].name + ' failed.');
+// });
+// var jqXHR = $('#fileupload').fileupload('send', {files: filesList})
+//     .error(function (jqXHR, textStatus, errorThrown) {
+//         if (errorThrown === 'abort') {
+//             alert('File Upload has been canceled');
+//         }
+//     });
+// $('button.cancel').click(function (e) {
+//     jqXHR.abort();
+// });
+
+</script>
+{% endblock %}

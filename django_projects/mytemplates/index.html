@@ -1,0 +1,306 @@
+{% extends "base-index.html" %}
+
+{% block head %}
+<style type="text/css">
+.navbar-inner{
+    /*opacity: 0.7;*/
+    transition-duration: 1s;
+  }
+.carousel-indicators {
+position: absolute;
+/*top: 15px;*/
+bottom: 23px;
+right: 15px;
+z-index: 5;
+margin: 0;
+list-style: none;
+}
+.carousel-indicators li {
+cursor: pointer;
+display: block;
+float: left;
+width: 10px;
+height: 10px;
+margin-left: 5px;
+text-indent: -999px;
+background-color: #ccc;
+background-color: rgba(255, 255, 255, 0.25);
+border-radius: 5px;
+}
+.carousel-indicators .active {
+background-color: #fff;
+}
+.wrapper{
+  /*background: #FAFAFA url({{ STATIC_URL }}/img/Polyomics_transparent.png) bottom center no-repeat;
+  background-image: url({{ STATIC_URL }}/img/Polyomics_transparent.png);*/
+  background-position-x: 50%;
+  background-position-y: 100%;
+  background-size: cover;
+  background-repeat-x: no-repeat;
+  background-repeat-y: no-repeat;
+  background-attachment: initial;
+  background-origin: initial;
+  background-clip: initial;
+  background-color: #FAFAFA;
+  border-top: solid 14px;
+}
+
+#row-background{
+  background: #FAFAFA; /* Old browsers */
+  background: -moz-linear-gradient(top, #FAFAFA 87%, #406786 87%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(87%,#FAFAFA), color-stop(87%,#406786)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #FAFAFA 87%,#406786 87%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, #FAFAFA 87%,#406786 87%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, #FAFAFA 87%,#406786 87%); /* IE10+ */
+  background: linear-gradient(to bottom, #FAFAFA 87%,#406786 87%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#FAFAFA', endColorstr='#406786',GradientType=0 ); /* IE6-9 */
+  margin-bottom: 0px;
+} 
+
+.feature_list li{
+  background: url({{ STATIC_URL }}img/bullet.png) no-repeat left 5px;
+  padding-left: 1em;
+  list-style: none;
+  margin-bottom: 10px;
+}
+
+.title-row {
+  background: white;
+  padding-bottom: 10px;
+  border-radius: 5px;
+  border: solid 1px rgb(231, 231, 231);
+}
+/*.carousel.fade {
+  opacity: 1;
+}
+.carousel.fade .item {
+  -moz-transition: opacity ease-in-out .7s;
+  -o-transition: opacity ease-in-out .7s;
+  -webkit-transition: opacity ease-in-out .7s;
+  transition: opacity ease-in-out .7s;
+  left: 0 !important;
+  opacity: 0;
+  top:0;
+  position:absolute;
+  width: 100%;
+  display:block !important;
+  z-index:1;
+}
+.carousel.fade .item:first-child {
+  top:auto;
+  position:relative;
+}
+.carousel.fade .item.active {
+  opacity: 1;
+  -moz-transition: opacity ease-in-out .7s;
+  -o-transition: opacity ease-in-out .7s;
+  -webkit-transition: opacity ease-in-out .7s;
+  transition: opacity ease-in-out .7s;
+  z-index:2;
+}*/
+
+/*.carousel-fade .carousel-inner .item {
+  opacity: 0;
+  -webkit-transition-property: opacity;
+  -moz-transition-property: opacity;
+  -o-transition-property: opacity;
+  transition-property: opacity;
+}
+.carousel-fade .carousel-inner .active {
+  opacity: 1 !important;
+}
+.carousel-fade .carousel-inner .active.left,
+.carousel-fade .carousel-inner .active.right {
+  left: 0;
+  opacity: 0;
+  z-index: 1;
+}
+.carousel-fade .carousel-inner .next.left,
+.carousel-fade .carousel-inner .prev.right {
+  opacity: 1;
+}
+.carousel-fade .carousel-control {
+  z-index: 2;
+}*/
+</style>
+
+<script type="text/javascript">
+$(document).ready(function() {
+  var height = $('.carousel-inner').height();
+  var width = $('.carousel-inner').width();
+  console.log('height '+height+' width '+width);
+  $('#animation').width(width);
+  $('#animation').height(height);
+  $(function(){
+      $('.carousel').carousel({
+        interval: 8000
+      }).on('slide', function (e) {
+       var xx = $(this);
+       // console.log(xx);
+       setTimeout(function() {
+        // console.log(xx.find('.active'));
+        if (xx.find('.active').next().attr('id') == 'video'){
+          console.log("hahah");
+          $('#animation').get(0).load();
+          $('#animation').get(0).play();
+          // var v = document.getElementsByTagName("video")[0];
+          // console.log(v);
+          // v.play();
+        }
+       } , 0);
+    });
+  });
+  $('#animation').get(0).play();
+  $("video").bind('ended', function(){ 
+    $('#myCarousel').carousel('next');
+  });
+  // var v = document.getElementsByTagName("video")[0];
+  // v.play();
+});
+$(window).resize(function() {
+  if ($(document).width() > 979 && $(document).scrollTop() < 300){
+    $('.navbar-inner').css('background-color','rgba(236,234,232, 0.7)');
+  }
+  else{
+    $('.navbar-inner').css('background-color','rgba(236,234,232, 1)');
+  }
+});
+$(function() {
+    $('body').on("mousewheel", function() {
+        if ($(document).scrollTop() > 300){
+          $('.navbar-inner').css('background-color','rgba(236,234,232, 1)');
+        }
+        else{
+          if ($(document).width() > 979){
+            $('.navbar-inner').css('background-color','rgba(236,234,232, 0.7)');
+          }
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block banner %}
+  <div class="row" id="row-background" >
+    <!-- <div style="width:100%; height:55px;background: #00355E;position:relative;bottom:60px"></div> -->
+    <div class="span12" style="float:none;margin: 0 auto;">
+      <div id="myCarousel" class="carousel slide" style="background-color: white;">
+        <ol class="carousel-indicators">
+          <li data-target="#myCarousel" data-slide-to="0"></li>
+          <li data-target="#myCarousel" data-slide-to="1"></li>
+          <li data-target="#myCarousel" data-slide-to="2" class="active"></li>
+        </ol>
+        <div class="carousel-inner">
+          <div class="item">
+            <img src="{{ STATIC_URL }}/img/index1.png" alt="">
+            <div class="carousel-caption">
+              <h4 style="opacity:1;">PiMP - Analyse and interprete your metabolomics data in a user friendly manner</h4>
+              <!-- <p>Make metabolomics easy!</p> -->
+            </div>
+          </div>
+          <div class="item">
+            <img src="{{ STATIC_URL }}/img/index2.png" alt="">
+            <div class="carousel-caption">
+              <h4 style="opacity:1;">PiMP - access your data at anytime from anywhere</h4>
+              <!-- <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p> -->
+            </div>
+          </div>
+          <div class="item active" id="video">
+            <!-- <video width="320" height="240" controls> -->
+            <video id="animation" width="870" height="500">
+              <source src="{{ STATIC_URL }}/img/animated_vectors_2.mp4" type="video/mp4">
+              <!-- <source src="movie.ogg" type="video/ogg"> -->
+              Your browser does not support the video tag.
+            </video>
+            <div class="carousel-caption">
+              <h4 style="opacity:1;">Find out more on <a href="http://www.polyomics.gla.ac.uk/" style="color:white;text-decoration: underline;">Glasgow Polyomics website</a></h4>
+              <!-- <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p> -->
+            </div>
+          </div>
+          <!-- <div class="item">
+            <img src="{{ STATIC_URL }}/img/ex3.jpg" alt="">
+            <div class="carousel-caption">
+              <h4>Third Thumbnail label</h4>
+              <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+            </div>
+          </div> -->
+        </div>
+        <!-- <a class="left carousel-control" href="#myCarousel" data-slide="prev">‹</a>
+        <a class="right carousel-control" href="#myCarousel" data-slide="next">›</a> -->
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="row" style="margin-bottom:10px;">
+  <div class="span12" style="float:none;margin: 0 auto;text-align:center; margin-top: 20px;">
+    <div class="alert">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <strong>Warning!</strong> Registration is currently closed and will open soon, for more information about software release, training course and workshop please contact <a href="http://www.polyomics.gla.ac.uk/enquiry.php" target="_blank">Glasgow Polyomics</a>
+    </div>
+  </div>
+</div>
+<div class="row title-row">
+  <div class="span12" style="float:none;margin: 0 auto;text-align:center; margin-top: 20px;">
+    <h3><img src="{{ STATIC_URL }}img/PiMP_logo_no_background.png" class="img-polaroid" style="border-radius: 500px;width: 123px;">  An integrated, web-enabled tool for LC-MS data analysis and visualization</h3>
+  </div>
+</div>
+<div class="row" style="border-bottom: solid 10px rgb(125, 153, 194);">
+  <div class="span12" style="float:none;margin: 0 auto;">
+    <div class="row">
+      <div class="span12" style="margin-bottom:20px;">
+        The goal of our software is to standardize and automate metabolomics analysis by integrating all steps of a study -- from planning to analysis to reporting -- into one comprehensive tool spanning raw data to biological insight, allowing users to:</p>
+      </div>
+      <div class="span4">
+        <ul class="feature_list">
+          <li><span style="font-weight:bold">Share</span> both experimental designs and results online.</li>
+          <li><span style="font-weight:bold">Generate</span> plots ready for presentation and publication.</li>
+        </ul>
+      </div>
+      <div class="span4">
+        <ul class="feature_list">
+          <li><span style="font-weight:bold">Apply</span> systematic statistical analysis.</li>
+          <li><span style="font-weight:bold">Extract</span> relevant information using a state-of-the-art, multi-scale, multi-viewpoint online visualization.</li>
+        </ul>
+      </div>
+      <div class="span4">
+        <ul class="feature_list">
+          <li><span style="font-weight:bold">Examine</span> and <span style="font-weight:bold">replace</span> data in biological context.</li>
+          <li><span style="font-weight:bold">Differentiate</span> and <span style="font-weight:bold">report</span> both identified and annotated metabolites according to the Metabolomics Standard Initiative.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row" style="border-bottom: solid 10px rgb(125, 153, 194);">
+  <div class="span12" style="float:none;margin: 0 auto;">
+    <div class="row" style="margin-bottom: 20px;">
+      <div class="span4" style="text-align: center;">
+        <img src="{{ STATIC_URL }}img/collaboration.png" class="img-polaroid" style="border-radius: 500px;width: 168px;">
+        <p style="font-weight: bolder;margin-top: 10px;">Collaborative environment</p>
+      </div>
+      <div class="span4" style="text-align: center;">
+        <img src="{{ STATIC_URL }}img/result_screenshot.png" class="img-polaroid" style="border-radius:5px;width: 278px;">
+        <p style="font-weight: bolder;margin-top: 10px;">Intuitive & interactive interface</p>
+      </div>
+      <div class="span4" style="text-align: center;">
+        <img src="{{ STATIC_URL }}img/pipeline.png" class="img-polaroid" style="border-radius: 500px;width: 168px;">
+        <p style="font-weight: bolder;margin-top: 10px;">Assisted pipeline</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="span12" style="float:none;margin: 0 auto;">
+      <h4>Why is PiMP developed ?</h4>
+      <p>Rapid advances in metabolomics technology create enormous challenges for the development of data processing and visualization techniques that enable biological scientists to gain insight from complex data sets. Although programming libraries are available for informaticians, there remains a need for powerful, user-friendly software to support biological specialists in analysing metabolomics data.</p>
+      </br>
+      <h4>PiMP main features :</h4>
+      <p>From raw data to the biological context of samples, the pipeline guides users through each core step in LC– MS data analysis. World-wide collaboration between groups is enabled by sharing both experimental designs and results online, overcoming limitations in big-data transfer. A robust and systematic statistical analysis is built into the pipeline, enabling users to differentiate and report both identified and annotated metabolites according to the Metabolomics Standard Initiative (MSI). State-of-the-art, multi-scale, multi-viewpoint visualization allows scientists to navigate and extract relevant information from sample data and to examine this information in a biological context.</p>
+      </br>
+      <h4>PiMP aim !</h4>
+      <p>PiMP is currently being developed by Glasgow Polyomics. [...sentence to invite poeple to join the dev team...] The ultimate goal of our software is to standardize and automate metabolomics analysis by integrating all steps of a study -- from planning to analysis to reporting -- into one comprehensive tool spanning raw data to biological insight.</p>
+  </div>
+</div>
+{% endblock %}

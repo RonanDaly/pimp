@@ -1,0 +1,9 @@
+Dear {{ first_name }},
+
+The analysis named {{ analysis_name }} submitted on {{ analysis.submited|truncatewords:"1"|slice:":-3" }} has now finished processing.
+
+Sign into your account to browse your results.
+
+Glasgow Polyomics team
+
+This is an automatically generated email, please do not reply to this message.

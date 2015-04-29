@@ -1,0 +1,269 @@
+\name{Pimp.exportToXML}
+\alias{Pimp.exportToXML}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{
+%%  ~~function to do ... ~~
+}
+\description{
+%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+}
+\usage{
+Pimp.exportToXML(id = NULL, raw.data = data.frame(), identification = data.frame(), toptables = list(), pathway.stats = data.frame())
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{id}{
+%%     ~~Describe \code{id} here~~
+}
+  \item{raw.data}{
+%%     ~~Describe \code{raw.data} here~~
+}
+  \item{identification}{
+%%     ~~Describe \code{identification} here~~
+}
+  \item{toptables}{
+%%     ~~Describe \code{toptables} here~~
+}
+  \item{pathway.stats}{
+%%     ~~Describe \code{pathway.stats} here~~
+}
+}
+\details{
+%%  ~~ If necessary, more details than the description above ~~
+}
+\value{
+%%  ~Describe the value returned
+%%  If it is a LIST, use
+%%  \item{comp1 }{Description of 'comp1'}
+%%  \item{comp2 }{Description of 'comp2'}
+%% ...
+}
+\references{
+%% ~put references to the literature/web site here ~
+}
+\author{
+%%  ~~who you are~~
+}
+\note{
+%%  ~~further notes~~
+}
+
+%% ~Make other sections like Warning with \section{Warning }{....} ~
+
+\seealso{
+%% ~~objects to See Also as \code{\link{help}}, ~~~
+}
+\examples{
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (id = NULL, raw.data = data.frame(), identification = data.frame(), 
+    toptables = list(), pathway.stats = data.frame()) 
+{
+    if (is.null(id)) {
+        stop("No analysis id found.")
+    }
+    if (nrow(raw.data) == 0) {
+        stop("No raw.data found.")
+    }
+    if (nrow(identification) == 0) {
+        stop("No identification data found")
+    }
+    con <- dbConnect("SQLite", dbname = "~/Downloads/sqlite3.db")
+    experiment_id <- .get.experiment_id(con = con, analysis_id = id)
+    experiment.samples <- .get.experiment.samples(con = con, 
+        experiment_id = experiment_id)
+    doc <- newXMLDoc()
+    gpimp <- newXMLNode("gpimp:pimp_analysis", doc = doc, namespace = c(gpimp = "http://puma.ibls.gla.ac.uk/ns/gpimp/1.0", 
+        xsi = "http://www.w3.org/2001/XMLSchema-instance"), attrs = c(`xsi:schemaLocation` = "http://puma.ibls.gla.ac.uk/ns/gpimp/1.0 http://puma.ibls.gla.ac.uk/ns/gpimp/1.0/pimp_framework.xsd", 
+        id = id))
+    settings <- newXMLNode("settings", parent = gpimp)
+    groupset <- newXMLNode("groupset", parent = settings)
+    experiment.groups <- .get.experiment.groups(con = con, experiment_id = experiment_id)
+    for (i in 1:nrow(experiment.groups)) {
+        group <- newXMLNode("group", attrs = c(id = experiment.groups$id[i]), 
+            parent = groupset)
+        group.name <- newXMLNode("name", experiment.groups$name[i], 
+            parent = group)
+        member.set <- newXMLNode("memberset", parent = group)
+        group.members <- .get.experiment.group.members(con = con, 
+            group_id = experiment.groups$id[i])
+        for (j in 1:nrow(group.members)) {
+            member <- newXMLNode("member", attrs = c(id = group.members$id[j]), 
+                parent = member.set)
+            member.name <- newXMLNode("name", group.members$name[j], 
+                parent = member)
+            samples <- .get.member.samples(con, member_id = group.members$id[j])
+            sample.set <- newXMLNode("sampleset", parent = member)
+            for (k in 1:nrow(samples)) {
+                sample <- newXMLNode("sample", attrs = c(id = samples$id[k]), 
+                  parent = sample.set)
+                sample.name <- newXMLNode("name", samples$name[k], 
+                  parent = sample)
+            }
+        }
+    }
+    member.comparison.set <- newXMLNode("member_comparison_set", 
+        parent = settings)
+    experiment.comparisons <- .get.experiment.comparisons(con = con, 
+        experiment_id = experiment_id)
+    for (i in 1:nrow(experiment.comparisons)) {
+        member.comparison <- newXMLNode("member_comparison", 
+            attrs = c(id = experiment.comparisons$id[i]), parent = member.comparison.set)
+        comparison.members <- .get.experiment.comparison.members(con = con, 
+            comparison_id = experiment.comparisons$id[i])
+        sapply(comparison.members, function(x) newXMLNode("member_reference", 
+            attrs = c(id = x), parent = member.comparison))
+    }
+    parameterset <- newXMLNode("parameterset", parent = settings)
+    parameters <- .get.analysis.parameters(con = con, analysis_id = id)
+    for (i in 1:nrow(parameters)) {
+        name <- parameters$name[i]
+        value <- parameters$value[i]
+        state <- as.logical(parameters$state[i])
+        if (state && !is.na(value)) {
+            parameter <- newXMLNode("parameter", attrs = c(type = "numeric_conditional_parameter"), 
+                parent = parameterset)
+            newXMLNode("name", name, parent = parameter)
+            numeric_conditional_parameter <- newXMLNode("numeric_conditional_parameter", 
+                parent = parameter)
+            newXMLNode("state", "on", parent = numeric_conditional_parameter)
+            newXMLNode("value", value, parent = numeric_conditional_parameter)
+        }
+        else if (state && is.na(value)) {
+            parameter <- newXMLNode("parameter", attrs = c(type = "conditional_parameter"), 
+                parent = parameterset)
+            newXMLNode("name", name, parent = parameter)
+            conditional_parameter <- newXMLNode("conditional_parameter", 
+                parent = parameter)
+            newXMLNode("state", "on", parent = conditional_parameter)
+        }
+    }
+    peakset <- newXMLNode("peakset", parent = gpimp)
+    samples.idx <- match(file_path_sans_ext(experiment.samples$name), 
+        colnames(raw.data))
+    identification <- .generateCompoundIds(identification)
+    for (i in 1:nrow(raw.data)) {
+        cat(paste(i, "of", nrow(raw.data), "\r"))
+        peak.id <- rownames(raw.data)[i]
+        peak <- newXMLNode("peak", attrs = c(id = peak.id), parent = peakset)
+        newXMLNode("mass", raw.data$Mass[i], parent = peak)
+        newXMLNode("retention_time", raw.data$RT[i], parent = peak)
+        newXMLNode("polarity", raw.data$polarity[i], parent = peak)
+        compoundset <- newXMLNode("compoundset", parent = peak)
+        comparisonset <- newXMLNode("comparisonset", parent = peak)
+        identified.idx <- which(peak.id == identification$id)
+        if (length(identified.idx) > 0) {
+            identified.subset <- identification[identified.idx, 
+                ]
+            no.inchi.idx <- which(as.character(identified.subset$InChIKey) == 
+                "")
+            inchi.idx <- which(as.character(identified.subset$InChIKey) != 
+                "")
+            inchi.subset <- unique(identified.subset[inchi.idx, 
+                c("id", "formula", "ppm", "adduct", "InChIKey", 
+                  "publishable", "compound.id")])
+            no.inchi.subset <- identified.subset[no.inchi.idx, 
+                ]
+            if (nrow(inchi.subset) > 0) {
+                for (j in 1:nrow(inchi.subset)) {
+                  compound <- newXMLNode("compound", attrs = c(id = inchi.subset$compound.id[j]), 
+                    parent = compoundset)
+                  newXMLNode("formula", inchi.subset$formula[j], 
+                    parent = compound)
+                  newXMLNode("inchikey", inchi.subset$InChIKey[j], 
+                    parent = compound)
+                  newXMLNode("ppm", inchi.subset$ppm[j], parent = compound)
+                  newXMLNode("adduct", inchi.subset$adduct[j], 
+                    parent = compound)
+                  newXMLNode("identified", inchi.subset$publishable[j], 
+                    parent = compound)
+                  compound.idx <- which(as.character(identified.subset$InChIKey) == 
+                    inchi.subset$InChIKey[j])
+                  dbset <- newXMLNode("dbset", parent = compound)
+                  for (k in 1:length(compound.idx)) {
+                    db <- newXMLNode("db", parent = dbset)
+                    newXMLNode("db_name", identified.subset$DB[compound.idx[k]], 
+                      parent = db)
+                    newXMLNode("identifier", identified.subset$DBID[compound.idx[k]], 
+                      parent = db)
+                    newXMLNode("compound_name", identified.subset$name[compound.idx[k]], 
+                      parent = db)
+                  }
+                }
+            }
+            if (nrow(no.inchi.subset) > 0) {
+                for (j in 1:nrow(no.inchi.subset)) {
+                  compound <- newXMLNode("compound", attrs = c(id = no.inchi.subset$compound.id[j]), 
+                    parent = compoundset)
+                  newXMLNode("formula", no.inchi.subset$formula[j], 
+                    parent = compound)
+                  newXMLNode("inchikey", parent = compound)
+                  newXMLNode("ppm", no.inchi.subset$ppm[j], parent = compound)
+                  newXMLNode("adduct", no.inchi.subset$adduct[j], 
+                    parent = compound)
+                  newXMLNode("identified", no.inchi.subset$publishable[j], 
+                    parent = compound)
+                  dbset <- newXMLNode("dbset", parent = compound)
+                  db <- newXMLNode("db", parent = dbset)
+                  newXMLNode("db_name", no.inchi.subset$DB[j], 
+                    parent = db)
+                  newXMLNode("identifier", no.inchi.subset$DBID[j], 
+                    parent = db)
+                  newXMLNode("compound_name", no.inchi.subset$name[j], 
+                    parent = db)
+                }
+            }
+            for (k in 1:nrow(experiment.comparisons)) {
+                tt <- toptables[[experiment.comparisons$contrast[k]]]
+                peak.idx <- match(peak.id, rownames(tt))
+                if (!is.na(peak.idx) && !is.na(tt$P.Value[peak.idx])) {
+                  comparison <- newXMLNode("comparison", attrs = c(id = experiment.comparisons$id[k]), 
+                    parent = comparisonset)
+                  newXMLNode("logfc", tt$logFC[peak.idx], parent = comparison)
+                  newXMLNode("pvalue", tt$P.Value[peak.idx], 
+                    parent = comparison)
+                  newXMLNode("adjpvalue", tt$adj.P.Val[peak.idx], 
+                    parent = comparison)
+                  newXMLNode("logodds", tt$B[peak.idx], parent = comparison)
+                }
+            }
+        }
+        sampleintensityset <- newXMLNode("sample_intensity_set", 
+            parent = peak)
+        for (l in 1:nrow(experiment.samples)) {
+            samplereference <- newXMLNode("sample_reference", 
+                attrs = c(id = experiment.samples$id[l]), parent = sampleintensityset)
+            newXMLNode("intensity", raw.data[i, samples.idx[l]], 
+                parent = samplereference)
+        }
+    }
+    pathwayset <- newXMLNode("pathwayset", parent = gpimp)
+    pathway.compounds <- identification[which(identification$DB == 
+        "kegg"), ]
+    for (i in 1:nrow(pathway.stats)) {
+        pathway <- newXMLNode("pathway", attrs = c(id = pathway.stats$id[i]), 
+            parent = pathwayset)
+        newXMLNode("name", pathway.stats$name[i], parent = pathway)
+        newXMLNode("compound_number", pathway.stats$number.compounds[i], 
+            parent = pathway)
+        compound_in_pathwayset <- newXMLNode("compound_in_pathwayset", 
+            parent = pathway)
+        dbid.idx <- which(pathway.compounds$DBID \%in\% identified.compounds.by.pathway[[pathway.stats$id[i]]], 
+            arr.ind = T)
+        lapply(unique(pathway.compounds[dbid.idx, "compound.id"]), 
+            function(x) {
+                newXMLNode("compound_in_pathway", attrs = c(id = as.integer(x)), 
+                  parent = compound_in_pathwayset)
+            })
+    }
+    saveXML(doc, file = "foo.xml")
+    dbDisconnect(con)
+  }
+}
+% Add one or more standard keywords, see file 'KEYWORDS' in the
+% R documentation directory.
+\keyword{ ~kwd1 }
+\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load project_tags %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="span8"><h1>Delete file from {{ project }}</h1></div>
+        <div class="span4 span-create-project"><a class="btn btn-back btn-create-project" href="{% url 'project_detail' project.id %}"><i class="icon-arrow-left"></i> Back to project</a></div>
+    </div>
+    <form id="fileupload" method="post" action="{% url 'upload-new' project.id %}">{% csrf_token %}
+    	<div class="row fileupload-buttonbar">
+    		<div class="span7">
+    			<button type="button" class="btn btn-danger delete">
+                    <i class="icon-trash icon-white"></i>
+                    <span>Delete files</span>
+                </button>
+                <input type="checkbox" class="toggle">
+            </div>
+        </div>
+        <div class="fileupload-loading"></div>
+        <table class="table table-striped">
+        	<tbody class="files" data-toggle="modal-gallery" data-target="#modal-gallery">
+        		{% for sample in project.picture_set.all %}
+        		<tr class="template-download fade in" style="height: 57px;">
+		            <td class="preview">
+		            	<img id="pic" src="{{ STATIC_URL }}/img/mzxml-icon.png" alt="The Scream" width="45">
+		                <!--a href="/media/projects/2/samples/logoinra-couleur.jpg" title="logoinra-couleur.jpg" rel="gallery" download="logoinra-couleur.jpg"--><!--img src="/media/projects/2/samples/logoinra-couleur.jpg"--><!--/a-->
+		            </td>
+		            <td class="name">
+						<p>{{ sample.name|truncatechars:25 }}</p>
+		            </td>
+		            <td class="size">
+		            	<span>{{ sample.file.size|filesizeformat }}</span>
+		            </td>
+		            <!td colspan="2"><!/td>
+			        <td class="delete">
+			            <button class="btn btn-danger" data-type="DELETE" data-url="/accounts/project/{{ project.id }}/upload/delete/{{ sample.id }}">
+			                <i class="icon-trash icon-white"></i>
+			                <span>Delete</span>
+			            </button>
+			            <input type="checkbox" name="delete" value="1">
+			        </td>
+    			</tr>
+    			{% endfor %}
+			</tbody>
+		</table>
+    </form>
+</div>
+
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+<script src="{{ STATIC_URL }}js/jquery.ui.widget.js"></script>
+<!script src="{{ STATIC_URL }}js/tmpl.min.js"><!/script>
+<script src="{{ STATIC_URL }}js/load-image.min.js"></script>
+<script src="{{ STATIC_URL }}js/canvas-to-blob.min.js"></script>
+<!script src="{{ STATIC_URL }}js/bootstrap.min.js"><!/script>
+<script src="{{ STATIC_URL }}js/bootstrap-image-gallery.min.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.iframe-transport.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.fileupload.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.fileupload-fp.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.fileupload-ui.js"></script>
+<script src="{{ STATIC_URL }}js/locale.js"></script>
+<script src="{{ STATIC_URL }}js/main.js"></script>
+<script src="{{ STATIC_URL }}js/csrf.js"></script>
+{% endblock %}

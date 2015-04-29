@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style type="text/css">
+.title-row {
+  background-color: rgb(255, 251, 215);
+  padding-bottom: 10px;
+  border-radius: 5px;
+  border: solid 1px rgb(231, 231, 231);
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="row" style="margin-bottom:10px;margin-top:50px;">
+	<div class="row title-row">
+	  <div class="span12" style="float:none;margin: 0 auto;text-align:center; margin-top: 20px;">
+	    <p><!-- <img src="{{ STATIC_URL }}img/PiMP_logo_no_background.png" class="img-polaroid" style="border-radius: 500px;width: 123px;"> -->  Registration is currently closed and will open soon, for more information about software release, training course and workshop please contact <a href="http://www.polyomics.gla.ac.uk/enquiry.php" target="_blank">Glasgow Polyomics</a></p>
+	  </div>
+	</div>
+</div>
+{% endblock %}

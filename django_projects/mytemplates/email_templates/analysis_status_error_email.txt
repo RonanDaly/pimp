@@ -1,0 +1,9 @@
+Dear {{ first_name }}, 
+
+The analysis {{ analysis_name }} submitted on {{ analysis.submited|truncatewords:"1"|slice:":-3" }} has encountered an error and could not be achieved.
+
+Please log into your account and follow the instructions in order to resolve this issue.
+
+Glasgow Polyomics team
+
+This is an automatically generated email, please do not reply to this message.

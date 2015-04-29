@@ -1,0 +1,2578 @@
+{% extends "base.html" %}
+{% load project_tags %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/defaultTheme.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/bootstrap-modal.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/bootstrap/css/slider.css" media="screen"/>
+<script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.fixedheadertable.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/table.js"></script>
+<!script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"><!/script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap-modalmanager.js"></script>
+<script src="{{ STATIC_URL }}js/highcharts.js"></script>
+<script src="{{ STATIC_URL }}js/exporting.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-slider.js"></script>
+<!script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap-modal.js"><!/script>
+<style>
+.wrapper{
+    background-color: rgb(253, 253, 253);
+}
+.center-text {
+    text-align: center;
+}
+
+.text-in-table{
+    margin-bottom: 0px;
+    margin-top: 0px;
+}
+
+.introduction_text {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #9298A3;
+}
+
+#overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: #FFF;
+    opacity: 0.9;
+    filter: alpha(opacity=90);
+    z-index: 10000;
+}
+#loading_img {
+    /*width: 50px;
+    height: 57px;*/
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -100px 0 0 -100px;
+}
+#loading_text {
+    /*width: 50px;
+    height: 57px;*/
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 100px 0 0 -160px;
+}
+</style>
+<script type="text/javascript">
+	<!--//--><![CDATA[//><!--
+				var images = new Array()
+				function preload() {
+					for (i = 0; i < preload.arguments.length; i++) {
+						images[i] = new Image()
+						images[i].src = preload.arguments[i]
+					}
+				}
+				preload(
+					"{{ STATIC_URL }}img/PiMP_logo.gif"
+				)
+	//--><!]]>
+$(function() {
+
+    var loading = function() {
+        // add the overlay with loading image to the page
+        var over = '<div id="overlay">' +
+            '<img id="loading_img" src="{{ STATIC_URL }}img/PiMP_logo.gif">' +
+            '<p id="loading_text">Your data environment is being generated, please wait.<p>' +
+            '</div>';
+        $(over).appendTo('body');
+
+        console.log("prout");
+        // click on the overlay to remove it
+        // $('#overlay').click(function() {
+        //     $(this).remove();
+        // });
+
+        // hit escape to close the overlay
+        // $(document).keyup(function(e) {
+        //     if (e.which === 27) {
+        //         $('#overlay').remove();
+        //     }
+        // });
+    };
+
+    // you won't need this button click
+    // just call the loading function directly
+    $('.analysis_result_button').click(loading);
+
+});
+$(document).ready(function() {
+
+	// $("#spanLoading").ajaxStart(function () {
+	//     $('body').css('cursor', 'wait');
+	// });
+
+	// $("#spanLoading").ajaxComplete(function () {
+	//     $('body').css('cursor', 'auto');
+	// });
+
+	$('.modal') 
+    .on('shown', function(){ 
+      console.log('show'); 
+      $('body').css({overflow: 'hidden'}); 
+    }) 
+    .on('hidden', function(){ 
+      $('body').css({overflow: ''}); 
+    }); 
+
+	function massSpectra(sample_id, polarity, retentionTime){
+		console.log(sample_id + " " + polarity + " " + retentionTime);
+		var data = {"id": sample_id, "polarity": polarity, "rt":retentionTime};
+		var chartWidth = $('#main-container').width();
+		var url = "{% url 'project_detail' project.id %}" + "sample/" + sample_id + "/scan/";
+		if (polarity == "NEG"){
+			var scan = $("#full-width").find('#tab2').find('#scan');
+		}
+		else{
+			var scan = $("#full-width").find('#tab1').find('#scan');
+		}
+
+		// var $modal = $('#full-width');
+		// $modal.modal('loading');
+		$("#full-width").find('.modal-body').modalmanager('loading');
+
+		$.ajax({
+			type: "GET",
+            url: url,
+            data: data,
+            success: function(response){
+            	// alert(response);
+            	$(scan).highcharts({
+            			credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: 'Mass spectra for RT ' + retentionTime
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: retentionTime.toString().replace(".","_") + "_" + polarity + "_mass_spectra"
+			            },
+			            xAxis: {
+			                // type: 'linear',
+			                // categories: response[1][1],
+			                // maxZoom: 14 * response[1][0].length, // fourteen days
+			                title: {
+			                    text: 'm/z'
+			                },
+			                // startOnTick: true,
+	                		// endOnTick: true,
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			                // min: 0,
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '<span style="font-size: 10px">Mass : {point.key}</span><br/>'
+			            },
+			            legend: {
+			                enabled: false
+			            },
+			            plotOptions: {
+			                area: {
+			                    fillColor: {
+			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+			                        stops: [
+			                            [0, Highcharts.getOptions().colors[0]],
+			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+			                        ]
+			                    },
+			                    lineWidth: 1,
+			                    marker: {
+			                        enabled: false
+			                    },
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                // series: {
+			                //     cursor: 'pointer',
+			                //     point: {
+			                //         events: {
+			                //             click: function() {
+			                //                 hs.htmlExpand(null, {
+			                //                     pageOrigin: {
+			                //                         x: this.pageX,
+			                //                         y: this.pageY
+			                //                     },
+			                //                     headingText: 'Retention Time: ' + retentionTime,
+			                //                     maincontentText: 'Mass: '+ this.x +':<br/> '+
+			                //                         'Intensity: '+ this.y,
+			                //                     width: 200
+			                //                 });
+			                //             }
+			                //         }
+			                // 	}
+			                // },
+			                scatter: {
+			                    marker: {
+			                        radius: 5,
+			                        states: {
+			                            hover: {
+			                                enabled: true,
+			                                lineColor: 'rgb(100,100,100)'
+			                            }
+			                        }
+			                    }
+			                    // states: {
+			                    //     hover: {
+			                    //         marker: {
+			                    //             enabled: false
+			                    //         }
+			                    //     }
+			                    // },
+			                    // tooltip: {
+			                    //     headerFormat: '<b>{series.name}</b><br>',
+			                    //     pointFormat: '{point.x} cm, {point.y} kg'
+			                    // }
+			                }
+			            },
+			    
+			            series: [{
+			                type: 'area',
+			                name: 'Intensity',
+			                data : response
+			            }]
+		    		});
+					$("#full-width").find('.modal-body').modalmanager('loading','false');;
+					// $modal.modal('loading','false');
+
+            },
+            error: function(){
+        		alert("Error");
+        	}
+		});
+
+	}
+
+	$('.mzxml-viewer').click(function (e){
+		var $modal = $("#full-width");
+		var modalLabel = $modal.find('#myModalLabel');
+		var modalBody = $modal.find('.modal-body');
+		
+		$(modalLabel).empty();
+		$(modalBody).empty();
+
+		$(modalLabel).text("mzxml viewer")
+		
+		var sampleId = $(this).attr('id').split("-")[1];
+		var sampleType = $(this).attr('id').split("-")[2];
+		console.log(sampleId);
+
+		var url = "{% url 'project_detail' project.id %}" + "sample/" + sampleId + "/";
+		var sample_type = {"type": sampleType};
+
+		$('body').modalmanager('loading');
+		// console.log('window height: ' + $(window).height());
+
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: sample_type,
+            success: function(response){
+            	console.log(response);
+            	console.log(response[1].length);
+            	console.log(response[1][1].length);
+            	// $(modalLabel).text("TIC : " + response[0])
+            	// if (response[1] == "None" || response[2] == "None"){
+            	// 	console.log("1 polarity missing");
+            	if (response[1] == "None" || response[2] == "None"){
+            		console.log("1 polarity missing");
+            	}
+            	else{
+            		console.log("both polarity present, all good!!");
+            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li  style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+
+            		$(ul).appendTo($(modalBody));
+            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+            		
+
+            		var tab1 = $('<div class="tab-pane" id="tab1"></div>');
+            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+
+            		var posTIC = $('<div id="tic"></div>');
+            		var posScan = $('<div id="scan"></div>');
+
+            		var negTIC = $('<div id="tic"></div>');
+            		var negScan = $('<div id="scan"></div>');
+
+
+            		var chartWidth = $('#main-container').width(); 
+    				// $("#full-width").find('.modal-body').prepend(content);
+    				// $("#full-width").find('.modal-body').highcharts({
+	            	$(posTIC).highcharts({
+	            		credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: response[0] +' positive Total Ion Current'
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: response[0].split(".")[0] + "_positive_TIC"
+			            },
+			            xAxis: {
+			                // type: 'linear',
+			                // categories: response[1][1],
+			                // maxZoom: 14 * response[1][0].length, // fourteen days
+			                title: {
+			                    text: 'Retention time'
+			                },
+			                // startOnTick: true,
+	                		// endOnTick: true,
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			                // min: 0,
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
+			            },
+			            legend: {
+			                enabled: false
+			            },
+			            plotOptions: {
+			                area: {
+			                    fillColor: {
+			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+			                        stops: [
+			                            [0, Highcharts.getOptions().colors[0]],
+			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+			                        ]
+			                    },
+			                    lineWidth: 1,
+			                    marker: {
+			                        enabled: false
+			                    },
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                scatter: {
+			                    marker: {
+			                        radius: 5,
+			                        states: {
+			                            hover: {
+			                                enabled: true,
+			                                lineColor: 'rgb(100,100,100)'
+			                            }
+			                        }
+			                    }
+			                    // states: {
+			                    //     hover: {
+			                    //         marker: {
+			                    //             enabled: false
+			                    //         }
+			                    //     }
+			                    // },
+			                    // tooltip: {
+			                    //     headerFormat: '<b>{series.name}</b><br>',
+			                    //     pointFormat: '{point.x} cm, {point.y} kg'
+			                    // }
+			                },
+			                series: {
+				                cursor: 'pointer',
+				                point: {
+			                        events: {
+			                            click: function() {
+			                            	console.log("retention time :" + this.x);
+			                            	massSpectra(sampleId, "POS", this.x);
+			                            	// alert('You just clicked the graph');
+			                                // hs.htmlExpand(null, {
+			                                //     pageOrigin: {
+			                                //         x: this.pageX,
+			                                //         y: this.pageY
+			                                //     },
+			                                //     headingText: this.series.name,
+			                                //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+			                                //         this.y +' visits',
+			                                //     width: 200
+			                                // });
+			                            }
+			                        }
+			                    },
+				                // events: {
+				                //     click: function() {
+				                //         alert('You just clicked the graph');
+				                //     }
+				                // }
+				            }
+
+			            },
+			    
+			            series: [{
+			                type: 'area',
+			                name: 'Intensity',
+			                data : response[1]
+			            }]
+		    		});
+					$(negTIC).highcharts({
+						credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: response[0] +' negative Total Ion Current'
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: response[0].split(".")[0] + "_negative_TIC" 
+			            },
+			            xAxis: {
+			                // type: 'linear',
+			                // categories: response[1][1],
+			                // maxZoom: 14 * response[1][0].length, // fourteen days
+			                title: {
+			                    text: 'Retention time'
+			                },
+			                // startOnTick: true,
+	                		// endOnTick: true,
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			                // min: 0,
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
+			            },
+			            legend: {
+			                enabled: false
+			            },
+			            plotOptions: {
+			                area: {
+			                    fillColor: {
+			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+			                        stops: [
+			                            [0, Highcharts.getOptions().colors[0]],
+			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+			                        ]
+			                    },
+			                    lineWidth: 1,
+			                    marker: {
+			                        enabled: false
+			                    },
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                scatter: {
+			                    marker: {
+			                        radius: 5,
+			                        states: {
+			                            hover: {
+			                                enabled: true,
+			                                lineColor: 'rgb(100,100,100)'
+			                            }
+			                        }
+			                    }
+			                    // states: {
+			                    //     hover: {
+			                    //         marker: {
+			                    //             enabled: false
+			                    //         }
+			                    //     }
+			                    // },
+			                    // tooltip: {
+			                    //     headerFormat: '<b>{series.name}</b><br>',
+			                    //     pointFormat: '{point.x} cm, {point.y} kg'
+			                    // }
+			                },
+			                series: {
+				                cursor: 'pointer',
+				                point: {
+			                        events: {
+			                            click: function() {
+			                            	console.log("retention time :" + this.x);
+			                            	massSpectra(sampleId, "NEG", this.x);
+			                            	// alert('You just clicked the graph');
+			                                // hs.htmlExpand(null, {
+			                                //     pageOrigin: {
+			                                //         x: this.pageX,
+			                                //         y: this.pageY
+			                                //     },
+			                                //     headingText: this.series.name,
+			                                //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+			                                //         this.y +' visits',
+			                                //     width: 200
+			                                // });
+			                            }
+			                        }
+			                    },
+				                // events: {
+				                //     click: function() {
+				                //         alert('You just clicked the graph');
+				                //     }
+				                // }
+				            }
+			            },
+			    
+			            series: [{
+			                type: 'area',
+			                name: 'Intensity',
+			                data : response[2]
+			            }]
+		    		});
+				}
+
+            	$(posTIC).appendTo($(tab1));
+            	$(posScan).appendTo($(tab1));
+            	$(negTIC).appendTo($(tab2));
+            	$(negScan).appendTo($(tab2));
+            	$(tab1).appendTo($(tabContent));
+            	$(tab2).appendTo($(tabContent));
+            	$(tabContent).appendTo($(modalBody));
+				$('body').modalmanager('loading','false');
+				$(modalBody).width($('#main-container').width());
+				$(tabContent).width($('#main-container').width());
+				$(tab1).width($('#main-container').width());
+				$(tab2).width($('#main-container').width());
+				console.log('modal height: '+$modal.height())
+				var maxModalHeight = $modal.height() + 401;
+				console.log("max modal height: "+maxModalHeight);
+				console.log("modal top: "+$modal.css('top'));
+				if (maxModalHeight < $(window).height()){
+					$modal.css('max-height', 'none');
+					$(modalBody).css('max-height', 'none');
+				}
+				// console.log('TIC height: '+$(negTIC).height());
+				$modal.modal();
+				// console.log('TIC height: '+$(posTIC).height());
+            },
+     		error: function(){
+        		alert("Error");
+        	}
+    	});
+		
+		// calculate and set width to display chart
+		// console.log($('#main-container').width());
+		// $("#full-width").find('.modal-body').width($('#main-container').width());
+		// console.log($("#full-width").find('.modal-body').width());
+
+		// chart creation and render
+		
+	})
+
+	
+	function barTicPlot(chartWidth, div, polarity, memberName, type, categoryNames, dataPoints){
+		$(div).highcharts({
+					credits : {
+						enabled : false
+    				},
+    				exporting: {
+			            enabled: true,
+			            filename: memberName + '_' + polarity + '_' + type + "_TIC_plot" 
+			        },
+		            chart: {
+		                type: 'column',
+		                width: chartWidth
+		                // margin: [ 50, 50, 100, 80]
+		            },
+		            title: {
+		                text: memberName + ' ' + polarity + ' ' + type + ' TIC plot'
+		            },
+		            xAxis: {
+		                categories: categoryNames,
+		                labels: {
+		                    rotation: -45,
+		                    align: 'right',
+		                    style: {
+		                        fontSize: '13px',
+		                        fontFamily: 'Verdana, sans-serif'
+		                    }
+		                }
+		            },
+		            yAxis: {
+		                min: 0,
+		                title: {
+		                    text: 'Intensity'
+		                }
+		            },
+		            legend: {
+		                enabled: false
+		            },
+		            plotOptions: {
+		            	column: {colorByPoint: true}
+		            },
+		            tooltip: {
+		                formatter: function() {
+		                    return '<b>'+ this.x +'</b><br/>'+
+		                        'Intensity: '+ Highcharts.numberFormat(this.y, 1);
+		                }
+		            },
+		            series: [{
+		                name: 'to_set',
+		                data: dataPoints,
+		                // dataLabels: {
+		                //     enabled: true,
+		                //     rotation: -90,
+		                //     color: '#FFFFFF',
+		                //     align: 'right',
+		                //     x: 4,
+		                //     y: 10,
+		                //     style: {
+		                //         fontSize: '13px',
+		                //         fontFamily: 'Verdana, sans-serif'
+		                //     }
+		                // }
+		            }]
+		        });
+	}
+
+	$('.tic-group').click(function (e){
+		e.preventDefault();
+		var $modal = $("#full-width");
+		var modalLabel = $modal.find('#myModalLabel');
+		var modalBody = $modal.find('.modal-body');
+		
+		$(modalLabel).empty();
+		$(modalBody).empty();
+
+		$(modalLabel).text("Total Ion Current");
+
+		console.log($(this).parent().find('.active').attr('id').split("-")[1]);
+		var groupId = $(this).parent().find('.active').attr('id').split("-")[1];
+
+		var url = "{% url 'project_detail' project.id %}" + "ticgroup/" + groupId + "/";
+
+		console.log(url);
+
+		var group_id = {"id": groupId};
+
+		$('body').modalmanager('loading');
+
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: group_id,
+            success: function(response){
+            	console.log(response);
+            	var neg = false;
+            	var pos = false;
+            	var posIndex;
+            	var negIndex;
+            	console.log("ICICICICICICICICICI nombre de membre "+response[1].length);
+            	for (var i=0;i<response[1].length;i++){
+            		console.log("ICICICICICICICICICI nombre de sample "+response[1][i][1].length);
+            		for (var j=0;j<response[1][i][1].length;j++){
+	            		if (pos == false && response[1][i][1][j][1] != "None"){
+	            			pos = true;
+	            			pos_memberIndex = i;
+	            			pos_sampleIndex = j;
+	            		}
+	            		if (neg == false && response[1][i][1][j][2] != "None"){
+	            			neg = true;
+	            			negIndex = i;
+	            		}
+	            		// console.log(i);
+	            		if (pos && neg){
+	            			console.log("ca marche bulle de savon!");
+	            			break;
+	            		}
+	            	}
+	            	if (pos && neg){
+	            		console.log("ca marche bulle de savon 2 fois!");
+	            		break;
+	            	}
+            	}
+            	if (pos == false || neg == false){
+            		console.log("1 polarity missing");
+            	}
+            	else{
+            		console.log("both polarity present, all good!!");
+            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li  style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+
+            		$(ul).appendTo($(modalBody));
+            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+            		
+
+            		var tab1 = $('<div class="tab-pane" id="tab1"></div>');
+            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+
+            		var posTIC = $('<div id="tic"></div>');
+            		var posScan = $('<div id="scan"></div>');
+            		var posMean = $('<div id="mean"></div>');
+            		var posMedian = $('<div id="meidan"></div>');
+
+            		var negTIC = $('<div id="tic"></div>');
+            		var negScan = $('<div id="scan"></div>');
+            		var negMean = $('<div id="mean"></div>');
+            		var negMedian = $('<div id="meidan"></div>');
+
+
+            		var chartWidth = $('#main-container').width(); 
+
+	            	$(posTIC).highcharts({
+	            		credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: response[0] +' positive Total Ion Current'
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: response[0] + "_positive_TIC",
+			            },
+			            xAxis: {
+			                title: {
+			                    text: 'Retention time'
+			                },
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '',
+			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+			            },
+			            legend: {
+			                enabled: true
+			            },
+			    		plotOptions: {
+			                area: {
+			                    marker: {
+			                        enabled: false,
+			                        symbol: 'circle',
+			                        radius: 2,
+			                        states: {
+			                            hover: {
+			                                enabled: true
+			                            }
+			                        }
+			                    },
+			                    lineWidth: 1,
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                series: {
+                				fillOpacity: 0.1
+	            			}
+			            },
+			            series: [{
+			                type: 'area',
+			                // name: response[1][pos_memberIndex][0],
+			                name: response[1][pos_memberIndex][1][pos_sampleIndex][0].split(".")[0],
+			                data : response[1][pos_memberIndex][1][pos_sampleIndex][1]
+			            }]
+		    		});
+					// console.log($(posTIC).highcharts().series);
+					console.log("response here ");
+					console.log(response);
+					for (var i=0;i<response[1].length;i++){
+						console.log("nombre de sample "+response[1][i].length);
+						for (var j=0;j<response[1][i][1].length;j++){
+		            		if ((response[1][i][1][j][1] != "None") && (i != pos_memberIndex || j != pos_sampleIndex)){
+		            			console.log("i "+i+" j "+j);
+		            			// console.log("sample name "+response[1][i][j][0]);
+		            			console.log("on ajoute une serie!!!");
+		            			$(posTIC).highcharts().addSeries({
+		            				type: 'area',
+				                	// name: response[1][i][0],
+				                	name: response[1][i][1][j][0].split(".")[0],
+				                	data : response[1][i][1][j][1]
+		            			});
+		            		}
+		            	}
+	            	}	
+            	}
+            	$(posTIC).appendTo($(tab1));
+            	$(posMean).appendTo($(tab1));
+            	$(posMedian).appendTo($(tab1));
+            	$(negTIC).appendTo($(tab2));
+            	$(negMean).appendTo($(tab2));
+            	$(negMedian).appendTo($(tab2));
+            	$(tab1).appendTo($(tabContent));
+            	$(tab2).appendTo($(tabContent));
+            	$(tabContent).appendTo($(modalBody));
+				$('body').modalmanager('loading','false');
+				$(modalBody).width($('#main-container').width());
+				$(tabContent).width($('#main-container').width());
+				$(tab1).width($('#main-container').width());
+				$(tab2).width($('#main-container').width());
+				console.log('modal height: '+$modal.height())
+				var maxModalHeight = $modal.height() + 401 + 401;
+				console.log("max modal height: "+maxModalHeight);
+				console.log("modal top: "+$modal.css('top'));
+				console.log("window-height: "+$(window).height());
+				var windowHeight = $(window).height() - (25 * $(window).height() / 100)
+				console.log("window-height: "+windowHeight);
+				$(modalBody).css('max-height', 871);
+				if (maxModalHeight-401 > windowHeight){
+					$(modalBody).css('max-height', 470);
+				}
+				if (maxModalHeight < windowHeight){
+					$modal.css('max-height', 'none');
+					$(modalBody).css('max-height', 'none');
+				}
+				// console.log('TIC height: '+$(negTIC).height());
+				$modal.modal();
+				// console.log('TIC height: '+$(posTIC).height());
+            },
+     		error: function(){
+        		alert("Error");
+            }
+        });
+
+
+	})
+
+	function peakDiscovery($modal,mass,rt,ppm,rt_window,polarity,sample_list){
+		var data = {"mass":mass,"rt":rt,"ppm":ppm,"rt_window":rt_window,"polarity":polarity,"ids":sample_list};
+		var url = "{% url 'peak_discovery' project.id %}";
+
+		var modalBody = $modal.find('.modal-body');
+		$(modalBody).empty();
+		var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="display:block;margin-left: auto;margin-right: auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+		$(loadingPan).appendTo($(modalBody));
+
+
+
+		$.ajax({
+			type: "GET",
+			traditional: true,
+			url: url,
+			data: data,
+			success: function(response){
+				console.log(response);
+				// response structure single polarity : [[sample1_name,[[time1,intensity1],[time2,intensity2],[...]]],[sample2_name,[[time1,intensity1],[time2,intensity2],[...]]]]
+				// response structure dual polarity : [[sample1_name,[[time1_neg,intensity1_neg],[time2_neg,intensity2_neg],[...]],[[time1_pos,intensity1_pos],[time2_pos,intensity2_pos],[...]]],[sample2_name,[[time1_neg,intensity1_neg],[time2_neg,intensity2_neg],[...]],[[time1_pos,intensity1_pos],[time2_pos,intensity2_pos],[...]]]]
+				// length of the response list represent the number of samples screened
+				// the lenght of the list containing the "time" and "intensity" points can vary between samples according to the peak found (from 1 to hundreds of points), if no peak have been found in the sample, the list is replaced by "None" statement. A sample can then contain "None" for one polarity and values for the other polarity (can also have values/None for both)
+				var chartWidth = $modal.width()/4;
+				var innerWidth = chartWidth-5;
+				// chartWidth = chartWidth-5;
+				console.log("polarity :"+polarity);
+				console.log("length response0 :"+response[0].length);
+				if (polarity == "dual"){
+					var ul = $('<ul class="nav nav-tabs" style="margin-bottom: 0px;text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Negative polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Positive polarity</a></li></ul>');
+
+            		$(ul).appendTo($(modalBody));
+            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+            		
+
+            		var tab1 = $('<div class="tab-pane active peak-discovery-tab-pane" id="tab1" style="padding-top: 0px;"></div>');
+            		var tab2 = $('<div class="tab-pane peak-discovery-tab-pane" id="tab2" style="padding-top: 0px;"></div>');
+				}
+				for (var y=0;y<response[0].length-1;y++){
+					console.log("y equal : "+y);
+					if (polarity == "dual"){
+						if (y == 0){
+							polarity_display = "negative";
+							exact_mass = parseFloat(mass)-1.0073;
+						}
+						else{
+							polarity_display = "positive";
+							exact_mass = parseFloat(mass)+1.0073;
+						}
+					}
+					else {
+						polarity_display = polarity;
+						if (polarity == "negative"){
+							exact_mass = parseFloat(mass)-1.0073;
+						}
+						else{
+							exact_mass = parseFloat(mass)+1.0073;
+						}
+					}
+					var leftPanel = $('<div class="span3" style="position:static;margin:0px;width:'+chartWidth+'px;padding-top:20px;"><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Neutral mass: '+mass+'</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Exact mass: '+exact_mass+' &plusmn; '+ppm+' ppm</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Retention time: '+rt+' &plusmn; '+rt_window/2+' s</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Polarity: '+polarity_display+'</p><br><button class="btn btn-primary new-screening" style="margin-left:10px;" data-toggle="tooltip" title="Process" id="new-screening"><i class="icon-refresh icon-white"></i> New screening</button></div>');
+					var rightPanel = $('<div class="span9 rightPanel" style="position:static;overflow:auto;margin:0px;width:'+chartWidth*3+'px"></div>');
+					var innerRightPanel = $('<div class="span12" style="margin:0px;width:'+innerWidth*3+'px"></div>');
+					var j = 0;
+					for (var i=0;i<response.length;i++){
+						if (j==0){
+							// var span = $('<div class="span12" style="margin:auto;float:none;"></div>');
+							var row = $('<div class="row" style="margin-left:0px;margin-bottom:0px"></div>');
+						}
+						var div = $('<div class="span4" style="margin:0px;width:'+innerWidth+'px"></div>');
+						$(div).highcharts({
+		            		credits : {
+	    						enabled : false
+	    					},
+				        	chart: {
+				                zoomType: 'x',
+				                // spacingRight: 5,
+				                width: innerWidth,
+				                height: 300,
+				                backgroundColor: '#ffffff',
+				                plotBackgroundColor: null,
+				                plotBorderWidth: null,
+				                plotShadow: false,
+				    //             events: {
+								// 	click: function() {peaksChromatogramPopUp(mass, retentionTime, response);}
+								// }
+				            },
+				            title: {
+				                text: 'Peak chromatogram'
+				            },
+				            subtitle: {
+				                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+				            },
+				            exporting: {
+				            	enabled: true,
+				            	filename: 'Peak_' + response[i][0] + "_chromatogram_rt_" + parseFloat(rt).toFixed(3) + "_" + polarity_display,
+				            },
+				         //    exporting: {
+					        //    	enabled: false,
+					        // },
+				            xAxis: {
+				                title: {
+				                    text: 'Retention time (s)'
+				                },
+		                		showLastLabel: true
+				            },
+				            yAxis: {
+				                title: {
+				                    text: 'Relative abundance'
+				                },
+				            },
+				            tooltip: {
+				                shared: true,
+				                headerFormat: '',
+				                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+				            },
+				            legend: {
+				                enabled: true
+				            },
+				    		plotOptions: {
+				                area: {
+				                    marker: {
+				                        enabled: false,
+				                        symbol: 'circle',
+				                        radius: 2,
+				                        states: {
+				                            hover: {
+				                                enabled: true
+				                            }
+				                        }
+				                    },
+				                    lineWidth: 1,
+				                    shadow: false,
+				                    states: {
+				                        hover: {
+				                            lineWidth: 1
+				                        }
+				                    },
+				                    threshold: null
+				                },
+				                series: {
+	                				fillOpacity: 0.1
+		            			}
+				            },
+				            series: [{
+				                type: 'area',
+				                name: response[i][0],
+				                data : response[i][y+1]
+				            }]
+			    		});
+						$(div).appendTo($(row));
+						j += 1;
+						console.log("usual j = "+j+" i = "+i);
+						if (i == response.length-1 && j != 3){
+							// $(span).appendTo($(row));
+							$(row).appendTo($(innerRightPanel));
+							console.log("j = "+j+" i  = "+i);
+						}
+						if (j == 3){
+							// $(span).appendTo($(row));
+							$(row).appendTo($(innerRightPanel));
+							j = 0;
+							console.log("j = 3");
+						}
+					}
+					if (polarity == "dual"){
+						if (y == 0){
+							var tab = $(tab1);
+						}
+						else {
+							var tab = $(tab2);
+						}
+						$(leftPanel).appendTo($(tab));
+						$(innerRightPanel).appendTo($(rightPanel));
+						$(rightPanel).appendTo($(tab));
+						$(tab).appendTo($(tabContent));
+						// var windowHeight = $(window).height() - (25 * $(window).height() / 100);
+						// console.log("windowHeight "+windowHeight);
+						// $(modalBody).css('max-height', windowHeight);
+						// // $(modalBody).height(windowHeight);
+						// console.log("modal height "+$(modalBody).height());
+						// $(rightPanel).css('background-color','white');
+						// $(rightPanel).height($(modalBody).height()-38);
+						// $(tab).height($(modalBody).height()-38);
+						// $(tab).css("background-color",'rgb(245, 245, 245)');
+					}
+				}
+
+				// $(wrapper).appendTo($(modalBody));
+				$(modalBody).css('overflow', 'hidden');
+				$(loadingPan).remove();
+				if (polarity == "dual"){
+            		$(tabContent).appendTo($(modalBody));
+            		$(modalBody).css('background-color','white');
+            		var windowHeight = $(window).height() - (25 * $(window).height() / 100);
+					console.log("windowHeight "+windowHeight);
+					$(modalBody).css('max-height', windowHeight);
+					// $(modalBody).height(windowHeight);
+					console.log("modal height "+$(modalBody).height());
+					$('.rightPanel').css('background-color','white');
+					$(tabContent).height($(modalBody).height()-38);
+					$('.peak-discovery-tab-pane').height($(modalBody).height()-38);
+					$('.rightPanel').height($(modalBody).height()-38);
+					$('.peak-discovery-tab-pane').css("background-color",'rgb(245, 245, 245)');
+					$(tabContent).css('overflow', 'hidden');
+					// $('.tab-pane').css('overflow', 'auto');
+					$('#tab1').width($(modalBody).width());
+					$('#tab2').width($(modalBody).width());
+					// $('#tab1').css('overflow', 'auto');
+					// $('#tab2').css('overflow', 'auto');
+				}
+				else{
+					$(leftPanel).appendTo($(modalBody));
+					$(innerRightPanel).appendTo($(rightPanel));
+					$(rightPanel).appendTo($(modalBody));
+					var windowHeight = $(window).height() - (25 * $(window).height() / 100);
+					console.log("windowHeight "+windowHeight)
+					$(modalBody).css('max-height', windowHeight);
+					console.log("modal height "+$(modalBody).height());
+					$(rightPanel).css('background-color','white');
+					$(rightPanel).height($(modalBody).height());
+				}
+				
+				// var windowHeight = $(window).height() - (25 * $(window).height() / 100);
+				// console.log("windowHeight "+windowHeight)
+				// $(modalBody).css('max-height', windowHeight);
+				// console.log("modal height "+$(modalBody).height());
+				// $(rightPanel).css('background-color','white');
+				// $(rightPanel).height($(modalBody).height());
+				$('.new-screening').click(function (e){
+					e.preventDefault();
+					createPeakDiscoveryWindow(mass, ppm, rt, rt_window);
+				});
+			},
+			error: function(){
+				console.log("ajax return Error");
+			}
+		})
+	}
+
+	function createPeakDiscoveryWindow(mass, ppm, rt, rt_window){
+		mass = mass || "";
+		rt = rt || "";
+		ppm = ppm || 3;
+		rt_window = rt_window || 120;
+		var $modal = $("#peak-discovery-modal");
+
+		var modalBody = $modal.find('.modal-body');
+		var modalHeader = $modal.find('.modal-header');
+		var modalFooter = $modal.find('.modal-footer');
+
+		$(modalBody).empty();
+		$(modalFooter).empty();
+		$(modalHeader).empty();
+
+		$(modalBody).css('background-color','#f5f5f5');
+		$(modalFooter).css('background-color','#E6E6E6');
+
+		$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
+
+		$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="{{ STATIC_URL }}/img/peak_icon.png" alt="tools" style="margin-bottom: 3px;"> Peak discovery</h3>').appendTo($(modalHeader));
+		// var modalLabel = $modal.find('#myModalLabel');
+		// $(modalLabel).text("Preferences");
+
+		var content = $('<h3 style="margin-left:10px;">Exactive screening</h3><div class="row" style="margin-left:0px;"><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Neutral mass</span><input value="'+mass+'" id="exact_mass" class="span2" type="text" name="exact-mass"><br><h4 style="margin-bottom: 20px;">Mass window (ppm): <span id="ppm_span">'+ppm+'</span></h4><span style="font-weight: bold;margin-right: 12px;">1</span><input id="ppm_slider" type="text" class="span4" value="" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="'+ppm+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">5</span><br><h4 style="margin-bottom: 20px;">Samples</h4><label for="all_samples_checkbox" style="font-weight: bold;margin-left:12px;margin-bottom:0px;">All samples <input id="all_samples_checkbox" type="checkbox" name="all_samples" value="all_samples" style="margin-top:0px"></label><br><select id="multiple_select_sample" multiple="multiple" style="margin-top:0px;margin-left:10px;">{% for sample in project.sample_set.all %}<option class="sample_option" value="{{ sample.id }}">{{ sample.name|truncatechars:20 }}</option>{% endfor %}</select></div><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Retention time</span><input value="'+rt+'" id="exact-rt" class="span2" type="text" name="exact-rt"><br><h4 style="margin-bottom: 20px;">Retention time window (s): <span id="rtwindow_span">'+rt_window+'</span></h4><span style="font-weight:bold;margin-right:12px;">15</span><input id="rt_window_slider" type="text" class="span4" value="" data-slider-min="15" data-slider-max="300" data-slider-step="5" data-slider-value="'+rt_window+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">300</span><br><h4 style="margin-bottom: 20px;">Polarity</h4><input type="radio" name="polarity" value="dual" style="margin:0px 0px 2px;" checked><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Dual</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup> & [M-H]<sup>-</sup></span><br><input type="radio" name="polarity" value="positive" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Positive</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup></span><br><input type="radio" name="polarity" value="negative" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Negative</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M-H]<sup>-</sup></span><br><button class="btn btn-primary" style="margin-right: 5px;margin-top:8px;float:right;" data-toggle="tooltip" title="Process" id="exactive-screening-process"><i class="icon-play icon-white"></i> Process</button></div>');
+
+		$(content).appendTo($(modalBody));
+
+		$('#rt_window_slider').slider().on('slide', function(ev){
+			$('#rtwindow_span').empty().text($('#rt_window_slider').data('slider').getValue());
+		});
+
+		$('#rt_window_slider').css('display','none');
+		$('#ppm_slider').slider().on('slide', function(ev){
+			$('#ppm_span').empty().text($('#ppm_slider').data('slider').getValue());
+		});
+		$('#ppm_slider').css('display','none');
+		$('#all_samples_checkbox').change(function() {
+			if ($(this).is(':checked')){
+				console.log("all samples checked");
+				$("#multiple_select_sample option" ).each(function (){
+					$(this).prop('selected', true);
+				});
+			}
+			else{
+				console.log("unchecked");
+				$("#multiple_select_sample option" ).each(function (){
+					$(this).prop('selected', false);
+				});
+			}
+		});
+		$('.sample_option').click(function (){
+			var allChecked = true;
+			console.log("clicked");
+			$('.sample_option').each(function (){
+				if ($(this).is(':selected') == false){
+					allChecked = false;
+					console.log("one option false");
+				}
+			});
+			if (allChecked){
+				$('#all_samples_checkbox').prop('checked',true);
+				console.log("checkbox to be checked, allChecked true");
+			}
+			else if (allChecked == false && $('#all_samples_checkbox').is(':checked')){
+				$('#all_samples_checkbox').prop('checked',false);
+				console.log("checkbox to be unchecked");
+			}
+		});
+		$('#exactive-screening-process').click(function (){
+			if (!$('#exact_mass').val()){
+				alert("come on! how do you want me to do that without mass!");
+			}
+			else if (!$('#exact-rt').val()){
+				alert("come on! how do you want me to do that without rt!");
+			}
+			else if ($('.sample_option:selected').length == 0){
+				alert("come on! how do you want me to do that without sample!");
+			}
+			else{
+				var mass = $('#exact_mass').val();
+				var rt = $('#exact-rt').val();
+				var ppm = $('#ppm_slider').data('slider').getValue();
+				var rt_window = $('#rt_window_slider').data('slider').getValue();
+				var polarity = $('input:radio[name=polarity]:checked').val();
+				var sample_list = [];
+				console.log("mass "+mass+" rt "+rt+" ppm "+ppm+" rt_window "+rt_window+"polarity "+polarity);
+				$('.sample_option:selected').each(function (){
+					sample_list.push($(this).val());
+				});
+				console.log(sample_list);
+				peakDiscovery($modal,mass,rt,ppm,rt_window,polarity,sample_list);
+
+			}
+		});
+	}
+
+	$('#peak-discovery').click(function (e){
+		e.preventDefault();
+		createPeakDiscoveryWindow();
+		var $modal = $("#peak-discovery-modal");
+		$modal.modal();
+	})
+
+	$('.tic-viewer').click(function (e){
+		e.preventDefault();
+		var $modal = $("#full-width");
+		var modalLabel = $modal.find('#myModalLabel');
+		var modalBody = $modal.find('.modal-body');
+		
+		$(modalLabel).empty();
+		$(modalBody).empty();
+
+		$(modalLabel).text("Total Ion Current");
+		
+		var attributeId = $(this).attr('id').split("-")[1];
+
+		var url = "{% url 'project_detail' project.id %}" + attributeId + "/";
+		var attribute_id = {"id": attributeId};
+
+		$('body').modalmanager('loading');
+		$('body').css('cursor', 'wait');
+		// console.log('window height: ' + $(window).height());
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: attribute_id,
+            success: function(response){
+            	console.log(response);
+            	console.log("samples : "+response[1].length);
+            	// console.log(response[1][1].length);
+            	var neg = false;
+            	var pos = false;
+            	var posIndex;
+            	var negIndex;
+            	for (var i=0;i<response[1].length;i++){
+            		if (pos == false && response[1][i][1] != "None"){
+            			pos = true;
+            			posIndex = i;
+            		}
+            		if (neg == false && response[1][i][2] != "None"){
+            			neg = true;
+            			negIndex = i;
+            		}
+            		// console.log(i);
+            		if (pos && neg){
+            			console.log("ca marche bulle de savon!");
+            			break;
+            		}
+            	}
+            		
+            	// response = response[1][0]
+            	// console.log(response);
+            	// $(modalLabel).text("TIC : " + response[0])
+            	// if (response[1] == "None" || response[2] == "None"){
+            	// 	console.log("1 polarity missing");
+            	if (pos == false || neg == false){
+            		console.log("1 polarity missing");
+            	}
+            	else{
+            		console.log("both polarity present, all good!!");
+            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+
+            		$(ul).appendTo($(modalBody));
+            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+            		
+
+            		var tab1 = $('<div class="tab-pane" id="tab1"></div>');
+            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+
+            		var posTIC = $('<div id="tic"></div>');
+            		var posScan = $('<div id="scan"></div>');
+            		var posMean = $('<div id="mean"></div>');
+            		var posMedian = $('<div id="meidan"></div>');
+
+            		var negTIC = $('<div id="tic"></div>');
+            		var negScan = $('<div id="scan"></div>');
+            		var negMean = $('<div id="mean"></div>');
+            		var negMedian = $('<div id="meidan"></div>');
+
+
+            		var chartWidth = $('#main-container').width(); 
+    				// $("#full-width").find('.modal-body').prepend(content);
+    				// $("#full-width").find('.modal-body').highcharts({
+	            	$(posTIC).highcharts({
+	            		credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: response[0] +' positive Total Ion Current'
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: response[0] + "_positive_TIC",
+			       //      	buttons: {
+						    //     'myButton': {
+						    //         _id: 'myButton',
+						    //         symbol: 'diamond',
+						    //         x: -62,
+						    //         symbolFill: '#B5C9DF',
+						    //         hoverSymbolFill: '#779ABF',
+						    //         onclick: function() {
+						    //             console.log("click!");
+						    //             console.log(this.options.plotOptions.series.fillOpacity);
+						    //             this.options.plotOptions.series.fillOpacity = 0;
+						    //             console.log(this.options);
+						    //             this.options.chart.redraw();
+						    //         }
+						    //     }
+						    // }
+			            },
+			            xAxis: {
+			                // type: 'linear',
+			                // categories: response[1][1],
+			                // maxZoom: 14 * response[1][0].length, // fourteen days
+			                title: {
+			                    text: 'Retention time'
+			                },
+			                // startOnTick: true,
+	                		// endOnTick: true,
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			                // min: 0,
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '',
+			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+			            },
+			            legend: {
+			                enabled: true
+			            },
+			            // plotOptions: {
+			            //     area: {
+			            //         fillColor: {
+			            //             linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+			            //             stops: [
+			            //                 [0, Highcharts.getOptions().colors[0]],
+			            //                 [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+			            //             ]
+			            //         },
+			            //         lineWidth: 1,
+			            //         marker: {
+			            //             enabled: false
+			            //         },
+			            //         shadow: false,
+			            //         states: {
+			            //             hover: {
+			            //                 lineWidth: 1
+			            //             }
+			            //         },
+			            //         threshold: null
+			            //     },
+			            //     scatter: {
+			            //         marker: {
+			            //             radius: 5,
+			            //             states: {
+			            //                 hover: {
+			            //                     enabled: true,
+			            //                     lineColor: 'rgb(100,100,100)'
+			            //                 }
+			            //             }
+			            //         }
+			            //         // states: {
+			            //         //     hover: {
+			            //         //         marker: {
+			            //         //             enabled: false
+			            //         //         }
+			            //         //     }
+			            //         // },
+			            //         // tooltip: {
+			            //         //     headerFormat: '<b>{series.name}</b><br>',
+			            //         //     pointFormat: '{point.x} cm, {point.y} kg'
+			            //         // }
+			            //     },
+			            //     series: {
+				           //      cursor: 'pointer',
+				           //      point: {
+			            //             events: {
+			            //                 click: function() {
+			            //                 	console.log("retention time :" + this.x);
+			            //                 	// massSpectra(sampleId, "POS", this.x);
+			            //                 	// alert('You just clicked the graph');
+			            //                     // hs.htmlExpand(null, {
+			            //                     //     pageOrigin: {
+			            //                     //         x: this.pageX,
+			            //                     //         y: this.pageY
+			            //                     //     },
+			            //                     //     headingText: this.series.name,
+			            //                     //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+			            //                     //         this.y +' visits',
+			            //                     //     width: 200
+			            //                     // });
+			            //                 }
+			            //             }
+			            //         },
+				           //      // events: {
+				           //      //     click: function() {
+				           //      //         alert('You just clicked the graph');
+				           //      //     }
+				           //      // }
+				           //  }
+
+			            // },
+			    		plotOptions: {
+			                area: {
+			                    // pointStart: 1940,
+			                    marker: {
+			                        enabled: false,
+			                        symbol: 'circle',
+			                        radius: 2,
+			                        states: {
+			                            hover: {
+			                                enabled: true
+			                            }
+			                        }
+			                    },
+			                    // fillColor: {
+			                    //     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+			                    //     stops: [
+			                    //         // [0, Highcharts.getOptions().colors[0]],
+			                    //         [0, this.lineColor],
+			                    //     //     [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+			                    //     	[1, Highcharts.Color(this.LineColor).setOpacity(0).get('rgba')]
+			                    //     ]
+			                    // },
+			                    lineWidth: 1,
+			                    // marker: {
+			                    //     enabled: false
+			                    // },
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                series: {
+                				fillOpacity: 0.1
+	               //  			fillColor: {
+				            //         linearGradient: [0, 0, 0, 300],
+				            //         stops: [
+				            //             // [0, 'rgb(69, 114, 167)'],
+				            //             [0, this.color],
+				            //             [1, 'rgba(2,0,0,0)']
+				            //         ]
+	            			// 	}
+	            			}
+			            },
+			            series: [{
+			                type: 'area',
+			                name: response[1][posIndex][0],
+			                data : response[1][posIndex][1]
+			            }]
+		    		});
+					console.log($(posTIC).highcharts().series);
+					for (var i=0;i<response[1].length;i++){
+	            		if (response[1][i][1] != "None" && i != posIndex){
+	            			console.log("on ajoute une serie!!!");
+	            			$(posTIC).highcharts().addSeries({
+	            				type: 'area',
+			                	name: response[1][i][0],
+			                	data : response[1][i][1]
+	            			});
+	            		}
+	            	}
+	            	console.log($(posTIC).highcharts().series);
+					$(negTIC).highcharts({
+						credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: response[0] +' negative Total Ion Current'
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: response[0] + "_negative_TIC" 
+			            },
+			            xAxis: {
+			                // type: 'linear',
+			                // categories: response[1][1],
+			                // maxZoom: 14 * response[1][0].length, // fourteen days
+			                title: {
+			                    text: 'Retention time'
+			                },
+			                // startOnTick: true,
+	                		// endOnTick: true,
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			                // min: 0,
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '',
+			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+			            },
+			            legend: {
+			                enabled: true
+			            },
+			            plotOptions: {
+			                area: {
+			                    // pointStart: 1940,
+			                    marker: {
+			                        enabled: false,
+			                        symbol: 'circle',
+			                        radius: 2,
+			                        states: {
+			                            hover: {
+			                                enabled: true
+			                            }
+			                        }
+			                    },
+			                    lineWidth: 1,
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                series: {
+                			fillOpacity: 0.1
+	            			}
+			            },
+			    
+			            series: [{
+			                type: 'area',
+			                name: response[1][negIndex][0],
+			                data : response[1][negIndex][2]
+			            }]
+		    		});
+					for (var i=0;i<response[1].length;i++){
+	            		if (response[1][i][2] != "None" && i != negIndex){
+	            			console.log("on ajoute une serie!!!");
+	            			$(negTIC).highcharts().addSeries({
+	            				type: 'area',
+			                	name: response[1][i][0],
+			                	data : response[1][i][2]
+	            			});
+	            		}
+	            	}
+	            	// creation of list for mean and median bar tic
+	            	posCategories = new Array();
+	            	posMeans = new Array();
+	            	posMedians = new Array();
+	            	negCategories = new Array();
+	            	negMeans = new Array();
+	            	negMedians = new Array();
+	            	for (var i=0;i<response[1].length;i++){
+	            		// start over from here
+	            		if (response[1][i][1] != "None"){
+	            			posCategories.push(response[1][i][0].split(".")[0]);
+	            			// console.log(response[1][i][0].split(".")[0])
+	            			posMeans.push(response[1][i][3][0]);
+	            			posMedians.push(response[1][i][3][1]);
+	            		}
+	            		if (response[1][i][2] != "None"){
+	            			negCategories.push(response[1][i][0].split(".")[0]);
+	            			negMeans.push(response[1][i][4][0]);
+	            			negMedians.push(response[1][i][4][1]);
+	            		}
+	            	}
+	            	console.log("means is here: "+negMeans);
+	            	console.log("categories is here: "+negCategories);
+				}
+
+				// TIC TEST ----------------------------------------------------------------
+
+				barTicPlot(chartWidth,posMean,'positive',response[0],'mean',posCategories,posMeans);
+				barTicPlot(chartWidth,posMedian,'positive',response[0],'median',posCategories,posMedians);
+				barTicPlot(chartWidth,negMean,'negative',response[0],'mean',negCategories,negMeans);
+				barTicPlot(chartWidth,negMedian,'negative',response[0],'median',negCategories,negMedians);
+				// END TIC TEST ------------------------------------------------------------
+
+            	$(posTIC).appendTo($(tab1));
+            	$(posMean).appendTo($(tab1));
+            	$(posMedian).appendTo($(tab1));
+            	$(negTIC).appendTo($(tab2));
+            	$(negMean).appendTo($(tab2));
+            	$(negMedian).appendTo($(tab2));
+            	$(tab1).appendTo($(tabContent));
+            	$(tab2).appendTo($(tabContent));
+            	$(tabContent).appendTo($(modalBody));
+				$('body').modalmanager('loading','false');
+				$('body').css('cursor', 'auto');
+				$(modalBody).width($('#main-container').width());
+				$(tabContent).width($('#main-container').width());
+				$(tab1).width($('#main-container').width());
+				$(tab2).width($('#main-container').width());
+				console.log('modal height: '+$modal.height())
+				var maxModalHeight = $modal.height() + 401 + 401;
+				console.log("max modal height: "+maxModalHeight);
+				console.log("modal top: "+$modal.css('top'));
+				console.log("window-height: "+$(window).height());
+				var windowHeight = $(window).height() - (25 * $(window).height() / 100)
+				console.log("window-height: "+windowHeight);
+				$(modalBody).css('max-height', 871);
+				if (maxModalHeight-401 > windowHeight){
+					$(modalBody).css('max-height', 470);
+				}
+				if (maxModalHeight < windowHeight){
+					$modal.css('max-height', 'none');
+					$(modalBody).css('max-height', 'none');
+				}
+				// console.log('TIC height: '+$(negTIC).height());
+				$modal.modal();
+				// console.log('TIC height: '+$(posTIC).height());
+            },
+     		error: function(){
+        		alert("Error");
+        	}
+    	});
+
+	})
+	// ++++++++++++++++++++++++++++++++++++++ End TIC Viewer +++++++++++++++++++++++++++++++++++++++
+
+	$('.analysis-submit-btn').click(function (e) {
+  		e.preventDefault();
+  		
+  		var url = "{% url 'start_analysis' project.id %}";
+
+  		analysis = $(this).attr('id').split("_")[1];
+  		console.log("analysis_id: "+analysis);
+  		var analysis_id = {"id": analysis};
+		
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: analysis_id,
+            success: function(response){
+            	alert(response);
+            },
+            error: function(e){
+        		alert(e);
+        	}
+		});
+	})
+
+
+	$('#group-tab a').click(function (e) {
+  		e.preventDefault();
+  		$(this).tab('show');
+	})
+
+	$('#comparison-tab a').click(function (e) {
+  		e.preventDefault();
+  		$(this).tab('show');
+	})
+
+	$('#experiment-tab a').click(function (e) {
+  		e.preventDefault();
+  		$(this).tab('show');
+	})
+
+	$('#projfile-attribute-tab a').click(function (e) {
+  		e.preventDefault();
+  		$(this).tab('show');
+	})
+	
+
+	$('#upload-btn').mouseenter(function (){
+		$('#upload-btn').tooltip('show');
+	})
+	// $('#upload-btn').mouseleave(function (){
+	// 	$('#upload-btn').tooltip('hide');
+	// })
+	$('.peak-discovery').mouseenter(function (){
+		$(this).tooltip('show');
+	})
+	$('.mzxml-viewer').mouseenter(function (){
+		$(this).tooltip('show');
+	})
+	$('.mzxml-viewer').mouseleave(function (){
+		$(this).tooltip('hide');
+	})
+
+	$('.tic-viewer').mouseenter(function (){
+		$(this).tooltip('show');
+	})
+	
+	// $('.mzxml-viewer').mouseleave(function (){
+	// 	$(this).tooltip('hide');
+	// })
+
+	$('#dlt-btn').mouseenter(function (){
+		$('#dlt-btn').tooltip('show');
+	})
+	$('#dlt-btn').mouseleave(function (){
+		$('#dlt-btn').tooltip('hide');
+	})
+	$('#edit-btn').mouseenter(function (){
+		$('#edit-btn').tooltip('show');
+	})
+	$('#edit-btn').mouseleave(function (){
+		$('#edit-btn').tooltip('hide');
+	})
+
+	var isVisible = false;
+	var id;
+
+    var hideAllPopovers = function() {
+       $('.popup-marker').each(function() {
+            $(this).popover('hide');
+        });  
+    };
+
+    $('.popup-marker').popover({
+        html: true,
+        trigger: 'manual'
+    }).on('click', function(e) {
+        // if any other popovers are visible, hide them
+        if(isVisible) {
+            hideAllPopovers();
+        }
+
+        console.log("avant test");
+        if (isVisible && $(this).attr('id')==id){
+        	console.log("visible et id");
+        	$(this).popover('hide');
+        	id = null;
+        	isVisible = false;
+    	}
+    	else{
+    		console.log("else");
+    		$(this).popover('show');
+        	id = $(this).attr('id');
+        	isVisible = true;
+    	}
+
+        // handle clicking on the popover itself
+        $('.popover').off('click').on('click', function(e) {
+            e.stopPropagation(); // prevent event for bubbling up => will not get caught with document.onclick
+        });
+
+        // isVisible = true;
+        e.stopPropagation();
+    });
+
+    $('.arrow-top').each(function(){
+    	var offset = $(this).parent().offset();
+    	var width = $(this).parent().width();
+    	var centerX = offset.left + width / 2;
+    	var centerY = offset.top - 8;
+    	$(this).css('left',centerX);
+    	$(this).css('top',centerY);
+    	console.log(offset.top);
+    });
+
+    $('.arrow-bottom').each(function(){
+    	var offset = $(this).parent().offset();
+    	var width = $(this).parent().width();
+    	var height = $(this).parent().height();
+    	var centerX = offset.left + width / 2;
+    	var centerY = offset.top + height + 4;
+    	$(this).css('left',centerX);
+    	$(this).css('top',centerY);
+    	console.log(offset.top);
+    });
+
+    $(document).on('click', function(e) {
+        hideAllPopovers();
+        isVisible = false;
+    });
+	// $('#experiment-breadcrumbs').click(function (){
+	// 	// console.log($(this).popover());
+	// 	$(this).popover('show');
+	// })
+	// $('#experiment-breadcrumbs').mouseleave(function (){
+	// 	$(this).popover('show');
+	// })
+
+	$('#plus-btn').mouseleave(function (){
+		$('#plus-btn').tooltip('hide');
+	})
+
+	$('#change-display').mouseenter(function (){
+		$('#change-display').tooltip('show');
+	})
+	$('#change-display').mouseleave(function (){
+		$('#change-display').tooltip('hide');
+	})
+
+	$("#change-display").click(function() {
+    	return changeDisplay($(this));
+  	});
+
+	$('#breadcrumbs-span a').click(function (e) {
+  		e.preventDefault();
+  		$(this).tab('show');
+	});
+
+
+  	// function changeDisplay(a){
+  	// 	if(!tab){
+  	// 		$(a).attr('data-original-title','Forum display');
+  	// 		$('#page-tab').css('display','block');
+  	// 		$('#project-administration').addClass("tab-pane");
+  	// 		$('#sample-management').addClass("tab-pane");
+  	// 		$('#experiment').addClass("tab-pane");
+  	// 		tab = true;
+  	// 		$('#breadcrumbs-span a').click(function (e) {
+  	// 			e.preventDefault();
+  	// 			$(this).tab('show');
+			// })
+  	// 	}
+  	// 	else {
+  	// 		$(a).attr('data-original-title','Tab display');
+  	// 		$('#page-tab').css('display','none');
+  	// 		$('#project-administration').removeClass("tab-pane");
+  	// 		$('#sample-management').removeClass("tab-pane");
+  	// 		$('#experiment').removeClass("tab-pane");
+  	// 		tab = false;
+  	// 	}
+  	// }
+
+  	// var tab = false;
+
+	$(".expend-experiment").click(function() {
+    	return expendExperiment($(this));
+  	});
+
+  	function expendExperiment(a){
+  		var experimentContent = $(a).parent().parent().parent().find(".experiment-content")[0];
+  		console.log($(a).parent())
+  		console.log(experimentContent);
+  		if($(experimentContent).css('display') == 'none'){
+  			console.log("here we go");
+  			// $(experimentContent).css('display','block');
+  			$(experimentContent).slideDown();
+  			$(a).addClass('experiment-open');
+  		}
+  		else{
+  			// $(experimentContent).css('display','none');
+  			$(experimentContent).slideUp();
+  			$(a).removeClass('experiment-open');
+  		}
+  	}
+
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div class="row" style="margin-bottom: 0px;">
+	<div class="span8"><h3>{{ project }}</h3></div>
+	{% ifequal permission 'admin' %}
+	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#"><i class="icon-trash icon-white"></i> Delete project</a></div>
+	{% endifequal %}
+</div>
+<div class="row" style="margin-bottom: 0px;">
+	<div class="span6 list-span">
+		<ul style="margin-left: 0px;">
+			<li>Created by : {{ project.owner }}</li>
+			<!-- <li><a class="" id="change-display" data-toggle="tooltip" title="Tab display" data-placement="right"></a></li> -->
+		</ul>
+	</div>
+	<div class="span6 list-span date-span">
+		<ul>
+			<li>Created : {{ project.created }}</li>
+			<li>Modified : {{ project.modified}}</li>
+		</ul>
+	</div>
+</div>
+<div class="row" style="margin-bottom: 0px;">
+	<div class="span12" id="breadcrumbs-span" style="margin-top:10px;">
+    	<ul id="breadcrumbs-one">
+	        <li class="active" id="first-active"><a href="#project-administration" class="{% if project.description %}done{% else %}process{% endif %}">Project Administration</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
+	        <li><a href="#calibration-samples" class="{% if projfileattributes|length > 0 %}done{% elif project.calibrationsample_set.all %}process{% endif %}">Calibration samples</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
+	        <li><a href="#sample-management" class="{% if groups|length > 0 %}done{% elif project.sample_set.all  %}process{% endif %}">Sample management</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
+	        <li>
+	        	{% if groups|length > 0 %}
+	        	<a href="#experiment">Analysis</a><div class="arrow-top"></div><div class="arrow-bottom"></div>
+	        	{% else %}
+	        	<p id="experiment-breadcrumbs" class="popup-marker" data-toggle="popover" data-placement="bottom" data-content="Sample management is required to access this section." title="This section is not available" data-original-title="" data-animation="delay: { show: 500, hide: 100 }">Analysis</p>
+	        	{% endif %}
+	        </li>
+    	</ul>
+	</div>
+</div>
+{% ifequal permission 'read' %}
+<div class="row" style="margin-top:20px;">
+	<div class="alert alert-block" style="margin-bottom:0px;">
+  		<button type="button" class="close" data-dismiss="alert">&times;</button>
+  		Read access only
+	</div>
+</div>
+{% endifequal %}
+{% ifequal permission 'edit' %}
+<div class="row" style="margin-top:20px;">
+	<div class="alert alert-block" style="margin-bottom:0px;">
+  		<button type="button" class="close" data-dismiss="alert">&times;</button>
+  		<h4>Warning!</h4>
+  		Edit access only, you cannot share this project with anyone.
+	</div>
+</div>
+{% endifequal %}
+<hr class="soften" id="project-hr">
+<div class="row-fluid" id="main-container">
+	<!-- <ul class="nav nav-tabs" id="page-tab" style="display: none;">
+		<li class="active" id="first-active">
+	  		<a href="#project-administration">Project Administration</a>
+	  	</li>
+	  	<li>
+	  		<a href="#sample-management">Sample Management</a>
+	  	</li>
+	  	<li>
+	  		<a href="#experiment">Experiment</a>
+	  	</li>
+	</ul> -->
+	<div class="tab-content-test">
+	<div id="project-administration" class="tab-pane active" style="background-color: rgb(253, 253, 253);">
+		<div class="span8 paddingleft"><h3>Project administration</h3></div>
+		{% ifnotequal permission 'read' %}
+		<div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit title</a></div>
+		{% endifnotequal %}
+		<div class="container-fluid">
+			<div class="row-fluid">
+				<div class="span6 white-span" id="white-span-summary">
+					<div class="row-fluid">
+						<div class="span12">
+			  				<div class="row-fluid">
+								<div class="span4 description-span"><h4>Share :</h4></div>
+								{% ifequal permission 'admin' %}
+								<div class="span8 span-btn">
+									<a class="btn btn-primary btn-create-project" href="{% url 'add_user' project.id %}"><i class="icon-share icon-white"></i> Add user</a>
+									{% if project.users.all|length > 1 %}
+									<a class="btn btn-success btn-create-project" href="{% url 'add_user' project.id %}" style="margin-right: 5px;"><i class="icon-lock icon-white"></i> Permissions</a>
+									{% endif %}
+								</div>
+								{% endifequal %}
+							</div>
+							{% if project.users.all|length > 1 %}
+							<div class="row-fluid">
+								<div class="span12">
+									<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+										<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+											<p class="text-in-table">User</p>
+										</div>
+										<div class="span4 center-text"style="min-height:10px;">
+											<p class="text-in-table">Permission</p>
+										</div>
+										<div class="span4 center-text" style="min-height:10px;">
+											<p class="text-in-table">Date joined</p>
+										</div>
+									</div>
+									{% for user in project.users.all %}
+									<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+										<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+											<p class="text-in-table introduction_text">{{ user }}</p>
+										</div>
+										{% for userpro in user.userproject_set.all %}
+										{% if userpro.project == project %}
+										<div class="span4 center-text"style="min-height:10px;">
+											<p class="text-in-table introduction_text" {% ifequal userpro.permission 'admin' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal userpro.permission 'edit' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal userpro.permission 'read' %}style="color: rgb(213, 170, 60);"{% endifequal %}>{{ userpro.permission }}</p>
+										</div>
+										<div class="span4 center-text" style="min-height:10px;">
+											<p class="text-in-table introduction_text">{{ userpro.date_joined|truncatewords:"1"|slice:":-3" }}</p>
+										</div>
+										{% endif %}
+										{% endfor %}
+									</div>
+									{% endfor %}
+								</div>
+							</div>
+							{% else %}
+							<div class="row-fluid">
+								<div class="span12 description-span">
+									<p class="introduction_text">You are the only user on this project</p>
+								</div>
+							</div>
+							{% endif %}
+						</div>
+					</div>
+			  	</div>
+			  	<div class="span6 white-span" id="white-span-summary">
+			  		<div class="row-fluid">
+			  			<div class="span12">
+			  				<div class="row-fluid">
+								<div class="span6 description-span"><h4>Description :</h4></div>
+								{% ifnotequal permission 'read' %}
+								<div class="span6 span-btn"><a class="btn btn-success btn-create-project" href="{% url 'edit_description' project.id %}"><i class="icon-edit icon-white"></i> Edit</a></div>
+								{% endifnotequal %}
+							</div>
+							<div class="row-fluid">
+								<div class="span12 description-span">
+									<p class="introduction_text">{% if not project.description %}No description available{% else %}{{ project.description }}{% endif %}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+			  	</div>
+			</div>
+		</div>
+	</div>
+	<div id="calibration-samples" class="tab-pane" style="background-color: rgb(253, 253, 253);">	
+		<div class="container-fluid">
+			<div class="row-fluid">
+			  	<div class="span12 white-span" id="white-span-summary">
+			  		<div class="row-fluid">
+			  			<div class="span12">
+			  				<div class="row-fluid">
+								<div class="span6 description-span"><h3>Calibration : </h3></div><div class="span6 span-btn"><a class="btn btn-info btn-create-project" href="#myModalInfo" role="button" data-toggle="modal"><i class="icon-info-sign icon-white"></i> Info</a></div>
+							</div>
+						</div>
+					</div>
+					<div class="row-fluid">
+						<div class="span6 project-span" id="file-table-span">
+							<div class="row-fluid bold">
+								<div class="span12">
+									<p>Available Samples</p>
+								</div>
+							</div>
+							<div class="row-fluid">
+								<div class="tab-content">
+									<div class="tab-pane active">
+										<div class="row-fluid">
+											<div class="span4 user-span bold" style="padding-top: 10px;">
+												<ul>
+													<li>Total samples :</li>
+												</ul>
+											</div>
+											<div class="span4 user-span bold" style="padding-top: 10px;">
+												<ul>
+													{% if project.calibrationsample_set.all %}
+													<li>{{ project.calibrationsample_set.all|length }}</li>
+													{% else %}
+													<li>0</li>
+													{% endif %}
+												</ul>
+											</div>
+											<div class="span4 span-btn">
+												<a class="btn btn-danger btn-create-project" href="{% url 'delete-projectfile' project.id %}" data-toggle="tooltip" title="Delete Files" id="dlt-btn"><i class="icon-trash icon-white"></i></a>
+												<a class="btn btn-primary btn-create-project" href="{% url 'upload-new-projFile' project.id %}" style="margin-right: 5px;" data-toggle="tooltip" title="Upload Files" id="upload-btn"><i class="icon-upload icon-white"></i></a>
+											</div>
+										</div>
+										<div class="row-fluid">
+											<div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
+												<img id="pic" src="{{ STATIC_URL }}/img/mzxml-icon.png" alt="The Scream" width="45">
+											</div>
+											<div class="span4 user-span bold" style="padding-top: 10px;">
+												{% if project.calibrationsample_set.all %}
+												{% with project.calibrationsample_set.all|count:"." as parts %}
+												<ul>
+													<li style="padding-top:10px;">{{ parts.0 }}</li>
+												</ul>
+												{% endwith %}
+												{% endif %}
+											</div>
+										</div>
+										<div class="row-fluid">
+											<div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
+												<img id="pic" src="{{ STATIC_URL }}/img/icon-csv.png" alt="The Scream" width="45">
+											</div>
+											<div class="span4 user-span bold" style="padding-top: 10px;">
+												{% if project.calibrationsample_set.all %}
+												{% with project.calibrationsample_set.all|count:"." as parts %}
+												<ul>
+													<li style="padding-top:10px;">{{ parts.1 }}</li>
+												</ul>
+												{% endwith %}
+												{% endif %}
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="span6">
+							<div class="span12 center-span project-span" style="float: none;margin: 0 auto;">
+								<div class="row-fluid">
+									<div class="span6 bold">
+										<p>Categories</p>
+									</div>
+									<div class="span6 span-btn">
+										{% if project.calibrationsample_set.all %}
+										{% if projfileattributes|length > 0 %}
+										<a class="btn btn-success btn-create-project" href="{% url 'projfile_attribute' project.id %}" data-toggle="tooltip" title="Edit categories" data-placement="bottom" id="edit-btn"><i class="icon-edit icon-white"></i></a>
+										{% endif %}
+										<a class="btn btn-primary btn-create-project" href="{% url 'projfile_attribute' project.id %}" data-toggle="tooltip" title="Create categories" data-placement="bottom" id="plus-btn" style="margin-right: 5px;"><i class="icon-plus icon-white"></i></a>
+										{% endif %}
+									</div>
+								</div>
+								{% if projfileattributes|length > 0 %}
+								<ul class="nav nav-tabs" id="projfile-attribute-tab">
+								{% for attribute in projfileattributes %}
+									{% if forloop.counter == 1 %}
+									<li class="active">
+									{% else %}
+									<li>
+									{% endif %}
+	  								<a href="#{{ attribute.name }}">{{ attribute.name }}</a></li>
+	  							{% endfor %}
+								</ul>
+								<div class="tab-content">
+								{% for attribute in projfileattributes %}
+								{% if forloop.counter == 1 %}
+		  							<div class="tab-pane active" id="{{ attribute.name }}">
+		  							{% else %}
+		  							<div class="tab-pane" id="{{ attribute.name }}">
+			  						{% endif %}
+			  							<div class="row-fluid">
+											<div class="span4 user-span bold">
+												<ul>
+													<li>Sample Name</li>
+												</ul>
+											</div>
+											<div class="span4 user-span bold">
+												<ul style="text-align:center;">
+													<li>Polarity</li>
+												</ul>
+											</div>
+											<div class="span4 user-span bold">
+												<ul style="text-align:center;">
+													<li>TIC</li>
+												</ul>
+											</div>
+										</div>
+										{% for sample in attribute.calibrationsample.all %}
+										<div class="row-fluid">
+											<div class="span4 user-span">
+												<ul>
+													<li>{{ sample.name|truncatechars:20 }}</li>
+												</ul>
+											</div>
+											<div class="span4 user-span">
+												<ul style="text-align:center;">
+													<li>{% if sample.standardFile.posdata %}+{% endif %}{% if sample.standardFile.posdata and sample.standardFile.negdata%} {% endif %}{% if sample.standardFile.negdata %}-{% endif %}{% if sample.standardFile.data %}Std{% endif %}</li>
+												</ul>
+											</div>
+											<div class="span4 user-span">
+												<ul>
+													<li><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-calibration" data-toggle="tooltip" title="tic viewer soon" data-placement="left"></a></li>
+												</ul>
+											</div>
+	  									</div>
+	  									{% endfor %}
+	  								</div>
+	  								{% endfor %}
+	  							</div>
+								{% else %}
+								<p class="not-available">No category available</p>
+								{% endif %}
+							</div>
+						</div>
+					</div>
+			  	</div>
+			</div>
+		</div>
+	</div>
+	<div class="tab-pane" id="sample-management" style="background-color: rgb(253, 253, 253);">
+	<!hr class="soften">
+		<div class="row-fluid">
+		<div class="span8 paddingleft"><h3>Sample management</h3></div>
+		</div>
+		<div class="container-fluid">	
+			<div class="row-fluid">
+				<div class="span6 white-span" id="white-span-summary">
+					<div class="row-fluid">
+						<div class="span6 description-span"><h4>Samples :</h4></div>
+						{% ifnotequal permission 'read' %}
+						<div class="span6 span-btn"><a class="btn btn-primary btn-create-project" href="{% url 'upload-new' project.id %}"><i class="icon-upload icon-white"></i> Upload files</a></div>
+						{% endifnotequal %}
+						<div class="row-fluid">
+							<div class="span12" id="file-table-span" style="padding-top:0px;">
+								{% if project.sample_set.all %}
+								<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+									<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+										<p class="text-in-table">Name</p>
+									</div>
+									<div class="span4 center-text"style="min-height:10px;">
+										<p class="text-in-table">Polarity</p>
+									</div>
+									<div class="span4 center-text" style="min-height:10px;">
+										<p class="text-in-table">TIC</p>
+									</div>
+								</div>
+								<div class="row-fluid">
+									<div class="tab-content">
+										<div class="span12 description-span tab-pane active" style="padding-top:0px;">
+											{% for sample in project.sample_set.all %}
+											<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+												<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+													<p class="text-in-table introduction_text">{{ sample.name|truncatechars:20 }}</p>
+												</div>
+												<div class="span4 center-text"style="min-height:10px;">
+													<p class="text-in-table introduction_text">{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.posdata and sample.samplefile.negdata%} {% endif %}{% if sample.samplefile.negdata %}-{% endif %}</p>
+												</div>
+												<div class="span4 center-text" style="min-height:10px;">
+													<p class="text-in-table introduction_text"><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-sample" href="#" title="mzxml viewer" data-placement="left" role="button" data-toggle="modal"></a></p>
+												</div>
+											</div>
+		  									{% endfor %}
+		  								</div>
+		  							</div>
+		  						</div>
+								{% else %}
+								<div class="row-fluid">
+									<div class="span12 description-span">
+										<p class="introduction_text">No sample available</p>
+									</div>
+								</div>
+								{% endif %}
+							</div>
+						</div>
+						{% if project.sample_set.all|length >= 1 %}
+						<div class="row-fluid">
+		        			<div class="span12 span-btn btn-del-file">
+		        				<a id="peak-discovery" class="peak-discovery" href="#" title="peak discovery" data-placement="bottom" role="button"></a> 
+	        					<a class="btn btn-danger btn-create-project" href="{% url 'delete-sample' project.id %}"><i class="icon-trash icon-white"></i> Delete files</a>
+		        			</div>
+		        		</div>
+		        		{% endif %}
+					</div>
+			  	</div>
+			  	<div class="span6 white-span" id="white-span-summary">
+			  		<div class="row-fluid">
+						<div class="span8 description-span"><h4>Experiment :</h4></div>
+						<div class="span4 span-btn">
+							{% if project.sample_set.all|length >= 3 %}
+							{% ifnotequal permission 'read' %}
+							<a class="btn btn-primary btn-create-project" href="{% url 'add_group' project.id %}"><i class="icon-plus icon-white"></i> Create</a>
+							{% endifnotequal %}
+							{% endif %}
+						</div>
+					</div>
+					<div class="row-fluid">
+						<div class="span12 center-span" style="float: none;margin: 0 auto;">
+							{% if groups|length > 0 %}
+								{% if groups|length <= 3 %}
+								<ul class="nav nav-tabs" id="group-tab" style="margin-bottom: 0px;">
+									{% for group in groups %}
+										{% if forloop.counter == 1 %}
+										<li id="group-{{ group.id }}" class="active">
+										{% else %}
+										<li>
+										{% endif %}
+		  								<a href="#{{ group.name }}">{{ group.name }}</a></li>
+		  							{% endfor %}
+		  							<div class="tic-group" style="margin-right: 5px;margin-top: 5px;" id="ticviewer" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></div>
+								</ul>
+								{% else %}
+								<ul class="nav nav-tabs" id="group-tab" style="margin-bottom: 0px;">
+									{% for group in groups %}
+									{% if forloop.counter == 1 %}
+									<li class="active">
+									{% elif forloop.counter == 3 %}
+									<li class="dropdown">
+		            					<a href="#" class="dropdown-toggle" data-toggle="dropdown">More <b class="caret"></b></a>
+		            					<ul class="dropdown-menu">
+											<li>
+									{% else %}
+									<li>
+									{% endif %}
+										<a href="#{{ group.name }}" data-toggle="tab">{{ group.name }}</a></li>
+									{% endfor %}
+										</ul>
+									</li>
+		  						</ul>	
+								{% endif %}
+							<div class="tab-content">
+								{% for group in groups %}
+								{% if forloop.counter == 1 %}
+	  							<div class="tab-pane active" id="{{ group.name }}" style="padding-top: 0px;">
+	  							{% else %}
+	  							<div class="tab-pane" id="{{ group.name }}" style="padding-top: 0px;">
+		  						{% endif %}
+		  							<div class="row-fluid" style="padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+										<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+											<p class="text-in-table">Condition</p>
+										</div>
+										<div class="span4 center-text"style="min-height:10px;">
+											<p class="text-in-table">Sample</p>
+										</div>
+										<div class="span4 center-text" style="min-height:10px;">
+											<p class="text-in-table">TIC</p>
+										</div>
+									</div>
+									{% for attribute in group.attribute_set.all %}
+									<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+										<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+											<p class="text-in-table introduction_text">{{ attribute.name }}</p>
+										</div>
+										<div class="span4 center-text"style="min-height:10px;">
+											<p class="text-in-table introduction_text">{{ attribute.sample.all|length }}</p>
+										</div>
+										<div class="span4 center-text" style="min-height:10px;">
+											<p class="text-in-table introduction_text"><a class="tic-viewer" id="ticviewer-{{ attribute.id }}" href="#" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></a></p>
+										</div>
+									</div>
+	  								{% endfor %}
+	  							</div>
+	  							{% endfor %}
+	  						</div>
+							{% else %}
+							<div class="row-fluid">
+								<div class="span12 description-span">
+									<p class="introduction_text">No experiment available</p>
+								</div>
+							</div>
+							{% endif %}
+						</div>
+					</div>
+			  	</div>
+			</div>
+		</div>
+	</div>
+	<div class="tab-pane" id="experiment" style="background-color: rgb(253, 253, 253);">
+		<div class="row-fluid">
+		<div class="span8 paddingleft"><h3>Analysis</h3></div>
+		{% ifnotequal permission 'read' %}
+		<div class="span4 span-create-project paddingight"><a class="btn btn-primary btn-create-project" href="{% url 'create_experiment' project.id %}"><i class="icon-plus icon-white"></i> Create new</a></div>
+		{% endifnotequal %}
+		</div>
+		<div class="container-fluid">
+			{% if not experiments %}
+			<div class="row-fluid">
+				<div class="span12 white-span" id="white-span-summary">
+					<div class="row-fluid">
+			  			<div class="span12">
+							<div class="row-fluid">
+								<div class="span12 project-span" style="margin-bottom:0px;">
+									<p class="not-available">No analysis available</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% else %}
+			{% for experiment in experiments %}
+			<div class="row-fluid">
+				<div class="span12 white-span" id="white-span-summary">
+					<div class="row-fluid">
+			  			<div class="span12">
+			  				<div class="row-fluid">
+								<div class="span10 description-span"><h4>{{ experiment.title }}</h4></div>
+								<div class="span2"><a class="expend-experiment"></a></div>
+							</div>
+							<div class="row-fluid">
+								{% for analysis in experiment.analysis_set.all %}
+								<div class="row-fluid">
+									<div class="span12">
+										<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+											<div class="span2 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table">Name</p>
+											</div>
+											<div class="span2 center-text"style="min-height:10px;">
+												<p class="text-in-table">Created</p>
+											</div>
+											<div class="span2 center-text" style="min-height:10px;">
+												<p class="text-in-table">Created by</p>
+											</div>
+											<div class="span2 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table">Submitted</p>
+											</div>
+											<div class="span2 center-text"style="min-height:10px;">
+												<p class="text-in-table">Status</p>
+											</div>
+											<div class="span2 center-text" style="min-height:10px;">
+												<p class="text-in-table">Action</p>
+											</div>
+										</div>
+										<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% ifequal analysis.status 'Error' %}background-color: rgb(240, 230, 230);{% endifequal %}{% ifequal analysis.status 'Finished' %}background-color: rgb(230, 240, 231);{% endifequal %}{% ifequal analysis.status 'Finished' %}background-color: rgb(230, 240, 231);{% endifequal %}{% ifequal analysis.status 'Submitted' %}background-color: rgb(221, 236, 245);{% endifequal %}{% ifequal analysis.status 'Ready' %}background-color: rgb(221, 236, 245);{% endifequal %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+											<div class="span2 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table introduction_text">{{ experiment.title }}</p>
+											</div>
+											<div class="span2 center-text"style="min-height:10px;">
+												<p class="text-in-table introduction_text">{{ analysis.created|truncatewords:"1"|slice:":-3" }}</p>
+											</div>
+											<div class="span2 center-text"style="min-height:10px;">
+												<p class="text-in-table introduction_text">{{ analysis.owner }}</p>
+											</div>
+											<div class="span2 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table introduction_text">{% if analysis.submited %}{{ analysis.submited|truncatewords:"1"|slice:":-3" }}{% endif %}</p>
+											</div>
+											<div class="span2 center-text" style="min-height:10px;">
+												<p class="text-in-table introduction_text" {% ifequal analysis.status 'Finished' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal analysis.status 'Ready' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Submitted' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Processing' %}style="color: rgb(213, 170, 60);"{% endifequal %}{% ifequal analysis.status 'Error' %}style="color: rgb(232, 45, 45);"{% endifequal %}>{{ analysis.status }}</p>
+											</div>
+											<div class="span2 center-text" style="min-height:10px;padding-top: 4px;">
+												{% ifequal analysis.status 'Finished' %}<a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">Access result</a>{% endifequal %}{% ifequal analysis.status 'Ready' %}<a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">Submit analysis</a>{% endifequal %}
+											</div>
+										</div>
+									</div>
+								{% endfor %}
+								</div>
+								<div class="row-fluid experiment-content" style="margin-top:10px;">
+									<div class="span6">
+										<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+											<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table">Comparison</p>
+											</div>
+											<div class="span4 center-text"style="min-height:10px;">
+												<p class="text-in-table">Control</p>
+											</div>
+											<div class="span4 center-text" style="min-height:10px;">
+												<p class="text-in-table">Condition</p>
+											</div>
+										</div>
+										{% for comparison in experiment.comparison_set.all %}
+										<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+											<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table introduction_text">{{ comparison.name }}</p>
+											</div>
+											{% for attribute in comparison.attribute.all %}
+											<div class="span4 center-text"style="min-height:10px;">
+												<p class="text-in-table introduction_text">{{ attribute.name }}</p>
+											</div>
+											{% endfor %}
+										</div>
+	  									{% endfor %}
+									</div>
+									<div class="span6">
+										{% for analysis in experiment.analysis_set.all %}
+										<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+												<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+													<p class="text-in-table">Parameter</p>
+												</div>
+												<div class="span4 center-text"style="min-height:10px;">
+													<p class="text-in-table">On | Off</p>
+												</div>
+												<div class="span4 center-text" style="min-height:10px;">
+													<p class="text-in-table">Value</p>
+												</div>
+										</div>
+										{% for  parameter in analysis.params.param.all %}
+										<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+											<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+												<p class="text-in-table introduction_text">{{ parameter.name }}</p>
+											</div>
+											<div class="span4 center-text"style="min-height:10px;">
+												<p class="text-in-table introduction_text">{% if parameter.state %}<span style="color: rgb(59, 182, 59);">On</span> <span style="color: #00355E;">|</span> <span style="opacity: 0.3;">Off</span>{% else %}<span style="opacity: 0.3;">On</span> <span style="color: #00355E;">|</span> <span style="color: rgb(232, 45, 45);">Off</span>{% endif %}</p>
+											</div>
+											<div class="span4 center-text"style="min-height:10px;">
+												{% if parameter.value and parameter.state %}
+												<p class="text-in-table introduction_text">{{ parameter.value }}</p>
+												{% endif %}
+											</div>
+										</div>
+	  									{% endfor %}
+	  									{% endfor %}
+	  								</div>
+	  							</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+			{% endif %}
+		</div>
+	</div>
+</div>
+ </div>
+ 
+ <div id="myModalInfo" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Calibration</h3>
+  </div>
+  <div class="modal-body">
+    <p>Doc calibration : TODO</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+<div id="full-width" class="modal container hide fade" tabindex="-1">
+<!div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Svg test</h3>
+  </div>
+  <!div class="modal-body" style="max-height: none;padding: 0px;">
+  <div class="modal-body" style="padding: 0px;">
+  	<!div style="height:100%, width:100%">
+  	<!embed src="{{ groups.0.attribute_set.all.0.ticgroup.negtic.ticplot }}" type="image/svg+xml" id="myviewport"/>
+  <!/div>
+    <!svg id="circle" height="260" width="260" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
+  		<!image x="0" y="0" height="560" width="560"  xlink:href="{{ STATIC_URL }}chart.svg" />
+	<!/svg>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+<div id="peak-discovery-modal" class="modal container hide fade" tabindex="-1">
+<!div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Peak discovery tool</h3>
+  </div>
+  <!div class="modal-body" style="max-height: none;padding: 0px;">
+  <div class="modal-body" style="padding: 0px;">
+  	<!div style="height:100%, width:100%">
+  	<!embed src="{{ groups.0.attribute_set.all.0.ticgroup.negtic.ticplot }}" type="image/svg+xml" id="myviewport"/>
+  <!/div>
+    <!svg id="circle" height="260" width="260" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
+  		<!image x="0" y="0" height="560" width="560"  xlink:href="{{ STATIC_URL }}chart.svg" />
+	<!/svg>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+{% else %}
+<p>No projects are available.</p>
+{% endif %}
+{% endblock %}

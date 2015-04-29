@@ -1,0 +1,2817 @@
+<!DOCTYPE html>
+
+{% load compound_tags %}
+<html>
+	<head>
+		<title>PiMP</title>
+		<script src="http://code.jquery.com/jquery-latest.js"></script>
+		<!script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"><!/script>
+		<!-- {% block head %} {% endblock %} -->
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<link rel="shortcut icon" href="{{ STATIC_URL }}img/logo_blue_white_result.png">
+		<!-- {% load staticfiles %} -->
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" media="screen"/>
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/bootstrap2.css" media="screen"/>
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/slider.css" media="screen"/>
+		<!-- <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/bootstrap-responsive2.css" media="screen"/> -->
+		<!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-image-gallery.min.css">
+    	<link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.fileupload-ui.css">
+    	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/jquery.dataTables.css" media="screen" />
+    	<link rel="stylesheet" href="{{ STATIC_URL }}css/result.css">
+    	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/bootstrap-modal.css" media="screen" />
+    	
+    	<!-- <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/jquery.dataTables_themeroller.css" media="screen" /> -->
+    	<script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap-modalmanager.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables.js"></script>
+		<script src="{{ STATIC_URL }}js/highcharts.js"></script>
+		<script src="{{ STATIC_URL }}js/highcharts-more.js"></script>
+		<script src="{{ STATIC_URL }}js/exporting.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/FixedHeader.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-slider.js"></script>
+    	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
+    	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+		<style type="text/css">
+			h1.unimg{
+				position: relative;
+				background: transparent;
+				background-image: url({{ STATIC_URL }}img/logo_blue_white.jpg);
+				background-repeat:no-repeat;
+				background-size: 170px 145px;
+				width: 170px;
+				height: 145px;
+				left: 0px;
+				}
+			div.gpimg{
+				position: absolute;
+				background: transparent;
+				background-image: url({{ STATIC_URL }}img/logo_white.png);
+				background-repeat:no-repeat;
+				background-size: 100px 68px;
+				width: 100px;
+				height: 68px;
+				right: 10px;
+				top:50px;
+				}
+			#close-right-summary-panel {
+				top: 10px;
+				/*right: 20px;*/
+				height: 16px;
+				width: 16px;
+				float: left;
+				cursor: pointer;
+				background-image: url({{ STATIC_URL }}img/plus-icon2.png);
+			}
+
+			#close-right-summary-panel:hover {
+				background-image: url({{ STATIC_URL }}img/plus-icon-black.png);
+			}
+		</style>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/prefixfree.min.js"></script>
+		<script type="text/javascript">
+		var oTable;
+		var giRedraw = false;
+		var ppm = 3;
+		var rtwindow = 120;
+		var rightPanelPreference = "summary";
+
+		var memberList = [{% for member in member_list %}"{{ member.name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+		var sampleList = [{% for sublist in sample_list %}[{% for sample in sublist %}"{{ sample.name }}"{% if not forloop.last %},{% endif %}{% endfor %}]{% if not forloop.last %},{% endif %}{% endfor %}];
+
+
+
+		console.log('{{ pca_data_point }}');
+		console.log(memberList);
+		console.log(sampleList);
+
+		function kegg_map_modal(map) {
+
+				console.log("map received ",map);
+
+				var $modal = $('#full-width');
+
+				var chartWidth = $modal.width()-10;
+
+				var chartHeight = $(window).height()-400;
+
+				console.log(chartWidth); 
+
+				var modalLabel = $modal.find('#myModalLabel');
+				var modalBody = $modal.find('.modal-body');
+				
+				$(modalLabel).empty();
+				$(modalBody).empty();
+
+				$(modalLabel).text("Kegg map");
+
+				var frame = $('<iframe id="frame" src="http://www.kegg.jp/kegg-bin/show_pathway?map00473/C00022%09pink,pink/C00133%09pink,pink/C00041%09pink,pink/C00993%09pink,pink" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+				// var title = rowInfo[0]+' coverage';
+				// console.log($(frame).find("img[name='pathwayimage']"));
+				$(frame).appendTo($modal.find('.modal-body'));
+				// var iframe = document.getElementById('frame');
+				// iframe.onload = function() {
+    // 				// this.contentWindow.document.notesform.ID_client.value = Client;
+    // 				// var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+				// 	console.log("prout");
+				// 	$(this).contents().find("img");
+				// 	// console.log($(iframe).find("img"));
+				// };
+				
+				$modal.modal();
+				// $('body').modalmanager('loading');
+ 
+				// setTimeout(function(){
+				// 	$modal.find('.modal-body').load('http://www.kegg.jp/kegg-bin/show_pathway?map00473/C00022%09pink,pink/C00133%09pink,pink/C00041%09pink,pink/C00993%09pink,pink', '', function(){
+				// 	$modal.modal();
+				// 	});
+				// }, 1000);
+			}
+
+		$(document).ready(function() {
+
+			$('.dropdown-comparison-menu-a').width($('#dropdown-comparison-menu').width());
+			console.log($('#dropdown-comparison-menu').width());
+
+			$('#home-side-nav').affix();
+
+			var right_panel = true; 
+
+			$('.dropdown-toggle').dropdown();
+
+			$('#tool_button').hover(function() {
+				$('#tool_menu_bar').css('margin-left',0);
+				$('#tool_menu_bar').css('box-shadow','4px 4px 10px 0px rgba(0,0,0,.15)');
+			});
+			$( '#tool_menu_bar').mouseleave(function() {
+				$('#tool_menu_bar').css('margin-left',-230);
+				$('#tool_menu_bar').css('box-shadow','');
+			});
+
+			$('.right-summary-info').click(function(){
+				console.log("clicked");
+
+				var clicked_panel = $(this).parent().parent();
+				console.log($(clicked_panel).css('position'));
+				var height = $(clicked_panel).height()/2;
+				// var top = $(clicked_panel).offset().top+height;
+
+				// var top = $(clicked_panel).offsetRelative("div#pathway-row-fluid").top;
+				console.log("!!!!!!!!!!!!scroll  :"+$(clicked_panel).parent().parent().parent().parent().parent().parent().parent().parent().scrollTop());
+				console.log("offset de clicked  :"+$(clicked_panel).offset().top);
+				var top = $(clicked_panel).offset().top + $(clicked_panel).parent().parent().parent().parent().parent().parent().parent().parent().scrollTop() - height;
+				var width = $(clicked_panel).width()+10;
+				console.log("top is : "+top);
+
+				$("#first-pathway").css("margin-top",-25);
+				// $('#right-summary-panel-arrow').css('margin-right','none');
+				// $('#right-summary-panel-arrow').removeClass('right');
+				// $('#right-summary-panel-arrow').css('margin-left','49%');
+				$('#right-summary-panel-arrow').css('margin-left',width);
+				$('#right-summary-panel-arrow').css('top',top);
+				$('#right-summary-panel-arrow').css('display','block');
+				$('#right-summary-panel').css('display','block');
+				$('#right-summary-panel').css('margin-right',0);
+				$('#right-summary-panel-inner').empty();
+
+				var chartWidth = $('#right-summary-panel-inner').width()-10;
+
+				var chartHeight = $('#right-summary-panel').height()-200;
+
+				var frame = $('<iframe id="frame" src="http://www.kegg.jp/kegg-bin/show_pathway?map00473/C00022%09pink,pink/C00133%09pink,pink/C00041%09pink,pink/C00993%09pink,pink" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+				var newDom = "";
+				var wrapper = $('<div class="span12"></div>');
+				newDom += '<div class="span6"><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+$(this).text()+'</h5></div>';
+				$(this).parent().parent().find("p").each( function(){
+					console.log($(this).text());
+					newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+$(this).text()+'</h5></div>'
+				});
+
+				newDom += '</div>';
+
+				// PieChart
+				chartWidth = $('body').width()/4;
+				var fakeChart = $('<div class="span6" style="margin-left:0px;">');
+				var serie = [['Annotated',41],['Identified',19],['Not covered',40]];
+				pieChart(chartWidth, fakeChart, serie, 200);
+
+
+
+
+				$(newDom).appendTo($(wrapper));
+				$(fakeChart).appendTo($(wrapper));
+
+				$(wrapper).appendTo($('#right-summary-panel-inner'));
+
+				$(frame).appendTo($('#right-summary-panel-inner'));
+
+
+			});
+
+			$('#close-right-summary-panel').click(function(){
+				$("#first-pathway").css("margin-top",25);
+				$('#right-summary-panel').css('display','block');
+				$('#right-summary-panel').css('margin-right','-55%');
+				$('#right-summary-panel').css('display','none');
+				$('#right-summary-panel-arrow').css('display','none');
+				// $('#right-summary-panel-arrow').css('margin-left','none');
+				// $('#right-summary-panel-arrow').addClass('right');
+				// $('#right-summary-panel-arrow').css('margin-right','-50%');
+			});
+
+			$('#tabnav a').click(function (e) {
+  				e.preventDefault();
+  				$(this).tab('show');
+  				$("#first-pathway").css("margin-top",25);
+				$('#right-summary-panel').css('display','block');
+				$('#right-summary-panel').css('margin-right','-55%');
+				$('#right-summary-panel').css('display','none');
+				$('#right-summary-panel-arrow').css('display','none');
+  				
+  				// if ($(this).attr('href') == '#identification' ) {
+  				// 	console.log('id de la tab: '+$(this).attr('href'));
+  				// 	new FixedHeader( idTable );
+  				// }
+			});
+			$('#right-side-button').click(function (e) {
+				if (right_panel) {
+					console.log("hihi");
+					$('.myspan3').width('0%');
+					$('.myspan9').width('100%');
+					$('.identification-table_wrapper_toolbar').width('100%');
+					$('.peak-table_wrapper_toolbar').width('100%');
+					$('.comparison-table_wrapper_toolbar').width('100%');
+					$('.dataTables_paginate').width('100%');
+					$('#right-arrow').removeClass('show-right').addClass('show-left');
+					right_panel = false;
+				}
+				else {
+					console.log("houhou");
+					$('.myspan3').width('20%');
+					$('.myspan9').width('80%');
+					$('.identification-table_wrapper_toolbar').width('80%');
+					$('.peak-table_wrapper_toolbar').width('80%');
+					$('.comparison-table_wrapper_toolbar').width('80%');
+					$('.dataTables_paginate').width('80%');
+					$('#right-arrow').removeClass('show-left').addClass('show-right');
+					right_panel = true;
+				}
+			});
+
+			$('#home_button').click(function (e) {
+				e.preventDefault();
+				$("#first-pathway").css("margin-top",25);
+				$('#right-summary-panel').css('display','block');
+				$('#right-summary-panel').css('margin-right','-55%');
+				$('#right-summary-panel').css('display','none');
+				$('#right-summary-panel-arrow').css('display','none');
+				$('#tabnav').find('.active').removeClass('active');
+				$('#general-tab-content').find('.active').removeClass('active');
+				$('#home').addClass('active');
+			});
+
+			$('#preferences').click(function (e) {
+				var $modal = $("#full-width");
+				var modalBody = $modal.find('.modal-body');
+				var modalHeader = $modal.find('.modal-header');
+				var modalFooter = $modal.find('.modal-footer');
+				
+				// $(modalLabel).empty();
+				$(modalBody).empty();
+				$(modalFooter).empty();
+				$(modalHeader).empty();
+
+				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
+				$('<button class="btn btn-primary" data-dismiss="modal" id="save_preference">Save changes</button>').appendTo($(modalFooter));
+
+				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="{{ STATIC_URL }}img/preference_icon.png" alt="tools" style="margin-bottom: 3px;"> Preferences</h3>').appendTo($(modalHeader));
+				// var modalLabel = $modal.find('#myModalLabel');
+				// $(modalLabel).text("Preferences");
+
+				var rightPanelPreferencesContent = $('<h3 style="margin-left:10px;">Embedded right panel display</h3><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="rightPanelSummaryCheck" type="radio" name="right_panel_preference" value="summary" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Summary</span></div><div class="span6" style="margin-left:10px;"><input id="rightPanelDetailsCheck" type="radio" name="right_panel_preference" value="details" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Details</span></div></div>');
+
+				var peakChromatogramsContent = $('<h3 style="margin-left:10px;">Peak chromatograms</h3><div class="row" style="margin-left:0px;"><div class="span6" style="margin-left:10px;"><h4 style="margin-bottom: 20px;">Retention time window (s): <span id="rtwindow_span">'+rtwindow+'</span></h4><span style="font-weight:bold;margin-right:12px;">15</span><input id="rt_window_slider" type="text" class="span2" value="" data-slider-min="15" data-slider-max="180" data-slider-step="5" data-slider-value="'+rtwindow+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">180</span></div><div class="span6" style="margin-left:10px;"><h4 style="margin-bottom: 20px;">Mass window (ppm): <span id="ppm_span">'+ppm+'</span></h4><span style="font-weight: bold;margin-right: 12px;">1</span><input id="ppm_slider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="'+ppm+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">5</span></div>');
+
+				$(rightPanelPreferencesContent).appendTo($(modalBody));
+
+				if (rightPanelPreference == "summary"){
+					$('#rightPanelSummaryCheck').prop('checked', true);
+				}
+				else {
+					$('#rightPanelDetailsCheck').prop('checked', true);
+				}
+
+				$(peakChromatogramsContent).appendTo($(modalBody));
+
+				$('#rt_window_slider').slider().on('slide', function(ev){
+					$('#rtwindow_span').empty().text($('#rt_window_slider').data('slider').getValue());
+				});
+				$('#ppm_slider').slider().on('slide', function(ev){
+					$('#ppm_span').empty().text($('#ppm_slider').data('slider').getValue());
+				});
+
+				$modal.modal();
+
+				$('#save_preference').click(function (e) {
+				console.log("ppm = "+$('#ppm_slider').data('slider').getValue());
+				ppm = $('#ppm_slider').data('slider').getValue();
+				console.log("rtwindow = "+$('#rt_window_slider').data('slider').getValue());
+				rtwindow = $('#rt_window_slider').data('slider').getValue();
+				rightPanelPreference = $('input:radio[name=right_panel_preference]:checked').val();
+				});
+				// var chartWidth = $modal.width();
+
+			});
+
+			// PCA CHART CREATION
+			$('#pca_test').highcharts({
+				credits : {
+						enabled : false
+				},
+	            chart: {
+	                type: 'scatter',
+	                zoomType: 'xy',
+	                height: 500,
+	                width: 500,
+	            },
+	            title: {
+	                text: 'PCA'
+	            },
+	            subtitle: {
+	                text: 'Click and drag in the plot area to zoom in'
+	            },
+	            xAxis: {
+	                title: {
+	                    enabled: true,
+	                    text: 'PCA 1'
+	                },
+	                startOnTick: true,
+	                endOnTick: true,
+	                showLastLabel: true
+	            },
+	            yAxis: {
+	                title: {
+	                    text: 'PCA 2'
+	                }
+	            },
+	            legend: {
+	                // layout: 'vertical',
+	                // align: 'left',
+	                // verticalAlign: 'top',
+	                // x: 100,
+	                // y: 70,
+	                // floating: true,
+	                backgroundColor: '#FFFFFF',
+	                borderWidth: 1
+	            },
+	            plotOptions: {
+	                scatter: {
+	                    marker: {
+							symbol: 'circle',
+	                        radius: 4,
+	                        states: {
+	                            hover: {
+	                                enabled: true,
+	                                lineColor: 'rgb(100,100,100)'
+	                            }
+	                        }
+	                    },
+	                    states: {
+	                        hover: {
+	                            marker: {
+	                                enabled: false
+	                            }
+	                        }
+	                    },
+	                    tooltip: {
+	                        headerFormat: '<b>{series.name}</b><br>',
+	                        pointFormat: '{point.name}<br>pca1: {point.x:.1f},pca2: {point.y:.1f}'
+	                    }
+	                }
+	            },
+	            series: [{% for serie in pca_data_point.2 %}{
+	                name: '{{ serie.0 }}',
+	                data: [{% for point in serie %}
+		                		{% if not forloop.first %}
+		                			{ 
+		                				name: '{{ point.0 }}',
+		                				x: {{ point.1 }},
+		                				y: {{ point.2 }}
+		                			}{% if not forloop.last %},{% endif %}
+		                		{% endif %}
+		                	{% endfor %}
+		                	]
+		                }{% if not forloop.last %},{% endif %}
+		                {% endfor %}
+		                ]
+        	});
+
+			{% for comparison in comparisons %}
+			$('#comparison{{ comparison.id }}-volcano-plot').highcharts({
+				credits : {
+						enabled : false
+				},
+	            chart: {
+	                type: 'scatter',
+	                zoomType: 'xy',
+	                height: 500,
+	                width: 500,
+	            },
+	            title: {
+	                text: '{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }} volcano plot'
+	            },
+	            subtitle: {
+	                text: 'Click and drag in the plot area to zoom in'
+	            },
+	            xAxis: {
+	                title: {
+	                    enabled: true,
+	                    text: 'log2 Fold Change'
+	                },
+	                startOnTick: true,
+	                endOnTick: true,
+	                showLastLabel: true
+	            },
+	            yAxis: {
+	                title: {
+	                    text: '-log10 adjusted P-Value'
+	                }
+	            },
+	            legend: {
+	                // layout: 'vertical',
+	                // align: 'left',
+	                // verticalAlign: 'top',
+	                // x: 100,
+	                // y: 70,
+	                // floating: true,
+	                backgroundColor: '#FFFFFF',
+	                borderWidth: 1
+	            },
+	            plotOptions: {
+	                scatter: {
+	                    marker: {
+            				symbol: 'circle',
+	                        radius: 4,
+	                        states: {
+	                            hover: {
+	                                enabled: true,
+	                                lineColor: 'rgb(100,100,100)'
+	                            }
+	                        }
+	                    },
+	                    states: {
+	                        hover: {
+	                            marker: {
+	                                enabled: false
+	                            }
+	                        }
+	                    },
+	                    tooltip: {
+	                        headerFormat: '<b>{series.name}</b><br>',
+	                        pointFormat: '{point.name}<br>Log2 Fold Change: {point.x:.1f}, -log10 P-value: {point.y:.1f}'
+	                    }
+	                }
+	            },
+	            series: [{
+	                name: 'P-value > 0.05',
+	                data: [{% for peak in peak_comparison_list %} 
+		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
+		                			{% if compinfo.adjPvalue > 0.05 %}
+		                			{
+		                				name: 'Peak {{ peak.secondaryId }}',
+		                				x: {{ compinfo.logFC  }},
+		                				y: {{ compinfo|minuslogten }},
+		                			}{% if not forloop.last %},{% endif %}
+		                			{% endif %}
+		                		{% endwith %}
+		                	{% endfor %}
+		                	]
+		            },
+		            {
+	                name: 'P-value < 0.05',
+	                data: [{% for peak in peak_comparison_list %} 
+		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
+		                			{% if compinfo.adjPvalue < 0.05 %}
+		                			{
+		                				name: 'Peak {{ peak.secondaryId }}',
+		                				x: {{ compinfo.logFC  }},
+		                				y: {{ compinfo|minuslogten }},
+		                			}{% if not forloop.last %},{% endif %}
+		                			{% endif %}
+		                		{% endwith %}
+		                	{% endfor %}
+		                	]
+		            },
+	            //     {
+	            //     name: 'Sea-Level Pressure',
+	            //     type: 'spline',
+	            //     color: '#AA4643',
+	            //     yAxis: 2,
+	            //     data: [1.30, 1.30],
+	            //     marker: {
+	            //         enabled: false
+	            //     },
+	            //     dashStyle: 'shortdot',
+	            //     tooltip: {
+	            //         valueSuffix: ' mb'
+	            //     }
+    
+            	// }
+            	]
+        	});
+			{% endfor %}
+
+			// plugin for changing length of table (number of row in table) - move to a PiMP plugin library file
+    		$.fn.dataTableExt.oApi.fnLengthChange = function ( oSettings, iDisplay )
+			{
+			    oSettings._iDisplayLength = iDisplay;
+			    oSettings.oApi._fnCalculateEnd( oSettings );
+			      
+			    /* If we have space to show extra rows (backing up from the end point - then do so */
+			    if ( oSettings._iDisplayEnd == oSettings.aiDisplay.length )
+			    {
+			        oSettings._iDisplayStart = oSettings._iDisplayEnd - oSettings._iDisplayLength;
+			        if ( oSettings._iDisplayStart < 0 )
+			        {
+			            oSettings._iDisplayStart = 0;
+			        }
+			    }
+			      
+			    if ( oSettings._iDisplayLength == -1 )
+			    {
+			        oSettings._iDisplayStart = 0;
+			    }
+			      
+			    oSettings.oApi._fnDraw( oSettings );
+			      
+			    if ( oSettings.aanFeatures.l )
+			    {
+			        $('select', oSettings.aanFeatures.l).val( iDisplay );
+			    }
+			};
+			// end 
+
+			// plugin for filter (search bar) on all dataTables in the html DOM - move to a PiMP plugin library file
+			$.fn.dataTableExt.oApi.fnFilterAll = function(oSettings, sInput, iColumn, bRegex, bSmart) {
+			    var settings = $.fn.dataTableSettings;
+			    console.log("we are in filter all");
+
+			    for ( var i=0 ; i<settings.length ; i++ ) {
+			      settings[i].oInstance.fnFilter( sInput, iColumn, bRegex, bSmart);
+			    }
+			};
+			// end
+
+			// plugin for selection - get row selected in the table
+			function fnGetSelected( oTableLocal )
+			{
+				var aReturn = new Array();
+				var aTrs = oTableLocal.fnGetNodes();
+				
+				for ( var i=0 ; i<aTrs.length ; i++ )
+				{
+					if ( $(aTrs[i]).hasClass('row_selected') )
+					{
+						aReturn.push( aTrs[i] );
+						console.log("aTrs : "+aTrs[i]+" "+i);
+					}
+				}
+				console.log("aReturn : "+aReturn);
+				return aReturn;
+			} 
+
+			
+			// table library
+			var idTable = $('#identification-table').dataTable( {
+					"sDom": '<"identification-table_wrapper_toolbar"li>rtp',
+					"bPaginate": true,
+					"sPaginationType": "full_numbers",
+					"iDisplayLength": 100,
+					"aLengthMenu": [ 100, 250, 500, 1000 ],
+					"aoColumns": [ 
+					/* Secondary id */   null,
+					/* Primary id */  { "bSearchable": false,
+										"bVisible":    false },
+					/* Peak id */ { "bSearchable": false,
+										"bVisible":    false },
+					/* Name */	null,
+					/* Formula */	null,
+					/* PPM */	null,
+					/* Identification */	null,
+					/* Polarity */	null,
+					],
+					// "sDom": 't',
+			});
+
+			idTable.$('tr').click( function () {
+
+				// get data from the row clicked as an array
+			    var data = idTable.fnGetData( this );
+			    console.log(data);
+
+			    // remove any row selection from the table
+			    $(idTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(idTable.dataTableSettings[0].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				console.log(headerInfo);
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				// send info to update right panel
+				updateIdentificationRightPanel(data,headerInfo,innerSidePanel);
+			});
+
+			// new FixedHeader( idTable );
+
+			var pathwayTable = $('#pathway-table').dataTable( {
+					"sDom": '<"pathway-table_wrapper_toolbar"li>rtp',
+					"bPaginate": true,
+					"sPaginationType": "full_numbers",
+					"iDisplayLength": 100,
+					"aLengthMenu": [ 100, 250, 500, 1000 ],
+					"aoColumns": [ 
+			/* Name */   null,
+			/* ID */  { "bSearchable": false,
+						"bVisible":    false },
+			/* Number compounds */	null,
+			/* Annotated */	null,
+			/* Identified */	null,
+			/* Coverage */	null,
+					]
+			});
+
+			pathwayTable.$('tr').click( function () {
+
+				// get data from the row clicked as an array
+			    var data = pathwayTable.fnGetData( this );
+			    console.log(data);
+
+			    map = $(this).attr("map");
+
+			    console.log("map ",map)
+
+			    // remove any row selection from the table
+			    $(pathwayTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(pathwayTable.dataTableSettings[1].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				var rowInfo = data;
+
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+				console.log('side panel '+innerSidePanel);
+				updateRightPanel(rowInfo,headerInfo,innerSidePanel);
+				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+				data = calculPathwayCoverage(rowInfo,headerInfo);
+				console.log("IIIIIIIIIIIIIIIII : "+$(innerSidePanel).width());
+				chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				var chart1 = $('<div class="span12" style="margin-left:0px;">');
+				// var title = rowInfo[0]+' coverage';
+				pieChart(chartWidth, chart1, data, 400);
+				$(kegg).appendTo($(innerSidePanel));
+				$(chart1).appendTo($(innerSidePanel));
+
+				$('#kegg-map-icon').click( function (){
+					var $modal = $('#full-width');
+
+					var chartWidth = $modal.width()-10;
+
+					var chartHeight = $(window).height()-400;
+
+					console.log(chartWidth); 
+
+					var modalLabel = $modal.find('#myModalLabel');
+					var modalBody = $modal.find('.modal-body');
+				
+					$(modalLabel).empty();
+					$(modalBody).empty();
+
+					$(modalLabel).text("Kegg map");
+
+					var frame = $('<iframe id="frame" src="http://www.kegg.jp/kegg-bin/show_pathway?'+map+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+				// var title = rowInfo[0]+' coverage';
+				// console.log($(frame).find("img[name='pathwayimage']"));
+					$(frame).appendTo($modal.find('.modal-body'));
+				// var iframe = document.getElementById('frame');
+				// iframe.onload = function() {
+    // 				// this.contentWindow.document.notesform.ID_client.value = Client;
+    // 				// var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+				// 	console.log("prout");
+				// 	$(this).contents().find("img");
+				// 	// console.log($(iframe).find("img"));
+				// };
+				
+					$modal.modal();
+				});
+
+			});
+
+			var peakTable = $('#peak-table').dataTable( {
+					// "sDom": '<"toolbar">frtip',
+					// "sDom": 't',
+					"sDom": '<"peak-table_wrapper_toolbar"li>rtp',
+					"bPaginate": true,
+					"sPaginationType": "full_numbers",
+					"iDisplayLength": 100,
+					"aLengthMenu": [ 100, 250, 500, 1000 ],
+			});
+
+			peakTable.$('tr').click( function () {
+				// get data from the row clicked as an array
+			    var data = peakTable.fnGetData( this );
+			    console.log(data);
+
+			    // remove any row selection from the table
+			    $(peakTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(peakTable.dataTableSettings[2].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				console.log(headerInfo);
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
+				rowInfo = [data[0],data[1],data[2],data[data.length-1]];
+
+				console.log(headerInfoToPass);
+				console.log(rowInfo);
+
+				// send info to update right panel
+				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$(loadingPan).appendTo($(innerSidePanel));
+				var ajax_data = {"id":rowInfo[0]};
+
+				var url = "{% url get_peak_info_peak_id project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						// $(chart1).appendTo($(innerSidePanel));
+						$(loadingPan).before($(averageIntensityChart));
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+		        var data = {"id":rowInfo[0],"ppm":ppm,"rtwindow":rtwindow};
+
+				var url = "{% url get_peaks_from_peak_id project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var peakChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						createPeaksChromatogram(chartWidth, peakChart, response);
+
+						$(loadingPan).before($(peakChart));
+
+						$(loadingPan).remove();
+		    //         	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						// var chartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
+						// var chartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						// averageIntensityChartFromCompound(chartWidth, chartSummary, response);
+						// averageIntensityChartFromCompound(chartWidth, chartDetail, response);
+						// // $(chart1).appendTo($(innerSidePanel));
+						// $(summaryloadingPan).before($(chartSummary));
+						// $(detailsloadingPan).before($(chartDetail));
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+			});
+
+			var comparisonTable = $('#comparison-table').dataTable( {
+					// "sDom": '<"toolbar">frtip',
+					// "sDom": 't',
+					"sDom": '<"comparison-table_wrapper_toolbar"li>rtp',
+					"bPaginate": true,
+					"sPaginationType": "full_numbers",
+					"iDisplayLength": 100,
+					"aLengthMenu": [ 100, 250, 500, 1000 ],
+			});
+
+			comparisonTable.$('tr').click( function () {
+				// get data from the row clicked as an array
+			    var data = comparisonTable.fnGetData( this );
+			    console.log(data);
+
+			    // remove any row selection from the table
+			    $(comparisonTable.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(comparisonTable.dataTableSettings[3].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				console.log(headerInfo);
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				// headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
+				// rowInfo = [data[0],data[1],data[2],data[data.length-1]];
+				rowInfo = data;
+				headerInfoToPass = headerInfo;
+
+				console.log(headerInfo);
+				console.log(rowInfo);
+
+				// send info to update right panel
+				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$(loadingPan).appendTo($(innerSidePanel));
+				var ajax_data = {"id":rowInfo[0]};
+
+				var url = "{% url get_peak_info_peak_id project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						// $(chart1).appendTo($(innerSidePanel));
+						$(loadingPan).before($(averageIntensityChart));
+						$(loadingPan).remove();
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+		        var url = "{% url get_compounds_from_peak_id project.id analysis.id %}";
+
+		        $.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	var compoundTitle = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Compounds</h5></div>');
+		            	var newDom = '';
+
+		            	for (var i=0;i<response.length;i++){
+		            		if (response[i].length > 1){
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			for (var j=1; j<response[i].length; j++){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;background-color: #EBF6FF"><p style="padding-left:10px;padding-top: 8px;">alias: '+response[i][j]+'</p></div>';
+		            			}
+		            		}
+		            		else {
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            		}
+		            	}
+		            	var scrollBox = $('<div class="span12" style="overflow: auto;margin-left:0px;max-height:300px;background-color:white;border-left: 1px solid whitesmoke;margin-bottom: 30px;" ></div>');
+		            	// $(loadingPan).before($(compoundTitle));
+		            	// $(loadingPan).before($(newDom));
+		            	$(compoundTitle).appendTo($(innerSidePanel));
+		            	$(newDom).appendTo($(scrollBox));
+		            	$(scrollBox).appendTo($(innerSidePanel));
+		            	
+		            	// chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						// var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						// averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						// $(chart1).appendTo($(innerSidePanel));
+						// $(loadingPan).before($(averageIntensityChart));
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+				
+				// $(loadingPan).remove();
+
+		    });
+
+			{% for comparison in comparisons %}
+				var comparisonTable{{ comparison.id }} = $('#comparison{{ comparison.id }}-table').dataTable( {
+					// "sDom": '<"toolbar">frtip',
+					// "sDom": 't',
+					"sDom": '<"comparison-table_wrapper_toolbar"li>rtp',
+					"bPaginate": true,
+					"sPaginationType": "full_numbers",
+					"iDisplayLength": 100,
+					"aLengthMenu": [ 100, 250, 500, 1000 ],
+			});
+			{% endfor %}
+
+			{% for comparison in comparisons %}
+			comparisonTable{{ comparison.id }}.$('tr').click( function () {
+				// get data from the row clicked as an array
+			    var data = comparisonTable{{ comparison.id }}.fnGetData( this );
+			    console.log(data);
+
+			    // remove any row selection from the table
+			    $(comparisonTable{{ comparison.id }}.fnSettings().aoData).each(function (){
+					$(this.nTr).removeClass('row_selected');
+				});
+
+				// set the clicked row as selected
+				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+
+				// extract header information in an array
+				var headerInfo = new Array();
+				$.each(comparisonTable{{ comparison.id }}.dataTableSettings[{{ forloop.counter0 }}+4].aoColumns, function(i,v) {
+					headerInfo.push(v.sTitle);
+				});
+
+				console.log(headerInfo);
+
+				// get the right side panel div that has to be updated
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+
+				// headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
+				// rowInfo = [data[0],data[1],data[2],data[data.length-1]];
+				rowInfo = data;
+				headerInfoToPass = headerInfo;
+
+				console.log(headerInfo);
+				console.log(rowInfo);
+
+				// send info to update right panel
+				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$(loadingPan).appendTo($(innerSidePanel));
+				var ajax_data = {"id":rowInfo[0],"comparison":{{ comparison.id }} };
+
+				var url = "{% url get_peak_info_peak_id project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						// $(chart1).appendTo($(innerSidePanel));
+						$(loadingPan).before($(averageIntensityChart));
+						$(loadingPan).remove();
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+		        var url = "{% url get_compounds_from_peak_id project.id analysis.id %}";
+
+		        $.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: ajax_data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	var compoundTitle = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Compounds</h5></div>');
+		            	var newDom = '';
+
+		            	for (var i=0;i<response.length;i++){
+		            		if (response[i].length > 1){
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			for (var j=1; j<response[i].length; j++){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;background-color: #EBF6FF"><p style="padding-left:10px;padding-top: 8px;">alias: '+response[i][j]+'</p></div>';
+		            			}
+		            		}
+		            		else {
+		            			if (i%2 == 1){
+		            				newDom += '<div class="span12" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            			else{
+		            				newDom += '<div class="span12 red-compound-name-list" style="margin-left:0px;padding-left:13px;min-height:27px;padding-top: 8px;border-top: 2px solid #ACACAC;"><p>'+response[i][0]+'</p></div>';
+		            			}
+		            		}
+		            	}
+		            	var scrollBox = $('<div class="span12" style="overflow: auto;margin-left:0px;max-height:300px;background-color:white;border-left: 1px solid whitesmoke;margin-bottom: 30px;" ></div>');
+		            	// $(loadingPan).before($(compoundTitle));
+		            	// $(loadingPan).before($(newDom));
+		            	$(compoundTitle).appendTo($(innerSidePanel));
+		            	$(newDom).appendTo($(scrollBox));
+		            	$(scrollBox).appendTo($(innerSidePanel));
+		            	
+		            	// chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						// var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						// averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+						// $(chart1).appendTo($(innerSidePanel));
+						// $(loadingPan).before($(averageIntensityChart));
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+				
+				// $(loadingPan).remove();
+
+		    });
+			{% endfor %}
+			// Dynamic creation of individual comparison tables click event
+
+			// End of dynamic creation of individual comparison tables click event
+
+			// Add search handler for search on idTable only
+			$("#search").keyup( function () {
+			// Filter on the column (the index) of this element
+				// idTable.fnFilterAll(this.value);
+				idTable.fnFilter(this.value);
+				pathwayTable.fnFilter(this.value);
+				peakTable.fnFilter(this.value);
+				comparisonTable.fnFilter(this.value);
+				{% for comparison in comparisons %}
+				comparisonTable{{ comparison.id }}.fnFilter(this.value);
+				{% endfor %}
+				console.log(idTable.fnFilter(this.value));
+				console.log("search : "+this.value);
+			});
+
+			function calculPathwayCoverage(data,names){
+				var annotated = parseInt(data[3])*100/parseInt(data[2]);
+				var identified = parseInt(data[4])*100/parseInt(data[2]);
+				var notcoveredNumber = parseInt(data[2])-(parseInt(data[3])+parseInt(data[4]));
+				var notcovered = notcoveredNumber*100/parseInt(data[2]);
+				// var notcovered = parseInt(data[1])-(parseInt(data[2])+parseInt(data[3]));
+				// console.log("annotated : "+annotated);
+				// console.log("identified : "+identified);
+				// console.log("not covered : "+notcovered);
+
+				var serie = [['Annotated',annotated],['Not covered',notcovered],['Identified',identified]];
+				console.log(serie);
+				return serie;
+				// console.log("annotated : "+data[2]);
+				// console.log("identified : "+data[3]);
+				// console.log("not covered : "+data[1]);
+			}
+
+			function getSampleIntensities(data,names){
+				var plotInfo = new Array();
+				// var k = 0;
+				// var tmp = new Array();
+				console.log("names "+names)
+				for ( var i=2 ; i<data.length-1 ; i++ ){
+					// k += 1;
+					console.log("names "+names[i+4]+" value "+data[i]);
+					plotInfo.push([names[i+4],data[i]]);
+				}
+				console.log(plotInfo);
+				return plotInfo;
+			}
+
+			function pieChart(chartWidth, div, data, height){
+				$(div).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	width: chartWidth,
+		            	height: height,
+		            	backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false
+		            },
+		            title: {
+		                text: 'Map coverage'
+		            },
+		            tooltip: {
+		        	    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+		            },
+		            plotOptions: {
+		                pie: {
+		                    allowPointSelect: true,
+		                    cursor: 'pointer',
+		                    dataLabels: {
+		                        enabled: false
+		                    },
+		                    showInLegend: true
+		                }
+		            },
+		            series: [{
+		                type: 'pie',
+		                name: 'Pathway coverage',
+		                data: data
+		            }]
+		        });
+			}
+
+			function averageIntensityChart(chartWidth, div, data){
+				var averageData = new Array();
+				var tmp = new Array();
+				var k = 0;
+				var group = 0;
+				var sum = 0;
+				var average = 0;
+				for (var i=0;i<data.length;i++){
+					k += 1;
+					tmp.push(parseFloat(data[i][1]));
+					console.log("i = "+i+" k = "+k+" tmp "+tmp);
+					if (k==3){
+						// console.log("tmp : "+tmp);
+						for (var j=0;j<tmp.length;j++){
+							sum += tmp[j];
+							// tmp[i] = tmp[i];
+							// console.log("sum "+i+" "+sum);
+						}
+						average = sum/tmp.length;
+						console.log("average : ",average);
+						if (group == 2){ 
+							var deviation = new Array()
+							for (var t=0;t<tmp.length;t++){
+								dev = Math.pow(tmp[t]-average,2);
+								deviation.push(dev);
+							}
+							var sqrDev = 0;
+							for (var t=0;t<deviation.length;t++){
+								sqrDev += deviation[t];
+							}
+							var stdDev = Math.sqrt(sqrDev/tmp.length);
+							console.log("standard dev : "+stdDev);
+							averageData.push(["Wildtype",average,[average-stdDev,average+stdDev]]);
+						// 	sum = 0;
+						// 	tmp = new Array();
+						// 	average = 0;
+						// 	k = 0;
+							console.log("group3");
+						}
+						if (group == 1){ 
+							var deviation = new Array()
+							for (var t=0;t<tmp.length;t++){
+								dev = Math.pow(tmp[t]-average,2);
+								deviation.push(dev);
+							}
+							var sqrDev = 0;
+							for (var t=0;t<deviation.length;t++){
+								sqrDev += deviation[t];
+							}
+							var stdDev = Math.sqrt(sqrDev/tmp.length);
+							console.log("standard dev : "+stdDev);
+							averageData.push(["Complemented",average,[average-stdDev,average+stdDev]]);
+							sum = 0;
+							tmp = new Array();
+							average = 0;
+							k = 0;
+							group += 1;
+							console.log("group2");
+						}
+						if (group == 0){
+							var deviation = new Array()
+							for (var t=0;t<tmp.length;t++){
+								dev = Math.pow(tmp[t]-average,2);
+								deviation.push(dev);
+							}
+							var sqrDev = 0;
+							for (var t=0;t<deviation.length;t++){
+								sqrDev += deviation[t];
+							}
+							var stdDev = Math.sqrt(sqrDev/tmp.length);
+							console.log("standard dev : "+stdDev);
+							averageData.push(["Mutant",average,[average-stdDev,average+stdDev]]);
+							// parseFloat(tmp);
+							// console.log("we are in the group");
+							sum = 0;
+							tmp = new Array();
+							average = 0;
+							k = 0;
+							group += 1;
+							console.log("group1");
+						}
+					}
+				}
+				console.log("averageData : "+averageData);
+				// console.log("averageData length : "+averageData.length);
+				var categories = [];
+				var average = [];
+				var errorBar = [];
+				for (var i=0;i<averageData.length;i++){
+					categories.push(averageData[i][0]);
+					average.push(averageData[i][1]);
+					errorBar.push(averageData[i][2]);
+				}
+				console.log("cat "+categories);
+				console.log("average"+ average);
+				console.log("err "+errorBar);
+				$(div).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	width: chartWidth,
+		            	backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		                events: {
+							click: function() {averagePopUp(categories, average, errorBar);}
+						}
+
+		            },
+		            title: {
+		                text: 'Intensity comparison',
+		            },
+		            exporting: {
+			           	enabled: false,
+			        },
+		            xAxis: {
+						categories: categories,
+						labels: {
+                    		rotation: -45,
+                    		align: 'right'
+                    	}
+					},
+					yAxis: [{ // Secondary yAxis
+						title: {
+							text: 'Relative abundance',
+						// 	style: {
+						// 		color: '#4572A7'
+						// 	}
+						},
+						labels: {
+							formatter: function() {
+								return this.value;
+							},
+							// style: {
+							// 	color: '#4572A7'
+							// }
+						},
+						// opposite: true
+					}],
+		            tooltip: {
+		        	    shared: true,
+		        	    valueDecimals: 2
+		            },
+		            // plotOptions: {
+		            //     pie: {
+		            //         allowPointSelect: true,
+		            //         cursor: 'pointer',
+		            //         dataLabels: {
+		            //             enabled: false
+		            //         },
+		            //         showInLegend: true
+		            //     }
+		            // },
+		            series: [{
+					    showInLegend: false,
+						name: 'Intensity',
+						// color: '#4572A7',
+						type: 'column',
+						data: average,
+						tooltip: {
+							pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
+						}
+					}, { 
+						name: 'Standard deviation',
+						type: 'errorbar',
+						data: errorBar,
+						tooltip: {
+							// formatter:function(a,b,c){
+							// 	// console.log("series : "+series);
+							// 	'<span style="font-weight: bold; color: {series.color}"></span>:<br/>'
+							// },
+							pointFormat:'' //'<span style="font-weight: bold; color: {series.color}">{series.name}</span>:<br/>'
+						}
+					}]
+		        });
+				// console.log(Math.max.apply(null, averageData));
+
+			}
+
+			// temporary AJAX call, it has to be changed when database is populated
+			function getPeaksChromatogram(loadingPan, chartWidth, div, id, polarity, retentionTime, mass){
+
+				var data = {"id":id,"polarity": polarity, "rt":retentionTime,"mass":mass,"ppm":ppm,"rtwindow":rtwindow};
+				var url = "{% url get_peaks %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: data,
+		            success: function(response){
+		            	console.log(response);
+		            	// console.log("houhou")
+		            	console.log(response[0][0]);
+		            	console.log(response[0][1]);
+		            	// Begining of chart
+		            	$(div).highcharts({
+		            		credits : {
+	    						enabled : false
+	    					},
+				        	chart: {
+				                zoomType: 'x',
+				                // spacingRight: 20,
+				                width: chartWidth,
+				                height: 400,
+				                backgroundColor: '#f5f5f5',
+				                plotBackgroundColor: null,
+				                plotBorderWidth: null,
+				                plotShadow: false,
+				                events: {
+									// click: function() {peaksChromatogramPopUp(mass, retentionTime, response);}
+									click: function (event) {
+                        
+				                        if(($(event.target)[0].textContent) != "Reset zoom"){
+				                            // alert('chart click!');
+				                        	peaksChromatogramPopUp(mass, retentionTime, response);
+				                        }
+				                    }
+								}
+				            },
+				            title: {
+				                text: 'Peak chromatogram'
+				            },
+				            subtitle: {
+				                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+				            },
+				            // exporting: {
+				            // 	enabled: true,
+				            // 	filename: 'Peak_' + id + "_chromatogram",
+				            // },
+				            exporting: {
+					           	enabled: false,
+					        },
+				            xAxis: {
+				                title: {
+				                    text: 'Retention time (s)'
+				                },
+		                		showLastLabel: true
+				            },
+				            yAxis: {
+				                title: {
+				                    text: 'Relative abundance'
+				                },
+				            },
+				            tooltip: {
+				                shared: true,
+				                headerFormat: '',
+				                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+				            },
+				            legend: {
+				                enabled: true
+				            },
+				    		plotOptions: {
+				                area: {
+				                    marker: {
+				                        enabled: false,
+				                        symbol: 'circle',
+				                        radius: 2,
+				                        states: {
+				                            hover: {
+				                                enabled: true
+				                            }
+				                        }
+				                    },
+				                    lineWidth: 1,
+				                    shadow: false,
+				                    states: {
+				                        hover: {
+				                            lineWidth: 1
+				                        }
+				                    },
+				                    threshold: null
+				                },
+				                series: {
+	                				fillOpacity: 0.1
+		            			}
+				            },
+				            series: [{
+				                type: 'area',
+				                name: response[0][0],
+				                data : response[0][1]
+				            }]
+			    		});
+						for (var i=1;i<response.length;i++){
+            			console.log("on ajoute une serie!!! "+i);
+	            			$(div).highcharts().addSeries({
+	            				type: 'area',
+			                	name: response[i][0],
+			                	data : response[i][1]
+	            			});	
+	            		}
+	            		console.log("here is the series");
+            			console.log($(div).highcharts().series);
+            			console.log($(div).highcharts().series.length);
+            			for (var i=0;i<$(div).highcharts().series.length;i++){
+            				// console.log($(div).highcharts().series[i]["data"].length)
+            				if ($(div).highcharts().series[i].data.length == 0) {
+            					$(div).highcharts().series[i].hide();
+            				}
+            			}
+		            	// End of chart
+		            $(loadingPan).remove();
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+			}
+
+			function updateIdentificationRightPanel(rowInfo, header, innerSidePanel){
+				$(innerSidePanel).empty();
+				var newDetailsDom = '';
+				var newSummaryDom = '';
+				var db = null;
+				var dbId = null;
+				var summaryPanel = $('<div class="span12" id="identificationSideSummaryPanel" style="margin:0px;"></div>');
+				var detailsPanel = $('<div class="span12" id="identificationSideDetailsPanel" style="margin:0px;"></div>');
+				var summaryIdentificationPanelButton = $('<div class="span6 right-side-panel-button" id="summaryIdentification" style="margin:0px;width:50%;"><span>Summary</span></div>');
+				var detailsIdentificationPanelButton = $('<div class="span6 right-side-panel-button" id="detailsIdentification" style="margin:0px;width:50%;"><span>Details</span></div>');
+				buttonDiv = $('<div class="span12" style="margin:0px;"></div>');
+				$(summaryIdentificationPanelButton).appendTo($(buttonDiv));
+				$(detailsIdentificationPanelButton).appendTo($(buttonDiv));
+				var summaryloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
+				var detailsloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
+				$(detailsloadingPan).appendTo($(detailsPanel));
+				$(summaryloadingPan).appendTo($(summaryPanel));
+
+				// console.log("hihi");
+				// console.log(peakTable.fnGetData(rowInfo[2]-1));
+				// for (var i=0;i<rowInfo.length;i++){
+				// 	if (rowInfo[i] == "kegg"){
+				// 		db = "kegg"
+				// 	}
+				// 	else if (rowInfo[i] == "hmdb"){
+				// 		db = "hmdb"
+				// 	}
+				// 	if (header[i] == "DB id"){
+				// 		dbId = rowInfo[i]
+				// 	} 
+				// 	newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'</p></div>';
+				// 	if (header[i] == "Name" || header[i] == "Identification" || header[i] == "DB"){
+				// 		newSummaryDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'</p></div>';
+				// 	}
+				// }
+				// if (dbId && db){
+				// 	newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div>'
+				// 	if (db == "kegg"){
+				// 		newDom += '<div class="span12" style="margin-left:0px;"><img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+dbId+'.gif" alt="some_text"></div>'
+				// 	}
+				// 	if (db == "hmdb"){
+				// 		newDom += '<div class="span12" style="margin-left:0px;"><img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+dbId+'/image.png" alt="some_text"></div>'
+				// 	}
+				// }
+				$(buttonDiv).appendTo($(innerSidePanel));
+				if (rightPanelPreference == "summary"){
+					$(detailsPanel).hide();
+					$('#summaryIdentification').addClass('active');
+				}
+				else {
+					$(summaryPanel).hide();
+					$('#detailsIdentification').addClass('active');
+				}
+				$('#summaryIdentification').click(function (e) {
+  					e.preventDefault();
+  					$('#identificationSideDetailsPanel').hide();
+  					$('#identificationSideSummaryPanel').show();
+  					$(this).addClass('active');
+  					$('#detailsIdentification').removeClass('active');
+  				});
+				$('#detailsIdentification').click(function (e) {
+  					e.preventDefault();
+  					$('#identificationSideDetailsPanel').show();
+  					$('#identificationSideSummaryPanel').hide();
+  					$(this).addClass('active');
+  					$('#summaryIdentification').removeClass('active');
+  				});
+
+  		// 		$(newDom).appendTo($(detailsPanel));
+				// $(newSummaryDom).appendTo($(summaryPanel));
+				$(detailsPanel).appendTo($(innerSidePanel));
+				$(summaryPanel).appendTo($(innerSidePanel));
+
+				var data = {"id":rowInfo[1]};
+
+				var url = "{% url get_compound_info project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: data,
+		            success: function(response){
+		            	console.log(response);
+		            	var database_info = {};
+		            	for (var i=2;i<response.length;i++){
+		            		console.log(response[i]);
+		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
+		            	}
+		            	newSummaryDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
+		            	newDetailsDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
+		            	for (var index in database_info){
+		            		newSummaryDom += '<option value="'+index+'">'+index+'</option>';
+		            		newDetailsDom += '<option value="'+index+'">'+index+'</option>';
+		            	}
+		            	newSummaryDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Identification</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>';
+		            	newDetailsDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Identification</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">inchikey</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+response[1]+'</div>';
+		            	$(summaryloadingPan).before($(newSummaryDom));
+		            	$(detailsloadingPan).before($(newDetailsDom));
+		            	console.log($('select.db_selector').val());
+		            	name = database_info[String($('select.db_selector').val())][0];
+		            	console.log(database_info);
+		            	var structureDom;
+		            	$('.compound_name').text(name);
+		            	if ($('select.db_selector').val() == "hmdb"){
+		            		console.log("hmdb "+$('select.db_selector').val());
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            	}
+		            	else if ($('select.db_selector').val() == "kegg"){
+		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+		            	}
+		            	else if ($('select.db_selector').val() == "lipidmaps"){
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            	}
+		            	else {
+		            		structureDom = $('<p>Structure not available</p>');
+		            	}
+		            	console.log($('.structure'));
+		            	structureDiv = $('.structure');
+		            	$(structureDom).appendTo($(structureDiv));
+		            	$('select.db_selector').change(function (){
+		            		name = database_info[$(this).val()][0];
+		            		$('.compound_name').text(name);
+		            		$('select.db_selector').val($(this).val());
+		            		if ($(this).val() == "hmdb"){
+		            		console.log("hmdb "+$('select.db_selector').val());
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+			            	}
+			            	else if ($(this).val() == "kegg"){
+			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+			            	}
+			            	else if ($(this).val() == "lipidmaps"){
+		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            		}
+			            	else {
+			            		structureDom = $('<p>Structure not available</p>');
+			            	}
+			            	$(structureDiv).empty();
+			            	$(structureDom).appendTo($(structureDiv));
+			            });
+
+						
+
+		            	// $(newSummaryDom).slideDown('slow');
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+				var data = {"id":rowInfo[1]};
+
+				var url = "{% url get_peak_info project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var chartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
+						var chartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						averageIntensityChartFromCompound(chartWidth, chartSummary, response);
+						averageIntensityChartFromCompound(chartWidth, chartDetail, response);
+						// $(chart1).appendTo($(innerSidePanel));
+						$(summaryloadingPan).before($(chartSummary));
+						$(detailsloadingPan).before($(chartDetail));
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+		        var data = {"id":rowInfo[1],"ppm":ppm,"rtwindow":rtwindow};
+
+				var url = "{% url get_peaks_from_compound project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            // async: false,
+		            data: data,
+		            success: function(response){
+		            	console.log("second ajax call");
+		            	console.log(response);
+		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						var peakChartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
+						var peakChartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						createPeaksChromatogram(chartWidth, peakChartSummary, response);
+						createPeaksChromatogram(chartWidth, peakChartDetail, response);
+
+						$(summaryloadingPan).before($(peakChartSummary));
+						$(detailsloadingPan).before($(peakChartDetail));
+
+						$(summaryloadingPan).remove();
+						$(detailsloadingPan).remove();
+		    //         	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+						// var chartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
+						// var chartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
+
+						// averageIntensityChartFromCompound(chartWidth, chartSummary, response);
+						// averageIntensityChartFromCompound(chartWidth, chartDetail, response);
+						// // $(chart1).appendTo($(innerSidePanel));
+						// $(summaryloadingPan).before($(chartSummary));
+						// $(detailsloadingPan).before($(chartDetail));
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+			}
+
+			function createPeaksChromatogram(chartWidth, div, response){
+
+				// var data = {"id":id,"polarity": polarity, "rt":retentionTime,"mass":mass,"ppm":ppm,"rtwindow":rtwindow};
+            	console.log(response);
+            	polarity = response[0][0]
+            	retentionTime = response[0][1]
+            	mass = response[0][2]
+            	// console.log("houhou")
+            	console.log(response[0][0]);
+            	console.log(response[0][1]);
+            	// Begining of chart
+            	$(div).highcharts({
+            		credits : {
+						enabled : false
+					},
+		        	chart: {
+		                zoomType: 'x',
+		                // spacingRight: 20,
+		                width: chartWidth,
+		                height: 400,
+		                backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		                events: {
+							// click: function() {peaksChromatogramPopUp(mass, retentionTime, response);}
+							click: function (event) {
+                				event.preventDefault();
+		                        if(($(event.target)[0].textContent) != "Reset zoom"){
+		                            // alert('chart click!');
+		                        	peaksChromatogramPopUp(mass, retentionTime, response);
+		                        }
+		                    }
+						}
+		            },
+		            title: {
+		                text: 'Peak chromatogram'
+		            },
+		            subtitle: {
+		                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+		            },
+		            // exporting: {
+		            // 	enabled: true,
+		            // 	filename: 'Peak_' + id + "_chromatogram",
+		            // },
+		            exporting: {
+			           	enabled: false,
+			        },
+		            xAxis: {
+		                title: {
+		                    text: 'Retention time (s)'
+		                },
+                		showLastLabel: true
+		            },
+		            yAxis: {
+		                title: {
+		                    text: 'Relative abundance'
+		                },
+		            },
+		            tooltip: {
+		                shared: true,
+		                headerFormat: '',
+		                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+		            },
+		            legend: {
+		                enabled: true
+		            },
+		    		plotOptions: {
+		                area: {
+		                    marker: {
+		                        enabled: false,
+		                        symbol: 'circle',
+		                        radius: 2,
+		                        states: {
+		                            hover: {
+		                                enabled: true
+		                            }
+		                        }
+		                    },
+		                    lineWidth: 1,
+		                    shadow: false,
+		                    states: {
+		                        hover: {
+		                            lineWidth: 1
+		                        }
+		                    },
+		                    threshold: null
+		                },
+		                series: {
+            				fillOpacity: 0.1
+            			}
+		            },
+		            series: [{
+		                type: 'area',
+		                name: response[1][0],
+		                data : response[1][1]
+		            }]
+	    		});
+				for (var i=2;i<response.length;i++){
+    			console.log("on ajoute une serie!!! "+i);
+        			$(div).highcharts().addSeries({
+        				type: 'area',
+	                	name: response[i][0],
+	                	data : response[i][1]
+        			});	
+        		}
+        		console.log("here is the series");
+    			console.log($(div).highcharts().series);
+    			console.log($(div).highcharts().series.length);
+    			for (var i=0;i<$(div).highcharts().series.length;i++){
+    				// console.log($(div).highcharts().series[i]["data"].length)
+    				if ($(div).highcharts().series[i].data.length == 0) {
+    					$(div).highcharts().series[i].hide();
+    				}
+    			}
+            	// End of chart
+            // $(loadingPan).remove();
+			}
+
+			function averageIntensityChartFromCompound(chartWidth, div, data){
+				// console.log("averageData length : "+averageData.length);
+				var categories = [];
+				var average = [];
+				var errorBar = [];
+				console.log(data);
+				for (var i=0;i<data.length;i++){
+					categories.push(data[i][0]);
+					average.push(data[i][1]);
+					erroBarPoint = [data[i][1]-data[i][2],data[i][1]+data[i][2]]
+					errorBar.push(erroBarPoint);
+				}
+				console.log("cat "+categories);
+				console.log("average"+ average);
+				console.log("err "+errorBar);
+				$(div).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	width: chartWidth,
+		            	backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		                events: {
+							click: function() {averagePopUp(categories, average, errorBar);}
+						}
+
+		            },
+		            title: {
+		                text: 'Intensity comparison',
+		            },
+		            exporting: {
+			           	enabled: false,
+			        },
+		            xAxis: {
+						categories: categories,
+						labels: {
+                    		rotation: -45,
+                    		align: 'right'
+                    	}
+					},
+					yAxis: [{ // Secondary yAxis
+						title: {
+							text: 'Relative abundance',
+						// 	style: {
+						// 		color: '#4572A7'
+						// 	}
+						},
+						labels: {
+							formatter: function() {
+								return this.value;
+							},
+							// style: {
+							// 	color: '#4572A7'
+							// }
+						},
+						// opposite: true
+					}],
+		            tooltip: {
+		        	    shared: true,
+		        	    valueDecimals: 2
+		            },
+		            // plotOptions: {
+		            //     pie: {
+		            //         allowPointSelect: true,
+		            //         cursor: 'pointer',
+		            //         dataLabels: {
+		            //             enabled: false
+		            //         },
+		            //         showInLegend: true
+		            //     }
+		            // },
+		            series: [{
+					    showInLegend: false,
+						name: 'Intensity',
+						// color: '#4572A7',
+						type: 'column',
+						data: average,
+						tooltip: {
+							pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
+						}
+					}, { 
+						name: 'Standard deviation',
+						type: 'errorbar',
+						data: errorBar,
+						tooltip: {
+							// formatter:function(a,b,c){
+							// 	// console.log("series : "+series);
+							// 	'<span style="font-weight: bold; color: {series.color}"></span>:<br/>'
+							// },
+							pointFormat:'' //'<span style="font-weight: bold; color: {series.color}">{series.name}</span>:<br/>'
+						}
+					}]
+		        });
+				// console.log(Math.max.apply(null, averageData));
+
+			}
+
+			function updateRightPanel(rowInfo, header, innerSidePanel){
+				$(innerSidePanel).empty();
+				var newDom = "";
+				for (var i=0;i<rowInfo.length;i++){
+					if (header[i] == "Coverage"){
+						newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'%</p></div>';
+					}
+					else {
+					newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'</p></div>';
+					}
+				}
+				$(newDom).appendTo($(innerSidePanel));
+			}
+
+			function averagePopUp(categories, average, errorBar){
+				var $modal = $("#full-width");
+				
+				var modalBody = $modal.find('.modal-body');
+				var modalFooter = $modal.find('.modal-footer');
+				var modalHeader = $modal.find('.modal-header');
+
+
+
+
+				$(modalHeader).empty();
+				$(modalLabel).empty();
+				$(modalBody).empty();
+				$(modalFooter).empty();
+
+				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
+				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
+				var modalLabel = $modal.find('#myModalLabel');
+				$(modalLabel).text("Intensity comparison");
+				var chartWidth = $modal.width(); 
+				$(modalBody).highcharts({
+					credits : {
+						enabled : false
+					},
+		            chart: {
+		            	width: chartWidth,
+		            	// backgroundColor: '#f5f5f5',
+		                plotBackgroundColor: null,
+		                plotBorderWidth: null,
+		                plotShadow: false,
+		    //             events: {
+						// 	click: function() {averagePopUp(categories, average, errorBar);}
+						// }
+
+		            },
+		            title: {
+		                text: 'Intensity comparison',
+		            },
+		            exporting: {
+			           	enabled: true,
+			           	filename: 'intensity_comparison'
+			        },
+		            xAxis: {
+						categories: categories,
+						labels: {
+                    		rotation: -45,
+                    		align: 'right'
+                    	}
+					},
+					yAxis: [{ // Secondary yAxis
+						title: {
+							text: 'Relative abundance',
+						// 	style: {
+						// 		color: '#4572A7'
+						// 	}
+						},
+						labels: {
+							formatter: function() {
+								return this.value;
+							},
+							// style: {
+							// 	color: '#4572A7'
+							// }
+						},
+						// opposite: true
+					}],
+		            tooltip: {
+		        	    shared: true,
+		        	    valueDecimals: 2
+		            },
+		            // plotOptions: {
+		            //     pie: {
+		            //         allowPointSelect: true,
+		            //         cursor: 'pointer',
+		            //         dataLabels: {
+		            //             enabled: false
+		            //         },
+		            //         showInLegend: true
+		            //     }
+		            // },
+		            series: [{
+					    showInLegend: false,
+						name: 'Intensity',
+						// color: '#4572A7',
+						type: 'column',
+						data: average,
+						tooltip: {
+							pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
+						}
+					}, { 
+						name: 'Standard deviation',
+						type: 'errorbar',
+						data: errorBar,
+						tooltip: {
+							// formatter:function(a,b,c){
+							// 	// '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: {point.low}'
+							// }
+							pointFormat:'' //'<span style="font-weight: bold; color: {series.color}">{series.name}</span>:<br/>'
+						}
+					}]
+		        });
+				$modal.modal();
+			}
+
+			function peaksChromatogramPopUp(mass, retentionTime, response){
+				console.log("mass: "+mass);
+				console.log("retentionTime: "+retentionTime);
+				console.log("response: "+response.length);
+				var $modal = $("#full-width");
+				var modalBody = $modal.find('.modal-body');
+				var modalFooter = $modal.find('.modal-footer');
+				var modalHeader = $modal.find('.modal-header');
+
+
+				
+
+
+				$(modalHeader).empty();
+				$(modalLabel).empty();
+				$(modalBody).empty();
+				$(modalFooter).empty();
+
+				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
+				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
+				// var wrapper = $('<div class="row-fluid"></div>');
+				var modalLabel = $modal.find('#myModalLabel');
+				$(modalLabel).text("Peaks chromatogram - RT: "+parseFloat(retentionTime).toFixed(1)+" (s) - RT window: "+rtwindow+" (s)");
+				var chartWidth = $modal.width()/4;
+				var j = 0;
+				for (var i=1;i<response.length;i++){
+					if (j==0){
+						// var span = $('<div class="span12" style="margin:auto;float:none;"></div>');
+						var row = $('<div class="row" style="margin-left:0px;margin-bottom:0px"></div>');
+					}
+					var div = $('<div class="span3" style="margin:0px;width:'+chartWidth+'px"></div>');
+					$(div).highcharts({
+	            		credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                // spacingRight: 5,
+			                width: chartWidth,
+			                height: 300,
+			                backgroundColor: '#ffffff',
+			                plotBackgroundColor: null,
+			                plotBorderWidth: null,
+			                plotShadow: false,
+			    //             events: {
+							// 	click: function() {peaksChromatogramPopUp(mass, retentionTime, response);}
+							// }
+			            },
+			            title: {
+			                text: 'Peak chromatogram'
+			            },
+			            subtitle: {
+			                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: 'Peak_' + response[i][0] + "_chromatogram_rt_" + parseFloat(retentionTime).toFixed(3),
+			            },
+			         //    exporting: {
+				        //    	enabled: false,
+				        // },
+			            xAxis: {
+			                title: {
+			                    text: 'Retention time (s)'
+			                },
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Relative abundance'
+			                },
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '',
+			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+			            },
+			            legend: {
+			                enabled: true
+			            },
+			    		plotOptions: {
+			                area: {
+			                    marker: {
+			                        enabled: false,
+			                        symbol: 'circle',
+			                        radius: 2,
+			                        states: {
+			                            hover: {
+			                                enabled: true
+			                            }
+			                        }
+			                    },
+			                    lineWidth: 1,
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                series: {
+                				fillOpacity: 0.1
+	            			}
+			            },
+			            series: [{
+			                type: 'area',
+			                name: response[i][0],
+			                data : response[i][1]
+			            }]
+		    		});
+					$(div).appendTo($(row));
+					j += 1;
+					console.log("usual j = "+j+" i = "+i);
+					if (i == response.length-1 && j != 4){
+						// $(span).appendTo($(row));
+						$(row).appendTo($(modalBody));
+						console.log("j = "+j+" i  = "+i);
+					}
+					if (j == 4){
+						// $(span).appendTo($(row));
+						$(row).appendTo($(modalBody));
+						j = 0;
+						console.log("j = 4");
+					}
+				}
+				// $(wrapper).appendTo($(modalBody));
+				$(modalBody).css('overflow', 'auto');
+				var windowHeight = $(window).height() - (25 * $(window).height() / 100);
+				console.log("windowHeight "+windowHeight)
+				$(modalBody).css('max-height', windowHeight);
+				$modal.modal();
+				console.log("modal height "+$(modalBody).height());
+				// var maxModalHeight = $modal.height() + 401 + 401;
+				// console.log("max modal height: "+maxModalHeight);
+				// console.log("modal top: "+$modal.css('top'));
+				// console.log("window-height: "+$(window).height());
+				// var windowHeight = $(window).height() - (25 * $(window).height() / 100)
+				// console.log("window-height: "+windowHeight);
+				// $(modalBody).css('max-height', 871);
+				// if (maxModalHeight-401 > windowHeight){
+				// 	$(modalBody).css('max-height', 470);
+				// }
+				// if (maxModalHeight < windowHeight){
+				// 	$modal.css('max-height', 'none');
+				// 	$(modalBody).css('max-height', 'none');
+				// }
+				// $modal.modal();
+			}
+
+		});
+		</script>
+	</head>
+	<body style="padding-top:0px;" data-spy="scroll" data-target=".bs-docs-sidenav">
+		<div class="navbar navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            			<span class="icon-bar"></span>
+            			<span class="icon-bar"></span>
+            			<span class="icon-bar"></span>
+					</a>
+					<a class="brand" href="">PiMP</a>
+					<div class="nav-collapse">
+						<ul class="nav">
+							<li><a href="">My projects</a></li>
+							<li><a href="">My account</a></li>
+							<li><a href="">logout</a></li>
+							<li><a href="">About</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<header class="subhead" style="padding-top:40px">
+			<div class="container" style="padding:5px;">
+				<div class="span2">
+					<a href=""><img src="{{ STATIC_URL }}img/logo_blue_white_result.png" alt="index"></a>
+				</div>
+				<div class="span6" style="margin-top: 27px;">
+					<form class="navbar-search pull-left">
+  						<input type="text" class="search-query" placeholder="Search" id="search">
+  						<!-- <button class="btn btn-primary btn-create-project" type="submit" style="margin-left:10px;float:none;margin-left: 25px;padding-left: 20px;padding-right: 20px;"> --><img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;"><!-- <i class="icon-share icon-white"></i> --><!-- </button> -->
+					</form>
+				</div>
+				<div class="span3" style="margin-top: 32px;">
+					<p style="float:right;">{{ user.first_name }} {{ user.last_name }}</p>
+				</div>
+				<!-- <h1 class="unimg"></h1> -->
+				<!-- <!div class="gpimg"><!/div> -->
+			</div>
+			<div class="navtable" style="background-color:#f5f5f5;width:100%;padding:0px;text-align:center;height:40px;">
+				<!-- <nav class="navbar-collapse collapse"> -->
+				<!-- <div class="span12" style="text-align:center;"> -->
+					<div id="tool_button"><img src="{{ STATIC_URL }}img/tool_icon.png" alt="tools"><span id="tool_button_text">Tools</span><img src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
+					<ul id="tabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
+						<li id="summary-li" style="float:left;margin:0px;height:37px;"><a href="#summary" style="float:left;margin:0px;">Summary</a></li>
+						<li id="identification-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#identification" style="float:left;">Identification</a></li>
+						<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Pathway</a></li>
+						<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
+						<li id="peaks-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#peaks" style="float:left;">Peaks</a></li>
+						<li class="dropdown" style="float:left;margin:0px;height:37px;margin-left:20px;">
+    						<a class="dropdown-toggle" data-toggle="dropdown" href="#">More<b id="nav-bar-caret" class="caret"></b></a>
+    						<ul class="dropdown-menu" id="dropdown-comparison-menu" style="min-width:100px;">
+    							{% for comparison in comparisons %}
+    								<li id="comparison{{ comparison.id }}-li" style="margin:0px;"><a href="#comparison{{ comparison.id }}" class="dropdown-comparison-menu-a" style="float:left;">{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</a></li>
+						        {% endfor %}
+							</ul>
+						</li>
+					</ul>
+					<div id="right-side-button"><img id="right-arrow" class="show-right" src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
+				<!-- </div> -->
+				<!-- </nav> -->
+			</div>
+		</header>
+		<div id="tool_menu_bar" class="left_menu">
+			<div class="tool_menu_inner">
+				<div class="home_button" id="home_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/home.png" alt="tools" ><span id="tool_button_text">Home</span></div>
+				</div>
+				<div class="inner_button" id="preferences"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/preference_icon.png" alt="tools" ><span id="tool_button_text">Preferences</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/cluster_icon.png" alt="tools" ><span id="tool_button_text">Cluster</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/sort_icon.png" alt="tools" ><span id="tool_button_text">Sort</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/pca_icon.png" alt="tools" ><span id="tool_button_text">PCA</span></div>
+				</div>
+				<div class="side_footer">
+					<span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span>
+				</div>
+			</div>
+				<!-- {% block content %} {% endblock %} -->
+		</div>
+		<div id="right-summary-panel" class="right-panel" style="padding-left:5px;">
+							<!-- <div class="row" style="margin:0px;"> -->
+				<div id="close-right-summary-panel" style="-webkit-transform: rotate(-45deg);margin-top:5px;margin-right:5px;">
+					<!-- <img src="{{ STATIC_URL }}img/plus-icon-black.png" alt="tools"> -->
+				</div>
+				<div id="right-summary-panel-inner" class="row-fluid" style="">
+
+				<!-- </div> -->
+				<!-- <div class="home_button" id="home_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/home.png" alt="tools" ><span id="tool_button_text">Home</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/cluster_icon.png" alt="tools" ><span id="tool_button_text">Cluster</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/sort_icon.png" alt="tools" ><span id="tool_button_text">Sort</span></div>
+				</div>
+				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/pca_icon.png" alt="tools" ><span id="tool_button_text">PCA</span></div>
+				</div>
+				<div class="side_footer">
+					<span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span>
+				</div> -->
+			</div>
+		</div>
+		<!-- <div id="right-summary-panel-arrow" class="right" style="-webkit-transform: rotate(-45deg);">
+			<img src="{{ STATIC_URL }}img/plus-icon-black.png" alt="tools">
+		</div> -->
+		<div class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:175px;z-index:6;">
+			<div class="tab-content" id="general-tab-content">
+				<div id="home" class="tab-pane  active">
+					<div class="row" style="margin:0px;">
+						<!div class="myspan12" style="height:100%;">
+						<!-- <div class="summary-content"> -->
+							<!-- <div class="span1">
+							</div> -->
+							<div class="span12" style="width:100%;margin:0px;">
+								<div class='home-title' style='text-align:center;background-color:whitesmoke;'>
+									<h2 style="margin-top:0px">PiMP data exploration environment</h2>
+									<h3 style="margin-bottom:0px;">User guide</h3>
+								</div>
+								<!-- <div class="home_img">
+									<img src="{{ STATIC_URL }}img/PiMP_home.png" alt="rien">
+								</div> -->
+							</div>
+							
+							<!-- <div class="span1"></div> -->
+						<!-- </div> -->
+						<!/div>
+					</div>
+					<div class="row" style="margin-left:0px;">
+						<div class="row-fluid">
+							<div class="span3 bs-docs-sidebar" style="">
+									<div id="home-side-nav" class="bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="140">
+										<div class="row-fluid">
+											<div class="span12">
+												<ul  class="nav nav-list">
+												  <li class="nav-header">Navigation</li>
+												  <li class="active"><a href="#">General</a></li>
+												  <li><a href="#">Tools</a></li>
+												  <li><a href="#">Summary Panel</a></li>
+												  <li><a href="#">Data Panels</a></li>
+												</ul>
+											</div>
+										</div>
+									</div>
+							</div>
+							<div class="span9" style="float:right;">
+								<!-- Just for test -->
+								<div class="row-fluid">
+									<h3>General</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h3>Tools</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<div style="margin-left:30px;">
+									<h4>Cluster</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Sort</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>PCA</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									</div>
+									<h3>Summary Panel</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h3>Data Panels</h3>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<div style="margin-left:30px;">
+									<h4>Identification</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Pathway</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Comparison</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									<h4>Peaks</h4>
+									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+									</div>
+									<div class="" id="pca_test"></div>
+									{% for comparison in comparisons %}
+										<div class="volcano-plot" id="comparison{{ comparison.id }}-volcano-plot"></div>
+									{% endfor %}
+								</div>
+
+							</div>
+						</div>
+					</div>
+					<!-- <div class="row" style="margin-left:0px;height:100%;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid">
+								<div class="spreadsheet-content">
+								</div>
+							</div>
+						</div>
+						<div class="myspan3">
+							<div class="right-side-bar-inner">
+							</div>
+						</div>
+					</div> -->
+				</div>
+				<div id="summary" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;">
+						<div class="myspan12" style="height:100%;">
+							<div class="container-fluid">
+								<div class="row-fluid">
+								<!-- <div class="summary-content"> -->
+									<div class="span1">
+									</div>
+									<!-- pathway span -->
+									<div class="span5">
+										<div class="row-fluid" id="pathway-row-fluid">
+											<div id="right-summary-panel-arrow" style="">
+												<img src="{{ STATIC_URL }}img/blue-arrow.png" alt="tools">
+											</div>
+											<div id="first-pathway" class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/pathway_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3 class="right-summary-info">Linoleic Acid metabolism</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Coverage: 53%</p>
+														<p>Compounds identified: 6 </p>
+													</div>
+													<div class="span6">
+														<p>Compounds in map: 44</p>
+														<p>Compounds annotated: 17</p>
+														
+													</div>
+												</div>
+											</div>
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/pathway_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3 class="right-summary-info">Carbohydrate metabolism</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Coverage: 53%</p>
+														<p>Compounds identified: 6 </p>
+													</div>
+													<div class="span6">
+														<p>Compounds in map: 44</p>
+														<p>Compounds annotated: 17</p>
+														
+													</div>
+												</div>
+											</div>
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/pathway_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3 class="right-summary-info">Carbohydrate metabolism</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Coverage: 53%</p>
+														<p>Compounds identified: 6 </p>
+													</div>
+													<div class="span6">
+														<p>Compounds in map: 44</p>
+														<p>Compounds annotated: 17</p>
+														
+													</div>
+												</div>
+											</div>
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/pathway_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3 class="right-summary-info">Linoleic Acid metabolism</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Coverage: 53%</p>
+														<p>Compounds identified: 6 </p>
+													</div>
+													<div class="span6">
+														<p>Compounds in map: 44</p>
+														<p>Compounds annotated: 17</p>
+														
+													</div>
+												</div>
+											</div>
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/pathway_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3 class="right-summary-info">Linoleic Acid metabolism</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Coverage: 53%</p>
+														<p>Compounds identified: 6 </p>
+													</div>
+													<div class="span6">
+														<p>Compounds in map: 44</p>
+														<p>Compounds annotated: 17</p>
+														
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<!-- id and comparison span -->
+									<div class="span5">
+										<div class="row-fluid">
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/id_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3>Compounds identification</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Compounds identified: 68</p>
+													</div>
+													<div class="span6">
+														<p>Compounds annotated: 317</p>
+														
+													</div>
+												</div>
+											</div>
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/comparison_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3>Glucose</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Log fold change: 2.53</p>
+														<p>Adjusted Pvalue : 0.0124</p>
+													</div>
+													<div class="span6">
+														<p>Isomers: 5</p>
+														<p>Standard : <span style="color: green;font-weight:bold;">✓</span></p>
+													</div>
+												</div>
+											</div>
+											<div class="span12 project-span" style="background-color:#f5f5f5;margin-left:0px;">
+												<div class="row-fluid" style="text-align:center;margin-top:5px">
+													<img src="{{ STATIC_URL }}img/comparison_img.png" alt="tools">
+												</div>
+												<div class="row-fluid" style="text-align:center;">
+													<h3>Leucine</h3> 
+												</div>
+												<div class="row-fluid" style="margin-top:5px;background-color:#ffffff;border-radius:3px;">
+													<div class="span6">
+														<p>Log fold change: 2.53</p>
+														<p>Adjusted Pvalue : 0.0124</p>
+													</div>
+													<div class="span6">
+														<p>Isomers: 5</p>
+														<p>Standard : <span style="color: red;font-weight:bold;">X</span></p>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="span1"></div>
+								<!-- </div> -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="identification" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<!-- <table class="table table-striped"> -->
+									<table id="identification-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						                  <th>Compound id</th>
+						                  <th>ID</th>
+						                  <th>Peak id</th>
+						                  <th>Name</th>
+						                  <th>Formula</th>
+						                  <!-- <th>DB</th>
+						                  <th>DB id</th> -->
+						                  <th>ppm</th>
+						                  <!-- <th>Adduct</th> -->
+						                  <th>Identification</th>
+						                  <th>Polarity</th>
+						                </tr>
+						              </thead>
+						              <tbody>
+					              		{% for compound in compounds|slice:":2000" %}
+					              		<tr><td>{{ compound.secondaryId }}</td>
+					              			<td>{{ compound.id }}</td>
+					              			<td>{{ compound.peak.secondaryId }}</td>
+					              			<td>{{ compound.repositorycompound_set.all|compoundname }}</td>
+					              			<td>{{ compound.formula }}</td>
+					              			<td>{{ compound.ppm }}</td>
+					              			<td>{% ifequal compound.identified "False" %}Annotated{% else %}Identified{% endifequal %}</td>
+					              			<td>{{ compound.peak.polarity }}
+						              	</tr>
+						              	{% endfor %}
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="pathway" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="pathway-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						                  <th>Name</th>
+						                  <th>ID</th>
+						                  <th>Number compounds</th>
+						                  <th>Annotated</th>
+						                  <th>Identified</th>
+						                  <th>Coverage</th>
+						                </tr>
+						              </thead>
+						              <tbody>
+						              	{% for pathway in pathway_list %}
+						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
+						              		<td>{{ pathway.0.id }}</td>
+						              		<td>{{ pathway.0.compoundNumber }}</td>
+						              		<td>{{ pathway.2 }}</td>
+						              		<td>{{ pathway.1 }}</td>
+						              		<td>{{ pathway.3 }}</td></tr>
+						              	{% endfor %}
+						              </tbody>
+						              <!-- test -->
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="comparison" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="comparison-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						               	  <th>Peak id</th>
+						                  {% for comparison in comparisons %}
+						                  <th>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }} (logfc)</th>
+						                  {% endfor %}
+						                 </tr>
+						              </thead>
+						              <tbody>
+						              	{% for peak in peak_comparison_list %}
+						              	<tr><td>{{ peak.secondaryId }}</td>
+						              		{% for comp in peak.peakdtcomparison_set.all %}
+						              		 <td>{% if comp.logFC != 0 %}{{ comp.logFC }}{% else %}NA{% endif %}</td>
+						              		 {% endfor %}
+						              	</tr>
+						                {% endfor %}	
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="peaks" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="peak-table" class="table table-striped">
+						              <thead>
+						                <tr>
+
+						               	  <th rowspan="2">Peak id</th>
+						                  <th rowspan="2">Mass</th>
+						                  <th rowspan="2">RT</th>
+						                  {% for member in member_list %}
+						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
+						                  {% endfor %}
+						                  <th rowspan="2">Polarity</th>
+						                 </tr>
+						                 <tr>
+						                  {% for sublist in sample_list %}
+						                  	{% for sample in sublist %}
+						                  	<th rowspan="1">{{ sample.name }}</th>
+						                  	{% endfor %}
+						                  {% endfor %}
+						                </tr>
+						              </thead>
+						              <tbody>
+						              	{% for peak,intensityLists in peak_table.items %}
+						              	<tr><td>{{ peak.secondaryId }}</td>
+						              		<td>{{ peak.mass }}</td>
+						              		<td>{{ peak.rt }}</td>
+						              		{% for intensityList in intensityLists %}
+						              		 {% for intensity in intensityList %}
+						              		 <td>{% if intensity.intensity != 0 %}{{ intensity.intensity }}{% else %}NA{% endif %}</td>
+						              		 {% endfor %}
+						                  	{% endfor %}
+						                  	<td>{{ peak.polarity }}</td></tr>
+						                {% endfor %}	
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				{% for comparison in comparisons %}
+    			<div id="comparison{{ comparison.id }}" class="tab-pane">
+					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
+						<div class="myspan9" style="height:100%;">
+							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
+								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+									<table id="comparison{{ comparison.id }}-table" class="table table-striped">
+						              <thead>
+						                <tr>
+						               	  <th>Peak id</th>
+						                  <th>Log FC</th>
+						                  <th>P-value</th>
+						                  <th>Adjusted P-value</th>
+						                  <th>Log Odds</th>
+						                 </tr>
+						              </thead>
+						              <tbody>
+						              	{% for peak in peak_comparison_list %}
+						              	<tr><td>{{ peak.secondaryId }}</td>
+						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
+						              		<td>{{ compinfo.logFC }}</td>
+						              		<td>{{ compinfo.pValue }}</td>
+						              		<td>{{ compinfo.adjPvalue }}</td>
+						              		<td>{{ compinfo.logOdds }}</td>
+						              		{% endwith %}
+						              	</tr>
+						                {% endfor %}	
+						              </tbody>
+						            </table>
+								</div>
+							</div>
+						</div>
+						<div class="myspan3" style="height:100%;">
+							<div class="row-fluid">
+								<div class="right-side-bar-inner">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>			
+				{% endfor %}
+			</div>
+		</div>
+		<div id="full-width" class="modal container hide fade" tabindex="-1" style="top: 10%">
+			<!div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			  <div class="modal-header">
+			    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			    <h3 id="myModalLabel">Kegg test</h3>
+			  </div>
+			  <!div class="modal-body" style="max-height: none;padding: 0px;">
+			  <div class="modal-body" style="padding: 0px;">
+			  	<!div style="height:100%, width:100%">
+			  	<!embed src="{{ groups.0.attribute_set.all.0.ticgroup.negtic.ticplot }}" type="image/svg+xml" id="myviewport"/>
+			  <!/div>
+			    <!svg id="circle" height="260" width="260" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
+			  		<!image x="0" y="0" height="560" width="560"  xlink:href="{{ STATIC_URL }}chart.svg" />
+				<!/svg>
+			  </div>
+			  <div class="modal-footer">
+			    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+			  </div>
+		</div>
+	</body>
+</html>

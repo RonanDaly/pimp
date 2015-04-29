@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style type="text/css">
+.carousel-indicators {
+position: absolute;
+top: 15px;
+right: 15px;
+z-index: 5;
+margin: 0;
+list-style: none;
+}
+.carousel-indicators li {
+display: block;
+float: left;
+width: 10px;
+height: 10px;
+margin-left: 5px;
+text-indent: -999px;
+background-color: #ccc;
+background-color: rgba(255, 255, 255, 0.25);
+border-radius: 5px;
+}
+.carousel-indicators .active {
+background-color: #fff;
+}
+</style>
+
+<script type="text/javascript">
+$(document).ready(function() {
+  var height = $('.carousel-inner').height();
+  var width = $('.carousel-inner').width();
+  console.log('height '+height+' width '+width);
+  $('#animation').width(width);
+  $('#animation').height(height);
+  $(function(){
+      $('.carousel').carousel({
+        interval: 8000
+      }).on('slide', function (e) {
+       var xx = $(this);
+       // console.log(xx);
+       setTimeout(function() {
+        // console.log(xx.find('.active'));
+        if (xx.find('.active').next().attr('id') == 'video'){
+          console.log("hahah");
+          $('#animation').get(0).load();
+          $('#animation').get(0).play();
+          // var v = document.getElementsByTagName("video")[0];
+          // console.log(v);
+          // v.play();
+        }
+       } , 0);
+    });
+  });
+  $('#animation').get(0).play();
+  // var v = document.getElementsByTagName("video")[0];
+  // v.play();
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="span9" style="float:none;margin: 0 auto;">
+  <div id="myCarousel" class="carousel slide">
+    <ol class="carousel-indicators">
+      <li data-target="#myCarousel" data-slide-to="0"></li>
+      <li data-target="#myCarousel" data-slide-to="1"></li>
+      <li data-target="#myCarousel" data-slide-to="2" class="active"></li>
+    </ol>
+    <div class="carousel-inner">
+      <div class="item">
+        <img src="{{ STATIC_URL }}/img/index1.png" alt="">
+        <div class="carousel-caption">
+          <h4>PiMP</h4>
+          <!-- <p>Make metabolomics easy!</p> -->
+        </div>
+      </div>
+      <div class="item">
+        <img src="{{ STATIC_URL }}/img/index2.png" alt="">
+        <div class="carousel-caption">
+          <h4>PiMP</h4>
+          <!-- <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p> -->
+        </div>
+      </div>
+      <div class="item active" id="video">
+        <!-- <video width="320" height="240" controls> -->
+        <video id="animation" width="870" height="580">
+          <source src="{{ STATIC_URL }}/img/animated_vectors_1.mp4" type="video/mp4">
+          <!-- <source src="movie.ogg" type="video/ogg"> -->
+          Your browser does not support the video tag.
+        </video>
+        <!-- <div class="carousel-caption">
+          <h4>PiMP</h4>
+          <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+        </div> -->
+      </div>
+      <!-- <div class="item">
+        <img src="{{ STATIC_URL }}/img/ex3.jpg" alt="">
+        <div class="carousel-caption">
+          <h4>Third Thumbnail label</h4>
+          <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+        </div>
+      </div> -->
+    </div>
+    <!-- <a class="left carousel-control" href="#myCarousel" data-slide="prev">‹</a>
+    <a class="right carousel-control" href="#myCarousel" data-slide="next">›</a> -->
+  </div>
+</div>
+{% endblock %}

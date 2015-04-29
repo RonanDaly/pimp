@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>PiMP</title>
+		<script src="http://code.jquery.com/jquery-latest.js"></script>
+		<!script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"><!/script>
+		{% block head %} {% endblock %}
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="shortcut icon" href="{{ STATIC_URL }}/img/logo_blue_white_icon_large.png">
+		{% load staticfiles %}
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/base.css" media="screen"/>
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/bootstrap/css/bootstrap2.css" media="screen"/>
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/bootstrap/css/bootstrap-responsive2.css" media="screen"/>
+		<!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-image-gallery.min.css">
+    	<link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.fileupload-ui.css">
+    	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
+    	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+		<style type="text/css">
+			h1.unimg{
+				position: relative;
+				background: transparent;
+				background-image: url({{ STATIC_URL }}/img/PiMP_logo_no_background.png);
+				background-repeat:no-repeat;
+				/*background-size: 170px 145px;*/
+				background-size: 110px 110px;
+				width: 110px;
+				height: 110px;
+				left: 0px;
+				}
+			div.gpimg{
+				position: absolute;
+				background: transparent;
+				background-image: url({{ STATIC_URL }}/img/logo_white.png);
+				background-repeat:no-repeat;
+				background-size: 100px 68px;
+				width: 100px;
+				height: 68px;
+				right: 10px;
+				top:50px;
+				}
+			.navbar-inner{
+				background-color: rgba(236,234,232, 1);
+				}
+		</style>
+		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}js/prefixfree.min.js"></script>
+	</head>
+
+	<body>
+		<div class="navbar navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            			<span class="icon-bar"></span>
+            			<span class="icon-bar"></span>
+            			<span class="icon-bar"></span>
+					</a>
+					<a class="brand" href="{% url 'index' %}">PiMP</a>
+					<div class="nav-collapse">
+						<ul class="nav">
+							{% if user.is_authenticated %}
+							<li><a href="{% url 'project_summary' %}">My projects</a></li>
+							<li><a href="{% url 'profile' %}">My account</a></li>
+							<li><a href="{% url 'auth_logout' %}">logout</a></li>
+							{% else %}
+							<li><a href="{% url 'auth_login' %}">Login</a></li>
+							<!-- <li><a href="{% url 'registration_register' %}">Register</a></li> -->
+							{% endif %}
+							<li><a href="{% url 'about' %}">About</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="wrapper">
+			<header class="greenlantern subhead">
+				<div class="container">
+					<h1 class="unimg"></h1>
+					<!div class="gpimg"><!/div>
+				</div>
+			</header>
+			<div class="container">
+					{% block content %} {% endblock %}
+			</div>
+			<div class="push"></div>
+		</div>
+		<footer class="footer">
+			<div class="container">
+				<p>
+					Designed and built by Glasgow Polyomics <a href="http://twitter.com/polyomics">@polyomics</a>.
+				</p>
+				<ul class="footer-links">
+					<li>
+						<a href="http://www.gla.ac.uk/colleges/mvls/research/gpf/">Polyomics website</a>
+					</li>
+					<li class="muted">·</li>
+					<li>
+						<a href="#">Licence</a>
+					</li>
+					<li class="muted">·</li>
+					<li>
+						<a href="#">Credits</a>
+					</li>
+			</div>
+		</footer>
+	</body>
+</html>

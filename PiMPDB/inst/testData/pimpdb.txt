@@ -1,0 +1,5 @@
+dbuser: pimpuser
+dbname: pimp_test
+dbpassword: pimppass
+dbtype: mysql
+dbhost: localhost

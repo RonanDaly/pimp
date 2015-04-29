@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/defaultTheme.css" media="screen" />
+<script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+<!script type="text/javascript" src="{{ STATIC_URL }}js/jquery.fixedheadertable.min.js"><!/script>
+<!script type="text/javascript" src="{{ STATIC_URL }}js/table.js"><!/script>
+<!script type="text/javascript" src="{{ STATIC_URL }}js/dragndrop.js"><!/script>
+<!script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.10.0.custom.min.js"><!/script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+  var previous;
+  var combination = {};
+  var i = 0;
+  var data = jQuery.parseJSON('{{ ref|safe }}');
+  for (dataCount = data.length; i < dataCount; i++) {
+    data[i].forEach(function(j , el){
+      combination[j] = [];
+    });
+  }
+  console.log(combination);
+
+  $('#id_attributes-0-attribute2').empty();
+
+  function removeByValue(arr, val) {
+    for(var i=0; i<arr.length; i++) {
+        if(arr[i] == val) {
+            arr.splice(i, 1);
+            break;
+        }
+    }
+}
+
+  function changeOptionSelected(element) {	
+	  var str = "";
+
+    // console.log("select change");
+    console.log("previous: "+previous)
+    var selectId = $(element).attr('id');
+    var selectedOption = $('#' + selectId + ' option:selected')[0];
+    var value = $(selectedOption).val();
+    var selectFirst = $(element).parent().parent().find('select')[0];
+    var selectToFill = $(element).parent().parent().find('select')[1];
+    var titleField = $(element).parent().parent().find('input')[0];
+    console.log("value: "+value);
+
+    // if the "select" element is not the 2nd element "select" of the comparison div
+    if (selectId != $(selectToFill).attr('id') && value != "select"){
+      var i = 0;
+      var list = new Array();
+      var data = jQuery.parseJSON('{{ ref|safe }}');
+      for (dataCount = data.length; i < dataCount; i++) {
+        data[i].forEach(function(j , el){
+          if (j == value){
+            list = data[i];
+          }
+        });
+      }
+      if (previous != "select"){
+        var valueSecond = selectToFill.value;
+        if (valueSecond != "select"){
+          removeByValue(combination[valueSecond],previous);
+          removeByValue(combination[previous],valueSecond);
+          $('.item').each(function(){
+            var selectListFirst = $(this).find('select')[0];
+            var selectListSecond = $(this).find('select')[1];
+            if (selectListFirst.value == previous){
+              if ($(selectListSecond).attr('id') != $(selectToFill).attr('id')){
+                $(selectListSecond).find('option[value="' + valueSecond + '"]').attr('disabled',false);
+              }
+            }
+            if (selectListFirst.value == valueSecond){
+              $(selectListSecond).find('option[value="' + previous + '"]').attr('disabled',false);
+            }
+          });
+          console.log("value: "+valueSecond+" List: " + combination[valueSecond]);
+          console.log("value: "+previous+" List: " + combination[previous]);
+        }
+      }
+      // delete every option in the 2nd select
+      $(selectToFill).empty();
+      // fill 2nd "select" element with all option except the one selected in the first "select" element
+      list.forEach(function(j, el){
+        if (j != value){
+          var text = $('option[value="' + j + '"]').html();
+          var opt = $('<option value="' + j + '">' + text + '</option>');
+          opt.appendTo(selectToFill);
+        }
+      });
+      var opt = $('<option value="select" selected="selected">select attribute</option>');
+      opt.appendTo(selectToFill);
+
+      combination[value].forEach(function(j, el){
+        console.log("JE SUIS LA!!!! "+j);
+        $(selectToFill).find('option[value="' + j + '"]').attr('disabled','disabled');
+      });
+      // end of fill
+      // create comparison title
+      $(titleField).val($(selectedOption).html().split(" ")[0] + ' relative to ');
+      // if default select option exist in the first "select element", remove it so the user cannot choose it anymore
+      if ($('#' + selectId + ' option[value="select"]').length){
+        $('#' + selectId + ' option[value="select"]').remove();
+      }
+    }
+    // if the "select" element is the seconde of the comparison div
+    else {
+      var valueFirst = selectFirst.value;
+      // if default select option exist, remove it so the user cannot choose it anymore
+      if ($('#' + selectId + ' option[value="select"]').length){
+        $('#' + selectId + ' option[value="select"]').remove();
+      }
+      if (previous == "select"){
+        console.log("select First: "+valueFirst);
+        combination[valueFirst].push(value);
+        combination[value].push(valueFirst);
+        console.log("value: "+valueFirst+" List: " + combination[valueFirst]);
+        console.log("value: "+value+" List: " + combination[value]);
+        $('.item').each(function(){
+          var selectListFirst = $(this).find('select')[0];
+          var selectListSecond = $(this).find('select')[1];
+          if (selectListFirst.value == valueFirst){
+            if ($(selectListSecond).attr('id') != $(selectToFill).attr('id')){
+              $(selectListSecond).find('option[value="' + value + '"]').attr('disabled','disabled');
+            }
+          }
+          if (selectListFirst.value == value){
+            $(selectListSecond).find('option[value="' + valueFirst + '"]').attr('disabled','disabled');
+          }
+        });
+      }
+      else {
+        removeByValue(combination[valueFirst],previous);
+        removeByValue(combination[previous],valueFirst);
+        combination[valueFirst].push(value);
+        combination[value].push(valueFirst);
+        $('.item').each(function(){
+          var selectListFirst = $(this).find('select')[0];
+          var selectListSecond = $(this).find('select')[1];
+          if (selectListFirst.value == valueFirst){
+            if ($(selectListSecond).attr('id') != $(selectToFill).attr('id')){
+              $(selectListSecond).find('option[value="' + previous + '"]').attr('disabled',false);
+              $(selectListSecond).find('option[value="' + value + '"]').attr('disabled','disabled');
+            }
+          }
+          if (selectListFirst.value == previous){
+              $(selectListSecond).find('option[value="' + valueFirst + '"]').attr('disabled',false);
+            }
+          if (selectListFirst.value == value){
+            $(selectListSecond).find('option[value="' + valueFirst + '"]').attr('disabled','disabled');
+          }
+        });
+        console.log("value: "+valueFirst+" List: " + combination[valueFirst]);
+        console.log("value: "+value+" List: " + combination[value]);
+      }
+      // create comparison title
+      text = $(titleField).val().split(" ");
+      // TODO : replace by this $(selectedOption).text().split(' ').join('_')
+      $(titleField).val(text[0] + "_" + text[1] + "_" + text[2] + "_" + $(selectedOption).text().split(' ')[0]);
+    }
+    // if option selected is default select option empty second select (normally never happend, just in case)
+    if (value == "select"){
+      $(selectToFill).empty();
+    }
+    // remove the focus on the element selected (used to create "previous" on the next focus) !Important
+    $(element).blur();
+    return false
+  }
+
+  function updateElementIndex(el, prefix, ndx) {
+    var id_regex = new RegExp('(' + prefix + '-\\d+-)');
+    var replacement = prefix + '-' + ndx + '-';
+    if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex,replacement));
+    if (el.id) el.id = el.id.replace(id_regex, replacement);
+    if (el.name) el.name = el.name.replace(id_regex, replacement);
+  }
+
+  function deleteForm(btn, prefix) {
+    var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+
+    if (formCount > 1) {
+      // Delete the item/form
+      $(btn).parents('.item').slideUp("normal", function() {
+        // dropdown list management
+        var selectFirst = $(this).find('select')[0];
+        var selectSecond = $(this).find('select')[1];
+        var valueFirst = selectFirst.value;
+        var valueSecond = selectSecond.value;
+        if (valueFirst != 'select' && valueSecond != 'select'){
+          removeByValue(combination[valueFirst],valueSecond);
+          removeByValue(combination[valueSecond],valueFirst);
+          $('.item').each(function(){
+            var selectListFirst = $(this).find('select')[0];
+            var selectListSecond = $(this).find('select')[1];
+            if (selectListFirst.value == valueSecond){
+              $(selectListSecond).find('option[value="' + valueFirst + '"]').attr('disabled',false);
+            }
+            if (selectListFirst.value == valueFirst){
+              $(selectListSecond).find('option[value="' + valueSecond + '"]').attr('disabled',false);
+            }
+          });
+        }
+        // end of dropdown list management
+        $(this).remove();
+        var forms = $('.item'); // Get all the forms
+        // Update the total number of forms (1 less than before)
+        $('#id_' + prefix + '-TOTAL_FORMS').val(forms.length);
+        // $(btn).parents('.item').remove();
+        var i = 0;
+        // Go through the forms and set their indices, names and IDs
+        for (formCount = forms.length; i < formCount; i++) {
+          $(forms.get(i)).children().children().each(function() {
+            updateElementIndex(this, prefix, i);
+          });
+        }
+
+      });
+
+
+    } // End if
+    else {
+        $('#myModal').modal();
+    }
+    return false;
+  }
+
+  function addForm(btn, prefix) {
+    var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+    var maxFormCount = parseInt($('#id_' + prefix + '-MAX_NUM_FORMS').val());
+    // You can only submit a maximum of 10 todo items 
+    if (formCount < maxFormCount) {
+      // Clone a form (without event handlers) from the first form
+      var row = $(".item:first").clone(false).get(0);
+      // Insert it after the last form
+      $(row).removeAttr('id').hide().insertAfter(".item:last").slideDown(400);
+      // Remove the bits we don't want in the new row/form
+      // e.g. error messages
+      $(".errorlist", row).remove();
+      $(row).children().removeClass('error');
+      
+      // Relabel/rename all the relevant bits
+      var first = true; 
+      $(row).children().children().each(function() {
+        // alert($(this).is("select"));
+        
+        updateElementIndex(this, prefix, formCount);
+        if ( $(this).attr('type') == 'text' )
+          $(this).val('');
+        if ( $(this).is("select") && !first){
+          $(this).empty();
+          // Connect the new select to change function
+          $(this).change(function () {
+            return changeOptionSelected(this);
+          });
+          // connect the new select to focus function 
+          $(this).focus(function(){
+            previous = this.value;
+          });
+        }
+        if ( $(this).is("select") && first){
+          first = false;
+          if (!$('#' + $(this).attr('id') + ' option[value="select"]').length){
+            var opt = $('<option value="select" selected="selected">select attribute</option>');
+            opt.appendTo(this);
+          }
+          // Connect the new select to change function
+          $(this).change(function () {
+            return changeOptionSelected(this);
+          });
+          // connect the new select to focus function 
+          $(this).focus(function(){
+            previous = this.value;
+          });
+        }
+      });
+      
+      // Add an event handler for the delete item/form link 
+      $(row).find('.delete').click(function() {
+        return deleteForm(this, prefix);
+      });
+
+      // Update the total form count
+      $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1); 
+
+    } // End if
+    else {
+      modalBody = $('#myModalEmpty').find('.modal-body')[0];
+      $(modalBody).empty();
+      var text = $('<p>Every possible comparison is already there, the calculated max number of comparison is ' + maxFormCount + ', no duplication allowed!');
+      text.appendTo(modalBody);
+      $('#myModalEmpty').modal();
+    }
+    return false;
+  }
+
+  function settingsPanel() {
+    // if setting panel not show
+    if (!Panel) {
+      // slide comparison panel to the left
+      $('#comparisonPanel').css("float","left");
+
+      // display setting panel (animate dosen't work, look at "isotope.metafizzy.co")
+      $('#comparisonPanel').animate({
+        "float": "left",
+      }, 100, function(){
+        $('#settinsPanel').fadeIn();
+      });
+      Panel = true;
+    }
+    else {
+      // if setting display, hide and center comparison panel
+      $('#settinsPanel').fadeOut(300, function(){
+        $('#comparisonPanel').css("float","none");
+      });
+      Panel = false;
+    }
+  }
+
+  // Register the click event handlers
+  $("#add").click(function() {
+    return addForm(this, 'attributes');
+  });
+  
+  $(".delete").click(function() {
+    return deleteForm(this, 'attributes');
+  });
+
+  $("#advancedSettings").click(function() {
+    return settingsPanel();
+  });
+
+  // Register the focus event handlers
+  $("select").focus(function(){
+    previous = this.value;
+  });
+
+  // Register the change event handlers
+  $("select").change(function () {
+    return changeOptionSelected(this);
+  });
+
+  // set up connection between switch buttons and text field in setting panel
+  $(".parameter-unit").each(function(){
+    var checkbox = $(this).find('input[type="checkbox"]');
+    // console.log(checkbox)
+    if ($(checkbox).length) {
+      var valueField = $(this).find('input[type="text"]');
+      if ($(checkbox).is(':checked')){
+        // $(checkbox).attr("value",true)
+        $(valueField).css("display","inline-block");
+      }
+      else{
+        $(valueField).css("display","inline-block");
+        $(valueField).prop('disabled', true);
+      }
+      $(checkbox).change(function (){
+        if ($(checkbox).is(':checked')){
+          // $(valueField).fadeIn();
+
+          $(valueField).prop('disabled', false);
+        }
+        else{
+          $(valueField).prop('disabled', true);
+          // $(valueField).fadeOut();
+        }
+      });
+    }
+  });
+
+  // $('#experiment_creat').submit(function() { // catch the form's submit event
+  //     //delete one form 'attribute sample' (first one to initialize)
+  //     // deleteFormAttributeSample('samplesattributes');
+  //     //fill attribute sample form with good values
+  //     // fillAttributeSampleForms();
+  //     $.ajax({ // create an AJAX call...
+  //         data: $(this).serialize(), // get the form data
+  //         type: $(this).attr('method'), // GET or POST
+  //         url: $(this).attr('action'), // the file to call
+  //         success: function(response) { // on success..
+  //             //console.log(response);
+  //             location.href = "{% url project_detail project.id %}"
+  //             // alert("ici");
+  //        }
+  //         //    $('#DIV_CONTAINING_FORM').html(response); // update the DIV
+  //         //}
+  //     });
+  //     return false;
+  //     //});
+  //     //alert($(this).serialize());
+  //     //alert($(this).attr('method'));
+  //     //alert($(this).attr('action'));
+  // });
+
+  $(".parameter-unit:first").css("margin-left",$(".parameter-unit:last").css("margin-left"));
+
+
+
+  var Panel = false;
+
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+{% ifnotequal permission 'read' %}
+<div class="row">
+	<div class="span8"><h1>{{ project }}</h1></div>
+	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
+</div>
+<div class="row-fluid">
+	<div class="container-fluid">
+		<form id="experiment_creat" method="post" action="{% url create_experiment project.id %}" enctype="multipart/form-data">{% csrf_token %}	
+    {{ comparison_formset.management_form }}
+    {{ parameter_formset.management_form }}
+  		<div id="first-step" class="row-fluid">
+  			<div class="span12">
+  				<div class="row-fluid">
+  					<div class="span12 white-span">
+  						<div class="row-fluid">
+                <div class="span6 description-span">
+    							<div class="span12 description-span"><h3>Experiment title :</h3></div>
+    							<div class="row-fluid">
+    								<div class="span12 description-span date-span">
+    									{{ experiment_form.title.errors }}
+    									{{ experiment_form.title }}
+    								</div>
+    							</div>
+                </div>
+                <div id="advanced" class="span6 right-span">
+                  <p>
+                    <a id="advancedSettings">Advanced Settings</a>
+                  </p>
+                </div>
+  						</div>
+            		<div class="row-fluid">
+                	<div id="comparisonPanel" class="span6 center-span" style="float:none;margin: 0 auto;">
+                    <div class="row-fluid">
+                      <div class="span12">
+                        <div class="span12 description-span"><h3>Comparisons :</h3></div>
+                        {% for form in comparison_formset.forms %}
+                        <div class="row-fluid item project-span">
+                          {{ form.as_p }}
+                          <p><a class="delete btn btn-danger btn-create-project">Delete</a></p>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    <div class="row-fluid">
+                      <div class="span12"><a id="add" class="btn btn-primary btn-create-project">Add attribute</a></div>
+                    </div>
+                	</div>
+                  <div id="settinsPanel" class="span6" style="display:none;">
+                    <div class="row-fluid">
+                      <div class="span12">
+                        <div class="span12 description-span"><h3>Analysis :</h3></div>
+                        <div class="row-fluid project-span">
+                          {% for form in parameter_formset.forms %}
+                          <div class="span12 parameter-unit">
+                            <div class="span6 description-span"><p>{{ form.value.label_tag }} </p></div>
+                            {% if form.value.label != "mindetection" and form.value.label != "rtwindow" and form.value.label != "ppm" %}
+                            <div class="span6 description-span">
+                              <!div class="onoffswitch">
+                                <!input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="{{ forloop.counter }}" checked>
+                                  <!label class="onoffswitch-label" for="{{ forloop.counter }}">
+                                      <!div class="onoffswitch-inner"><!/div>
+                                      <!div class="onoffswitch-switch"><!/div>
+                                  <!/label>
+                              <!/div>
+                              <div class="onoffswitch">
+                                {{ form.state }}
+                                <label class="onoffswitch-label" for="{{ form.state.auto_id }}">
+                                  <div class="onoffswitch-inner"></div>
+                                  <div class="onoffswitch-switch"></div>
+                                </label>
+                              </div>
+                            </div>
+                            {% endif %}
+                            {% if form.value.label != "rt.alignment" %}
+                            <div class="span12">
+                              {{ form.value.errors }}
+                              {{ form.value }}
+                            </div>
+                            {% endif %}
+                          </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div> 
+                  </div>
+            		</div>
+  				  	</div>
+          		<div class="row-fluid">
+            		<div class="span12"><input class="btn btn-success btn-create-project" type="submit" value="Create experiment"/><!a id="next" class="btn btn-success btn-create-project"><!/a></div>
+          		</div>
+  				</div>
+  			</div>
+  		</div>
+	</div>
+</div>
+<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Warning!</h3>
+  </div>
+  <div class="modal-body">
+    <p>You have to enter at least one comparison! </p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+<div id="myModalEmpty" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Warning!</h3>
+  </div>
+  <div class="modal-body">
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+<div id="myModalCancel" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Warning!</h3>
+  </div>
+  <div class="modal-body">
+    <p>Every change you may have made be will lost.</p>
+    <p>Are you sure you want to continue?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <a class="btn btn-primary" href="{% url project_detail project.id %}">Ok</a>
+  </div>
+</div>
+{% endifnotequal %}	
+{% else %}
+<p>Get out of here, you'r not authenticated!!</p>
+{% endif %}
+{% endblock %}

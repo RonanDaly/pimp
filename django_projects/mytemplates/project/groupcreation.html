@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/defaultTheme.css" media="screen" />
+<script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.fixedheadertable.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/table.js"></script>
+<!script type="text/javascript" src="{{ STATIC_URL }}js/dragndrop.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.10.0.custom.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+  // Code adapted from http://djangosnippets.org/snippets/1389/
+
+  function updateElementIndex(el, prefix, ndx) {
+    var id_regex = new RegExp('(' + prefix + '-\\d+-)');
+    var replacement = prefix + '-' + ndx + '-';
+    if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex,
+ replacement));
+    if (el.id) el.id = el.id.replace(id_regex, replacement);
+    if (el.name) el.name = el.name.replace(id_regex, replacement);
+  }
+
+  function deleteFormAttributeSample(prefix){
+    var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+    $('.second_item:last').remove();
+    $('#id_' + prefix + '-TOTAL_FORMS').val(formCount - 1);
+    return false;
+  }
+
+  function deleteForm(btn, prefix) {
+    var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+
+    if (formCount > 2) {
+      // Delete the item/form
+      $(btn).parents('.item').remove();
+
+      var forms = $('.item'); // Get all the forms
+
+      // Update the total number of forms (1 less than before)
+      $('#id_' + prefix + '-TOTAL_FORMS').val(forms.length);
+
+      var i = 0;
+      // Go through the forms and set their indices, names and IDs
+      for (formCount = forms.length; i < formCount; i++) {
+        $(forms.get(i)).children().children().each(function() {
+          updateElementIndex(this, prefix, i);
+        });
+      }
+
+    } // End if
+    else {
+        $('#myModal').modal();
+    }
+    return false;
+  }
+
+  function addFormAttributeSample(prefix){
+    //var formCount = parseInt($('#sample-attribute-formset').find('input[name="form-TOTAL_FORMS"]').val());
+    var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+    var row = $(".second_item:first").clone(false).get(0);
+    $(row).removeAttr('id').hide().insertAfter(".second_item:last")
+    $(".errorlist", row).remove();
+    $(row).children().removeClass('error');
+    $(row).children().children().each(function() {
+      updateElementIndex(this, prefix, formCount);
+      if ( $(this).attr('type') == 'text' )
+          $(this).val('');
+      });
+    $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1);
+    return false;
+  }
+
+
+  function addForm(btn, prefix) {
+    //alert($("input[name='form-TOTAL_FORMS']").attr("value"));
+    //alert($('#sample-attribute-formset').find('input[name="form-TOTAL_FORMS"]').attr("value"));
+    //alert($('#sample-attribute-formset').find('.sample_attribute_input').length);
+    var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+    // You can only submit a maximum of 10 todo items 
+    if (formCount < 20) {
+      // Clone a form (without event handlers) from the first form
+      var row = $(".item:first").clone(false).get(0);
+      // Insert it after the last form
+      $(row).removeAttr('id').hide().insertAfter(".item:last").slideDown(400);
+      // Remove the bits we don't want in the new row/form
+      // e.g. error messages
+      $(".errorlist", row).remove();
+      $(row).children().removeClass('error');
+      
+      // Relabel/rename all the relevant bits
+      $(row).children().children().each(function() {
+        //alert($(this).html());
+        updateElementIndex(this, prefix, formCount);
+        if ( $(this).attr('type') == 'text' )
+          $(this).val('');
+      });
+      
+      // Add an event handler for the delete item/form link 
+      $(row).find('.delete').click(function() {
+        return deleteForm(this, prefix);
+      });
+
+      // Update the total form count
+      $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1); 
+
+    } // End if
+    else {
+      alert("Sorry, you can only enter a maximum of 20 items.");
+    }
+    return false;
+  }
+
+  // Register the click event handlers
+  $("#add").click(function() {
+    return addForm(this, 'attributes');
+    //return addFormAttributeSample('form');
+  });
+  
+  $(".delete").click(function() {
+    return deleteForm(this, 'attributes');
+  });
+
+  // ----------------------------------------Second part of the form------------------------------------------
+  //Make table selectable and draggable
+  function dynamicTable(tableId){
+    var tableWidth = $(tableId).width();
+    var trHeight = $('.tr-file').height();
+    $(tableId).selectable({
+        filter:'tbody tr',
+        stop: function(event, ui){
+          console.log(trHeight);
+            $(this).find("tr.ui-draggable").draggable("destroy");
+            $(this).find("tr.ui-selected").draggable({
+                start: function(event, ui) {
+                  // $('#mzxml-icon').css("left", 500);
+
+                  // startx = $('#mzxml-icon').position().left;
+                  // starty = $('tr.ui-selected').position().top;
+                  // ui.helper.css("left", 500);
+                  // ui.position.left = 500;
+                  console.log("ui top" + ui.position.top);
+                  console.log("ui left" + ui.position.left);
+                  // ui.position.left = 500;
+                  // console.log(startx);
+                  // console.log(starty);
+                  // $('#mzxml-icon').css("background-color", "red");
+                },
+                helper: function(e) {
+                  var tr = $(this).closest("tbody").find("tr.ui-selected").clone();
+                  $(tr).height(trHeight);
+                    var tab = $("<table style='display:none;visibility:hidden;left:500px;' class='table-drag " + tableId.substring(1) + "'></table>")
+                        .append(tr)[0];
+                    $(tab).width(tableWidth);
+                    console.log(tab);
+                    //uncomment here to return table instead of image return tab;
+
+                    var div = $("<div id='mzxml-icon' style='background-image:url({{ STATIC_URL }}/img/mzxml-icon.png);width:105px;height:122px;background-size:cover;padding-left:15px;position:relative;'></div>");
+                    console.log(e.pageX);
+                    // div.css({'top':1000,'left':310});
+                    
+
+                    var p = $(tab).find('tr').length;
+                    var span = $("<span id='span-nb'>" + p + "</span>");
+                    //alert(p);
+                    //console.log(span);
+                    $(span).appendTo($(div));
+                    $(tab).appendTo($(div));
+                    // $(div).css("position", "relative");
+                    //$(div).css("left", 300);
+                    //console.log($(div).parent().attr("id"));
+                    
+                    // console.log($(div).css('left'));
+                    return div;
+                },
+                // drag: function( event, ui ) {
+                //   var x;
+                //   $(document).mousemove(function(e){
+                //     x = e.pageX
+                //     console.log(e.pageX)
+                //   });
+                //   // console.log(ui.position.left);
+                //   ui.position.left = x;
+
+                //   console.log(x);
+                // },
+                cursorAt: {left: 90, top: 100},
+                fadeIn: 1.2,
+                appendTo: "body",
+                revert: 'invalid',
+                // refreshPositions: true,
+            });
+        }
+    });
+  }
+
+  function getDropTable(attributeName){
+    return $('<div class="grid_8 height250 table-content">' + '<table class="table table-hover file-table fancyTable" id="' + attributeName + 'table">' + '<thead>' + '<tr>' + '<th id="th-hidden" style="font-size:13px">File Name</th>' + '<th id="th-hidden" style="font-size:13px">Polarity</th>' + '<th id="th-hidden" style="font-size:13px">Uploaded</th>' + '</tr>' + '</thead>' + '<tbody>' + '</tbody>' + '</table>' + '</div>');
+  }
+
+  //dynamically resize the table, max height for table-content div -> 223px
+  function resizeSpan(div){
+      var rowsHeight = $(div).find('tbody').find('tr').length * 37;
+      //alert(rowsHeight);
+      if(rowsHeight > 223){
+        $(div).find('.fht-tbody').height(223);
+        $(div).find('.fht-table-wrapper').height(223 + $(div).find('.fht-thead').height());
+        $(div).find('.grid_8').height($(div).find('.fht-table-wrapper').height());
+      }
+      else{
+        $(div).find('.fht-tbody').height(rowsHeight);
+        console.log($(div).find('.fht-tbody').height());
+        //console.log($(div).find('.fht-tbody').length);
+        $(div).find('.fht-table-wrapper').height($(div).find('.fht-tbody').height() + $(div).find('.fht-thead').height());
+        $(div).find('.grid_8').height($(div).find('.fht-table-wrapper').height());
+      }
+  }
+
+  function dropTable(attributeName){
+    $('#' + attributeName + 'div').droppable({
+                over: function() {
+                    //alert($(this).find('.attribute-content').hasClass('empty-drop-div'));
+                    if($(this).find('.attribute-content').hasClass('empty-drop-div')){
+                        $(this).find('.drop-content').removeClass('out-empty').addClass('over-empty');
+                    }
+                    else{
+                        if(!($(".table-drag").hasClass(attributeName + 'table'))){
+                           $(this).removeClass('out').addClass('over');
+                        }
+                    }
+                },
+                out: function() {
+                    $(this).find('.drop-content').removeClass('over-empty').addClass('out-empty');
+                    $(this).removeClass('over').addClass('out');
+                },
+                drop: function(event, ui) {
+
+                    //If the attribute div still empty
+                    if($(this).find('.attribute-content').hasClass('empty-drop-div')){
+                        //change class over to over to out
+                        $(this).find('.drop-content').removeClass('over-empty').addClass('out-empty');
+                        //remove the drop element to replace it by a table
+                        $(this).find('.drop-content').remove();
+                        //set parent class to 'table-drop-div'
+                        $(this).find('.attribute-content').removeClass('empty-drop-div').addClass('table-drop-div');
+                        //Create a table
+                        var tableElm = getDropTable(attributeName);
+                        //get current div id
+                        var currentId = $(this).attr('id');
+                        //alert(currentId);
+                        //Display it in attribute div
+                        tableElm.appendTo($(this).find('.attribute-content'));
+                        //same as if the table is already created
+                        $(this).removeClass('over').addClass('out');
+                        //get the tbody of the table to add the new rows
+                        var tableId = $(this).find('tbody');
+                        //get the id of the initiale table = 2nd class of draggable table
+                        initTable = $('.table-drag').attr('class').split(' ')[1];
+                        //for each rows dropped
+                        $(".table-drag").find('tr').each(function(){
+                            //if initTable = initFileTable add a form attribute/sample to invisible formset
+                            if(initTable == "initFiletable"){
+                              addFormAttributeSample('samplesattributes');
+                            }
+                            if(currentId ==  'initFilediv'){
+                              //alert(currentId);
+                              deleteFormAttributeSample('samplesattributes');
+                            }
+                            //add the row to the new table and remove row's classes 'selected' and 'draggable'
+                            tableId.append($(this).removeClass('ui-selected ui-draggable'));
+                            //remove the row from the initial table
+                            $('#' + initTable).find('tr#' + $(this).attr('id')).remove();
+                            //get the parent div of the initial table
+                            parentDiv = $('#' + initTable).closest('.ui-droppable');
+                            //resize the initial table and div
+                            resizeSpan($(parentDiv));
+                            //if the initial table has no row
+                            if($('#' + initTable).find('tbody').find('tr').length == 0){
+                                //remove the table
+                                $(parentDiv).find('.table-content').remove();
+                                //create a drop content div
+                                var contentElm = getDropContent();
+                                //add the drop content div to the parent div
+                                contentElm.appendTo($(parentDiv).find('.attribute-content'));
+                                //change class from 'table-drop-div' to 'empty-drop-div'
+                                $(parentDiv).find('.attribute-content').removeClass('table-drop-div').addClass('empty-drop-div');
+                            }
+                          });
+                          //make the table header fixed
+                          $('#' + attributeName + 'table').fixedHeaderTable({ footer: false, altClass: 'odd' });
+                          //resize the table and div
+                          resizeSpan($(this));
+                          //make all elements in the tables selectable and draggable
+                          dynamicTable('#' + attributeName + 'table');
+
+                    }
+                    else{
+                        //if the draggable table is from this table -> do nothing
+                        if(!($(".table-drag").hasClass(attributeName + 'table'))){
+                          $(this).removeClass('over').addClass('out');
+                          var currentId = $(this).attr('id');
+                          var tableId = $(this).find('tbody');
+                          initTable = $('.table-drag').attr('class').split(' ')[1];
+                          $(".table-drag").find('tr').each(function(){
+                            //if initTable = initFileTable add a form attribute/sample to invisible formset
+                            if(initTable == "initFiletable"){
+                              addFormAttributeSample('samplesattributes');
+                            }
+                            if(currentId ==  'initFilediv'){
+                              //alert(currentId);
+                              deleteFormAttributeSample('samplesattributes');
+                            }
+                            tableId.append($(this).removeClass('ui-selected ui-draggable'));
+                            $('#' + initTable).find('tr#' + $(this).attr('id')).remove();
+                            //alert($('#' + initTable).find('tbody').find('tr').length);
+                            parentDiv = $('#' + initTable).closest('.ui-droppable');
+                            resizeSpan($(parentDiv));
+                            if($('#' + initTable).find('tbody').find('tr').length == 0){
+                                //alert('on passe dedans');
+                                $(parentDiv).find('.table-content').remove();
+                                var contentElm = getDropContent();
+                                contentElm.appendTo($(parentDiv).find('.attribute-content'));
+                                $(parentDiv).find('.attribute-content').removeClass('table-drop-div').addClass('empty-drop-div');
+                            }
+                          });
+                          $('#' + attributeName + 'table').fixedHeaderTable({ footer: false, altClass: 'odd' });
+                          resizeSpan($(this));
+                          dynamicTable('#' + attributeName + 'table');
+                        }
+                    }
+                },
+        });
+  }
+
+  function getDropContent(){
+    return $('<div class="drop-content out-empty"><p>Drop files here<p></div>');
+  }
+
+  function fillAttributeSampleForms(){
+    var i = 0
+    $('.attribute-span').each(function() {
+      var attr = $(this).attr('name');
+      console.log(attr);
+      $(this).find('.tr-file').each(function(){
+        var idFile = $(this).attr('id');
+        $('#id_samplesattributes-' + i + '-sample').val(idFile);
+        $('#id_samplesattributes-' + i + '-attribute').val(attr);
+        i = i+1;
+        console.log(idFile);
+      })
+      
+    })
+  }
+
+  $('#group_creat').submit(function() { // catch the form's submit event
+      //delete one form 'attribute sample' (first one to initialize)
+      deleteFormAttributeSample('samplesattributes');
+      //fill attribute sample form with good values
+      fillAttributeSampleForms();
+            $.ajax({ // create an AJAX call...
+                data: $(this).serialize(), // get the form data
+                type: $(this).attr('method'), // GET or POST
+                url: $(this).attr('action'), // the file to call
+                success: function(response) { // on success..
+                    //console.log(response);
+                    location.href = "{% url 'project_detail' project.id %}"
+                    // alert("ici");
+               }
+                //    $('#DIV_CONTAINING_FORM').html(response); // update the DIV
+                //}
+            });
+            return false;
+        //});
+        //alert($(this).serialize());
+        //alert($(this).attr('method'));
+        //alert($(this).attr('action'));
+  });
+
+  //test which make me understand
+  function changeIdFormsetManagement(){
+    var inputId = $('#sample-attribute-formset').children();//find('input[name="form-TOTAL_FORMS"]').val())
+    //var inputId = $('#sample-attribute-formset').find('input[name="form-TOTAL_FORMS"]').val();
+    alert(inputId.html());
+    //$(inputId).attr('id','id_form-TOTAL_FORMS2')
+    //alert($(inputId).html());
+    //$('#sample-attribute-formset').find('input[name="form-TOTAL_FORMS"]').attr('id').val(id+'2');
+  }
+  
+
+  $("#next").click(function() {
+    
+    //Hide div which contain form and show new div
+  	$("#first-step").fadeOut(300, function(){
+        $("#second-step").fadeIn();
+        //Make initial file table with fixed header 
+        $('#initFiletable').fixedHeaderTable({ footer: false, altClass: 'odd' });
+
+        //create attribute div/tables
+        $('.attributeInput').each(function() {
+            var attributeName = $(this).val();
+            var elm = $('<div class="span12 project-span out attribute-span" name="' + attributeName + '" id="' + attributeName + 'div" style=margin-left:0;>' +
+              '<div class="span12 description-span"><h3>' + attributeName + '</h3></div>' + '<div class="row-fluid attribute-content empty-drop-div">' + '</div>' + '</div>');
+            var contentElm = getDropContent();
+            contentElm.appendTo($(elm).find('.attribute-content'));
+            $(elm).find('.attribute-content').addClass('empty-drop-div');
+            $(elm).appendTo($('#categorie-container'));
+            dropTable(attributeName);
+            //$('#' + attributeName + 'table').fixedHeaderTable({ footer: false, altClass: 'odd' });
+        })
+
+        //Set group name above the table
+        var groupName = $('#id_name').val();
+        var groupElm = $('<div class="span12 description-span"><h3 class="pull-left">Experiment : ' + groupName + '</h3></div>');
+        $(groupElm).appendTo($('#title-container'));
+        dynamicTable('#initFiletable');
+        dropTable('initFile');
+        $('.bs-docs-sidenav').width($('.bs-docs-sidenav').width());
+        //changeIdFormsetManagement();
+    });
+  	
+    
+    
+  });
+
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+{% ifnotequal permission 'read' %}
+<div class="row">
+	<div class="span8"><h1>{{ project }}</h1></div>
+	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
+</div>
+<div class="row-fluid">
+	<div class="container-fluid">
+		<form id="group_creat" method="post" action="{% url 'add_group' project.id %}" enctype="multipart/form-data">{% csrf_token %}	
+      {{ attribute_formset.management_form }}
+      <div id="sample-attribute-formset">
+        {{ sample_attribute_formset.management_form }}
+      </div>
+			<div id="first-step" class="row-fluid">
+				<div class="span12">
+					<!div class="span12"><!h2><!/h2><!/div>
+					<div class="row-fluid">
+						<div class="span12 white-span">
+							<div class="row-fluid">
+								<div class="span12 description-span"><h3>Experiment name :</h3></div>
+								<div class="row-fluid">
+									<div class="span12 description-span date-span">
+										{{ group_form.name.errors }}
+										{{ group_form.name }}
+									</div>
+								</div>
+							</div>
+              <div class="row-fluid">
+                <div class="span6 center-span" style="float:none;margin: 0 auto;">
+                  <div class="row-fluid">
+                    <div class="span12">
+                      <div class="span12 description-span"><h3>Conditions :</h3></div>
+                      {% for form in attribute_formset.forms %}
+                      <div class="row-fluid item project-span">
+                        {{ form.as_p }}
+                        <p><a class="delete btn btn-danger btn-create-project">Delete</a></p>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <div class="row-fluid">
+                    <div class="span12"><a id="add" class="btn btn-primary btn-create-project">Add condition</a></div>
+                  </div>
+                </div>
+              </div>
+					  </div>
+            <div class="row-fluid">
+              <div class="span12"><!input class="btn btn-success" type="submit" value="Assign Samples"/><a id="next" class="btn btn-success btn-create-project">Next</a></div>
+            </div>
+					</div>
+				</div>
+			</div>
+			<!--second part of the form is here and display only when we click next-->
+			<div id="second-step" class="row" style="display:none;">
+        <div class="span12 white-span">
+            <div class="row-fluid">
+				      <div class="span6">
+                <div class="span12 bs-docs-sidebar">
+                  <div class="project-span bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="295" data-offset-bottom="270" id="initFilediv"><!-- id="initFilediv" id="span-fix" data-spy="affix-top" data-offset-top="10" -->
+          					<div id="title-container" class="row-fluid">
+          					</div>
+          					<div class="row-fluid">
+          						<div class="span12 description-span date-span">
+          							{% if project.sample_set.all %}
+          							<div class="row-fluid">
+          								<div class="grid_8 height250">
+          									<table class="table table-hover file-table fancyTable" id="initFiletable">
+          		          			<thead>
+          		            		  <tr>
+          		              			<th id="th-hidden" style="font-size:13px">File Name</th>
+          		              			<th id="th-hidden" style="font-size:13px">Polarity</th>
+          		              			<th id="th-hidden" style="font-size:13px">Uploaded</th>
+          		            			</tr>
+          		          			</thead>
+          		          			<tbody>
+          										  {% for sample in project.sample_set.all %}
+          											<tr id="{{ sample.id }}" class="tr-file">
+          		                  	<td style="font-size:13px">{{ sample.name|truncatechars:25 }}</td>
+          		                  	<td style="font-size:13px">{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.posdata and sample.samplefile.negdata%} {% endif %}{% if sample.samplefile.negdata %}-{% endif %}</td>
+                                  <td></td>
+          		                  	<!td {{ sample.uploaded|truncatewords:"1" }}><!/td>
+          		                	</tr>
+          										  {% endfor %}
+          										</tbody>
+          		        			</table>
+          	        			</div>
+          	        		</div>
+                        {% else %}
+                        <p>No files in this project, please click "upload files" on the project page to continue</p>
+                        {% endif %}
+          						</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="span6">
+                <div id="categorie-container" class="row-fluid">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row-fluid">
+            <div class="span12"><input class="btn btn-success btn-create-project" type="submit" value="Submit"/><!a id="submit" class="btn btn-success btn-create-project"><!/a>
+            </div>
+            {% for form in sample_attribute_formset.forms %}
+            <div class="second_item" style="display:none;">
+              {{ form.as_p }}
+              </div>
+            {% endfor %}
+            </div>
+          </div>
+		    </form>
+      </div>
+    </div>
+  <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <h3 id="myModalLabel">Warning!</h3>
+    </div>
+    <div class="modal-body">
+      <p>You have to enter at least two conditions! </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    </div>
+  </div>
+  <div id="myModalCancel" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <h3 id="myModalLabel">Warning!</h3>
+    </div>
+    <div class="modal-body">
+      <p>Every change you may have made be will lost.</p>
+      <p>Are you sure you want to continue?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+      <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Ok</a>
+    </div>
+  </div>
+{% endifnotequal %}	
+{% else %}
+<p>Get out of here, you'r not authenticated!!</p>
+{% endif %}
+{% endblock %}

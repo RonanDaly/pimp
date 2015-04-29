@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+		<p>{{user}}, welcome to your profile page {{ user.first_name }} {{ user.last_name }}</p>
+		<p>email address : {{user.email}}</p>
+		<p>There is currently no news to display on your profile</p>
+	{% endif %}
+
+{% endblock %}

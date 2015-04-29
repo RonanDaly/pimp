@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% load project_tags %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/jquery.dataTables.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/dataTables.tableTools.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/pagination.css" media="screen" />
+<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables1.10.4.js"></script>
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        // Initially hide the TaskEdit form
+          $('#metexplore_mapping_table').DataTable({
+                "iDisplayLength": 25,
+                "order": [[ 2, "asc" ]]
+          });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row" style="margin-bottom: 10px;">
+    <div class="span4"><h3>Standard compound library</h3></div>
+</div>
+<div class="row">
+	<div class="span12">
+		<table border="0"  id="metexplore_mapping_table" class="table table-striped" style="text-align: center;">
+          <thead>
+            <tr>
+              <th style="text-align: center;">Metabolic network</th>
+              <th style="text-align: center;">Number of metabolites in the network</th>
+              <th style="text-align: center;">Metabolites found in Polyomics standard compound library</th>
+              <th style="text-align: center;">Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in metexplore_info %}
+            <tr>
+              <td><a href="http://metexplore.toulouse.inra.fr/metexploreTest/?idMapping={{ item.MetexploreIdMapping }}" target="_blank">{{ item.orgName }}</a></td>
+              <td>{{ item.TotalNumInchi }}</td>
+              <td>{{  item.MappedInchi }}</td>
+              <td>{% with pourcentage=item.TotalNumInchi|get_pourcent:item.MappedInchi  %}{{ pourcentage }}%{% endwith %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+      </table>
+	</div>
+</div>
+{% endblock %}

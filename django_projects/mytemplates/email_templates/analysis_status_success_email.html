@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Activation key</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	</head>
+ 	<body style="margin: 0; padding: 0;">
+		<table border="0" cellpadding="0" cellspacing="0" width="100%">
+			<tbody>
+				<tr>
+					<td>
+						<table align="center" cellpadding="0" cellspacing="0" width="600" style="padding:20px 0 9px;border-bottom:1px solid #003660">
+							<tbody>
+								<tr style="vertical-align:top;text-align:left;padding:0" align="left">
+									<td width="131" height="27" align="left" valign="top">
+										<a href="http://www.polyomics.gla.ac.uk/" target="_blank">
+											<img src="http://polyomics.mvls.gla.ac.uk/static/img/email/polyomics_email_blue.png" width="202" height="27" alt="Apple Developer" border="0" align="left" class="CToWUd">
+										</a>
+										<a href="http://polyomics.mvls.gla.ac.uk/" target="_blank">
+											<img src="http://polyomics.mvls.gla.ac.uk/static/img/email/PiMP_email_blue.png" height="27" align="right">
+										</a>
+									</td>
+	          	  				</tr>
+	          	  			</tbody>
+	          	  		</table>
+						<table align="center" cellpadding="0" cellspacing="0" width="600">
+							<tbody>
+								<tr>
+									<td align="center" bgcolor="#ffffff" style="padding: 40px 0 30px 0;">
+ 										<img src="http://polyomics.mvls.gla.ac.uk/static/img/email/pipeline_success.png" alt="Analysis finished" width="178" height="156" style="display: block;" />
+									</td>
+								</tr>
+								<tr>
+									<td bgcolor="#ffffff" style="padding: 30px 30px 40px 30px;">
+										<table border="0" cellpadding="0" cellspacing="0" width="100%">
+											<tbody>
+												<tr>
+													<td>
+													Dear {{ first_name }}, 
+													</td>
+												</tr>
+												<tr>
+													<td style="padding: 20px 0 20px 0;">
+														The analysis named {{ analysis_name }} submitted on {{ analysis.submited|truncatewords:"1"|slice:":-3" }} has now finished processing.<br/>
+													</td>
+												</tr>
+												<tr>
+													<td style="padding: 20px 0 20px 0;">
+														You can access you results using the following link:
+														http://polyomics.mvls.gla.ac.uk/accounts/project/{{ project.id }}/analysis/{{ analysis.id }}
+													</td>
+												</tr>
+												<tr>
+													<td style="padding: 20px 0 20px 0;">
+														Glasgow Polyomics team
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<td bgcolor="#FAFAFA" style="padding: 30px 30px 30px 30px;">
+										<table border="0" cellpadding="0" cellspacing="0" width="100%">
+											<tbody>
+												<tr>
+													<td width="75%" style="color: #9298A3;font-size: 11px;font-family: 'trebuchet ms','arial','helvetica',sans-serif;">
+														<p>This is an automatically generated email, please do not reply to this message.</p>
+														<!-- <br/>Unsubscribe to this newsletter instantly</p> -->
+													</td>
+													<td align="right" width="25%">
+														<table border="0" cellpadding="0" cellspacing="0">
+															<tbody>
+																<tr>
+																	<td>
+																		<a href="http://www.polyomics.gla.ac.uk/" target="_blank">
+																			<img src="http://polyomics.mvls.gla.ac.uk/static/img/email/polyomics_logo_footer.png" alt="Glasgow Polyomics" width="46" height="38" style="display: block;" border="0" />
+																		</a>
+																	</td>
+																	<td style="font-size: 0; line-height: 0;" width="20">&nbsp;</td>
+																	<td>
+																		<a href="http://twitter.com/polyomics" target="_blank">
+																			<img src="http://polyomics.mvls.gla.ac.uk/static/img/email/twitter_bird_footer.png" alt="Twitter" width="32" height="26" style="display: block;" border="0" />
+																		</a>
+																	</td>
+																	<td style="font-size: 0; line-height: 0;" width="20">&nbsp;</td>
+																	<td>
+																		<a href="https://www.facebook.com/GlasgowPolyomics?fref=ts" target="_blank">
+																			<img src="http://polyomics.mvls.gla.ac.uk/static/img/email/facebook_footer.png" alt="Facebook" width="28" height="28" style="display: block;" border="0" />
+																		</a>
+																	</td>
+																</tr>
+															</tbody>
+														</table>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</td>
+				</tr>
+			</tbody>
+ 		</table>
+	</body>
+</html>
