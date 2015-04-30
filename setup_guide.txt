@@ -77,7 +77,7 @@ Then open http://localhost:8000/admin/ in browser.
 Click [Users], find the superuser created above and edit to fill up its first and last names.
 
 13. Set up default configuration parameters
-$ python manage.pshell_plus --settings=pimp.settings_dev
+$ python manage.py shell_plus --settings=pimp.settings_dev
 
 Run all the following commands inside the shell
 
