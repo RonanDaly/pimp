@@ -69,7 +69,7 @@ $ python manage.py migrate
 
 12. Create a superuser manually
 $ cd /home/joewandy/git/pimp/django_projects/pimp
-$ python manage.pcreatesuperuser --settings=pimp.settings_dev
+$ python manage.py createsuperuser --settings=pimp.settings_dev
 
 Then go to the django admin page, and fill up the first and last names of the superuser. Run the server with:
 $ python manage.py runserver --settings=pimp.settings_dev
