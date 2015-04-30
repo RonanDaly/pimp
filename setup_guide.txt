@@ -3,6 +3,9 @@ Setup guide
 
 This is setup guide for the PiMP pipeline, written for an Ubuntu system ... but I guess it's more or less the same for OS X?
 
+0. Install mzmatch and the required libraries
+http://mzmatch.sourceforge.net/installation.php
+
 1. Install curl-config, required for RCurl below
 $ sudo apt-get install libcurl4-openssl-dev
 
