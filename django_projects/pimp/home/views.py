@@ -1,10 +1,12 @@
 # Create your views here.
 from django.template import Context, loader
 from django.shortcuts import render
-from django.utils import simplejson
+try:
+	from django.utils import simplejson
+except:
+	import json as simplejson
 from django.http import HttpResponse
 from django.template import RequestContext
-
 from fileupload.models import Sample
 
 from rpy2.robjects.packages import importr

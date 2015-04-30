@@ -7,7 +7,10 @@ from django.forms.formsets import formset_factory, BaseFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
-from django.utils import simplejson
+try:
+	from django.utils import simplejson
+except:
+	import json as simplejson
 
 # Pygal import for SVG file creation
 # import pygal

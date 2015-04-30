@@ -20,7 +20,10 @@ from fileupload.models import Sample, CalibrationSample
 # Add on
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
-from django.utils import simplejson
+try:
+	from django.utils import simplejson
+except:
+	import json as simplejson
 from django.utils.safestring import mark_safe
 import datetime
 

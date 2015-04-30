@@ -1,8 +1,8 @@
-Django
+Django==1.7
 django-registration
 django-extensions
 numpy
--e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
+# -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
 lxml
 mysql-python
 rpy2==2.3.10

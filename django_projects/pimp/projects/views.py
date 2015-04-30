@@ -21,7 +21,10 @@ import datetime
 import pickle 
 import base64
 
-from django.utils import simplejson
+try:
+	from django.utils import simplejson
+except:
+	import json as simplejson
 from django.http import HttpResponse
 
 # Rpy2 import for TIC creation

@@ -6,7 +6,7 @@ djcelery.setup_loader()
 
 CELERYD_LOG_COLOR = False
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # Set to True to enable registration
@@ -31,10 +31,10 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pimp_prod',
-        # 'NAME': '/Users/yoanngloaguen/Documents/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        # 'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': 'pimp_prod',
+        'NAME': '/home/joewandy/git/pimp/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
         'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -81,8 +81,10 @@ USE_TZ = False
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
-MEDIA_ROOT = '/opt/django/data/pimp_data/'
-#MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
+# MEDIA_ROOT = '/opt/django/data/pimp_data/'
+# MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
+MEDIA_ROOT = '/home/joewandy/git/pimp/django_projects/pimp_data/'
+
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
@@ -105,7 +107,8 @@ STATICFILES_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     # '/Users/yoanngloaguen/Documents/django_projects/pimp/static/',
-    '/opt/django/projects/django_projects/static/',
+    # '/opt/django/projects/django_projects/static/',
+    '/home/joewandy/git/pimp/django_projects/static',
 )
 
 # List of finder classes that know how to find static files in
@@ -142,7 +145,8 @@ ROOT_URLCONF = 'pimp.urls'
 WSGI_APPLICATION = 'pimp.wsgi.application'
 
 TEMPLATE_DIRS = (
-    '/opt/django/projects/django_projects/mytemplates',
+    # '/opt/django/projects/django_projects/mytemplates',
+    '/home/joewandy/git/pimp/django_projects/mytemplates',
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
