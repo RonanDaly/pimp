@@ -3,7 +3,7 @@ Setup guide
 
 This is setup guide for the PiMP pipeline, written for an Ubuntu system ... but I guess it's more or less the same for OS X?
 
-0. Install mzmatch and the required libraries
+0. Install mzmatch alongside with its required packages
 http://mzmatch.sourceforge.net/installation.php
 
 1. Install curl-config, required for RCurl below
@@ -64,25 +64,22 @@ $ pip install -r git/pimp/django_projects/requirements.txt
 10. Configure settings_dev.py in e.g. /home/joewandy/git/pimp/django_projects/pimp/pimp and adjust all the hardcoded path inside.
 
 11. Create db tables
-
 $ cd /home/joewandy/git/pimp/django_projects/pimp
 $ python manage.py migrate
 
 12. Create a superuser manually
-
 $ cd /home/joewandy/git/pimp/django_projects/pimp
 $ python manage.pcreatesuperuser --settings=pimp.settings_dev
 
-Then go to the django admin page, and fill up the first and last names of the superuser
-
+Then go to the django admin page, and fill up the first and last names of the superuser. Run the server with:
 $ python manage.py runserver --settings=pimp.settings_dev
-
-Open http://localhost:8000/admin/ in browser
+Then open http://localhost:8000/admin/ in browser. 
 Click [Users], find the superuser created above and edit to fill up its first and last names.
 
 13. Set up default configuration parameters
-
 $ python manage.pshell_plus --settings=pimp.settings_dev
+
+Run all the following commands inside the shell
 
 from experiments.models import DefaultParameter
 p = DefaultParameter(name="iqr",value=0.5,state=True)
