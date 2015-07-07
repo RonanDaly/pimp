@@ -1,0 +1,192 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.template.defaultfilters import slugify
+import os
+from pimp.settings_dev import MEDIA_ROOT
+
+# Use the default Django User model
+# This provides the attributes:
+#	username
+#	password
+#	email
+#	first_name
+#	last_name
+
+FILE_TYPES = (
+    ('Positive', 'Positive'),
+    ('Negative', 'Negative'),
+    # ('Pooled Sample', 'Pooled Sample'
+)
+
+# Define the choices for ionisation protocol
+IONISATION_PROTOCOLS = (
+    ('EIS','Electron Ionisation Spray'),
+    # Additional ionisation protocols could be added here if necessary
+)
+# Define the choices for method of detection
+DETECTION_PROTOCOLS = (
+    ('LCMS DDA','Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'),
+    ('GCMS EII','Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'),
+    ('DIA', 'Data Independent Acquisition'),
+)
+
+# Class defining the experiments created by the users
+class Experiment(models.Model):
+    title = models.CharField(max_length = 250, blank = False)
+    description = models.CharField(max_length = 250)
+    createdBy = models.ForeignKey(User, related_name = "experiment_creator")
+    timeCreated = models.DateTimeField(auto_now = True)
+    lastModified = models.DateTimeField(auto_now_add = True, blank = True)
+    ionisationMethod = models.CharField(max_length = 250, choices = IONISATION_PROTOCOLS)
+    detectionMethod = models.CharField(max_length = 250, choices = DETECTION_PROTOCOLS)
+    users = models.ManyToManyField(User, through = 'UserExperiments', through_fields = ('experiment', 'user'))
+    slug = models.SlugField(unique=True)
+
+    # Upon saving an instance of the model, a unique slug is derived for referencing in the URL
+    def save(self, *args, **kwargs):
+        ## The experiment id is going to be one greater than the total number of existing
+        ## experiments in the database.
+        experimentNumber = Experiment.objects.count()+1
+        # At the moment the slug is simply the experiment title plus the next available index
+        self.slug = slugify(self.title)+'-'+str(experimentNumber)
+        super(Experiment, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return 'Experiment '+str(self.id)+': '+self.title
+
+## Class defining the many-to-many relationships between a user and experiments
+class UserExperiments(models.Model):
+    user = models.ForeignKey(User)
+    experiment = models.ForeignKey(Experiment)
+
+    def __unicode__(self):
+        return self.user.username +' access to '+self.experiment.title
+
+# Class to define the experimental conditions of an experiment
+class ExperimentalCondition(models.Model):
+    name = models.CharField(max_length = 250, blank = False)
+    description = models.CharField(max_length = 250)
+    experiment = models.ForeignKey(Experiment)
+    slug = models.SlugField(unique=True)
+
+    def save(self, *args, **kwargs):
+        ## The experimentCondition id is going to be one greater than the total number of existing
+        ## experimentalConditions in the database.
+        conditionNumber = ExperimentalCondition.objects.count()+1
+        # As with the experiment the slug is simply the name of the
+        # experimental condition and the next available index
+        self.slug = slugify(self.name)+'-'+str(conditionNumber)
+        super(ExperimentalCondition, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return self.name+' in '+self.experiment.title
+
+# Class to define the samples which may be included in each experimental condition
+class Sample(models.Model):
+    name = models.CharField(max_length = 250, blank = False)
+    description = models.CharField(max_length = 250, blank = False)
+    experimentalCondition = models.ForeignKey(ExperimentalCondition)
+    organism = models.CharField(max_length = 250)
+    slug = models.SlugField(unique=True)
+
+    def save(self, *args, **kwargs):
+        ## The sample id is going to be one greater than the total number of existing
+        ## samples in the database.
+        sampleNumber = Sample.objects.count()+1
+        # The slug is simply the concatination of the name of the sample and the next available id
+        self.slug = slugify(self.name)+'-'+str(sampleNumber)
+        super(Sample, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return 'Sample '+str(self.id)+ ' in '+ self.experimentalCondition.experiment.title
+
+
+# Method to generate the absolute directory of the uploaded file
+def get_upload_file_name(instance, filename):
+    # Retrive the sample, experimental condition and experiment to which the sample file is to be associated
+    sampleObject = instance.sample
+    experimentalConditionObject = sampleObject.experimentalCondition
+    experimentObject = experimentalConditionObject.experiment
+    # The directory of the file upload is concatinated to the root directory
+    filepath = os.path.join(MEDIA_ROOT, experimentObject.slug, experimentalConditionObject.slug,
+                            sampleObject.slug, instance.polarity)
+    try:
+        # If the directory doesn't exist then it must be created.
+        os.makedirs(filepath)
+    except OSError as e:
+        if e.errno == 17:
+            # Directory already exists
+            pass
+    # Finally, the filename is contatinated to the directory
+    upload_location = os.path.join(filepath, filename)
+    return upload_location
+
+# Class detailing the location of files corresponding to the sample
+class SampleFile(models.Model):
+    name = models.CharField(max_length = 250, blank = False)
+    polarity = models.CharField(max_length = 250, choices = FILE_TYPES)
+    sample = models.ForeignKey(Sample, blank = False)
+    address = models.FileField(upload_to = get_upload_file_name)
+
+    def __unicode__(self):
+         return self.name
+
+# Class defining an Analysis of an Experiment
+class Analysis(models.Model):
+    experiment = models.ForeignKey(Experiment)
+    timeCreated = models.DateTimeField(auto_now = True)
+    ### Note additional parameters required here ####
+
+    def __unicode__(self):
+        return 'Analysis '+str(self.id)+ ' for Experiment '+ str(self.experiment.title)
+
+# Class defining the respositories which are queried during an analysis
+class Repository (models.Model):
+    name = models.CharField(max_length = 250, blank = False)
+
+    def __unicode__(self):
+        return self.name
+
+# Class defining the compounds identified from the repositories
+class Compound(models.Model):
+    formula = models.CharField(max_length = 250)
+    inchiKey = models.CharField(max_length = 250)
+    ppm = models.DecimalField(decimal_places = 10, max_digits = 20)
+    adduct = models.CharField(max_length = 250)
+    mass = models.DecimalField(decimal_places = 10, max_digits = 20)
+    repository = models.ManyToManyField(Repository, through = 'CompoundRepository')
+
+    def __unicode__(self):
+        return self.formula
+
+# Class defining the peaks derived from the source files
+class Peak(models.Model):
+    sourceFile = models.ForeignKey(SampleFile, blank = False)
+    mass = models.DecimalField(decimal_places = 10, max_digits = 20)
+    retentionTime = models.DecimalField(decimal_places = 10, max_digits = 20)
+    intensity = models.DecimalField(decimal_places = 10, max_digits = 20)
+    parentPeak = models.ForeignKey('self', null=True)
+    msnLevel = models.IntegerField(default = 0)
+    annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')
+
+    def __unicode__(self):
+        return 'Peak '+str(self.id)
+
+# Class defining the candidate annotations which are assigned to peaks
+class CandidateAnnotation(models.Model):
+    compound = models.ForeignKey(Compound)
+    peak = models.ForeignKey(Peak)
+    confidence = models.DecimalField(decimal_places = 10, max_digits = 20)
+    analysis = models.ForeignKey(Analysis)
+
+    def __unicode__(self):
+        return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)
+
+# Class defining which compounds were identified by in which repositories
+class CompoundRepository (models.Model):
+    compound = models.ForeignKey(Compound)
+    repository = models.ForeignKey(Repository)
+
+    def __unicode__(self):
+        return 'Compound '+str(self.compound.id)+' from Repository '+str(self.repository.id)

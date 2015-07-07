@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Frank</title>
+	</head>
+	<body>
+		<div>
+        		{% if user.is_authenticated %}
+			<h1>Welcome to Frank, {{ user.username }}!</h1>
+			{% else %}
+        		<!--otherwise just show the heading-->
+			<h2>Welcome to Frank</h2>
+			{% endif %}
+
+    		</div>
+		<table>
+		{% if user.is_authenticated %}
+		<tr><td><a href="/frank/logout">Logout</a></td></tr>
+		<tr><td><a href="/frank/my_experiments">My Experiments</a></td></tr>
+		{% else %}
+		<tr><td><a href="/frank/sign_up">Sign Up</a></td></tr>
+		<tr><td><a href="/frank/sign_in">Sign In</a></td></tr>
+		{% endif %}
+		</table>
+	</body>
+</html>

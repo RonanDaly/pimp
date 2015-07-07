@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Frank</title>
+    </head>
+
+    <body>
+	<h1>{{experiment.title}}</h1>
+		<table>
+			<tr><td>{{experiment.description}}</td></tr>
+			<tr><td>{{experiment.timeCreated}}</td></tr>
+			<tr><td>{{experiment.get_ionisationMethod_display}}</td></tr>
+			<tr><td>{{experiment.get_detectionMethod_display}}</td></tr>
+		</table></br>
+		<h2>Experimental Conditions</h2>
+<a href="/frank/my_experiments/{{experiment.slug}}/add_experimental_condition">Add Experimental Condition</a>
+		</table>
+	{% if conditions %}
+		<table>
+		{% for condition in conditions %}
+			<tr><td><a href="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}">{{condition.name}}</a></td></tr>
+		{% endfor %}
+		</table>
+	{% else %}
+		<p>No existing experimental condiditons</p>
+	{% endif %}
+	</br>
+	<h2>Analysis</h2>
+	<a href="/frank/my_experiments/{{experiment.slug}}/add_analysis">Add New Analysis</a>
+	{% if analysis_set %}
+		<table>
+		{% for analysis in analysis_set %}
+		<tr><td><a href="/frank/my_experiments/{{experiment.slug}}/{{analysis.slug}}">{{analysis.name}}</a></td></tr>
+		{% endfor %}
+		</table>
+	{% else %}
+		<p>No existing analysis<p>
+	{% endif %}
+	<br>
+<a href="/frank/my_experiments/{{experiment.slug}}/analyse">analyse</a>
+	
+	<table>
+		
+	<tr><td><a href="/frank/">Home</a></td></tr>
+	</table>	
+    </body>
+
+</html>

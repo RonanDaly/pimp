@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{experiment_name}}</title>
+    </head>
+
+    <body>
+        <h1>Add Experimental Condition</h1>
+
+	{% if experimental_condition_form %}
+        <form id="experimental_condition_form" method="post" action="/frank/my_experiments/{{experiment_slug}}/add_experimental_condition/">
+
+            {% csrf_token %}
+            {% for hidden in experimental_condition_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in experimental_condition_form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+
+            <input type="submit" name="submit" value="Add Condition" />
+	{% endif %}        
+	</form>
+    </body>
+
+</html>

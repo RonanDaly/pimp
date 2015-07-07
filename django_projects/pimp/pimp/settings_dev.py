@@ -9,6 +9,8 @@ CELERYD_LOG_COLOR = False
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
 # Set to True to enable registration
 REGISTRATION_OPEN = False
 
@@ -34,7 +36,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         # 'ENGINE': 'django.db.backends.mysql',
         # 'NAME': 'pimp_prod',
-        'NAME': '/home/joewandy/git/pimp/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(BASE_DIR, 'sqlite3.db'),                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
         'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -83,7 +85,7 @@ USE_TZ = False
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
 # MEDIA_ROOT = '/opt/django/data/pimp_data/'
 # MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
-MEDIA_ROOT = '/home/joewandy/git/pimp/django_projects/pimp_data/'
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'pimp_data')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -108,7 +110,7 @@ STATICFILES_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
     # '/Users/yoanngloaguen/Documents/django_projects/pimp/static/',
     # '/opt/django/projects/django_projects/static/',
-    '/home/joewandy/git/pimp/django_projects/static',
+    os.path.join(os.path.dirname(BASE_DIR), 'static'),
 )
 
 # List of finder classes that know how to find static files in
@@ -146,7 +148,7 @@ WSGI_APPLICATION = 'pimp.wsgi.application'
 
 TEMPLATE_DIRS = (
     # '/opt/django/projects/django_projects/mytemplates',
-    '/home/joewandy/git/pimp/django_projects/mytemplates',
+    os.path.join(os.path.dirname(BASE_DIR), 'mytemplates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -178,10 +180,11 @@ INSTALLED_APPS = (
     'data',
     'compound',
     'djcelery',
-    'gp_registration'
+    'gp_registration',
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
+    'frank',
 )
 
 ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.

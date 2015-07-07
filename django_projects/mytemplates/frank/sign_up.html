@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Frank</title>
+    </head>
+
+    <body>
+        <h1>Sign Up</h1>
+
+        <form id="user_form" method="post" action="/frank/sign_up/">
+
+            {% csrf_token %}
+            {% for hidden in user_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in user_form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+
+            <input type="submit" name="submit" value="Sign Up" />
+        </form>
+    </body>
+
+</html>

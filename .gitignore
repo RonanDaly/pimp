@@ -1,6 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.pyc
+
 
 # C extensions
 *.so
@@ -94,3 +96,9 @@ local.properties
 # PiMP specific files to ignore
 django_projects/pimp/sqlite3.db
 django_projects/pimp_data/
+
+# Ignore database files
+*.db
+
+# Ignore any temp files
+*~

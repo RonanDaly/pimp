@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Frank</title>
+    </head>
+
+    <body>
+	<h1>{{experiment.title}}: {{condition.name}}</h1>
+		<table>
+			<tr><td>{{condition.description}}</td></tr>
+		</table>
+		
+		<a href="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/add_sample">Add Sample</a>
+		<table>
+		{% for sample in samples %}
+			<tr><td>{{sample.name}}</td>
+			{% for file in sample_files %}
+				{% if file.sample == sample %}
+				<td>{{file.name}} File</td>
+				{% endif %}	 		
+			{% endfor %}
+			<td><a href="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/{{sample.slug}}/add_sample_file">Add Sample File</a></td></tr>
+		{% endfor %}
+		</table>
+	<table>
+	<tr><td><a href="/frank/">Home</a></td></tr>
+	</table>	
+    </body>
+
+</html>

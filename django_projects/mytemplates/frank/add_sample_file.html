@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Frank</title>
+    </head>
+
+    <body>
+        <h1>{{experiment.title}}: {{condition.name}}: {{sample.name}}</h1>
+
+        <form id="sample_form" method="post" action="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/{{sample.slug}}/add_sample_file/" enctype="multipart/form-data">
+
+            {% csrf_token %}
+            {% for hidden in sampleFileForm.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in sampleFileForm.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+	<input type = "submit" name="submit" value="Submit">
+	</form>
+    </body>
+
+</html>

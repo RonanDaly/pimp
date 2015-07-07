@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Frank</title>
+    </head>
+
+    <body>
+        <h1>My Experiments</h1>
+
+        {% if experiment_list %}
+		<table>
+		{% for experiment in experiment_list %}
+			<tr><td><a href="/frank/my_experiments/{{experiment.slug}}">{{experiment.title}}</a>
+		</td><td>{{experiment.timeCreated}}</td><td>{{experiment.get_ionisationMethod_display}}</td><td>{{experiment.get_detectionMethod_display}}</td></tr>
+		{% endfor %}
+	{% else %}
+		<h1>No existing experiments</h1>
+	{% endif %}
+
+	<table>
+	<tr><td><a href="/frank/my_experiments/add_experiment">Add Experiment</a></td></tr>	
+	<tr><td><a href="/frank/">Home</a></td></tr>
+	</table>	
+    </body>
+
+</html>
