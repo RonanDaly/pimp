@@ -82,10 +82,6 @@ def msnAnalysis(experiment):
         peak_dict[int(peakID[peak])] = new_peak.id
     print 'Peaks Populated!!'
 
-@celery.task
-def queryMagma(experiment):
-    
-
     # Get the peaks and create a
     # jarRetCode = subprocess.call([javaPath, jar, jarPath, fileType, mfPath, outSwitch, outPath])
 
