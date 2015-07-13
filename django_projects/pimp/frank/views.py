@@ -5,7 +5,7 @@ from frank.models import *
 from frank.forms import *
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
-from frank.MSNAnalysis import *
+from frank import tasks
 
 # Create your views here.
 
@@ -289,5 +289,10 @@ def addSampleFile(request, experiment_name_slug, condition_name_slug, sample_slu
 
 def analyse (request, experiment_name_slug):
     ## Remember to add the msnAnalysis method onto celery
-    msnAnalysis(experiment_name_slug)
-    return HttpResponse('Python Script Called')
+    tasks.msnAnalysis.delay(experiment_name_slug)
+    #msnAnalysis(experiment_name_slug)
+    return HttpResponse('Tasks.py Called for generation of peak list')
+
+def metfusion_annotations(request, experiment_name_slug):
+    tasks.metfusion.delay(experiment_name_slug)
+    return HttpResponse('Tasks.py callled for metfusion')

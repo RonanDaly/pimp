@@ -258,3 +258,4 @@ def start_pimp_pipeline(analysis, project, user):
 	# subprocess.call("/usr/local/bin/R-3.0.3/lib64/R/bin/Rscript /opt/django/scripts/pimp/runPiMP.R", shell=True)
 	# runPipeline(files=files, groups=groups, contrasts=contrasts, standards=standards, databases=databases)
 	return "Pipeline run with success! Yeah, celebration time!!!!!"
+

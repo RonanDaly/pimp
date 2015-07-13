@@ -1,4 +1,3 @@
-# Django settings for pimp project.
 import os
 
 import djcelery
@@ -177,6 +176,7 @@ INSTALLED_APPS = (
     'fileupload',
     'groups',
     'experiments',
+    'frank',
     'data',
     'compound',
     'djcelery',
@@ -184,7 +184,7 @@ INSTALLED_APPS = (
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
-    'frank',
+
 )
 
 ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.

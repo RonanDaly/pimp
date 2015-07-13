@@ -19,4 +19,5 @@ urlpatterns = patterns ('',
         views.addSampleFile, name = 'add_sample_file'),
     ### Views to be done ####
     url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/analyse$', views.analyse, name = 'analyse'),
+    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/annotate$', views.metfusion_annotations, name = 'metfusion'),
 )
