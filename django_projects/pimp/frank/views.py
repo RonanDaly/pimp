@@ -289,10 +289,10 @@ def addSampleFile(request, experiment_name_slug, condition_name_slug, sample_slu
 
 def analyse (request, experiment_name_slug):
     ## Remember to add the msnAnalysis method onto celery
-    tasks.msnAnalysis.delay(experiment_name_slug)
+    tasks.msnGeneratePeakList.delay(experiment_name_slug)
     #msnAnalysis(experiment_name_slug)
     return HttpResponse('Tasks.py Called for generation of peak list')
 
-def metfusion_annotations(request, experiment_name_slug):
-    tasks.metfusion.delay(experiment_name_slug)
-    return HttpResponse('Tasks.py callled for metfusion')
+def get_massBank_annotations(request, experiment_name_slug):
+    tasks.massBank_batch_search.delay(experiment_name_slug)
+    return HttpResponse('Tasks.py callled for massBank annotation')
