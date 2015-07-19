@@ -6,16 +6,16 @@
 
 {% block body_block %}
 
-        <h4>{{experiment.title}}: {{condition.name}}</h4>
+        <h4>Generate A New Fragmentation Set</h4>
 
-        <form id="sample_form" method="post" action="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/add_sample/">
+        <form id="fragmentation_set_form" method="post" action="/frank/my_experiments/{{experiment.slug}}/create_fragmentation_set">
 
             {% csrf_token %}
-            {% for hidden in sample_form.hidden_fields %}
+            {% for hidden in frag_set_form.hidden_fields %}
                 {{ hidden }}
             {% endfor %}
 
-            {% for field in sample_form.visible_fields %}
+            {% for field in frag_set_form.visible_fields %}
                 {{ field.errors }}
 		<br>
                 {{ field.help_text }}

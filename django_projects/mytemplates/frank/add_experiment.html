@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Frank</title>
-    </head>
+{% extends 'frank/frankbase.html' %}
 
-    <body>
-        <h1>Add Experiment</h1>
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h2>Add Experiment</h2>
 
         <form id="experiment_form" method="post" action="/frank/my_experiments/add_experiment/">
 
@@ -25,6 +26,4 @@
 
             <input type="submit" name="submit" value="Add Experiment" />
         </form>
-    </body>
-
-</html>
+{% endblock %}

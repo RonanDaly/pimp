@@ -1,7 +1,7 @@
 from frank.models import Peak, SampleFile
 
 class msnPeakBuilder:
-    def __init__(self, r_dataframe):
+    def __init__(self, r_dataframe, analysis_object):
         self.peak_ID_vector = r_dataframe[0]
         self.parent_peak_id_vector = r_dataframe[1]
         self.msn_level_vector = r_dataframe[2]
@@ -12,6 +12,7 @@ class msnPeakBuilder:
         self.sample_file_vector = r_dataframe[9]
         self.total_number_of_peaks = len(self.peak_ID_vector)
         self.created_peaks_dict = {}
+        self.analysis = analysis_object
 
     def populate_database_peaks(self):
         print 'Populating database peaks...'
@@ -75,6 +76,7 @@ class msnPeakBuilder:
                 intensity = peak_intensity,
                 parentPeak = parent_peak_object,
                 msnLevel = peak_msn_level,
+                fragmentation_set = self.analysis,
         )
         self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
         return newly_created_peak

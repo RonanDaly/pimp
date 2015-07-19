@@ -1,18 +1,19 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Frank</title>
-    </head>
+{% extends 'frank/frankbase.html' %}
 
-    <body>
-	<h1>{{experiment.title}}</h1>
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+	<h4>{{experiment.title}}</h4>
 		<table>
-			<tr><td>{{experiment.description}}</td></tr>
-			<tr><td>{{experiment.timeCreated}}</td></tr>
-			<tr><td>{{experiment.get_ionisationMethod_display}}</td></tr>
-			<tr><td>{{experiment.get_detectionMethod_display}}</td></tr>
+			<tr><td>Description: {{experiment.description}}</td></tr>
+			<tr><td>Date Created: {{experiment.timeCreated}}</td></tr>
+			<tr><td>Ionisation Method: {{experiment.get_ionisationMethod_display}}</td></tr>
+			<tr><td>Experiment Type: {{experiment.get_detectionMethod_display}}</td></tr>
 		</table></br>
-		<h2>Experimental Conditions</h2>
+		<h4>Experimental Conditions</h4>
 <a href="/frank/my_experiments/{{experiment.slug}}/add_experimental_condition">Add Experimental Condition</a>
 		</table>
 	{% if conditions %}
@@ -25,16 +26,19 @@
 		<p>No existing experimental condiditons</p>
 	{% endif %}
 	</br>
-	<h2>Analysis</h2>
-	<a href="/frank/my_experiments/{{experiment.slug}}/add_analysis">Add New Analysis</a>
-	{% if analysis_set %}
+	<h4>Fragment Sets</h4>
+	<a href="/frank/my_experiments/{{experiment.slug}}/create_fragmentation_set">Generate New Fragment Set</a>
+	{% if fragmentation_sets %}
 		<table>
-		{% for analysis in analysis_set %}
-		<tr><td><a href="/frank/my_experiments/{{experiment.slug}}/{{analysis.slug}}">{{analysis.name}}</a></td></tr>
+		{% for fragment_set in fragmentation_sets %}
+			<tr><td><a href="/frank/my_experiments/{{experiment.slug}}/{{fragment_set.slug}}">{{fragment_set.name}}</a></td>
+		<td>{{fragment_set.status}}</td>
+		<td>{{fragment_set.timeCreated}}</td>
+		</tr>
 		{% endfor %}
 		</table>
 	{% else %}
-		<p>No existing analysis<p>
+		<p>No existing peak sets associated with this experiment<p>
 	{% endif %}
 	<br>
 <a href="/frank/my_experiments/{{experiment.slug}}/analyse">analyse</a>
@@ -44,6 +48,5 @@
 		
 	<tr><td><a href="/frank/">Home</a></td></tr>
 	</table>	
-    </body>
 
-</html>
+{% endblock %}

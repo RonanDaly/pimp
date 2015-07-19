@@ -17,7 +17,14 @@ urlpatterns = patterns ('',
         views.add_sample, name = 'add_sample'),
     url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/(?P<condition_name_slug>[\w\-]+)/(?P<sample_slug>[\w\-]+)/add_sample_file/$',
         views.addSampleFile, name = 'add_sample_file'),
-    ### Views to be done ####
-    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/analyse$', views.analyse, name = 'analyse'),
+    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/create_fragmentation_set$', views.create_fragmentation_set, name = 'create_fragmentation_set'),
+    url(r'^my_fragmentation_sets/$', views.fragmentation_set_summary, name = 'fragmentation_set_summary'),
+    url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)$', views.fragmentation_set, name = 'fragmentation_set'),
+    url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)$', views.peak_summary, name = 'peak_summary'),
+
+
+
+    ### Testing Views ####
+    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/analyse$', views.input_peak_list_to_database, name = 'analyse'),
     url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/annotate$', views.get_massBank_annotations, name = 'massBank'),
 )

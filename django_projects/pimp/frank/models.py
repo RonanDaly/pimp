@@ -16,7 +16,14 @@ from pimp.settings_dev import MEDIA_ROOT
 FILE_TYPES = (
     ('Positive', 'Positive'),
     ('Negative', 'Negative'),
+    ('Pooled', 'Pooled'),
     # ('Pooled Sample', 'Pooled Sample'
+)
+
+ANALYSIS_STATUS = (
+    ('Submitted', 'Submitted'),
+    ('Processing', 'Processing'),
+    ('Completed', 'Completed'),
 )
 
 # Define the choices for ionisation protocol
@@ -27,8 +34,8 @@ IONISATION_PROTOCOLS = (
 # Define the choices for method of detection
 DETECTION_PROTOCOLS = (
     ('LCMS DDA','Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'),
+    ('LCMS DIA', 'Liquid-Chromatography Data-Independent Acquisition'),
     ('GCMS EII','Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'),
-    ('DIA', 'Data Independent Acquisition'),
 )
 
 # Class defining the experiments created by the users
@@ -109,8 +116,14 @@ def get_upload_file_name(instance, filename):
     experimentalConditionObject = sampleObject.experimentalCondition
     experimentObject = experimentalConditionObject.experiment
     # The directory of the file upload is concatinated to the root directory
-    filepath = os.path.join(MEDIA_ROOT, experimentObject.slug, experimentalConditionObject.slug,
-                            sampleObject.slug, instance.polarity)
+    filepath = os.path.join(MEDIA_ROOT,
+                            'frank',
+                            experimentObject.createdBy.username,
+                            experimentObject.slug,
+                            experimentalConditionObject.slug,
+                            sampleObject.slug,
+                            instance.polarity
+                            )
     try:
         # If the directory doesn't exist then it must be created.
         os.makedirs(filepath)
@@ -121,6 +134,9 @@ def get_upload_file_name(instance, filename):
     # Finally, the filename is contatinated to the directory
     upload_location = os.path.join(filepath, filename)
     return upload_location
+    ## Remember to fix the problem that if two identical files are added to the same experiment
+    ## then Django will create a duplicate file in the directory
+    ## Should probably be done in the form.
 
 # Class detailing the location of files corresponding to the sample
 class SampleFile(models.Model):
@@ -132,14 +148,45 @@ class SampleFile(models.Model):
     def __unicode__(self):
          return self.name
 
-# Class defining an Analysis of an Experiment
-class Analysis(models.Model):
+# Class defining an Analysis of an Experiment - i.e. the generation of a collection of peaks
+class FragmentationSet(models.Model):
+    name = models.CharField(max_length = 250)
     experiment = models.ForeignKey(Experiment)
     timeCreated = models.DateTimeField(auto_now = True)
+    status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Submitted')
+    slug = models.SlugField(unique=True)
     ### Note additional parameters required here ####
 
+    def save(self, *args, **kwargs):
+        ## The set id is going to be one greater than the total number of existing
+        # ## sets in the database.
+        setNumber = FragmentationSet.objects.count()+1
+        # The slug is simply the concatination of the name of the sample and the next available id
+        self.slug = slugify(self.name)+'-'+str(setNumber)
+        super(FragmentationSet, self).save(*args, **kwargs)
+
     def __unicode__(self):
-        return 'Analysis '+str(self.id)+ ' for Experiment '+ str(self.experiment.title)
+        return 'Fragmentation Set '+str(self.id)
+
+
+class AnnotationQuery(models.Model):
+    name = models.CharField(max_length = 250)
+    experiment = models.ForeignKey(Experiment)
+    timeCreated = models.DateTimeField(auto_now = True)
+    status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Defined')
+    slug = models.SlugField(unique=True)
+    ### Note additional parameters required here ####
+
+    def save(self, *args, **kwargs):
+        ## The set id is going to be one greater than the total number of existing
+        # ## sets in the database.
+        queryNumber = AnnotationQuery.objects.count()+1
+        # The slug is simply the concatination of the name of the sample and the next available id
+        self.slug = slugify(self.name)+'-'+str(queryNumber)
+        super(AnnotationQuery, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return 'Annotation Query '+str(self.id)
 
 # Class defining the respositories which are queried during an analysis
 class Repository (models.Model):
@@ -151,10 +198,8 @@ class Repository (models.Model):
 # Class defining the compounds identified from the repositories
 class Compound(models.Model):
     formula = models.CharField(max_length = 250)
-    inchiKey = models.CharField(max_length = 250)
-    ppm = models.DecimalField(decimal_places = 10, max_digits = 20)
-    adduct = models.CharField(max_length = 250)
-    mass = models.DecimalField(decimal_places = 10, max_digits = 20)
+    exact_mass = models.DecimalField(decimal_places=10, max_digits=20)
+    name = models.CharField(max_length=500)
     repository = models.ManyToManyField(Repository, through = 'CompoundRepository')
 
     def __unicode__(self):
@@ -169,6 +214,16 @@ class Peak(models.Model):
     parentPeak = models.ForeignKey('self', null=True)
     msnLevel = models.IntegerField(default = 0)
     annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')
+    fragmentation_set = models.ForeignKey(FragmentationSet)
+    slug = models.SlugField(unique=True)
+
+    def save(self, *args, **kwargs):
+        ## The set id is going to be one greater than the total number of existing
+        # ## sets in the database.
+        peakNumber = Peak.objects.count()+1
+        # The slug is simply the concatination of the name of the sample and the next available id
+        self.slug = slugify('Peak ')+str(peakNumber)
+        super(Peak, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return 'Peak '+str(self.id)
@@ -178,7 +233,7 @@ class CandidateAnnotation(models.Model):
     compound = models.ForeignKey(Compound)
     peak = models.ForeignKey(Peak)
     confidence = models.DecimalField(decimal_places = 10, max_digits = 20)
-    analysis = models.ForeignKey(Analysis)
+    annotation_query = models.ForeignKey(AnnotationQuery, null=True)
 
     def __unicode__(self):
         return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)

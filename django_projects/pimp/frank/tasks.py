@@ -2,7 +2,7 @@ import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 from pimp.settings_dev import MEDIA_ROOT
 import os
-from frank.models import Peak, SampleFile
+from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, Repository, CompoundRepository
 from djcelery import celery
 from decimal import *
 import urllib2
@@ -12,6 +12,8 @@ from frank.helperObjects import msnPeakBuilder
 from suds.client import Client, WebFault
 from django.contrib.auth.models import User
 import time
+import os
+from frank.models import *
 
 
 from celery import shared_task
@@ -19,21 +21,31 @@ import subprocess
 
 ## Method to derive the peaks from the mzXML file
 @celery.task
-def msnGeneratePeakList(experiment):
-
-#     ### Scarey Script ######
+def msnGeneratePeakList(experiment, analysis):
+    # Determine the directory of the experiment
+    experiment_object = Experiment.objects.get(slug = experiment)
+    filepath = os.path.join(MEDIA_ROOT,
+                            'frank',
+                            experiment_object.createdBy.username,
+                            experiment_object.slug,
+                            )
+    analysis_object = FragmentationSet.objects.get(id=analysis)
     r_source = robjects.r['source']
     r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/frankMSnPeakMatrix.R')
     r_frankMSnPeakMatrix = robjects.globalenv['frankMSnPeakMatrix']
-    output = r_frankMSnPeakMatrix(source_directory = '~/Git/MScProjectRepo/pimp/django_projects/pimp_data/justin-sample-dataset-1')
+    analysis_object.status = 'Processing'
+    analysis_object.save()
+    output = r_frankMSnPeakMatrix(source_directory = filepath)
 #    ### Debug Script ######
 #     r_source = robjects.r['source']
 #     r_source('~/R/MyScripts/testScript.R')
 #     r_testScript = robjects.globalenv['testscript']
 #     output = r_testScript('~/Git/MScProjectRepo/pimp/django_projects/pimp_data/beer-versus-urine-1')
 #  #######################
-    peak_generator = msnPeakBuilder(output)
+    peak_generator = msnPeakBuilder(output, analysis_object)
     peak_generator.populate_database_peaks()
+    analysis_object.status = 'Completed'
+    analysis_object.save()
 
 
 @celery.task
@@ -51,15 +63,7 @@ def massBank_batch_search(experiment):
     ]
     ion = "Positive"
     type = "1"
-    params = [
-        type,
-        mailAddress,
-        query,
-        inst,
-        ion,
-    ]
     client = Client('http://www.massbank.jp/api/services/MassBankAPI?wsdl')
-    print client
     try:
         response = client.service.execBatchJob(
             type,
@@ -87,8 +91,37 @@ def massBank_batch_search(experiment):
     except WebFault, e:
         print e.message
     results = response3
-    for result in results:
-        print result
+    ## results is a list
+    print 'The length of the list is...'+str(len(results))
+    for result_set_list in results:
+        print '============================'
+        print 'Beginning of result set'
+        print result_set_list['queryName']
+        annotations = result_set_list['results']
+        number_of_annotations = result_set_list['numResults']
+        massBank = Repository.objects.get(name = 'MassBank')
+        #### Grab any peak for testing just now ######
+        peak_object = Peak.objects.get(id=194893)
+        ##############################################
+        for index in range(0, number_of_annotations):
+            each_annotation = annotations[index]
+            compound_object = Compound.objects.get_or_create(
+                formula = each_annotation['formula'],
+                exact_mass = each_annotation['exactMass'],
+                name=each_annotation['title'],
+            )[0]
+            compound_repository = CompoundRepository.objects.create(
+                compound = compound_object,
+                repository = massBank,
+            )
+            CandidateAnnotation.objects.create(
+                compound = compound_object,
+                peak = peak_object,
+                confidence = each_annotation['score'],
+                analysis = None,
+            )
+
+        print '==========  END ============='
 
 
 # def magma_mass_tree():

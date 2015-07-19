@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Frank</title>
-    </head>
+{% extends 'frank/frankbase.html' %}
 
-    <body>
-	<h1>{{experiment.title}}: {{condition.name}}</h1>
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+	<h4>{{experiment.title}}: {{condition.name}}</h4>
 		<table>
 			<tr><td>{{condition.description}}</td></tr>
 		</table>
@@ -25,6 +26,5 @@
 	<table>
 	<tr><td><a href="/frank/">Home</a></td></tr>
 	</table>	
-    </body>
 
-</html>
+{% endblock %}

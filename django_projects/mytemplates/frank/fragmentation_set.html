@@ -1,0 +1,35 @@
+{% extends 'frank/frankbase.html' %}
+
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h2>{{fragment_set.name}}</h2>
+	<p>Experiment: {{fragment_set.experiment}}</p>
+	<p>Number of MS1 Peaks: {{number_of_peaks}}</p>
+
+        {% if peak_list %}
+		<table>
+		<p>MS1 Peaks</p>
+		{% for peak in peak_list %}
+		<tr>
+		<td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}/{{peak.slug}}">{{peak}}</a>
+		</td>
+		<td>{{peak.mass|floatformat:2}}</td>
+		<td>{{peak.retentionTime|floatformat:2}}</td>
+		<td>{{peak.intensity|floatformat:2}}</td>
+		<td>{{peak.msnLevel}}</td>
+		<td>{{peak.sourceFile}}</td>
+		</tr>
+		{% endfor %}
+	{% else %}
+		<h1>No peaks to display</h1>
+	{% endif %}
+
+	<table>	
+	<tr><td><a href="/frank/">Home</a></td></tr>
+	</table>	
+
+{% endblock %}

@@ -125,8 +125,12 @@ def experimentSummary(request, experiment_name_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
         experimentalConditions = ExperimentalCondition.objects.filter(experiment = experiment)
+        fragmentation_set_list = FragmentationSet.objects.filter(
+                    experiment = experiment
+                )
         context_dict = {'experiment': experiment,
-                        'conditions': experimentalConditions
+                        'conditions': experimentalConditions,
+                        'fragmentation_sets': fragmentation_set_list,
         }
         return render(request, 'frank/experiment.html', context_dict)
     else:
@@ -235,7 +239,6 @@ def conditionSummary(request, experiment_name_slug, condition_name_slug):
         experimentalCondition = ExperimentalCondition.objects.get(slug = condition_name_slug)
         samples = Sample.objects.filter(experimentalCondition = experimentalCondition)
         files = SampleFile.objects.filter(sample = samples)
-        print files
         context_dict = {'experiment': experiment,
                         'condition': experimentalCondition,
                         'samples': samples,
@@ -286,12 +289,89 @@ def addSampleFile(request, experiment_name_slug, condition_name_slug, sample_slu
     else:
         return render(request, 'frank/sign_in.html')
 
+def create_fragmentation_set(request, experiment_name_slug):
+    if request.user.is_authenticated():
+        experiment = Experiment.objects.get(slug = experiment_name_slug)
+        if request.method == 'POST':
+            fragment_set_from = FragmentationSetForm(request.POST)
+            if fragment_set_from.is_valid():
+                new_fragmentation_set = fragment_set_from.save(commit=False)
+                new_fragmentation_set.experiment = experiment
+                new_fragmentation_set.save()
+                input_peak_list_to_database(experiment_name_slug, new_fragmentation_set.id)
+                experimentalConditions = ExperimentalCondition.objects.filter(experiment = experiment)
+                fragmentation_set_list = FragmentationSet.objects.filter(
+                    experiment = experiment
+                )
+                context_dict = {'experiment': experiment,
+                                'conditions': experimentalConditions,
+                                'fragmentation_sets': fragmentation_set_list,
+                                }
+                return render(request, 'frank/experiment.html', context_dict)
+            else:
+                print fragment_set_from.errors()
+        else:
+            fragment_set_from = FragmentationSetForm()
+            context_dict = {
+                'frag_set_form': fragment_set_from,
+                'experiment': experiment
+            }
+            return render(request, 'frank/create_fragmentation_set.html', context_dict)
+    else:
+        return render(request, 'frank/sign_in.html')
 
-def analyse (request, experiment_name_slug):
+
+def input_peak_list_to_database(experiment_name_slug, analysis_id):
     ## Remember to add the msnAnalysis method onto celery
-    tasks.msnGeneratePeakList.delay(experiment_name_slug)
+    experiment = Experiment.objects.get(slug = experiment_name_slug)
+    experiment_type = experiment.detectionMethod
+    if experiment_type == 'LCMS DDA':
+        tasks.msnGeneratePeakList.delay(experiment_name_slug, analysis_id)
     #msnAnalysis(experiment_name_slug)
-    return HttpResponse('Tasks.py Called for generation of peak list')
+
+def fragmentation_set_summary(request):
+    if request.user.is_authenticated():
+        current_user = request.user
+        fragmentation_set_list = []
+        user_experiment_list = Experiment.objects.filter(users=current_user)
+        for experiment in user_experiment_list:
+            experiment_fragment_sets = FragmentationSet.objects.filter(experiment=experiment)
+            fragmentation_set_list.extend(experiment_fragment_sets)
+        context_dict = {'fragmentation_sets': fragmentation_set_list,}
+        return render(request, 'frank/my_fragmentation_sets.html', context_dict)
+    else:
+        return render(request, 'frank/sign_in.html')
+
+def fragmentation_set(request, fragmentation_set_name_slug):
+    if request.user.is_authenticated():
+        fragment_set = FragmentationSet.objects.get(slug=fragmentation_set_name_slug)
+        ## Display number of msn peaks
+        list_of_peaks = Peak.objects.filter(fragmentation_set = fragment_set, msnLevel=1)
+        number_of_peaks = len(list_of_peaks)
+        context_dict = {
+            'fragment_set': fragment_set,
+            'peak_list': list_of_peaks,
+            'number_of_peaks':number_of_peaks,
+        }
+        return render(request, 'frank/fragmentation_set.html', context_dict)
+    else:
+        return render(request, 'frank/sign_in.html')
+
+def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
+    if request.user.is_authenticated():
+        fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+        peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set)
+        ## Display number of msn peaks
+        list_of_peaks = Peak.objects.filter(parentPeak = peak)
+        number_of_fragments = len(list_of_peaks)
+        context_dict = {
+            'peak': peak,
+            'fragmentation_peak_list': list_of_peaks,
+            'number_of_fragments':number_of_fragments,
+        }
+        return render(request, 'frank/peak_summary.html', context_dict)
+    else:
+        return render(request, 'frank/sign_in.html')
 
 def get_massBank_annotations(request, experiment_name_slug):
     tasks.massBank_batch_search.delay(experiment_name_slug)

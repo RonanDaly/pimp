@@ -1,6 +1,6 @@
 from django import forms
 from frank.models import Experiment, ExperimentalCondition, \
-    Sample, SampleFile, Analysis, IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
+    Sample, SampleFile, FragmentationSet, IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
@@ -111,3 +111,12 @@ class SampleFileForm(forms.ModelForm):
                 raise forms.ValidationError("Incorrect file format. Please upload mzXML files")
 
 ## TO DO: create an analysis form class
+# The form that is used to new experimental condition
+class FragmentationSetForm(forms.ModelForm):
+    name = forms.CharField(max_length=60, help_text="Enter the name of the fragmentation set.")
+
+    class Meta:
+        model = FragmentationSet
+        fields = (
+            'name',
+        )

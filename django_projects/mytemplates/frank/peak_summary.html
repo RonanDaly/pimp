@@ -1,0 +1,50 @@
+{% extends 'frank/frankbase.html' %}
+
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h4>{{peak}}</h4>
+	<p>Mass: {{peak.mass}}</p>
+	<p>Retention Time: {{peak.retentionTime|floatformat:2}}</p>
+	<p>Intensity: {{peak.intensity|floatformat:2}}</p>
+	<p>Number of Fragments: {{number_of_fragments}}</p>
+
+	<p>MS2 Fragment Spectrum</p>        
+	{% if fragmentation_peak_list %}
+		<table>
+		{% for fragment in fragmentation_peak_list %}
+		<tr>
+		<td>{{fragment}}</td>
+		<td>{{fragment.mass|floatformat:2}}</td>
+		<td>{{fragment.retentionTime|floatformat:2}}</td>
+		<td>{{fragment.intensity|floatformat:2}}</td>
+		<td>{{fragment.msnLevel}}</td>
+		</tr>
+		{% endfor %}
+		</table>
+	{% else %}
+		<h1>No peaks to display</h1>
+	{% endif %}
+	<br/>
+	<p>Candidate Annotations</p>
+	 {% if annotation_list %}
+		<table>
+		<p>Candidate Annotations</p>
+		{% for annotation in annotation_list %}
+		<tr>
+		<td>{{annotation}}</td>
+		</tr>
+		{% endfor %}
+		</table>
+	{% else %}
+		<h1>No annotations to display</h1>
+	{% endif %}
+
+	<table>	
+	<tr><td><a href="/frank/">Home</a></td></tr>
+	</table>	
+
+{% endblock %}

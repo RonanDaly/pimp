@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Frank</title>
-    </head>
+{% extends 'frank/frankbase.html' %}
 
-    <body>
-        <h1>{{experiment.title}}: {{condition.name}}: {{sample.name}}</h1>
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h4>{{experiment.title}}: {{condition.name}}: {{sample.name}}</h4>
 
         <form id="sample_form" method="post" action="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/{{sample.slug}}/add_sample_file/" enctype="multipart/form-data">
 
@@ -24,6 +25,4 @@
             {% endfor %}
 	<input type = "submit" name="submit" value="Submit">
 	</form>
-    </body>
-
-</html>
+{% endblock %}

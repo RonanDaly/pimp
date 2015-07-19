@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Frank</title>
-    </head>
+{% extends 'frank/frankbase.html' %}
 
-    <body>
-        <h1>My Experiments</h1>
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h2>My Experiments</h2>
 
         {% if experiment_list %}
 		<table>
@@ -21,6 +22,5 @@
 	<tr><td><a href="/frank/my_experiments/add_experiment">Add Experiment</a></td></tr>	
 	<tr><td><a href="/frank/">Home</a></td></tr>
 	</table>	
-    </body>
 
-</html>
+{% endblock %}
