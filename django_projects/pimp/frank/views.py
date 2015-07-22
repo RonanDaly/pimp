@@ -363,7 +363,7 @@ def fragmentation_set(request, fragmentation_set_name_slug):
         ms1_peaks_by_file = {}
         for file_id in sample_file_ids:
             experimental_file = SampleFile.objects.get(id=file_id.get('sourceFile'))
-            ms1_peaks_by_file[experimental_file] = list_of_peaks.filter(sourceFile = experimental_file)
+            ms1_peaks_by_file[experimental_file] = list_of_peaks.filter(sourceFile = experimental_file).order_by('mass')
         context_dict = {
             'fragment_set': fragment_set,
             'peak_list': list_of_peaks,
