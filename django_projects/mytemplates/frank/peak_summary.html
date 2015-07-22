@@ -12,16 +12,27 @@
 	<p>Intensity: {{peak.intensity|floatformat:2}}</p>
 	<p>Number of Fragments: {{number_of_fragments}}</p>
 
-	<p>MS2 Fragment Spectrum</p>        
+	<p>MS2 Fragment Spectrum</p>     
 	{% if fragmentation_peak_list %}
+
+		<div>
+			<img src="{{peak.slug}}/msn_spectra_plot.png">
+		</div>
+		</br>
 		<table>
+		<tr>
+		<th>Fragment Identifier</th>
+		<th>Mass</th>
+		<th>Retention Time</th>
+		<th>Intensity</th>
+		</tr>
+
 		{% for fragment in fragmentation_peak_list %}
 		<tr>
-		<td>{{fragment}}</td>
+		<td>{{fragment.slug}}</td>
 		<td>{{fragment.mass|floatformat:2}}</td>
 		<td>{{fragment.retentionTime|floatformat:2}}</td>
 		<td>{{fragment.intensity|floatformat:2}}</td>
-		<td>{{fragment.msnLevel}}</td>
 		</tr>
 		{% endfor %}
 		</table>
@@ -30,12 +41,18 @@
 	{% endif %}
 	<br/>
 	<p>Candidate Annotations</p>
-	 {% if annotation_list %}
+	 {% if candidate_annotations %}
 		<table>
-		<p>Candidate Annotations</p>
-		{% for annotation in annotation_list %}
 		<tr>
-		<td>{{annotation}}</td>
+		<th>Compound Title</th>
+		<th>Formula</th>
+		<th>Confidence Value</th>
+		</tr>
+		{% for annotation in candidate_annotations %}
+		<tr>
+		<td>{{annotation.compound.name}}</td>
+		<td>{{annotation.compound}}</td>
+		<td>{{annotation.confidence|floatformat:3}}</td>
 		</tr>
 		{% endfor %}
 		</table>

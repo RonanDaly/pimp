@@ -30,7 +30,7 @@ class FragmentationSetAdmin(admin.ModelAdmin):
 
 # The fields to be displayed in the Analysis page of admin
 class AnnotationQueryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'experiment', 'timeCreated', 'status', 'slug')
+    list_display = ('name', 'fragmentation_set', 'timeCreated', 'status', 'slug')
 
 # The fields to be displayed in the Repository page of admin
 class RepositoryAdmin(admin.ModelAdmin):

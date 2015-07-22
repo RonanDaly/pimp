@@ -7,27 +7,60 @@
 {% block body_block %}
 
         <h2>{{fragment_set.name}}</h2>
-	<p>Experiment: {{fragment_set.experiment}}</p>
+	<p>{{fragment_set.experiment}}</p>
 	<p>Number of MS1 Peaks: {{number_of_peaks}}</p>
-
-        {% if peak_list %}
+	
+	<h4>Annotation Sets</h4>
+	<a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}/define_annotation_query">Create New Annotation Query</a>
+	</br>
+	{% if annotations %}
 		<table>
-		<p>MS1 Peaks</p>
-		{% for peak in peak_list %}
 		<tr>
-		<td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}/{{peak.slug}}">{{peak}}</a>
-		</td>
-		<td>{{peak.mass|floatformat:2}}</td>
-		<td>{{peak.retentionTime|floatformat:2}}</td>
-		<td>{{peak.intensity|floatformat:2}}</td>
-		<td>{{peak.msnLevel}}</td>
-		<td>{{peak.sourceFile}}</td>
+			<th>Name</th>
+			<th>Time Created</th>
+			<th>Current Status</th>
 		</tr>
-		{% endfor %}
+		{% for annotation in annotations %}
+		<tr>
+		<td>{{annotation.name}}</td>
+		<td>{{annotation.timeCreated}}</td>
+		<td>{{annotation.status}}</td>
+		</tr>
+		{% endfor %}	
+		</table>
 	{% else %}
-		<h1>No peaks to display</h1>
+		<h4>No annotation queries have been performed on this peak set</h4>
 	{% endif %}
 
+	<h4>MS1 Peaks</h4>
+	{% if peaks_by_file %}
+		{% for file,peak_values in peaks_by_file.items %}
+			<div>
+				<h4>{{file}}</h4>
+				<div>
+					<img src="{{fragment_set.slug}}/{{file.id}}/ms1_plot.png">
+				</div>
+				<table>
+				<tr>
+				<th>Identifier</th>
+				<th>Mass</th>
+				<th>Retention Time</th>
+				<th>Intensity</th>
+				</tr>
+				{% for peak in peak_values %}
+				<tr>
+				<td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}/{{peak.slug}}">{{peak.slug}}</a>
+				</td>
+				<td>{{peak.mass|floatformat:2}}</td>
+				<td>{{peak.retentionTime|floatformat:2}}</td>
+				<td>{{peak.intensity|floatformat:2}}</td>
+				</tr>				
+				{% endfor %}
+				</table>
+			</div>
+		{% endfor %}
+	{% endif %}
+	</br>
 	<table>	
 	<tr><td><a href="/frank/">Home</a></td></tr>
 	</table>	

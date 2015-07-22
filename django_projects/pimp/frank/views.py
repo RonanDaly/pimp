@@ -6,6 +6,16 @@ from frank.forms import *
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from frank import tasks
+import matplotlib
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+#matplotlib inline
+from matplotlib import pyplot as plt
+import numpy as np
+from matplotlib import patches as mpatches
+from decimal import *
+from django.db.models import Max
+
 
 # Create your views here.
 
@@ -348,14 +358,23 @@ def fragmentation_set(request, fragmentation_set_name_slug):
         ## Display number of msn peaks
         list_of_peaks = Peak.objects.filter(fragmentation_set = fragment_set, msnLevel=1)
         number_of_peaks = len(list_of_peaks)
+        annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragment_set)
+        sample_file_ids = list_of_peaks.values("sourceFile").distinct()
+        ms1_peaks_by_file = {}
+        for file_id in sample_file_ids:
+            experimental_file = SampleFile.objects.get(id=file_id.get('sourceFile'))
+            ms1_peaks_by_file[experimental_file] = list_of_peaks.filter(sourceFile = experimental_file)
         context_dict = {
             'fragment_set': fragment_set,
             'peak_list': list_of_peaks,
             'number_of_peaks':number_of_peaks,
+            'annotations': annotation_queries,
+            'peaks_by_file': ms1_peaks_by_file,
         }
         return render(request, 'frank/fragmentation_set.html', context_dict)
     else:
         return render(request, 'frank/sign_in.html')
+
 
 def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
     if request.user.is_authenticated():
@@ -363,16 +382,225 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
         peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set)
         ## Display number of msn peaks
         list_of_peaks = Peak.objects.filter(parentPeak = peak)
+        list_of_candidate_annotations = CandidateAnnotation.objects.filter(peak=peak)
+        list_of_candidate_annotations = list_of_candidate_annotations.order_by('-confidence')
         number_of_fragments = len(list_of_peaks)
         context_dict = {
             'peak': peak,
             'fragmentation_peak_list': list_of_peaks,
             'number_of_fragments':number_of_fragments,
+            'candidate_annotations': list_of_candidate_annotations,
         }
         return render(request, 'frank/peak_summary.html', context_dict)
     else:
         return render(request, 'frank/sign_in.html')
 
-def get_massBank_annotations(request, experiment_name_slug):
-    tasks.massBank_batch_search.delay(experiment_name_slug)
-    return HttpResponse('Tasks.py callled for massBank annotation')
+
+def define_annotation_query(request, fragmentation_set_name_slug):
+    if request.user.is_authenticated():
+        fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+        if request.method == 'POST':
+            annotation_query_form = AnnotationQueryForm(request.POST)
+            if annotation_query_form.is_valid():
+                new_annotation_query = annotation_query_form.save(commit=False)
+                new_annotation_query.fragmentation_set = fragmentation_set
+                new_annotation_query.save()
+                generate_annotations(fragmentation_set, new_annotation_query)
+                list_of_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set, msnLevel=1)
+                number_of_peaks = len(list_of_peaks)
+                annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+                context_dict = {
+                    'fragment_set': fragmentation_set,
+                    'peak_list': list_of_peaks,
+                    'number_of_peaks':number_of_peaks,
+                    'annotations': annotation_queries,
+                }
+                return render(request, 'frank/fragmentation_set.html', context_dict)
+            else:
+                print annotation_query_form.errors()
+        else:
+            annotation_query_form = AnnotationQueryForm()
+            context_dict = {
+                'annotation_query_form': annotation_query_form,
+                'fragmentation_set': fragmentation_set,
+            }
+            return render(request, 'frank/define_annotation_query.html', context_dict)
+    else:
+        return render(request, 'frank/sign_in.html')
+
+
+def generate_annotations(fragmentation_set, annotation_query):
+    if annotation_query.massBank == True:
+        tasks.massBank_batch_search.delay(fragmentation_set.id, annotation_query.id)
+
+def make_ms1_plot(request, fragmentation_set_name_slug, file_id):
+    sample_file_object = SampleFile.objects.get(id = file_id)
+    fragmentation_set_object = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+    file_peak_list = Peak.objects.filter(fragmentation_set = fragmentation_set_object, sourceFile = sample_file_object)
+
+    peak_masses = []
+    peak_intensities = []
+    for peak in file_peak_list:
+        peak_masses.append(peak.mass)
+        peak_intensities.append(peak.intensity)
+
+    # define some colours
+    parent_fontspec = {
+        'size':'10',
+        'color':'blue',
+        'weight':'bold'
+    }
+
+    # make blank figure
+    figsize=(10, 6)
+    fig = plt.figure(figsize=figsize, facecolor='white')
+    ax = fig.add_subplot(1,1,1)
+
+    # plot all the fragment peaks of this parent peak
+    num_peaks = len(peak_masses)
+    for j in range(num_peaks):
+        mass = peak_masses[j]
+        intensity = peak_intensities[j]
+        plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
+
+    # Determine the most intense and largest mass in peak query set
+    highest_intensity = file_peak_list.aggregate(Max('intensity'))['intensity__max']
+    highest_mass = file_peak_list.aggregate(Max('mass'))['mass__max']
+
+    # set range of x- and y-axes
+    xlim_upper = int(round(highest_mass*Decimal(1.1)))
+    ylim_upper = int(round(highest_intensity*Decimal(1.1)))
+    plt.xlim([0, xlim_upper])
+    plt.ylim([0, ylim_upper])
+
+    # show the axes info
+    plt.xlabel('m/z')
+    plt.ylabel('relative intensity')
+    title = 'MS1 Spectra for '+sample_file_object.name
+    plt.title(title)
+
+    # add legend
+    yellow_patch = mpatches.Patch(color='#FF9933', label='MS1 peaks')
+    plt.legend(handles=[yellow_patch])
+
+    # change plot tick paramaters
+    plt.tick_params(
+        axis = 'both',
+        which = 'both',
+        bottom = 'off',
+        top = 'off',
+        left = 'off',
+        right = 'off',
+    )
+
+    canvas = FigureCanvas(fig)
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
+
+def make_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
+    parent_object = Peak.objects.get(slug = peak_name_slug)
+    fragmentation_spectra = Peak.objects.filter(parentPeak = parent_object)
+
+    parent_mass = parent_object.mass
+    parent_intensity = parent_object.intensity
+    fragment_masses = []
+    fragment_intensities = []
+    for peak in fragmentation_spectra:
+        fragment_masses.append(peak.mass)
+        fragment_intensities.append(peak.intensity)
+
+    # define some colours
+    parent_fontspec = {
+        'size':'10',
+        'color':'blue',
+        'weight':'bold'
+    }
+
+    # ###### DEFAULT INTENSITIES #######
+    # # make blank figure
+    # figsize=(10, 6)
+    # fig = plt.figure(figsize=figsize, facecolor='white')
+    # ax = fig.add_subplot(111)
+    #
+    # # plot the parent peak first
+    # plt.plot((parent_mass, parent_mass), (0, parent_intensity), linewidth=2.0, color='b')
+    # x = parent_mass
+    # y = parent_intensity
+    # label = "%.5f" % parent_mass
+    # plt.text(x, y, label, **parent_fontspec)
+    #
+    # # plot all the fragment peaks of this parent peak
+    # num_peaks = len(fragment_masses)
+    # for j in range(num_peaks):
+    #     mass = fragment_masses[j]
+    #     intensity = fragment_intensities[j]
+    #     plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
+    #
+    # # set range of x- and y-axes
+    # xlim_upper = int(parent_mass + 50)
+    # ylim_upper = int(round(parent_intensity*Decimal(1.25)))
+    # plt.xlim([0, xlim_upper])
+    # plt.ylim([0, ylim_upper])
+
+    ###### PSEUDO RELATIVE INTENSITIES ########
+
+        # make blank figure
+    figsize=(10, 6)
+    fig = plt.figure(figsize=figsize, facecolor='white')
+    ax = fig.add_subplot(1,1,1)
+
+    # plot the parent peak first
+    plt.plot((parent_mass, parent_mass), (0, parent_intensity), linewidth=2.0, color='b')
+    x = parent_mass
+    y = parent_intensity
+    label = "%.5f" % parent_mass
+    plt.text(x, y, label, **parent_fontspec)
+
+    highest_intensity = fragmentation_spectra.aggregate(Max('intensity'))['intensity__max']
+    # scale the highest intensity value to the value of the parent intensity
+
+    scale = parent_intensity/highest_intensity
+
+    # plot all the fragment peaks of this parent peak
+    num_peaks = len(fragment_masses)
+    for j in range(num_peaks):
+        mass = fragment_masses[j]
+        intensity = (fragment_intensities[j]*scale)
+        plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
+
+    # set range of x- and y-axes
+    xlim_upper = int(parent_mass + 50)
+    ylim_upper = int(round(parent_intensity*Decimal(1.25)))
+    plt.xlim([0, xlim_upper])
+    plt.ylim([0, ylim_upper])
+    ###########################################
+
+    # show the axes info
+    plt.xlabel('m/z')
+    plt.ylabel('relative intensity')
+    mz_value = ("%.5f" % parent_mass)
+    rt_value = ("%.3f" % parent_object.retentionTime)
+    title = 'MS1 m/z=' + mz_value + ' RT=' + rt_value
+    plt.title(title)
+
+    # add legend
+    blue_patch = mpatches.Patch(color='blue', label='Parent peak')
+    yellow_patch = mpatches.Patch(color='#FF9933', label='Fragment peaks')
+    plt.legend(handles=[blue_patch, yellow_patch])
+
+    # change plot tick paramaters
+    # plt.tick_params(
+    #     axis = 'both',
+    #     which = 'both',
+    #     bottom = 'off',
+    #     top = 'off',
+    #     left = 'off',
+    #     right = 'off',
+    # )
+
+    canvas = FigureCanvas(fig)
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
+

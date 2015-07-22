@@ -171,10 +171,11 @@ class FragmentationSet(models.Model):
 
 class AnnotationQuery(models.Model):
     name = models.CharField(max_length = 250)
-    experiment = models.ForeignKey(Experiment)
+    fragmentation_set = models.ForeignKey(FragmentationSet)
     timeCreated = models.DateTimeField(auto_now = True)
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Defined')
     slug = models.SlugField(unique=True)
+    massBank = models.BooleanField(default = False)
     ### Note additional parameters required here ####
 
     def save(self, *args, **kwargs):

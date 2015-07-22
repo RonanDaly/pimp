@@ -20,11 +20,8 @@ urlpatterns = patterns ('',
     url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/create_fragmentation_set$', views.create_fragmentation_set, name = 'create_fragmentation_set'),
     url(r'^my_fragmentation_sets/$', views.fragmentation_set_summary, name = 'fragmentation_set_summary'),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)$', views.fragmentation_set, name = 'fragmentation_set'),
+    url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/define_annotation_query$', views.define_annotation_query, name = 'define_annotation_query'),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)$', views.peak_summary, name = 'peak_summary'),
-
-
-
-    ### Testing Views ####
-    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/analyse$', views.input_peak_list_to_database, name = 'analyse'),
-    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/annotate$', views.get_massBank_annotations, name = 'massBank'),
+    url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<file_id>[\w\-]+)/ms1_plot.png$', views.make_ms1_plot, name = "make_ms1_plot"),
+    url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)/msn_spectra_plot.png$', views.make_spectra_plot, name = "make_spectra_plot"),
 )

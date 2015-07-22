@@ -1,6 +1,6 @@
 from django import forms
 from frank.models import Experiment, ExperimentalCondition, \
-    Sample, SampleFile, FragmentationSet, IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
+    Sample, SampleFile, FragmentationSet, AnnotationQuery, IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
@@ -119,4 +119,14 @@ class FragmentationSetForm(forms.ModelForm):
         model = FragmentationSet
         fields = (
             'name',
+        )
+
+class AnnotationQueryForm(forms.ModelForm):
+    name = forms.CharField(max_length=60, help_text="Enter the name of the query.")
+    massBank = forms.BooleanField(label='massBank')
+
+    class Meta:
+        model = AnnotationQuery
+        fields = (
+            'name', 'massBank',
         )

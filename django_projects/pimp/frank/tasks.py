@@ -2,7 +2,8 @@ import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 from pimp.settings_dev import MEDIA_ROOT
 import os
-from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, Repository, CompoundRepository
+from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, Repository,\
+    CompoundRepository, FragmentationSet, Experiment, AnnotationQuery
 from djcelery import celery
 from decimal import *
 import urllib2
@@ -14,6 +15,9 @@ from django.contrib.auth.models import User
 import time
 import os
 from frank.models import *
+from django.db.models import Max
+from cStringIO import StringIO
+from django.core.exceptions import ValidationError
 
 
 from celery import shared_task
@@ -49,19 +53,46 @@ def msnGeneratePeakList(experiment, analysis):
 
 
 @celery.task
-def massBank_batch_search(experiment):
-    #currentUser = User.objects.get_by_natural_key(username=username)
-    ## Remember to change this to the current users email address
+def massBank_batch_search(fragmentation_set_id, annotation_query_id):
+    fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+    sample_peak_qset = Peak.objects.filter(fragmentation_set=fragmentation_set)
+    print 'Number of Peaks = '+str(len(sample_peak_qset))
+    ## To avoid database locking release the fragmentation set object
+    fragmentation_set = None
+    number_of_msn_levels = sample_peak_qset.aggregate(Max('msnLevel'))
+    number_of_msn_levels = number_of_msn_levels['msnLevel__max']
+    print 'Number of MSN Levels = '+str(number_of_msn_levels)
+    positive_samples_query = []
+    negative_samples_query = []
+    for level in range(1, (number_of_msn_levels)):
+        peaks_in_msnLevel = sample_peak_qset.filter(msnLevel=level)
+        print 'Number of peaks in level = '+str(len(peaks_in_msnLevel))
+        for peak in peaks_in_msnLevel:
+            polarity = peak.sourceFile.polarity
+            peakName = peak.slug
+            fragmented_peaks = sample_peak_qset.filter(parentPeak=peak)
+            spectrum_query_string = list('Name:'+peakName+';')
+            for fragment in fragmented_peaks:
+                spectrum_query_string.append(''+str(fragment.mass)+','+str(fragment.intensity)+';')
+            if polarity == 'Positive':
+                positive_samples_query.append(''.join(spectrum_query_string))
+            else:
+                negative_samples_query.append(''.join(spectrum_query_string))
+    # Now the query is structured, send it to mass Bank
+    if len(positive_samples_query)!=0:
+        query_mass_bank(positive_samples_query, 'Positive', annotation_query_id)
+    if len(negative_samples_query)!=0:
+        query_mass_bank(negative_samples_query, 'Negative', annotation_query_id)
+
+
+def query_mass_bank(query, polarity, annotation_query_id):
     mailAddress = 'scottgreig27@gmail.com'
-    query = [
-        'Name:Sample1; 59.300,653466.0;112.300,19802.0;',
-        'Name:Sample2; 30.000,34653.5;80.100,430693.5;',
-        'Name:Sample3; 80.100,430693.5;55.900,89109.0;60.100,391089.5',
-    ]
     inst = [
-        "all",
+        "LC-ESI-IT",
+        "LC-ESI-ITFT",
+        "LC-ESI-QTOF",
     ]
-    ion = "Positive"
+    ion = polarity
     type = "1"
     client = Client('http://www.massbank.jp/api/services/MassBankAPI?wsdl')
     try:
@@ -77,13 +108,14 @@ def massBank_batch_search(experiment):
     job_id = response
     print 'JOB ID = '+job_id
     job_list = [job_id]
-    for seconds in range(0, 60):
-        time.sleep(60)
+    for seconds in range(0, 144):
+        time.sleep(1200)
         try:
             response2 = client.service.getJobStatus(job_list)
             print response2
         except WebFault, e:
             print e.message
+            # May also need to handle URLError here for if the connection fails
         if response2['status'] == 'Completed':
             break
     try:
@@ -93,35 +125,39 @@ def massBank_batch_search(experiment):
     results = response3
     ## results is a list
     print 'The length of the list is...'+str(len(results))
+    annotation_query_object = AnnotationQuery.objects.get(id=annotation_query_id)
     for result_set_list in results:
-        print '============================'
-        print 'Beginning of result set'
-        print result_set_list['queryName']
-        annotations = result_set_list['results']
-        number_of_annotations = result_set_list['numResults']
+        print 'Processing...'+result_set_list['queryName']
+        peak_identifier_slug = result_set_list['queryName']
+        annotations = ()
+        number_of_annotations = 0
+        try:
+            annotations = result_set_list['results']
+            number_of_annotations = result_set_list['numResults']
+        except AttributeError, ae:
+            print 'No Result Set Was Found'
         massBank = Repository.objects.get(name = 'MassBank')
-        #### Grab any peak for testing just now ######
-        peak_object = Peak.objects.get(id=194893)
-        ##############################################
+        peak_object = Peak.objects.get(slug=peak_identifier_slug)
         for index in range(0, number_of_annotations):
             each_annotation = annotations[index]
-            compound_object = Compound.objects.get_or_create(
-                formula = each_annotation['formula'],
-                exact_mass = each_annotation['exactMass'],
-                name=each_annotation['title'],
-            )[0]
-            compound_repository = CompoundRepository.objects.create(
-                compound = compound_object,
-                repository = massBank,
-            )
-            CandidateAnnotation.objects.create(
-                compound = compound_object,
-                peak = peak_object,
-                confidence = each_annotation['score'],
-                analysis = None,
-            )
-
-        print '==========  END ============='
+            try:
+                compound_object = Compound.objects.get_or_create(
+                    formula = each_annotation['formula'],
+                    exact_mass = each_annotation['exactMass'],
+                    name=each_annotation['title'],
+                )[0]
+                compound_repository = CompoundRepository.objects.get_or_create(
+                    compound = compound_object,
+                    repository = massBank,
+                )
+                CandidateAnnotation.objects.create(
+                    compound = compound_object,
+                    peak = peak_object,
+                    confidence = each_annotation['score'],
+                    annotation_query = annotation_query_object,
+                )
+            except ValidationError, e:
+                print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
 
 
 # def magma_mass_tree():

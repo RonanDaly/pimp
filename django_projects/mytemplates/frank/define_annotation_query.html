@@ -1,0 +1,29 @@
+{% extends 'frank/frankbase.html' %}
+
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h4>Define Annotation Query Parameters</h4>
+
+        <form id="annotation_query_form" method="post" action="/frank/my_fragmentation_sets/{{fragmentation_set.slug}}/define_annotation_query">
+
+            {% csrf_token %}
+            {% for hidden in annotation_query_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in annotation_query_form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{field.label}} {{ field }}
+		<br>
+            {% endfor %}
+	<input type = "submit" name="submit" value="Submit">
+	</form>
+
+{% endblock %}
