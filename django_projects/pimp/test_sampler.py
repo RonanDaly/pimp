@@ -8,9 +8,13 @@ if __name__ == '__main__':
 	import frag_set
 	import network_sampler
 
+
+
 	os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
 	django.setup()
-	from frank.models import Experiment,Peak,SampleFile,FragmentationSet,AnnotationQuery,CandidateAnnotation
+	from frank.models import Experiment,Peak,SampleFile,FragmentationSet,AnnotationQuery,CandidateAnnotation,Repository,Compound,CompoundRepository
+
+
 
 
 	fragment_set = FragmentationSet.objects.get(slug="simon-test-fragmentation-set-2")
@@ -21,8 +25,18 @@ if __name__ == '__main__':
 	peakset = frag_set.FragSet()
 	peakset.annotations = []
 
+	qu2 = AnnotationQuery.objects.filter(name='posterior')
+	if qu2 != None:
+		an2 = CandidateAnnotation.objects.filter(annotation_query=qu2)
+		for a in an2:
+			a.delete()
+		qu2.delete()
 
-	#Following needs to be done for each peak
+
+	qu2 = AnnotationQuery.objects.create(name='posterior',fragmentation_set=fragment_set,massBank=False)
+
+
+	
 	for p in list_of_peaks:
 		print p,p.sourceFile.name
 		newmeasurement = peak_objects.Measurement(p.id)
@@ -57,5 +71,25 @@ if __name__ == '__main__':
 	n = network_sampler.NetworkSampler(peakset)
 	n.initialise_sampler()
 	n.multiple_network_sample(1000)
+	n.compute_posteriors()
 	n.dump_output(open('testoutput.txt','w'))
+
+	repo,created = Repository.objects.get_or_create(name='posterior_annotations')
+	print repo
+	co = Compound.objects.filter(repository=repo)
+	for c in co:
+		c.delete()
+	co = CompoundRepository.objects.filter(repository=repo)
+	for c in co:
+		c.delete()
+
+	for m in peakset.measurements:
+		p = Peak.objects.get(id=m.id)
+		for a in m.annotations:
+			c,created = Compound.objects.get_or_create(formula=a.formula.formula,exact_mass=a.formula.compute_exact_mass(),name=a.name)
+			c.save()
+			if created:
+				d = CompoundRepository.objects.create(compound=c,repository=repo)
+			an = CandidateAnnotation.objects.create(compound=c,peak=p,confidence=peakset.posterior_probability[m][a],annotation_query=qu2)
+
 
