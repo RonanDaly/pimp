@@ -46,12 +46,14 @@
 		<tr>
 		<th>Compound Title</th>
 		<th>Formula</th>
+		<th>Exact Mass</th>
 		<th>Confidence Value</th>
 		</tr>
 		{% for annotation in candidate_annotations %}
 		<tr>
 		<td>{{annotation.compound.name}}</td>
 		<td>{{annotation.compound}}</td>
+		<td>{{annotation.compound.exact_mass}}</td>
 		<td>{{annotation.confidence|floatformat:3}}</td>
 		</tr>
 		{% endfor %}
