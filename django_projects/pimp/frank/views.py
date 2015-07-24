@@ -608,7 +608,7 @@ def run_network_sampler(request):
 
     pq,created = AnnotationQuery.objects.get_or_create(name='posterior',fragmentation_set=fs,
         massBank='False',massBank_params=jsonpickle.encode(default_params),parent_annotation_query=aq)
-    edge_dict = tasks.runNetworkSampler(frag_slug,'Beer_3_T10_POS.mzXML',pq.slug)
-    context_dict = {'edge_dict':  edge_dict}
-    return render(request,'frank/sampler_output.html',context_dict)
-    # return render(request,'frank/')
+    edge_dict = tasks.runNetworkSampler.delay(frag_slug,'Beer_3_T10_POS.mzXML',pq.slug)
+    # context_dict = {'edge_dict':  edge_dict}
+    # return render(request,'frank/sampler_output.html',context_dict)
+    return render(request,'frank/index.html')

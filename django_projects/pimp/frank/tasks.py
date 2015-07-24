@@ -43,6 +43,8 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
         for annotation in old_annotations:
             annotation.delete()
 
+    new_annotation_query.status = 'Submitted'
+    new_annotation_query.save()
     # Extract the peaks
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msnLevel=1,sourceFile=sample_file)
     print "Found " + str(len(peaks)) + " peaks"
@@ -89,7 +91,8 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
     sampler.set_parameters(jsonpickle.decode(new_annotation_query.massBank_params))
     sampler.sample()
 
-
+    new_annotation_query.status = 'Processing'
+    new_annotation_query.save()
     print "Storing new annotations..."
     # Store new annotations in the database
     for m in peakset.measurements:
@@ -103,6 +106,8 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
                 mass_match=parent_annotation.mass_match,additional_information = add_info_string)
 
     edge_dict = sampler.global_edge_count()
+    new_annotation_query.status = 'Completed'
+    new_annotation_query.save()
     return edge_dict
 
 
