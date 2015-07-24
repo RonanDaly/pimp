@@ -342,7 +342,7 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
         ## Display number of msn peaks
         list_of_peaks = Peak.objects.filter(parentPeak = peak)
         list_of_candidate_annotations = CandidateAnnotation.objects.filter(peak=peak)
-        list_of_candidate_annotations = list_of_candidate_annotations.order_by('-confidence')
+        list_of_candidate_annotations = list_of_candidate_annotations.order_by('annotation_query','-confidence')
         number_of_fragments = len(list_of_peaks)
         context_dict = {
             'peak': peak,
