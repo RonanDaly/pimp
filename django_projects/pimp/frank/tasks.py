@@ -18,11 +18,80 @@ from frank.models import *
 from django.db.models import Max
 from cStringIO import StringIO
 from django.core.exceptions import ValidationError
+import frank.network_sampler as ns
 import re
 
 
 from celery import shared_task
 import subprocess
+
+## Method to run simon's network sampler
+@celery.task
+def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
+    # fragmentation set is the fragmentation set we want to run the analysis on (slug)
+    # annotation_query is the new annotation query slug
+    fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set)
+    new_annotation_query = AnnotationQuery.objects.get(slug=annotation_query)
+    parent_annotation_query = new_annotation_query.parent_annotation_query
+    sample_file = SampleFile.objects.filter(name=sample_file)
+    # check if the new annotation query already has annotations attached and delete them if it does
+    # might want to remove this at some point, but it's useful for debugging
+    old_annotations = CandidateAnnotation.objects.filter(annotation_query = new_annotation_query)
+    if old_annotations:
+        for annotation in old_annotations:
+            annotation.delete()
+
+    # Extract the peaks
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msnLevel=1,sourceFile=sample_file)
+    print "Found " + str(len(peaks)) + " peaks"
+
+    peakset = ns.FragSet()
+    peakset.annotations = []
+
+    for i in range(10):
+        p = peaks[i]
+        print p,p.sourceFile.name
+        newmeasurement = ns.Measurement(p.id)
+        peakset.measurements.append(newmeasurement)
+        # Loop over all candidate annotations for this peak
+        all_annotations = CandidateAnnotation.objects.filter(peak=p,annotation_query=parent_annotation_query)
+        for annotation in all_annotations:
+            # split the name up - THIS WILL BE REMOVED
+            split_name = annotation.compound.name.split(';')
+            short_name = split_name[0]
+            # find this one in the previous ones
+            previous_pos = [i for i,n in enumerate(peakset.annotations) if n.name==short_name]
+            if len(previous_pos) == 0:
+                # ADD A COMPOUND ID
+                peakset.annotations.append(ns.Annotation(annotation.compound.formula,short_name,annotation.compound.id,annotation.id))
+                newmeasurement.annotations[peakset.annotations[-1]] = float(annotation.confidence)
+            else:
+                # check if this measurement has had this annotation before
+                this_annotation = peakset.annotations[previous_pos[0]]
+                if this_annotation in newmeasurement.annotations:
+                    current_confidence = newmeasurement.annotations[this_annotation]
+                    newmeasurement.annotations[this_annotation] = max(float(annotation.confidence),current_confidence)
+                else:
+                    newmeasurement.annotations[this_annotation] = float(annotation.confidence)
+
+    print "Stored " + str(len(peakset.measurements)) + " peaks and " + str(len(peakset.annotations)) + " unique annotations"
+
+    sampler = ns.NetworkSampler(peakset)
+    # sampler.set_parameters(new_annotation_query.params) - IMPLEMENT ME!
+    sampler.initialise_sampler()
+    sampler.multiple_network_sample(100)
+    sampler.compute_posteriors()
+
+    # Store new annotations in the database
+    for m in peakset.measurements:
+        peak = Peak.objects.get(id=m.id)
+        for annotation in m.annotations:
+            compound = Compound.objects.get(id = annotation.id)
+            parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid)
+            an = CandidateAnnotation.objects.create(compound=compound,peak=peak,confidence=peakset.posterior_probability[m][annotation],annotation_query=new_annotation_query,difference_from_peak_mass = parent_annotation.difference_from_peak_mass,mass_match=parent_annotation.mass_match)
+
+
+
 
 ## Method to derive the peaks from the mzXML file
 @celery.task

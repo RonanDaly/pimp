@@ -592,3 +592,7 @@ def generate_annotations(fragmentation_set, annotation_query):
     annotation_query_id = annotation_query.id
     if annotation_query.massBank == True:
         tasks.massBank_batch_search.delay(fragmentation_set_id, annotation_query_id)
+
+def run_network_sampler(request):
+    tasks.runNetworkSampler('simon-test-fragmentation-set-2','Beer_3_T10_POS.mzXML','posterior-3')
+    return HttpResponse('Done!')
