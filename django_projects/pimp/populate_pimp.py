@@ -5,6 +5,7 @@ import django
 django.setup()
 
 from experiments.models import DefaultParameter, Database
+from frank.models import Repository
 
 def populate():
     iqr_parameter = add_default_parameter(
@@ -73,6 +74,10 @@ def populate():
         name = "lipidmaps"
     )
 
+    mass_bank_repository = add_repository(
+        name = 'MassBank'
+    )
+
 
 
 def add_default_parameter(name, value, state):
@@ -92,6 +97,14 @@ def add_database(name):
     print 'Creating default database - '+name+'...'
     database.save()
     return database
+
+def add_repository(name):
+    repository = Repository.objects.get_or_create(
+       name = name,
+    )[0]
+    print 'Creating default repository - '+name+'...'
+    repository.save()
+    return repository
 
 # Execution starts here
 if __name__=='__main__':

@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.template.defaultfilters import slugify
 import os
 from pimp.settings_dev import MEDIA_ROOT
+import hashlib
 
 # Use the default Django User model
 # This provides the attributes:
@@ -16,8 +17,7 @@ from pimp.settings_dev import MEDIA_ROOT
 FILE_TYPES = (
     ('Positive', 'Positive'),
     ('Negative', 'Negative'),
-    ('Pooled', 'Pooled'),
-    # ('Pooled Sample', 'Pooled Sample'
+    # ('Pooled Sample', 'Pooled Sample'),
 )
 
 ANALYSIS_STATUS = (
@@ -176,7 +176,10 @@ class AnnotationQuery(models.Model):
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Defined')
     slug = models.SlugField(unique=True)
     massBank = models.BooleanField(default = False)
+    massBank_params = models.CharField(max_length = 250, null=True)
     ### Note additional parameters required here ####
+    ### Also need to add in the choice field for Simon's additional code
+    parent_annotation_query = models.ForeignKey('self', null=True)
 
     def save(self, *args, **kwargs):
         ## The set id is going to be one greater than the total number of existing
@@ -198,13 +201,15 @@ class Repository (models.Model):
 
 # Class defining the compounds identified from the repositories
 class Compound(models.Model):
+    name = models.CharField(max_length=500)
     formula = models.CharField(max_length = 250)
     exact_mass = models.DecimalField(decimal_places=10, max_digits=20)
-    name = models.CharField(max_length=500)
+    inchikey = models.CharField(max_length=500, null=True)
     repository = models.ManyToManyField(Repository, through = 'CompoundRepository')
 
     def __unicode__(self):
         return self.formula
+
 
 # Class defining the peaks derived from the source files
 class Peak(models.Model):
@@ -217,13 +222,14 @@ class Peak(models.Model):
     annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')
     fragmentation_set = models.ForeignKey(FragmentationSet)
     slug = models.SlugField(unique=True)
+    preferred_candidate_annotation = models.ForeignKey(AnnotationQuery, null=True)
+    preferred_candidate_description = models.CharField(max_length = 250, null=True)
+    preferred_candidate_user_selector = models.ForeignKey(User, null=True)
+    preferred_candidate_updated_date = models.DateTimeField(auto_now_add = True, blank = True)
 
     def save(self, *args, **kwargs):
-        ## The set id is going to be one greater than the total number of existing
-        # ## sets in the database.
         peakNumber = Peak.objects.count()+1
-        # The slug is simply the concatination of the name of the sample and the next available id
-        self.slug = slugify('Peak ')+str(peakNumber)
+        self.slug = slugify('Peak:'+str(peakNumber)+'FS:'+str(self.fragmentation_set.id))
         super(Peak, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -235,6 +241,12 @@ class CandidateAnnotation(models.Model):
     peak = models.ForeignKey(Peak)
     confidence = models.DecimalField(decimal_places = 10, max_digits = 20)
     annotation_query = models.ForeignKey(AnnotationQuery, null=True)
+    mass_match = models.BooleanField()
+    difference_from_peak_mass = models.DecimalField(decimal_places = 10, max_digits = 20)
+    adduct = models.CharField(max_length=500, null=True)
+    instrument_type = models.CharField(max_length=500, null=True)
+    collision_energy = models.CharField(max_length=500, null=True)
+    additional_information = models.CharField(max_length=500, null=True)
 
     def __unicode__(self):
         return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)
@@ -243,6 +255,7 @@ class CandidateAnnotation(models.Model):
 class CompoundRepository (models.Model):
     compound = models.ForeignKey(Compound)
     repository = models.ForeignKey(Repository)
+    repository_identifier = models.CharField(max_length=500)
 
     def __unicode__(self):
         return 'Compound '+str(self.compound.id)+' from Repository '+str(self.repository.id)

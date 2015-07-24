@@ -30,7 +30,7 @@ class FragmentationSetAdmin(admin.ModelAdmin):
 
 # The fields to be displayed in the Analysis page of admin
 class AnnotationQueryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'fragmentation_set', 'timeCreated', 'status', 'slug')
+    list_display = ('name', 'fragmentation_set', 'timeCreated', 'status', 'slug', 'massBank', 'massBank_params')
 
 # The fields to be displayed in the Repository page of admin
 class RepositoryAdmin(admin.ModelAdmin):
@@ -38,20 +38,20 @@ class RepositoryAdmin(admin.ModelAdmin):
 
 # The fields to be displayed in the Compound page of admin
 class CompoundAdmin(admin.ModelAdmin):
-    list_display = ('id', 'formula', 'exact_mass', 'name')
+    list_display = ('name', 'formula', 'exact_mass', 'inchikey')
 
 # The fields to be displayed in the Peak page of admin
 class PeakAdmin(admin.ModelAdmin):
     list_display = ('id', 'sourceFile', 'mass', 'retentionTime', 'intensity',
-                    'parentPeak', 'msnLevel', 'fragmentation_set')
+                    'parentPeak', 'msnLevel', 'fragmentation_set', 'slug', 'preferred_candidate_annotation')
 
 # The fields to be displayed in the CandidateAnnotation page of admin
 class CandidateAnnotationAdmin(admin.ModelAdmin):
-    list_display = ('compound', 'peak', 'confidence', 'annotation_query')
+    list_display = ('compound', 'peak', 'confidence', 'annotation_query', 'mass_match', 'difference_from_peak_mass', 'adduct', 'instrument_type')
 
 # The fields to be displayed in the CompoundRepository page of admin
 class CompoundRepositoryAdmin(admin.ModelAdmin):
-    list_display = ('compound', 'repository')
+    list_display = ('compound', 'repository', 'repository_identifier')
 
 
 # Register each of the models and forms with the admin for display to user in admin site

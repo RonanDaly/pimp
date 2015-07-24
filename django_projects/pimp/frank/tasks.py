@@ -18,6 +18,7 @@ from frank.models import *
 from django.db.models import Max
 from cStringIO import StringIO
 from django.core.exceptions import ValidationError
+import re
 
 
 from celery import shared_task
@@ -50,6 +51,7 @@ def msnGeneratePeakList(experiment, analysis):
     peak_generator.populate_database_peaks()
     analysis_object.status = 'Completed'
     analysis_object.save()
+    return 'Done'
 
 
 @celery.task
@@ -86,12 +88,16 @@ def massBank_batch_search(fragmentation_set_id, annotation_query_id):
 
 
 def query_mass_bank(query, polarity, annotation_query_id):
-    mailAddress = 'scottgreig27@gmail.com'
-    inst = [
-        "LC-ESI-IT",
-        "LC-ESI-ITFT",
-        "LC-ESI-QTOF",
-    ]
+    annotation_query_object = AnnotationQuery.objects.get(id=annotation_query_id)
+    mass_bank_parameters = annotation_query_object.massBank_params
+    mass_bank_parameters = re.findall('<(.*?)>', mass_bank_parameters, re.DOTALL)
+    mailAddress = str(mass_bank_parameters[0])
+    print mailAddress
+    number_of_instrument_types = len(mass_bank_parameters)
+    instruments = []
+    if number_of_instrument_types > 0:
+        for instrument_index in range(1,number_of_instrument_types):
+            instruments.append(str(mass_bank_parameters[instrument_index]))
     ion = polarity
     type = "1"
     client = Client('http://www.massbank.jp/api/services/MassBankAPI?wsdl')
@@ -100,7 +106,7 @@ def query_mass_bank(query, polarity, annotation_query_id):
             type,
             mailAddress,
             query,
-            inst,
+            instruments,
             ion,
         )
     except WebFault, e:
@@ -109,7 +115,7 @@ def query_mass_bank(query, polarity, annotation_query_id):
     print 'JOB ID = '+job_id
     job_list = [job_id]
     for seconds in range(0, 144):
-        time.sleep(1200)
+        time.sleep(600)
         try:
             response2 = client.service.getJobStatus(job_list)
             print response2
@@ -140,21 +146,44 @@ def query_mass_bank(query, polarity, annotation_query_id):
         peak_object = Peak.objects.get(slug=peak_identifier_slug)
         for index in range(0, number_of_annotations):
             each_annotation = annotations[index]
+            elements_of_title = re.split('; ', each_annotation['title'])
             try:
                 compound_object = Compound.objects.get_or_create(
                     formula = each_annotation['formula'],
                     exact_mass = each_annotation['exactMass'],
-                    name=each_annotation['title'],
+                    name=elements_of_title[0],
                 )[0]
                 compound_repository = CompoundRepository.objects.get_or_create(
                     compound = compound_object,
                     repository = massBank,
+                    repository_identifier = each_annotation['id'],
                 )
+                annotation_mass = Decimal(each_annotation['exactMass'])
+                difference_in_mass = peak_object.mass-annotation_mass
+                ## Justin's suggestion - I am maybe doing this wrong
+                ppm = ((peak_object.mass/annotation_mass)/annotation_mass)*1000000
+                mass_match = False
+                if ppm < 3.0:
+                    mass_match = True
+                ## Try and obtain the adduct and collision energy from the description
+                adduct_label = None
+                collision_energy = None
+                for element in elements_of_title:
+                    if element.startswith('[M'):
+                        adduct_label = element
+                    if element.startswith('CE'):
+                        collision_energy = element
                 CandidateAnnotation.objects.create(
                     compound = compound_object,
                     peak = peak_object,
                     confidence = each_annotation['score'],
                     annotation_query = annotation_query_object,
+                    difference_from_peak_mass = difference_in_mass,
+                    mass_match = mass_match,
+                    adduct = adduct_label,
+                    instrument_type = elements_of_title[1],
+                    collision_energy = collision_energy,
+                    additional_information = each_annotation['title']
                 )
             except ValidationError, e:
                 print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'

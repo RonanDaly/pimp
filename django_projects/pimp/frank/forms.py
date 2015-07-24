@@ -121,9 +121,30 @@ class FragmentationSetForm(forms.ModelForm):
             'name',
         )
 
+
+MASS_BANK_INSTRUMENT_TYPES = (
+    ('EI-B', 'EI-B'),
+    ('EI-EBEB', 'EI-EBEB'),
+    ('GC-EI-QQ', 'GC-EI-QQ'),
+    ('GC-EI-TOF', 'GC-EI-TOF'),
+    ('CE-ESI-TOF', 'CE-ESI-TOF'),
+    ('ESI-ITFT', 'ESI-ITFT'),
+    ('ESI-ITTOF', 'ESI-ITTOF'),
+    ('LC-ESI-IT', 'LC-ESI-IT'),
+    ('LC-ESI-ITFT', 'LC-ESI-ITFT'),
+    ('LC-ESI-ITTOF', 'LC-ESI-ITTOF'),
+    ('LC-ESI-Q', 'LC-ESI-Q'),
+    ('LC-ESI-QFT', 'LC-ESI-QFT'),
+    ('LC-ESI-QIT', 'LC-ESI-QIT'),
+    ('LC-ESI-QQ', 'LC-ESI-QQ'),
+    ('LC-ESI-QTOF', 'LC-ESI-QTOF'),
+    ('LC-ESI-TOF', 'LC-ESI-TOF'),
+)
+
 class AnnotationQueryForm(forms.ModelForm):
     name = forms.CharField(max_length=60, help_text="Enter the name of the query.")
     massBank = forms.BooleanField(label='massBank')
+    mass_bank_instrument_types = forms.MultipleChoiceField(choices = MASS_BANK_INSTRUMENT_TYPES, widget=forms.CheckboxSelectMultiple)
 
     class Meta:
         model = AnnotationQuery

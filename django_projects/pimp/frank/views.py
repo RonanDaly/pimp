@@ -15,6 +15,7 @@ import numpy as np
 from matplotlib import patches as mpatches
 from decimal import *
 from django.db.models import Max
+import re
 
 
 # Create your views here.
@@ -22,71 +23,18 @@ from django.db.models import Max
 def index(request):
     return render(request, 'frank/index.html')
 
-def sign_up(request):
-    # is the user currently registered
-    registered = False
-    # if the request if a 'POST'
-    if request.method == 'POST':
-        # Obtain the sign in form from the POST request
-        user_form = SignUpForm(data=request.POST)
-        # is the form valid?
-        if user_form.is_valid():
-            # if so, commit the changes to the database
-            user = user_form.save()
-            # retrieve unencrypted copy of password for automatic login
-            password = user.password
-            user.set_password(user.password)
-            user.save()
-            username = user.username
-            registered = True
-            # The user is signed in automatically and returned to the index page
-            player = authenticate(username=username, password=password)
-            login(request, player)
-            return HttpResponseRedirect(reverse('index'))
-        else:
-            # if the form is invalid, display the errors to the user
-            print user_form.errors
-    else:
-        # if the request method is not a 'POST' create a new form
-        user_form = SignUpForm()
-    return render(request, 'frank/sign_up.html',
-                  {'user_form': user_form, 'registered': registered})
-
-# View for user sign in (login) page
-def sign_in(request):
-    # is the request a 'POST'?
-    if request.method == 'POST':
-        # retrieve the username and password from the POST
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(username=username, password=password)
-        if user:
-            # If the user exists and has not been disabled then they are logged in and sent to the index page
-            if user.is_active:
-                login(request, user)
-                # redirect the user to the index page
-                return HttpResponseRedirect(reverse('index'))
-            else:
-                return HttpResponse("Your account is currently disabled")
-        else:
-            # display that login details were invalid
-            print "Invalid Login Details: {0}, {1}".format(username, password)
-            return HttpResponse("Invalid Login Details Supplied")
-
-    else:
-        return render(request, 'frank/sign_in.html')
-
 # View to logout the user and return them to the index page
 @login_required
 def user_logout(request):
     logout(request)
     return HttpResponseRedirect(reverse('index'))
 
+
 def generate_experiment_list(currentUser):
     experimentList = Experiment.objects.filter(users = currentUser)
     return experimentList
 
-
+@login_required
 def my_experiments(request):
     if request.user.is_authenticated():
         activeUser = request.user
@@ -98,6 +46,7 @@ def my_experiments(request):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def add_experiment(request):
     if request.user.is_authenticated():
         activeUser = request.user
@@ -131,6 +80,7 @@ def add_experiment(request):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def experimentSummary(request, experiment_name_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
@@ -146,6 +96,7 @@ def experimentSummary(request, experiment_name_slug):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def add_experimental_condition(request, experiment_name_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
@@ -175,6 +126,7 @@ def add_experimental_condition(request, experiment_name_slug):
         return render(request, 'frank/sign_in.html')
 
 
+@login_required
 def add_experiment(request):
     if request.user.is_authenticated():
         activeUser = request.user
@@ -208,6 +160,7 @@ def add_experiment(request):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def add_sample (request, experiment_name_slug, condition_name_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
@@ -243,6 +196,7 @@ def add_sample (request, experiment_name_slug, condition_name_slug):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def conditionSummary(request, experiment_name_slug, condition_name_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
@@ -258,6 +212,7 @@ def conditionSummary(request, experiment_name_slug, condition_name_slug):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def addSampleFile(request, experiment_name_slug, condition_name_slug, sample_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
@@ -299,6 +254,7 @@ def addSampleFile(request, experiment_name_slug, condition_name_slug, sample_slu
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def create_fragmentation_set(request, experiment_name_slug):
     if request.user.is_authenticated():
         experiment = Experiment.objects.get(slug = experiment_name_slug)
@@ -339,6 +295,7 @@ def input_peak_list_to_database(experiment_name_slug, analysis_id):
         tasks.msnGeneratePeakList.delay(experiment_name_slug, analysis_id)
     #msnAnalysis(experiment_name_slug)
 
+@login_required
 def fragmentation_set_summary(request):
     if request.user.is_authenticated():
         current_user = request.user
@@ -352,6 +309,7 @@ def fragmentation_set_summary(request):
     else:
         return render(request, 'frank/sign_in.html')
 
+@login_required
 def fragmentation_set(request, fragmentation_set_name_slug):
     if request.user.is_authenticated():
         fragment_set = FragmentationSet.objects.get(slug=fragmentation_set_name_slug)
@@ -376,6 +334,7 @@ def fragmentation_set(request, fragmentation_set_name_slug):
         return render(request, 'frank/sign_in.html')
 
 
+@login_required
 def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
     if request.user.is_authenticated():
         fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
@@ -396,6 +355,7 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
         return render(request, 'frank/sign_in.html')
 
 
+@login_required
 def define_annotation_query(request, fragmentation_set_name_slug):
     if request.user.is_authenticated():
         fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
@@ -404,16 +364,36 @@ def define_annotation_query(request, fragmentation_set_name_slug):
             if annotation_query_form.is_valid():
                 new_annotation_query = annotation_query_form.save(commit=False)
                 new_annotation_query.fragmentation_set = fragmentation_set
+                if new_annotation_query.massBank == True:
+                    ## Need to build the massBank parameters and store them
+                    massbank_mail_address = request.user.email
+                    massbank_instrument_types = annotation_query_form.cleaned_data['mass_bank_instrument_types']
+                    # MassBank parameters take the format email;instrumenttype1,instrumenttype2;
+                    mass_bank_params = []
+                    mass_bank_params.append('Email:<'+massbank_mail_address+'>\n')
+                    instrument_types = []
+                    instrument_types.append('Instrument Types:')
+                    for instrument in massbank_instrument_types:
+                        name_of_instrument = str(instrument)
+                        instrument_types.append('<'+name_of_instrument+'>')
+                    mass_bank_params.append(''.join(instrument_types))
+                    new_annotation_query.massBank_params = ''.join(mass_bank_params)
                 new_annotation_query.save()
                 generate_annotations(fragmentation_set, new_annotation_query)
                 list_of_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set, msnLevel=1)
                 number_of_peaks = len(list_of_peaks)
                 annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+                sample_file_ids = list_of_peaks.values("sourceFile").distinct()
+                ms1_peaks_by_file = {}
+                for file_id in sample_file_ids:
+                    experimental_file = SampleFile.objects.get(id=file_id.get('sourceFile'))
+                    ms1_peaks_by_file[experimental_file] = list_of_peaks.filter(sourceFile = experimental_file).order_by('mass')
                 context_dict = {
                     'fragment_set': fragmentation_set,
                     'peak_list': list_of_peaks,
                     'number_of_peaks':number_of_peaks,
                     'annotations': annotation_queries,
+                    'peaks_by_file': ms1_peaks_by_file,
                 }
                 return render(request, 'frank/fragmentation_set.html', context_dict)
             else:
@@ -429,74 +409,70 @@ def define_annotation_query(request, fragmentation_set_name_slug):
         return render(request, 'frank/sign_in.html')
 
 
-def generate_annotations(fragmentation_set, annotation_query):
-    if annotation_query.massBank == True:
-        tasks.massBank_batch_search.delay(fragmentation_set.id, annotation_query.id)
-
-def make_ms1_plot(request, fragmentation_set_name_slug, file_id):
-    sample_file_object = SampleFile.objects.get(id = file_id)
-    fragmentation_set_object = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
-    file_peak_list = Peak.objects.filter(fragmentation_set = fragmentation_set_object, sourceFile = sample_file_object)
-
-    peak_masses = []
-    peak_intensities = []
-    for peak in file_peak_list:
-        peak_masses.append(peak.mass)
-        peak_intensities.append(peak.intensity)
-
-    # define some colours
-    parent_fontspec = {
-        'size':'10',
-        'color':'blue',
-        'weight':'bold'
-    }
-
-    # make blank figure
-    figsize=(10, 6)
-    fig = plt.figure(figsize=figsize, facecolor='white')
-    ax = fig.add_subplot(1,1,1)
-
-    # plot all the fragment peaks of this parent peak
-    num_peaks = len(peak_masses)
-    for j in range(num_peaks):
-        mass = peak_masses[j]
-        intensity = peak_intensities[j]
-        plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
-
-    # Determine the most intense and largest mass in peak query set
-    highest_intensity = file_peak_list.aggregate(Max('intensity'))['intensity__max']
-    highest_mass = file_peak_list.aggregate(Max('mass'))['mass__max']
-
-    # set range of x- and y-axes
-    xlim_upper = int(round(highest_mass*Decimal(1.1)))
-    ylim_upper = int(round(highest_intensity*Decimal(1.1)))
-    plt.xlim([0, xlim_upper])
-    plt.ylim([0, ylim_upper])
-
-    # show the axes info
-    plt.xlabel('m/z')
-    plt.ylabel('relative intensity')
-    title = 'MS1 Spectra for '+sample_file_object.name
-    plt.title(title)
-
-    # add legend
-    yellow_patch = mpatches.Patch(color='#FF9933', label='MS1 peaks')
-    plt.legend(handles=[yellow_patch])
-
-    # change plot tick paramaters
-    plt.tick_params(
-        axis = 'both',
-        which = 'both',
-        bottom = 'off',
-        top = 'off',
-        left = 'off',
-        right = 'off',
-    )
-
-    canvas = FigureCanvas(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+# def make_ms1_plot(request, fragmentation_set_name_slug, file_id):
+#     sample_file_object = SampleFile.objects.get(id = file_id)
+#     fragmentation_set_object = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+#     file_peak_list = Peak.objects.filter(fragmentation_set = fragmentation_set_object, sourceFile = sample_file_object)
+#
+#     peak_masses = []
+#     peak_intensities = []
+#     for peak in file_peak_list:
+#         peak_masses.append(peak.mass)
+#         peak_intensities.append(peak.intensity)
+#
+#     # define some colours
+#     parent_fontspec = {
+#         'size':'10',
+#         'color':'blue',
+#         'weight':'bold'
+#     }
+#
+#     # make blank figure
+#     figsize=(10, 6)
+#     fig = plt.figure(figsize=figsize, facecolor='white')
+#     ax = fig.add_subplot(1,1,1)
+#
+#     # plot all the fragment peaks of this parent peak
+#     num_peaks = len(peak_masses)
+#     for j in range(num_peaks):
+#         mass = peak_masses[j]
+#         intensity = peak_intensities[j]
+#         plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
+#
+#     # Determine the most intense and largest mass in peak query set
+#     highest_intensity = file_peak_list.aggregate(Max('intensity'))['intensity__max']
+#     highest_mass = file_peak_list.aggregate(Max('mass'))['mass__max']
+#
+#     # set range of x- and y-axes
+#     xlim_upper = int(round(highest_mass*Decimal(1.1)))
+#     ylim_upper = int(round(highest_intensity*Decimal(1.1)))
+#     plt.xlim([0, xlim_upper])
+#     plt.ylim([0, ylim_upper])
+#
+#     # show the axes info
+#     plt.xlabel('m/z')
+#     plt.ylabel('relative intensity')
+#     title = 'MS1 Spectra for '+sample_file_object.name
+#     plt.title(title)
+#
+#     # add legend
+#     yellow_patch = mpatches.Patch(color='#FF9933', label='MS1 peaks')
+#     plt.legend(handles=[yellow_patch])
+#
+#     # change plot tick paramaters
+#     plt.tick_params(
+#         axis = 'both',
+#         which = 'both',
+#         bottom = 'off',
+#         top = 'off',
+#         left = 'off',
+#         right = 'off',
+#     )
+#
+#     canvas = FigureCanvas(fig)
+#     response = HttpResponse(content_type='image/png')
+#     canvas.print_png(response)
+#     return response
 
 def make_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
     parent_object = Peak.objects.get(slug = peak_name_slug)
@@ -604,3 +580,8 @@ def make_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
     canvas.print_png(response)
     return response
 
+def generate_annotations(fragmentation_set, annotation_query):
+    fragmentation_set_id = fragmentation_set.id
+    annotation_query_id = annotation_query.id
+    if annotation_query.massBank == True:
+        tasks.massBank_batch_search.delay(fragmentation_set_id, annotation_query_id)
