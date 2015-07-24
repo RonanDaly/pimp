@@ -594,5 +594,19 @@ def generate_annotations(fragmentation_set, annotation_query):
         tasks.massBank_batch_search.delay(fragmentation_set_id, annotation_query_id)
 
 def run_network_sampler(request):
-    tasks.runNetworkSampler('simon-test-fragmentation-set-2','Beer_3_T10_POS.mzXML','posterior-3')
-    return HttpResponse('Done!')
+    import jsonpickle
+    default_params = {
+            'n_samples': 1000,
+            'n_burn': 500,
+            'delta': 1,
+        }
+    frag_slug = 'beer-3-frag-set-5'
+    aq_slug = 'beer-3-annotations-4'
+    aq = AnnotationQuery.objects.get(slug=aq_slug)
+    fs = FragmentationSet.objects.get(slug=frag_slug)
+
+    pq,created = AnnotationQuery.objects.get_or_create(name='posterior',fragmentation_set=fs,
+        massBank='False',massBank_params=jsonpickle.encode(default_params),parent_annotation_query=aq)
+    edge_dict = tasks.runNetworkSampler(frag_slug,'Beer_3_T10_POS.mzXML',pq.slug)
+    context_dict = {'edge_dict':  edge_dict}
+    return render(request,'frank/sampler_output.html',context_dict)

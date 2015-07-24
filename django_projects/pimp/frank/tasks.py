@@ -28,6 +28,7 @@ import subprocess
 ## Method to run simon's network sampler
 @celery.task
 def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
+    import jsonpickle
     # fragmentation set is the fragmentation set we want to run the analysis on (slug)
     # annotation_query is the new annotation query slug
     fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set)
@@ -48,8 +49,9 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
     peakset = ns.FragSet()
     peakset.annotations = []
 
-    for i in range(10):
-        p = peaks[i]
+    # for i in range(100):
+    for p in peaks:
+        # p = peaks[i]
         print p,p.sourceFile.name
         newmeasurement = ns.Measurement(p.id)
         peakset.measurements.append(newmeasurement)
@@ -66,21 +68,22 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
                 peakset.annotations.append(ns.Annotation(annotation.compound.formula,short_name,annotation.compound.id,annotation.id))
                 newmeasurement.annotations[peakset.annotations[-1]] = float(annotation.confidence)
             else:
-                # check if this measurement has had this annotation before
+                # check if this measurement has had this compound in its annotation before 
+                # (to remove duplicates with different collision energies - highest confidence is used)
                 this_annotation = peakset.annotations[previous_pos[0]]
                 if this_annotation in newmeasurement.annotations:
                     current_confidence = newmeasurement.annotations[this_annotation]
-                    newmeasurement.annotations[this_annotation] = max(float(annotation.confidence),current_confidence)
+                    if float(annotation.confidence) > current_confidence:
+                        newmeasurement.annotations[this_annotation] = float(annotation_confidence)
+                        this_annotation.parentid = annotation.id
                 else:
                     newmeasurement.annotations[this_annotation] = float(annotation.confidence)
 
     print "Stored " + str(len(peakset.measurements)) + " peaks and " + str(len(peakset.annotations)) + " unique annotations"
 
     sampler = ns.NetworkSampler(peakset)
-    # sampler.set_parameters(new_annotation_query.params) - IMPLEMENT ME!
-    sampler.initialise_sampler()
-    sampler.multiple_network_sample(100)
-    sampler.compute_posteriors()
+    sampler.set_parameters(jsonpickle.decode(new_annotation_query.massBank_params))
+    sampler.sample()
 
     # Store new annotations in the database
     for m in peakset.measurements:
@@ -88,8 +91,13 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
         for annotation in m.annotations:
             compound = Compound.objects.get(id = annotation.id)
             parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid)
-            an = CandidateAnnotation.objects.create(compound=compound,peak=peak,confidence=peakset.posterior_probability[m][annotation],annotation_query=new_annotation_query,difference_from_peak_mass = parent_annotation.difference_from_peak_mass,mass_match=parent_annotation.mass_match)
+            add_info_string = "Prior: {:5.4f}, Edges: {:5.2f}".format(peakset.prior_probability[m][annotation],peakset.posterior_edges[m][annotation])
+            an = CandidateAnnotation.objects.create(compound=compound,peak=peak,confidence=peakset.posterior_probability[m][annotation],
+                annotation_query=new_annotation_query,difference_from_peak_mass = parent_annotation.difference_from_peak_mass,
+                mass_match=parent_annotation.mass_match,additional_information = add_info_string)
 
+    edge_dict = sampler.global_edge_count()
+    return edge_dict
 
 
 

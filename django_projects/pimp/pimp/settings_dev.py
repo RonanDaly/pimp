@@ -35,7 +35,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         # 'ENGINE': 'django.db.backends.mysql',
         # 'NAME': 'pimp_prod',
-        'NAME': os.path.join(BASE_DIR, 'sqlite3.db'),                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(BASE_DIR, 'testdb.db'),                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
         'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.

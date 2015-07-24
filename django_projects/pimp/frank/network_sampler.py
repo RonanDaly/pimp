@@ -11,9 +11,24 @@ class NetworkSampler(object):
 		self.delta = 1.00
 		self.load_transformations('all_transformations_masses.txt')
 		self.adjacency = {}
-		self.create_adjacency(self.transformations)
+		self.create_adjacency()
 		self.peakset.posterior_counts = {}
-		
+		self.n_samples = 1000
+		self.n_burn = 100
+
+	def set_parameters(self,params):
+		if 'n_samples' in params:
+			self.n_samples = params['n_samples']
+		if 'n_burn' in params:
+			self.n_burn = params['n_burn']
+		if 'delta' in params:
+			self.delta = params['delta']
+	
+	def sample(self):
+		self.initialise_sampler()
+		self.multiple_network_sample(self.n_burn,record=False)
+		self.multiple_network_sample(self.n_samples,record=True)
+		self.compute_posteriors()
 
 
 	def load_transformations(self,filename):
@@ -22,7 +37,9 @@ class NetworkSampler(object):
 			for line in infile:
 				line = line.rstrip('\r\n')
 				splitline = line.split('\t')
-				self.transformations.append(Formula(splitline[1]))
+				name = splitline[0]
+				formula = splitline[1]
+				self.transformations.append(Transformation(formula,name))
 
 
 	def summarise_posterior(self):
@@ -63,6 +80,7 @@ class NetworkSampler(object):
 
 				if record:
 					self.peakset.posterior_counts[m][choose] += 1
+					self.peakset.edge_counts[m][choose] += self.in_degree[choose]
 
 				if verbose:
 					print "Measurement: " + str(m.id) + " assigned to " + str(choose.formula) + "(" + str(self.peakset.posterior_counts[m][choose]) + ")"
@@ -101,6 +119,7 @@ class NetworkSampler(object):
 
 				if record:
 					self.peakset.posterior_counts[m][choose] += 1
+					self.peakset.edge_counts[m][choose] += self.in_degree[choose]
 
 				if verbose:
 					print "Measurement: " + str(m.id) + " assigned to " + str(choose.formula) + "(" + str(self.peakset.posterior_counts[m][choose]) + ")"
@@ -110,21 +129,23 @@ class NetworkSampler(object):
 		self.n_samples = 0
 		self.assignment = {}
 		self.peakset.posterior_counts = {}
+		self.peakset.edge_counts = {}
 		self.in_degree = {}
 		for a in self.peakset.annotations:
 			self.in_degree[a] = 0
 		for m in self.peakset.measurements:
 			if m.annotations != {}:
 				self.peakset.posterior_counts[m] = {}
+				self.peakset.edge_counts[m] = {}
 				tempprobs = {}
 				totalprob = 0.0
 				for k in m.annotations:
 					self.peakset.posterior_counts[m][k] = 0
+					self.peakset.edge_counts[m][k] = 0
 					tempprobs[k] = m.annotations[k]
 					totalprob+=tempprobs[k]
 				u = random.random()*totalprob
 				cumprob = 0.0
-				choosepos = -1
 				for k in m.annotations:
 					cumprob += m.annotations[k]
 					choose = k
@@ -139,21 +160,39 @@ class NetworkSampler(object):
 				if verbose:
 					print "Measurement: " + str(m.id) + " assigned to " + str(choose.formula)
 
+	def global_edge_count(self):
+		import itertools
+		edge_dict = {}
+		for t in self.transformations:
+			edge_dict[t] = 0
+		for m1,m2 in itertools.combinations(self.peakset.measurements,2):
+			if m1.annotations != {} and m2.annotations!= {}:
+				if self.assignment[m2] in self.adjacency[self.assignment[m1]]:
+					this_edge = self.adjacency[self.assignment[m1]][self.assignment[m2]]
+					edge_dict[this_edge] += 1
+		return edge_dict
+
+
 	def compute_posteriors(self):
 		self.peakset.posterior_probability = {}
 		self.peakset.prior_probability = {}
+		self.peakset.posterior_edges = {}
 		for m in self.peakset.measurements:
 			total_count = 0
 			total_prob = 0.0
 			self.peakset.posterior_probability[m] = {}
 			self.peakset.prior_probability[m] = {}
-
+			self.peakset.posterior_edges[m] = {}
 			for a in m.annotations:
 				total_count += self.peakset.posterior_counts[m][a]
 				total_prob += m.annotations[a]
 			for a in m.annotations:
 				self.peakset.posterior_probability[m][a] = 1.0*self.peakset.posterior_counts[m][a]/(1.0*total_count)
 				self.peakset.prior_probability[m][a] = m.annotations[a]/(total_prob)
+				if self.peakset.posterior_counts[m][a] > 0:
+					self.peakset.posterior_edges[m][a] = 1.0*self.peakset.edge_counts[m][a]/(1.0*self.peakset.posterior_counts[m][a])
+				else:
+					self.peakset.posterior_edges[m][a] = 0.0
 
 
 	def create_adjacency(self,verbose=False):
@@ -161,15 +200,17 @@ class NetworkSampler(object):
 		import itertools
 		total_found = 0
 		for a in self.peakset.annotations:
-			self.adjacency[a] = []
+			self.adjacency[a] = {}
 		# Loop over annotations
 		for a1,a2 in itertools.combinations(self.peakset.annotations,2):
 			match_t = self.can_transform(a1,a2)
 			if match_t!=None:
 				if verbose:
 					print "Found match: " + str(a1.formula) + " -> " + str(match_t.formula) + " -> " + str(a2.formula)
-				self.adjacency[a1].append(a2)
-				self.adjacency[a2].append(a1)
+				self.adjacency[a1][a2] = match_t
+				self.adjacency[a2][a1] = match_t
+				# self.adjacency[a1].append(a2)
+				# self.adjacency[a2].append(a1)
 				total_found += 2
 
 		print "Found " + str(total_found) + " (sparsity ratio = " + str(1.0*total_found/(1.0*len(self.peakset.annotations)**2)) + ")"
@@ -177,12 +218,13 @@ class NetworkSampler(object):
 	def get_all_transforms(self,a1,a2):
 		tlist = []
 		for t in self.transformations:
+			tf = t.formula
 			poshit = 1
 			neghit = 1
-			for a in t.atoms:
-				if a1.formula.atoms[a] - a2.formula.atoms[a] != t.atoms[a]:
+			for a in tf.atoms:
+				if a1.formula.atoms[a] - a2.formula.atoms[a] != tf.atoms[a]:
 					poshit = 0
-				if a2.formula.atoms[a] - a1.formula.atoms[a] != t.atoms[a]:
+				if a2.formula.atoms[a] - a1.formula.atoms[a] != tf.atoms[a]:
 					neghit = 0
 				if poshit == 0 and neghit == 0:
 					break
@@ -193,12 +235,13 @@ class NetworkSampler(object):
 
 	def can_transform(self,a1,a2):
 		for t in self.transformations:
+			tf = t.formula
 			poshit = 1
 			neghit = 1
-			for a in t.atoms:
-				if a1.formula.atoms[a] - a2.formula.atoms[a] != t.atoms[a]:
+			for a in tf.atoms:
+				if a1.formula.atoms[a] - a2.formula.atoms[a] != tf.atoms[a]:
 					poshit = 0
-				if a2.formula.atoms[a] - a1.formula.atoms[a] != t.atoms[a]:
+				if a2.formula.atoms[a] - a1.formula.atoms[a] != tf.atoms[a]:
 					neghit = 0
 				if poshit == 0 and neghit == 0:
 					break
@@ -222,6 +265,11 @@ class NetworkSampler(object):
 				print >> outstream, "\t<<{}>>,<<{}>>,Prior: {:.4f}, Posterior {:.4f}, Degree {}".format(
 									an.formula,an.name,m.annotations[an]/total_prob,
 									1.0*self.peakset.posterior_counts[m][an]/total_count,self.in_degree[an])
+
+class Transformation(object):
+	def __init__(self,formula,name):
+		self.formula = Formula(formula)
+		self.name = name
 
 
 class FragSet(object):
