@@ -22,4 +22,5 @@ urlpatterns = patterns ('',
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)$', views.peak_summary, name = 'peak_summary'),
     #url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<file_id>[\w\-]+)/ms1_plot.png$', views.make_ms1_plot, name = "make_ms1_plot"),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)/msn_spectra_plot.png$', views.make_spectra_plot, name = "make_spectra_plot"),
+    url(r'^network_sampler/$',views.run_network_sampler,name = 'network_sampler'),
 )
