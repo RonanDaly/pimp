@@ -9,10 +9,7 @@ class NetworkSampler(object):
 		self.peakset = peakset
 		self.transformations = []
 		self.delta = 1.00
-		self.load_transformations('all_transformations_masses.txt')
-		self.adjacency = {}
-		self.create_adjacency()
-		self.peakset.posterior_counts = {}
+		self.transformation_file = 'all_transformations_masses.txt'
 		self.n_samples = 1000
 		self.n_burn = 100
 
@@ -23,6 +20,8 @@ class NetworkSampler(object):
 			self.n_burn = params['n_burn']
 		if 'delta' in params:
 			self.delta = params['delta']
+		if 'transformation_file' in params:
+			self.transformation_file = params['transformation_file']
 	
 	def sample(self):
 		self.initialise_sampler()
@@ -31,9 +30,9 @@ class NetworkSampler(object):
 		self.compute_posteriors()
 
 
-	def load_transformations(self,filename):
+	def load_transformations(self):
 		self.transformations = []
-		with open(filename) as infile:
+		with open(self.transformation_file) as infile:
 			for line in infile:
 				line = line.rstrip('\r\n')
 				splitline = line.split('\t')
@@ -126,6 +125,7 @@ class NetworkSampler(object):
 
 
 	def initialise_sampler(self,verbose = False):
+		self.create_adjacency()
 		self.n_samples = 0
 		self.assignment = {}
 		self.peakset.posterior_counts = {}
@@ -196,7 +196,10 @@ class NetworkSampler(object):
 
 
 	def create_adjacency(self,verbose=False):
+		print "Loading transformations"
+		self.load_transformations()
 		print "Creating adjacency structure. This might take some time..."
+		self.adjacency = {}
 		import itertools
 		total_found = 0
 		for a in self.peakset.annotations:

@@ -39,6 +39,7 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
     # might want to remove this at some point, but it's useful for debugging
     old_annotations = CandidateAnnotation.objects.filter(annotation_query = new_annotation_query)
     if old_annotations:
+        print "Deleting old annotations..."
         for annotation in old_annotations:
             annotation.delete()
 
@@ -49,10 +50,11 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
     peakset = ns.FragSet()
     peakset.annotations = []
 
+
+    print "Extracting peaks"
     # for i in range(100):
     for p in peaks:
         # p = peaks[i]
-        print p,p.sourceFile.name
         newmeasurement = ns.Measurement(p.id)
         peakset.measurements.append(newmeasurement)
         # Loop over all candidate annotations for this peak
@@ -81,10 +83,14 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
 
     print "Stored " + str(len(peakset.measurements)) + " peaks and " + str(len(peakset.annotations)) + " unique annotations"
 
+
+    print "Sampling..."
     sampler = ns.NetworkSampler(peakset)
     sampler.set_parameters(jsonpickle.decode(new_annotation_query.massBank_params))
     sampler.sample()
 
+
+    print "Storing new annotations..."
     # Store new annotations in the database
     for m in peakset.measurements:
         peak = Peak.objects.get(id=m.id)

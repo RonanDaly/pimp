@@ -599,6 +599,7 @@ def run_network_sampler(request):
             'n_samples': 1000,
             'n_burn': 500,
             'delta': 1,
+            'transformation_file': 'all_transformations_masses.txt',
         }
     frag_slug = 'beer-3-frag-set-5'
     aq_slug = 'beer-3-annotations-4'
@@ -610,3 +611,4 @@ def run_network_sampler(request):
     edge_dict = tasks.runNetworkSampler(frag_slug,'Beer_3_T10_POS.mzXML',pq.slug)
     context_dict = {'edge_dict':  edge_dict}
     return render(request,'frank/sampler_output.html',context_dict)
+    # return render(request,'frank/')
