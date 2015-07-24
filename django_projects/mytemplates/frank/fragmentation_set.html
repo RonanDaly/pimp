@@ -19,12 +19,14 @@
 			<th>Name</th>
 			<th>Time Created</th>
 			<th>Current Status</th>
+			<th>Parent</th>
 		</tr>
 		{% for annotation in annotations %}
 		<tr>
 		<td>{{annotation.name}}</td>
 		<td>{{annotation.timeCreated}}</td>
 		<td>{{annotation.status}}</td>
+		<td>{{annotation.parent_annotation_query.name}}</td>
 		</tr>
 		{% endfor %}	
 		</table>

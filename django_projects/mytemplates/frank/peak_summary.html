@@ -40,8 +40,13 @@
 		<h1>No peaks to display</h1>
 	{% endif %}
 	<br/>
-	<p>Candidate Annotations</p>
+	<h3>Candidate Annotations</h3>
 	 {% if candidate_annotations %}
+	  {% for annotation_query,annotations in candidate_annotations.items %}
+	  	<h4>{{annotation_query.name}}</h4>
+	  	{% if annotation_query.parent_annotation_query %}
+	  		<p>Parent: {{annotation_query.parent_annotation_query.name}}</p>
+	  	{% endif %}
 		<table>
 		<tr>
 		<th>Compound Title</th>
@@ -50,7 +55,7 @@
 		<th>Confidence Value</th>
 		<th>Mass Differential</th>
 		</tr>
-		{% for annotation in candidate_annotations %}
+		{% for annotation in annotations %}
 		<tr>
 		<td>{{annotation.compound.name}}</td>
 		<td>{{annotation.compound.id}}</td>
@@ -61,6 +66,7 @@
 		</tr>
 		{% endfor %}
 		</table>
+	  {% endfor %}
 	{% else %}
 		<h1>No annotations to display</h1>
 	{% endif %}

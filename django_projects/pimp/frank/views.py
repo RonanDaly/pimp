@@ -341,14 +341,21 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
         peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set)
         ## Display number of msn peaks
         list_of_peaks = Peak.objects.filter(parentPeak = peak)
-        list_of_candidate_annotations = CandidateAnnotation.objects.filter(peak=peak)
-        list_of_candidate_annotations = list_of_candidate_annotations.order_by('annotation_query','-confidence')
+        list_of_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+        candidate_annotations = {}
+        for aq in list_of_annotation_queries:
+            candidate_annotations[aq] = CandidateAnnotation.objects.filter(peak=peak,annotation_query=aq).order_by('-confidence')
+        # list_of_candidate_annotations = CandidateAnnotation.objects.filter(peak=peak)
+        # list_of_candidate_annotations = list_of_candidate_annotations.order_by('annotation_query','-confidence')
         number_of_fragments = len(list_of_peaks)
         context_dict = {
             'peak': peak,
             'fragmentation_peak_list': list_of_peaks,
             'number_of_fragments':number_of_fragments,
-            'candidate_annotations': list_of_candidate_annotations,
+            # 'candidate_annotations': list_of_candidate_annotations,
+            'candidate_annotations' : candidate_annotations,
+            'annotation_queries': list_of_annotation_queries,
+            # 'annotations': annotations
         }
         return render(request, 'frank/peak_summary.html', context_dict)
     else:
