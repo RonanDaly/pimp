@@ -8,7 +8,7 @@
 
         <h4>{{peak}}</h4>
 	<p>Mass: {{peak.mass}}</p>
-	<p>Retention Time: {{peak.retentionTime|floatformat:2}}</p>
+	<p>Retention Time: {{peak.retention_time|floatformat:2}}</p>
 	<p>Intensity: {{peak.intensity|floatformat:2}}</p>
 	<p>Number of Fragments: {{number_of_fragments}}</p>
 
@@ -31,7 +31,7 @@
 		<tr>
 		<td>{{fragment.slug}}</td>
 		<td>{{fragment.mass|floatformat:2}}</td>
-		<td>{{fragment.retentionTime|floatformat:2}}</td>
+		<td>{{fragment.retention_time|floatformat:2}}</td>
 		<td>{{fragment.intensity|floatformat:2}}</td>
 		</tr>
 		{% endfor %}

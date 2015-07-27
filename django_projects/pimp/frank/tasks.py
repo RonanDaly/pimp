@@ -9,7 +9,7 @@ from decimal import *
 import urllib2
 import urllib
 from cookielib import CookieJar
-from frank.helperObjects import msnPeakBuilder
+from frank.peakFactories import msnPeakBuilder
 from suds.client import Client, WebFault
 from django.contrib.auth.models import User
 import time
@@ -20,6 +20,7 @@ from cStringIO import StringIO
 from django.core.exceptions import ValidationError
 import frank.network_sampler as ns
 import re
+from subprocess import call
 
 
 from celery import shared_task
@@ -27,14 +28,14 @@ import subprocess
 
 ## Method to run simon's network sampler
 @celery.task
-def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
+def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query_slug):
     import jsonpickle
     # fragmentation set is the fragmentation set we want to run the analysis on (slug)
     # annotation_query is the new annotation query slug
-    fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set)
-    new_annotation_query = AnnotationQuery.objects.get(slug=annotation_query)
+    fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_slug)
+    new_annotation_query = AnnotationQuery.objects.get(slug=annotation_query_slug)
     parent_annotation_query = new_annotation_query.parent_annotation_query
-    sample_file = SampleFile.objects.filter(name=sample_file)
+    sample_file = SampleFile.objects.filter(name=sample_file_name)
     # check if the new annotation query already has annotations attached and delete them if it does
     # might want to remove this at some point, but it's useful for debugging
     old_annotations = CandidateAnnotation.objects.filter(annotation_query = new_annotation_query)
@@ -46,7 +47,7 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
     new_annotation_query.status = 'Submitted'
     new_annotation_query.save()
     # Extract the peaks
-    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msnLevel=1,sourceFile=sample_file)
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msn_level=1,source_file=sample_file)
     print "Found " + str(len(peaks)) + " peaks"
 
     peakset = ns.FragSet()
@@ -112,75 +113,81 @@ def runNetworkSampler(fragmentation_set,sample_file,annotation_query):
 
 
 
-## Method to derive the peaks from the mzXML file
+## Method to derive the peaks from the mzXML file for LCMS-MSN data sets
 @celery.task
-def msnGeneratePeakList(experiment, analysis):
+def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
     # Determine the directory of the experiment
-    experiment_object = Experiment.objects.get(slug = experiment)
+    experiment_object = Experiment.objects.get(slug = experiment_slug)
+    # From the experiment object derive the file directory of the .mzXML files
     filepath = os.path.join(MEDIA_ROOT,
                             'frank',
-                            experiment_object.createdBy.username,
+                            experiment_object.created_by.username,
                             experiment_object.slug,
                             )
-    analysis_object = FragmentationSet.objects.get(id=analysis)
+    fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
     r_source = robjects.r['source']
     r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/frankMSnPeakMatrix.R')
     r_frankMSnPeakMatrix = robjects.globalenv['frankMSnPeakMatrix']
-    analysis_object.status = 'Processing'
-    analysis_object.save()
+    fragmentation_set_object.status = 'Processing'
+    fragmentation_set_object.save()
     output = r_frankMSnPeakMatrix(source_directory = filepath)
-#    ### Debug Script ######
-#     r_source = robjects.r['source']
-#     r_source('~/R/MyScripts/testScript.R')
-#     r_testScript = robjects.globalenv['testscript']
-#     output = r_testScript('~/Git/MScProjectRepo/pimp/django_projects/pimp_data/beer-versus-urine-1')
-#  #######################
-    peak_generator = msnPeakBuilder(output, analysis_object)
+    peak_generator = msnPeakBuilder(output, fragmentation_set_object.id)
     peak_generator.populate_database_peaks()
-    analysis_object.status = 'Completed'
-    analysis_object.save()
+    fragmentation_set_object.status = 'Completed'
+    fragmentation_set_object.save()
     return 'Done'
 
-
+# Method to batch query the mass bank annotation tool using SOAP
 @celery.task
 def massBank_batch_search(fragmentation_set_id, annotation_query_id):
     fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
     sample_peak_qset = Peak.objects.filter(fragmentation_set=fragmentation_set)
-    print 'Number of Peaks = '+str(len(sample_peak_qset))
-    ## To avoid database locking release the fragmentation set object
-    fragmentation_set = None
-    number_of_msn_levels = sample_peak_qset.aggregate(Max('msnLevel'))
-    number_of_msn_levels = number_of_msn_levels['msnLevel__max']
+    query_spectra = get_massBank_query_spectra(sample_peak_qset)
+    # Now the query is structured, send it to mass Bank
+    positive_spectra = query_spectra['positive_spectra']
+    negative_spectra = query_spectra['negative_spectra']
+    positive_spectra_query_status = query_mass_bank(positive_spectra, 'Positive', annotation_query_id)
+    negative_spectra_query_status = query_mass_bank(negative_spectra, 'Negative', annotation_query_id)
+    return 'Done'
+
+# Method to format a query set of peaks for batch query of the mass bank annotation tool
+def get_massBank_query_spectra(sample_peak_query_set):
+    print 'Number of Peaks = '+str(len(sample_peak_query_set))
+    number_of_msn_levels = sample_peak_query_set.aggregate(Max('msn_level'))
+    number_of_msn_levels = number_of_msn_levels['msn_level__max']
     print 'Number of MSN Levels = '+str(number_of_msn_levels)
     positive_samples_query = []
     negative_samples_query = []
     for level in range(1, (number_of_msn_levels)):
-        peaks_in_msnLevel = sample_peak_qset.filter(msnLevel=level)
-        print 'Number of peaks in level = '+str(len(peaks_in_msnLevel))
-        for peak in peaks_in_msnLevel:
-            polarity = peak.sourceFile.polarity
-            peakName = peak.slug
-            fragmented_peaks = sample_peak_qset.filter(parentPeak=peak)
-            spectrum_query_string = list('Name:'+peakName+';')
+        peaks_in_msn_level = sample_peak_query_set.filter(msn_level=level)
+        print 'Number of peaks in level = '+str(len(peaks_in_msn_level))
+        for peak in peaks_in_msn_level:
+            polarity = peak.source_file.polarity
+            peak_name = peak.slug
+            fragmented_peaks = sample_peak_query_set.filter(parent_peak=peak)
+            spectrum_query_string = list('Name:'+peak_name+';')
             for fragment in fragmented_peaks:
                 spectrum_query_string.append(''+str(fragment.mass)+','+str(fragment.intensity)+';')
             if polarity == 'Positive':
                 positive_samples_query.append(''.join(spectrum_query_string))
             else:
                 negative_samples_query.append(''.join(spectrum_query_string))
-    # Now the query is structured, send it to mass Bank
-    if len(positive_samples_query)!=0:
-        query_mass_bank(positive_samples_query, 'Positive', annotation_query_id)
-    if len(negative_samples_query)!=0:
-        query_mass_bank(negative_samples_query, 'Negative', annotation_query_id)
+    query_spectra = {
+        'positive_spectra':positive_samples_query,
+        'negative_spectra':negative_samples_query,
+    }
+    return query_spectra
 
-
-def query_mass_bank(query, polarity, annotation_query_id):
+# Method to send the query spectra to mass bank and populate the database
+def query_mass_bank(query_spectra, polarity, annotation_query_id):
+    # Check to ensure there are spectra to send to mass bank, if not, simply return
+    if len(query_spectra) == 0:
+        return 'Done'
     annotation_query_object = AnnotationQuery.objects.get(id=annotation_query_id)
     mass_bank_parameters = annotation_query_object.massBank_params
+    # Obtain the parameters of the search from the database
     mass_bank_parameters = re.findall('<(.*?)>', mass_bank_parameters, re.DOTALL)
-    mailAddress = str(mass_bank_parameters[0])
-    print mailAddress
+    mail_address = str(mass_bank_parameters[0])
     number_of_instrument_types = len(mass_bank_parameters)
     instruments = []
     if number_of_instrument_types > 0:
@@ -192,8 +199,8 @@ def query_mass_bank(query, polarity, annotation_query_id):
     try:
         response = client.service.execBatchJob(
             type,
-            mailAddress,
-            query,
+            mail_address,
+            query_spectra,
             instruments,
             ion,
         )
@@ -249,7 +256,7 @@ def query_mass_bank(query, polarity, annotation_query_id):
                 annotation_mass = Decimal(each_annotation['exactMass'])
                 difference_in_mass = peak_object.mass-annotation_mass
                 ## Justin's suggestion - I am maybe doing this wrong
-                ppm = ((peak_object.mass/annotation_mass)/annotation_mass)*1000000
+                ppm = 1000000*abs(difference_in_mass)/annotation_mass
                 mass_match = False
                 if ppm < 3.0:
                     mass_match = True
@@ -275,7 +282,43 @@ def query_mass_bank(query, polarity, annotation_query_id):
                 )
             except ValidationError, e:
                 print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
+    return 'Done'
 
+
+def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
+    return 'Done'
+
+
+@celery.task
+def nist_batch_search(fragmentation_set_id, annotation_query_id):
+    ### NEED CODE HERE TO MAKE MSP FILE #####
+    print 'nist_batch_search called!'
+    call(["wine",
+          "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
+          "M",
+          "/HITS",
+          "3",
+          "/PATH",
+          "C:\\NIST14\\MSSEARCH",
+          "/MAIN",
+          "mainlib",
+          "/INP",
+          "Z:\\home\\scottiedog27\\Git\\MScProjectRepo\\pimp\\django_projects\\pimp\\frank\\NISTQueryFiles\\output.msp",
+          "/OUT",
+          "Z:\\home\\scottiedog27\\Git\\MScProjectRepo\\pimp\\django_projects\\pimp\\frank\\NISTQueryFiles\\nist_out.txt",
+          "/COL",
+          "pz,cf"])
+    ### NEED CODE HERE TO READ NIST OUPUT FILE ###
+    ### NEED CODE HERE TO POPULATE ANNOTATIONS ###
+    return 'Done'
+
+def nist_make_msp_file(fragmentation_set_id, annotation_query_id):
+    #### MSP file format seems to be as follows
+    #   NAME: name_of_query
+    #   DB#: name_of_query
+    #   Comments: nothing
+    #   Num Peaks: number_of_peaks_in_spectra
+    #   mass    intensity   ### For each of the peaks in the spectra
 
 # def magma_mass_tree():
 #     sample = SampleFile.objects.get(name = 'Urine_37_Top10_NEG.mzXML')
@@ -334,7 +377,3 @@ def query_mass_bank(query, polarity, annotation_query_id):
 #     content = rsp.read()
 #
 #     print content
-
-
-if __name__ == '__main__':
-    msnGeneratePeakList()

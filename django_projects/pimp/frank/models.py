@@ -6,24 +6,25 @@ import os
 from pimp.settings_dev import MEDIA_ROOT
 import hashlib
 
-# Use the default Django User model
-# This provides the attributes:
+# The default Django User model provides the following attributes:
 #	username
 #	password
 #	email
 #	first_name
 #	last_name
 
+# A tuple containing the file 'types' ie. the polarity of the file
 FILE_TYPES = (
     ('Positive', 'Positive'),
     ('Negative', 'Negative'),
-    # ('Pooled Sample', 'Pooled Sample'),
 )
 
+# A tuple containing the 'state' of the analysis to provide the user with feedback
 ANALYSIS_STATUS = (
     ('Submitted', 'Submitted'),
     ('Processing', 'Processing'),
-    ('Completed', 'Completed'),
+    ('Completed Successfully', 'Completed Successfully'),
+    ('Completed with Errors', 'Completed with Errors'),
 )
 
 # Define the choices for ionisation protocol
@@ -31,7 +32,8 @@ IONISATION_PROTOCOLS = (
     ('EIS','Electron Ionisation Spray'),
     # Additional ionisation protocols could be added here if necessary
 )
-# Define the choices for method of detection
+
+# Define the choices for method of detection, dictates method of how peaks are derived
 DETECTION_PROTOCOLS = (
     ('LCMS DDA','Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'),
     ('LCMS DIA', 'Liquid-Chromatography Data-Independent Acquisition'),
@@ -42,21 +44,20 @@ DETECTION_PROTOCOLS = (
 class Experiment(models.Model):
     title = models.CharField(max_length = 250, blank = False)
     description = models.CharField(max_length = 250)
-    createdBy = models.ForeignKey(User, related_name = "experiment_creator")
-    timeCreated = models.DateTimeField(auto_now = True)
-    lastModified = models.DateTimeField(auto_now_add = True, blank = True)
-    ionisationMethod = models.CharField(max_length = 250, choices = IONISATION_PROTOCOLS)
-    detectionMethod = models.CharField(max_length = 250, choices = DETECTION_PROTOCOLS)
+    created_by = models.ForeignKey(User, related_name = "experiment_creator")
+    time_created = models.DateTimeField(auto_now = True)
+    last_modified = models.DateTimeField(auto_now_add = True, blank = True)
+    ionisation_method = models.CharField(max_length = 250, choices = IONISATION_PROTOCOLS)
+    detection_method = models.CharField(max_length = 250, choices = DETECTION_PROTOCOLS)
     users = models.ManyToManyField(User, through = 'UserExperiments', through_fields = ('experiment', 'user'))
     slug = models.SlugField(unique=True)
 
     # Upon saving an instance of the model, a unique slug is derived for referencing in the URL
     def save(self, *args, **kwargs):
-        ## The experiment id is going to be one greater than the total number of existing
-        ## experiments in the database.
-        experimentNumber = Experiment.objects.count()+1
-        # At the moment the slug is simply the experiment title plus the next available index
-        self.slug = slugify(self.title)+'-'+str(experimentNumber)
+        ## The experiment id is going to be one greater than the total number of existing experiments in the database.
+        experiment_number = Experiment.objects.count()+1
+        # The slug is simply the experiment title plus the next available index
+        self.slug = slugify(self.title)+'-'+str(experiment_number)
         super(Experiment, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -78,12 +79,10 @@ class ExperimentalCondition(models.Model):
     slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
-        ## The experimentCondition id is going to be one greater than the total number of existing
-        ## experimentalConditions in the database.
-        conditionNumber = ExperimentalCondition.objects.count()+1
-        # As with the experiment the slug is simply the name of the
-        # experimental condition and the next available index
-        self.slug = slugify(self.name)+'-'+str(conditionNumber)
+        ## The id is going to be one greater than the total number of existing experimentalConditions in the database.
+        condition_number = ExperimentalCondition.objects.count()+1
+        # The slug is simply the name of the experimental condition and the next available index
+        self.slug = slugify(self.name)+'-'+str(condition_number)
         super(ExperimentalCondition, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -93,35 +92,34 @@ class ExperimentalCondition(models.Model):
 class Sample(models.Model):
     name = models.CharField(max_length = 250, blank = False)
     description = models.CharField(max_length = 250, blank = False)
-    experimentalCondition = models.ForeignKey(ExperimentalCondition)
+    experimental_condition = models.ForeignKey(ExperimentalCondition)
     organism = models.CharField(max_length = 250)
     slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
-        ## The sample id is going to be one greater than the total number of existing
-        ## samples in the database.
-        sampleNumber = Sample.objects.count()+1
+        ## The sample id is going to be one greater than the total number of existing samples in the database.
+        sample_number = Sample.objects.count()+1
         # The slug is simply the concatination of the name of the sample and the next available id
-        self.slug = slugify(self.name)+'-'+str(sampleNumber)
+        self.slug = slugify(self.name)+'-'+str(sample_number)
         super(Sample, self).save(*args, **kwargs)
 
     def __unicode__(self):
-        return 'Sample '+str(self.id)+ ' in '+ self.experimentalCondition.experiment.title
+        return 'Sample '+str(self.id)+ ' in '+ self.experimental_condition.experiment.title
 
 
 # Method to generate the absolute directory of the uploaded file
 def get_upload_file_name(instance, filename):
     # Retrive the sample, experimental condition and experiment to which the sample file is to be associated
-    sampleObject = instance.sample
-    experimentalConditionObject = sampleObject.experimentalCondition
-    experimentObject = experimentalConditionObject.experiment
+    sample_object = instance.sample
+    experimental_condition_object = sample_object.experimental_condition
+    experiment_object = experimental_condition_object.experiment
     # The directory of the file upload is concatinated to the root directory
     filepath = os.path.join(MEDIA_ROOT,
                             'frank',
-                            experimentObject.createdBy.username,
-                            experimentObject.slug,
-                            experimentalConditionObject.slug,
-                            sampleObject.slug,
+                            experiment_object.created_by.username,
+                            experiment_object.slug,
+                            experimental_condition_object.slug,
+                            sample_object.slug,
                             instance.polarity
                             )
     try:
@@ -138,7 +136,7 @@ def get_upload_file_name(instance, filename):
     ## then Django will create a duplicate file in the directory
     ## Should probably be done in the form.
 
-# Class detailing the location of files corresponding to the sample
+# Class corresponding to the sampke files corresponding to the sample
 class SampleFile(models.Model):
     name = models.CharField(max_length = 250, blank = False)
     polarity = models.CharField(max_length = 250, choices = FILE_TYPES)
@@ -148,45 +146,43 @@ class SampleFile(models.Model):
     def __unicode__(self):
          return self.name
 
-# Class defining an Analysis of an Experiment - i.e. the generation of a collection of peaks
+# Class defining a Fragmentation Set of an Experiment - i.e. a collection of peaks
 class FragmentationSet(models.Model):
     name = models.CharField(max_length = 250)
     experiment = models.ForeignKey(Experiment)
-    timeCreated = models.DateTimeField(auto_now = True)
+    time_created = models.DateTimeField(auto_now = True)
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Submitted')
     slug = models.SlugField(unique=True)
-    ### Note additional parameters required here ####
 
     def save(self, *args, **kwargs):
-        ## The set id is going to be one greater than the total number of existing
-        # ## sets in the database.
-        setNumber = FragmentationSet.objects.count()+1
-        # The slug is simply the concatination of the name of the sample and the next available id
-        self.slug = slugify(self.name)+'-'+str(setNumber)
+        ## The fragmentation set id is going to be one greater than the total number of existing sets in the database.
+        set_number = FragmentationSet.objects.count()+1
+        # The slug is simply the concatination of the name of the fragmentation set and the next available id
+        self.slug = slugify(self.name)+'-'+str(set_number)
         super(FragmentationSet, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return 'Fragmentation Set '+str(self.id)
 
-
+# Class defining an Annotation Query - i.e. a collection of candidate annotations
 class AnnotationQuery(models.Model):
     name = models.CharField(max_length = 250)
     fragmentation_set = models.ForeignKey(FragmentationSet)
-    timeCreated = models.DateTimeField(auto_now = True)
+    time_created = models.DateTimeField(auto_now = True)
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Defined')
     slug = models.SlugField(unique=True)
     massBank = models.BooleanField(default = False)
+    nist = models.BooleanField(default = False)
     massBank_params = models.CharField(max_length = 250, null=True)
     ### Note additional parameters required here ####
     ### Also need to add in the choice field for Simon's additional code
     parent_annotation_query = models.ForeignKey('self', null=True)
 
     def save(self, *args, **kwargs):
-        ## The set id is going to be one greater than the total number of existing
-        # ## sets in the database.
-        queryNumber = AnnotationQuery.objects.count()+1
-        # The slug is simply the concatination of the name of the sample and the next available id
-        self.slug = slugify(self.name)+'-'+str(queryNumber)
+        ## The query id is going to be one greater than the total number of existing queries in the database.
+        query_number = AnnotationQuery.objects.count()+1
+        # The slug is simply the concatination of the name of the query and the next available id
+        self.slug = slugify(self.name)+'-'+str(query_number)
         super(AnnotationQuery, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -213,12 +209,12 @@ class Compound(models.Model):
 
 # Class defining the peaks derived from the source files
 class Peak(models.Model):
-    sourceFile = models.ForeignKey(SampleFile, blank = False)
+    source_file = models.ForeignKey(SampleFile, blank = False)
     mass = models.DecimalField(decimal_places = 10, max_digits = 20)
-    retentionTime = models.DecimalField(decimal_places = 10, max_digits = 20)
+    retention_time = models.DecimalField(decimal_places = 10, max_digits = 20)
     intensity = models.DecimalField(decimal_places = 10, max_digits = 20)
-    parentPeak = models.ForeignKey('self', null=True)
-    msnLevel = models.IntegerField(default = 0)
+    parent_peak = models.ForeignKey('self', null=True)
+    msn_level = models.IntegerField(default = 0)
     annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')
     fragmentation_set = models.ForeignKey(FragmentationSet)
     slug = models.SlugField(unique=True)
@@ -228,8 +224,10 @@ class Peak(models.Model):
     preferred_candidate_updated_date = models.DateTimeField(auto_now_add = True, blank = True)
 
     def save(self, *args, **kwargs):
-        peakNumber = Peak.objects.count()+1
-        self.slug = slugify('Peak:'+str(peakNumber)+'FS:'+str(self.fragmentation_set.id))
+        peak_number = Peak.objects.count()+1
+        # The slug has to contain both the peak number and the fragmentation set number to ensure slug field
+        # remains unique throughout celery processes
+        self.slug = slugify('Peak:'+str(peak_number)+'FS:'+str(self.fragmentation_set.id))
         super(Peak, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -251,10 +249,11 @@ class CandidateAnnotation(models.Model):
     def __unicode__(self):
         return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)
 
-# Class defining which compounds were identified by in which repositories
+# Class defining which compounds were identified in which repositories
 class CompoundRepository (models.Model):
     compound = models.ForeignKey(Compound)
     repository = models.ForeignKey(Repository)
+    # Store the reference used by the repository to identify the compound
     repository_identifier = models.CharField(max_length=500)
 
     def __unicode__(self):

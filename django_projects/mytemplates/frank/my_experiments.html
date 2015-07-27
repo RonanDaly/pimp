@@ -12,7 +12,7 @@
 		<table>
 		{% for experiment in experiment_list %}
 			<tr><td><a href="/frank/my_experiments/{{experiment.slug}}">{{experiment.title}}</a>
-		</td><td>{{experiment.timeCreated}}</td><td>{{experiment.get_ionisationMethod_display}}</td><td>{{experiment.get_detectionMethod_display}}</td></tr>
+		</td><td>{{experiment.time_created}}</td><td>{{experiment.get_ionisationMethod_display}}</td><td>{{experiment.get_detectionMethod_display}}</td></tr>
 		{% endfor %}
 	{% else %}
 		<h1>No existing experiments</h1>

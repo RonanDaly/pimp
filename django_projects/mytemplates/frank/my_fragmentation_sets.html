@@ -18,7 +18,7 @@
 		</tr>
 		{% for frag_set in fragmentation_sets %}
 			<tr><td><a href="/frank/my_fragmentation_sets/{{frag_set.slug}}">{{frag_set.name}}</a>
-		</td><td>{{frag_set.experiment}}</td><td>{{frag_set.timeCreated}}</td><td>{{frag_set.status}}</td></tr>
+		</td><td>{{frag_set.experiment}}</td><td>{{frag_set.time_created}}</td><td>{{frag_set.status}}</td></tr>
 		{% endfor %}
 		</table>
 	{% else %}

@@ -1,22 +1,11 @@
 from django import forms
 from frank.models import Experiment, ExperimentalCondition, \
-    Sample, SampleFile, FragmentationSet, AnnotationQuery, IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
+    Sample, SampleFile, FragmentationSet, AnnotationQuery, \
+    IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-# The form is used to create a new user
-#### NOT NEEDED ANYMORE, USE PiMP SignUp #####
-class SignUpForm(forms.ModelForm):
-    username = forms.CharField(max_length=60, help_text="Enter your username.")
-    email = forms.CharField(max_length=60, help_text="Enter your email.", required = False)
-    password = forms.CharField(widget=forms.PasswordInput(), help_text="Enter your password.")
-
-    class Meta:
-        # Update the User model of the database
-        model = User
-        fields = ('username', 'email', 'password')
-
-# The form that is used to new experiment
+# The form is used to create a new experiment
 class ExperimentForm(forms.ModelForm):
     title = forms.CharField(max_length=60, help_text="Enter the name of the experiment.")
     description = forms.CharField(
@@ -27,21 +16,20 @@ class ExperimentForm(forms.ModelForm):
     )
     # Creation of an experiment can include the declaration of the ionisation protocol used
     # IONISATION_PROTOCOLS is declared in 'frank.models'
-    ionisationMethod = forms.ChoiceField(
+    ionisation_method = forms.ChoiceField(
         choices = IONISATION_PROTOCOLS,
-        required = False
     )
     # Creation of an experiment can include the declaration of the detection method used
     # DETECTION_PROTOCOLS is declared in the 'frank.models'
-    detectionMethod = forms.ChoiceField(
+    detection_method = forms.ChoiceField(
         choices = DETECTION_PROTOCOLS
     )
 
     class Meta:
         model = Experiment
-        fields = ('title', 'description', 'ionisationMethod', 'detectionMethod')
+        fields = ('title', 'description', 'ionisation_method', 'detection_method')
 
-# The form that is used to new experimental condition
+# The form that is used to create a new experimental condition
 class ExperimentalConditionForm(forms.ModelForm):
     name = forms.CharField(max_length=60, help_text="Enter the name of the experiment condition.")
     description = forms.CharField(
@@ -57,7 +45,7 @@ class ExperimentalConditionForm(forms.ModelForm):
             'name', 'description',
         )
 
-# The form is used to create a add a new sample to an experiment
+# The form is used to add a new sample to an experiment
 class SampleForm(forms.ModelForm):
     name = forms.CharField(max_length=60, help_text="Enter the name of the sample.")
     description = forms.CharField(
@@ -66,7 +54,10 @@ class SampleForm(forms.ModelForm):
         help_text="Enter a description of the sample.",
         required = False
     )
-    organism = forms.CharField(max_length=60, help_text="Enter the name of the organism.", required = False)
+    organism = forms.CharField(max_length=60,
+                               help_text="Enter the name of the organism.",
+                               required = False
+    )
 
     class Meta:
         model = Sample
@@ -76,8 +67,7 @@ class SampleForm(forms.ModelForm):
         exclude = ('experimentalCondition',)
 
 # The form used to assign sample files to a given sample
-# File types is a tuple containing the choices of file - i.e. positive and negative, but this could be expanded to
-# include pooled samples
+# File types is a tuple containing the choices of file - i.e. positive and negative
 class SampleFileForm(forms.ModelForm):
     polarity = forms.ChoiceField(
         choices = FILE_TYPES
@@ -108,12 +98,18 @@ class SampleFileForm(forms.ModelForm):
                 print 'Valid file'
             else:
                 print 'Invalid file format'
-                raise forms.ValidationError("Incorrect file format. Please upload mzXML files")
+                self.add_error("address", "Incorrect file format. Please upload an mzXML file")
+                raise forms.ValidationError("Incorrect file format. Please upload an mzXML file")
+        else:
+            print 'No file Selected'
+            self.add_error("address", "No file selected. Please upload an mzXML file")
+            raise forms.ValidationError("No file selected. Please upload an mzXML file")
 
-## TO DO: create an analysis form class
-# The form that is used to new experimental condition
+# The form that is used to create a new Fragmentation Set
 class FragmentationSetForm(forms.ModelForm):
-    name = forms.CharField(max_length=60, help_text="Enter the name of the fragmentation set.")
+    name = forms.CharField(max_length=60,
+                           help_text="Enter the name of the fragmentation set."
+    )
 
     class Meta:
         model = FragmentationSet
@@ -121,7 +117,8 @@ class FragmentationSetForm(forms.ModelForm):
             'name',
         )
 
-
+# The names of the instrument types supported by the Mass Bank API for selection of the user
+# Used to provide the user with checkboxes for selection of the instrument types
 MASS_BANK_INSTRUMENT_TYPES = (
     ('EI-B', 'EI-B'),
     ('EI-EBEB', 'EI-EBEB'),
@@ -141,13 +138,21 @@ MASS_BANK_INSTRUMENT_TYPES = (
     ('LC-ESI-TOF', 'LC-ESI-TOF'),
 )
 
+# The form is used to create a Annotation Query
 class AnnotationQueryForm(forms.ModelForm):
     name = forms.CharField(max_length=60, help_text="Enter the name of the query.")
-    massBank = forms.BooleanField(label='massBank')
-    mass_bank_instrument_types = forms.MultipleChoiceField(choices = MASS_BANK_INSTRUMENT_TYPES, widget=forms.CheckboxSelectMultiple)
+    # A series of boolean checkboxes for selection of the annotation tools used to gather annotations
+    massBank = forms.BooleanField(label='massBank', required=False)
+    nist = forms.BooleanField(label='NIST', required=False)
+    # The parameters required for the annotation tools should be included here
+    mass_bank_instrument_types = forms.MultipleChoiceField(
+        choices = MASS_BANK_INSTRUMENT_TYPES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
 
     class Meta:
         model = AnnotationQuery
         fields = (
-            'name', 'massBank',
+            'name', 'massBank', 'nist',
         )

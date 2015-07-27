@@ -24,7 +24,7 @@
 		{% for annotation in annotations %}
 		<tr>
 		<td>{{annotation.name}}</td>
-		<td>{{annotation.timeCreated}}</td>
+		<td>{{annotation.time_created}}</td>
 		<td>{{annotation.status}}</td>
 		<td>{{annotation.parent_annotation_query.name}}</td>
 		</tr>
@@ -51,7 +51,7 @@
 				<td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}/{{peak.slug}}">{{peak.id}}</a>
 				</td>
 				<td>{{peak.mass|floatformat:4}}</td>
-				<td>{{peak.retentionTime|floatformat:2}}</td>
+				<td>{{peak.retention_time|floatformat:2}}</td>
 				<td>{{peak.intensity|floatformat:2}}</td>
 				</tr>				
 				{% endfor %}
