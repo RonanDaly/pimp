@@ -21,6 +21,7 @@ from django.core.exceptions import ValidationError
 import frank.network_sampler as ns
 import re
 from subprocess import call
+from pimp.settings_dev import BASE_DIR
 
 
 from celery import shared_task
@@ -291,7 +292,7 @@ def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
 
 @celery.task
 def nist_batch_search(fragmentation_set_id, annotation_query_id):
-    ### NEED CODE HERE TO MAKE MSP FILE #####
+    nist_make_msp_file(fragmentation_set_id, annotation_query_id)
     print 'nist_batch_search called!'
     call(["wine",
           "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
@@ -313,12 +314,32 @@ def nist_batch_search(fragmentation_set_id, annotation_query_id):
     return 'Done'
 
 def nist_make_msp_file(fragmentation_set_id, annotation_query_id):
-    #### MSP file format seems to be as follows
+    #### MSP file format as follows
     #   NAME: name_of_query
     #   DB#: name_of_query
     #   Comments: nothing
     #   Num Peaks: number_of_peaks_in_spectra
     #   mass    intensity   ### For each of the peaks in the spectra
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'.msp')
+    output_file = None
+    try:
+        output_file = open(output_file_name, 'w')
+    except IOError:
+        return 'Error'
+    fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+    peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set = fragmentation_set)
+    number_of_msn_levels = peaks_in_fragmentation_set.aggregate(Max('msn_level'))
+    number_of_msn_levels = number_of_msn_levels['msn_level__max']
+    for level in range(1, (number_of_msn_levels)):
+        peaks_in_msn_level = peaks_in_fragmentation_set.filter(msn_level=level)
+        for peak in peaks_in_msn_level:
+            fragmentation_spectra = peaks_in_fragmentation_set.filter(parent_peak = peak)
+            output_file.write('NAME: '+peak.slug+'\nDB#: '+str(peak.id)+'\nComments: None\nNum Peaks: '+str(len(fragmentation_spectra))+'\n')
+            for fragment in fragmentation_spectra:
+                output_file.write(str(fragment.mass)+' '+str(fragment.intensity)+'\n')
+            output_file.write('\n')
+
 
 # def magma_mass_tree():
 #     sample = SampleFile.objects.get(name = 'Urine_37_Top10_NEG.mzXML')

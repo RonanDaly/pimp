@@ -102,3 +102,6 @@ django_projects/pimp_data/
 
 # Ignore any temp files
 *~
+
+# Ignore any NIST query files
+*.msp
