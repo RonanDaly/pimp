@@ -313,6 +313,7 @@ def nist_batch_search(fragmentation_set_id, annotation_query_id):
     return 'Done'
 
 def nist_make_msp_file(fragmentation_set_id, annotation_query_id):
+    pass
     #### MSP file format seems to be as follows
     #   NAME: name_of_query
     #   DB#: name_of_query
