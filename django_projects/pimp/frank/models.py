@@ -201,6 +201,7 @@ class Compound(models.Model):
     formula = models.CharField(max_length = 250)
     exact_mass = models.DecimalField(decimal_places=10, max_digits=20)
     inchikey = models.CharField(max_length=500, null=True)
+    cas_code = models.CharField(max_length=500, null=True)
     repository = models.ManyToManyField(Repository, through = 'CompoundRepository')
 
     def __unicode__(self):

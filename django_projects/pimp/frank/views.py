@@ -384,6 +384,7 @@ def generate_annotations(fragmentation_set, annotation_query):
     if annotation_query.massBank == True:
         tasks.massBank_batch_search.delay(fragmentation_set_id, annotation_query_id)
     if annotation_query.nist == True:
+        print 'NIST Called!'
         tasks.nist_batch_search.delay(fragmentation_set_id, annotation_query_id)
 
 

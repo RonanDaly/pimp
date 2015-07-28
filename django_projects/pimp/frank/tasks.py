@@ -22,6 +22,7 @@ import frank.network_sampler as ns
 import re
 from subprocess import call
 from pimp.settings_dev import BASE_DIR
+from django.utils.encoding import force_str
 
 
 from celery import shared_task
@@ -253,7 +254,7 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
                     compound = compound_object,
                     repository = massBank,
                     repository_identifier = each_annotation['id'],
-                )
+                )[0]
                 annotation_mass = Decimal(each_annotation['exactMass'])
                 difference_in_mass = peak_object.mass-annotation_mass
                 ## Justin's suggestion - I am maybe doing this wrong
@@ -292,39 +293,48 @@ def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
 
 @celery.task
 def nist_batch_search(fragmentation_set_id, annotation_query_id):
-    nist_make_msp_file(fragmentation_set_id, annotation_query_id)
-    print 'nist_batch_search called!'
-    call(["wine",
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    query_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'.msp')
+    nist_output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'_nist_out.txt')
+    nist_make_msp_file(fragmentation_set_id, query_file_name)
+    print 'Begin Querying NIST'
+    try:
+        call(["wine",
           "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
           "M",
           "/HITS",
-          "3",
+          "10",
           "/PATH",
           "C:\\NIST14\\MSSEARCH",
           "/MAIN",
           "mainlib",
           "/INP",
-          "Z:\\home\\scottiedog27\\Git\\MScProjectRepo\\pimp\\django_projects\\pimp\\frank\\NISTQueryFiles\\output.msp",
+          query_file_name,
           "/OUT",
-          "Z:\\home\\scottiedog27\\Git\\MScProjectRepo\\pimp\\django_projects\\pimp\\frank\\NISTQueryFiles\\nist_out.txt",
+          nist_output_file_name,
           "/COL",
-          "pz,cf"])
-    ### NEED CODE HERE TO READ NIST OUPUT FILE ###
+          "pz,tz,cf,cn,nn,it,ce"])
+    except subprocess.CalledProcessError:
+        print 'CalledProcessError Occured'
+    except OSError:
+        print 'Executable not found'
+    print 'Finished Querying NIST'
+    nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id)
     ### NEED CODE HERE TO POPULATE ANNOTATIONS ###
     return 'Done'
 
-def nist_make_msp_file(fragmentation_set_id, annotation_query_id):
+def nist_make_msp_file(fragmentation_set_id, query_file_name):
+    print 'Begin Writing MSP File...'
     #### MSP file format as follows
     #   NAME: name_of_query
     #   DB#: name_of_query
     #   Comments: nothing
     #   Num Peaks: number_of_peaks_in_spectra
     #   mass    intensity   ### For each of the peaks in the spectra
-    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
-    output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'.msp')
     output_file = None
     try:
-        output_file = open(output_file_name, 'w')
+        output_file = open(query_file_name, 'w')
+        print 'MSP File Open'
     except IOError:
         return 'Error'
     fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
@@ -339,6 +349,75 @@ def nist_make_msp_file(fragmentation_set_id, annotation_query_id):
             for fragment in fragmentation_spectra:
                 output_file.write(str(fragment.mass)+' '+str(fragment.intensity)+'\n')
             output_file.write('\n')
+    output_file.close()
+    print 'MSP File Finished'
+    return 'Done'
+
+
+def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id):
+    annotation_query_object = AnnotationQuery.objects.get(id = annotation_query_id)
+    fragmentation_set = FragmentationSet.objects.get(id = fragmentation_set_id)
+    peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set = fragmentation_set)
+    nist_repository = Repository.objects.get(name = 'NIST')
+    input_file = None
+    try:
+        input_file = open(nist_output_file_name, 'r')
+    except IOError:
+        return 'Error'
+    current_parent_peak = None
+    if input_file is not None:
+        ## For each line which does not begin in a comment (in NIST.txt this is indicated by '>')
+        for line in (line for line in input_file if not line.startswith('>')):
+            line = line.decode('iso-8859-1').encode('utf8')
+            if line.startswith('Unknown:'):
+                line_tokens = [token.split() for token in line.splitlines()]
+                parent_ion_slug = line_tokens[0][1]
+                current_parent_peak = peaks_in_fragmentation_set.get(slug = parent_ion_slug)
+            elif line.startswith('Hit'):
+                annotation_description = line.splitlines()[0]
+                string_annotation_attributes = re.findall('<<(.*?)>>', annotation_description, re.DOTALL)
+                compound_name = string_annotation_attributes[0]
+                compound_formula = string_annotation_attributes[1]
+                annotation_confidence = Decimal(re.findall('Prob: (.*?);', annotation_description, re.DOTALL)[0])
+                compound_cas = re.findall('CAS:(.*?);', annotation_description, re.DOTALL)[0]
+                if compound_cas == '0-00-0':
+                    compound_cas = None
+                compound_mass = Decimal(re.findall('Mw: (.*?);', annotation_description, re.DOTALL)[0])
+                compound_repository_identifier = re.findall('Id: (\d+).', annotation_description)[0]
+                print 'Creating Annotation for '+current_parent_peak.slug
+                try:
+                    compound_object = Compound.objects.get_or_create(
+                        formula = compound_formula,
+                        exact_mass = compound_mass,
+                        name=compound_name,
+                        cas_code=compound_cas,
+                    )[0]
+                    compound_repository = CompoundRepository.objects.get_or_create(
+                        compound = compound_object,
+                        repository = nist_repository,
+                        repository_identifier = compound_repository_identifier,
+                    )[0]
+                    difference_in_mass = current_parent_peak.mass-compound_mass
+                    ## Justin's suggestion - I am maybe doing this wrong
+                    ppm = 1000000*abs(difference_in_mass)/compound_mass
+                    mass_match = False
+                    if ppm < 3.0:
+                        mass_match = True
+                    CandidateAnnotation.objects.create(
+                        compound = compound_object,
+                        peak = current_parent_peak,
+                        confidence = annotation_confidence,
+                        annotation_query = annotation_query_object,
+                        difference_from_peak_mass = difference_in_mass,
+                        mass_match = mass_match,
+                        additional_information = annotation_description
+                    )
+                except ValidationError, e:
+                    print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
+    print 'Database Populated'
+    return 'Done'
+
+
 
 
 # def magma_mass_tree():
