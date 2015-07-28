@@ -40,7 +40,7 @@ class RepositoryAdmin(admin.ModelAdmin):
 
 # The fields to be displayed in the Compound page of admin
 class CompoundAdmin(admin.ModelAdmin):
-    list_display = ('name', 'formula', 'exact_mass', 'inchikey')
+    list_display = ('name', 'formula', 'exact_mass', 'inchikey', 'cas_code',)
 
 # The fields to be displayed in the Peak page of admin
 class PeakAdmin(admin.ModelAdmin):
@@ -53,7 +53,7 @@ class PeakAdmin(admin.ModelAdmin):
 class CandidateAnnotationAdmin(admin.ModelAdmin):
     list_display = ('compound', 'peak', 'confidence', 'annotation_query',
                     'mass_match', 'difference_from_peak_mass',
-                    'adduct', 'instrument_type'
+                    'adduct', 'instrument_type',
     )
 
 # The fields to be displayed in the CompoundRepository page of admin
