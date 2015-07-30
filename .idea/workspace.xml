@@ -2,20 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="191103bb-9840-4643-a086-229b2b8f66df" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/testdb.db" afterPath="$PROJECT_DIR$/django_projects/pimp/testdb.db" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/admin.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/admin.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/mytemplates/frank/experiment.html" afterPath="$PROJECT_DIR$/django_projects/mytemplates/frank/experiment.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/mytemplates/frank/fragmentation_set.html" afterPath="$PROJECT_DIR$/django_projects/mytemplates/frank/fragmentation_set.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/models.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/mytemplates/frank/peak_summary.html" afterPath="$PROJECT_DIR$/django_projects/mytemplates/frank/peak_summary.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" afterPath="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/pimp/settings.py" afterPath="$PROJECT_DIR$/django_projects/pimp/pimp/settings.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" afterPath="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/views.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/views.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="pimp.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -36,10 +23,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="views.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="views.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4921875">
+            <state vertical-scroll-proportion="0.0">
               <caret line="150" column="27" selection-start-line="150" selection-start-column="27" selection-end-line="150" selection-end-column="27" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
@@ -98,7 +85,7 @@
         <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="371" column="37" selection-start-line="371" selection-start-column="32" selection-end-line="371" selection-end-column="37" />
+              <caret line="372" column="37" selection-start-line="372" selection-start-column="32" selection-end-line="372" selection-end-column="37" />
               <folding>
                 <element signature="e#0#32#0" expanded="true" />
               </folding>
@@ -106,11 +93,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="settings_dev.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="settings_dev.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="51" column="28" selection-start-line="51" selection-start-column="28" selection-end-line="51" selection-end-column="28" />
+            <state vertical-scroll-proportion="0.12724552">
+              <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="43" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -149,7 +136,6 @@
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/unicodefixer.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" />
-        <option value="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/admin.py" />
@@ -157,6 +143,7 @@
         <option value="$PROJECT_DIR$/django_projects/pimp/pimp/settings.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/models.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/views.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
       </list>
     </option>
   </component>
@@ -164,10 +151,10 @@
     <order />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="715" />
-    <option name="y" value="52" />
-    <option name="width" value="651" />
-    <option name="height" value="716" />
+    <option name="x" value="65" />
+    <option name="y" value="24" />
+    <option name="width" value="1301" />
+    <option name="height" value="744" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -180,7 +167,7 @@
     <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="ProjectView">
-    <navigator proportions="" version="1">
+    <navigator currentView="ProjectPane" proportions="" version="1">
       <flattenPackages />
       <showMembers />
       <showModules />
@@ -191,7 +178,84 @@
       <autoscrollFromSource />
       <sortByType />
     </navigator>
-    <panes />
+    <panes>
+      <pane id="Scope" />
+      <pane id="Scratches" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="django_projects" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="django_projects" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="django_projects" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pimp" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+    </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../WebApplication/fmk_project/fmk/forms.py" />
@@ -337,10 +401,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="715" y="52" width="651" height="716" extended-state="4" />
+    <frame x="65" y="24" width="1301" height="744" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.070660524" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.14142966" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -688,14 +752,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="51" column="28" selection-start-line="51" selection-start-column="28" selection-end-line="51" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/django_projects/pimp/populate_pimp.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.5078125">
@@ -707,7 +763,7 @@
     <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="371" column="37" selection-start-line="371" selection-start-column="32" selection-end-line="371" selection-end-column="37" />
+          <caret line="372" column="37" selection-start-line="372" selection-start-column="32" selection-end-line="372" selection-end-column="37" />
           <folding>
             <element signature="e#0#32#0" expanded="true" />
           </folding>
@@ -772,11 +828,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/views.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4921875">
+        <state vertical-scroll-proportion="0.0">
           <caret line="150" column="27" selection-start-line="150" selection-start-column="27" selection-end-line="150" selection-end-column="27" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.12724552">
+          <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="43" selection-end-column="1" />
+          <folding />
         </state>
       </provider>
     </entry>
