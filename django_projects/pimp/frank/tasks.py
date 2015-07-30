@@ -324,6 +324,7 @@ def nist_batch_search(fragmentation_set_id, annotation_query_id):
     ### NEED CODE HERE TO POPULATE ANNOTATIONS ###
     return 'Done'
 
+
 def nist_make_msp_file(fragmentation_set_id, query_file_name):
     print 'Begin Writing MSP File...'
     #### MSP file format as follows
