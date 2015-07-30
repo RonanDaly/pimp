@@ -11,6 +11,16 @@
 	<p>Retention Time: {{peak.retention_time|floatformat:2}}</p>
 	<p>Intensity: {{peak.intensity|floatformat:2}}</p>
 	<p>Number of Fragments: {{number_of_fragments}}</p>
+	</br>
+	{% if preferred_annotation %}
+	<p>Preferred Annotation: {{preferred_annotation.compound.name}}</p>
+	<p>Preferred Annotation Formula: {{preferred_annotation.compound.formula}}</p>
+	<p>Selected By: {{peak.preferred_candidate_user_selector}}</p>
+	<p>Last Updated: {{peak.preferred_candidate_updated_date}}</p>
+	</br>
+	{% else %}
+	<p>No Specified Preferred Annotation</p>
+	{% endif %}
 
 	<p>MS2 Fragment Spectrum</p>     
 	{% if fragmentation_peak_list %}
@@ -29,7 +39,7 @@
 
 		{% for fragment in fragmentation_peak_list %}
 		<tr>
-		<td>{{fragment.slug}}</td>
+		<td><a href="/frank/my_fragmentation_sets/{{fragment.fragmentation_set.slug}}/{{fragment.slug}}">{{fragment}}</a></td>
 		<td>{{fragment.mass|floatformat:2}}</td>
 		<td>{{fragment.retention_time|floatformat:2}}</td>
 		<td>{{fragment.intensity|floatformat:2}}</td>
@@ -56,6 +66,7 @@
 		<th>Confidence Value</th>
 		<th>Additional information</th>
 		<th>Mass Differential</th>
+		<th></th>
 		</tr>
 		{% for annotation in annotations %}
 		<tr>
@@ -66,6 +77,7 @@
 		<td>{{annotation.confidence|floatformat:3}}</td>
 		<td>{{annotation.additional_information}}</td>		
 		<td>{{annotation.difference_from_peak_mass|floatformat:3}}</td>
+		<td><a href="/frank/my_fragmentation_sets/{{peak.fragmentation_set.slug}}/{{peak.slug}}/{{annotation.id}}/specify_preferred_annotation">Prefer Annotation</td>
 		</tr>
 		{% endfor %}
 		</table>

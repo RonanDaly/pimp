@@ -78,6 +78,10 @@ def populate():
         name = 'MassBank'
     )
 
+    mass_bank_repository = add_repository(
+        name = 'NIST'
+    )
+
 
 
 def add_default_parameter(name, value, state):

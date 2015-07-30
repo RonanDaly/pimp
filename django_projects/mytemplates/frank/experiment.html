@@ -31,7 +31,7 @@
 	{% if fragmentation_sets %}
 		<table>
 		{% for fragment_set in fragmentation_sets %}
-			<tr><td><a href="/frank/my_experiments/{{experiment.slug}}/{{fragment_set.slug}}">{{fragment_set.name}}</a></td>
+			<tr><td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}">{{fragment_set.name}}</a></td>
 		<td>{{fragment_set.status}}</td>
 		<td>{{fragment_set.time_created}}</td>
 		</tr>

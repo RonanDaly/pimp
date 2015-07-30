@@ -1,6 +1,6 @@
 from django import forms
 from frank.models import Experiment, ExperimentalCondition, \
-    Sample, SampleFile, FragmentationSet, AnnotationQuery, \
+    Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, \
     IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -155,4 +155,19 @@ class AnnotationQueryForm(forms.ModelForm):
         model = AnnotationQuery
         fields = (
             'name', 'massBank', 'nist',
+        )
+
+
+# The form is used to specify a preferred annotation for a peak
+class PreferredAnnotationForm(forms.ModelForm):
+    preferred_candidate_description = forms.CharField(
+        max_length=500,
+        help_text="Enter justification of preferred annotation.",
+        widget=forms.Textarea,
+    )
+
+    class Meta:
+        model = Peak
+        fields = (
+            'preferred_candidate_description',
         )

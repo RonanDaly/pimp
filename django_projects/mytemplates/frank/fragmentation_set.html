@@ -45,6 +45,7 @@
 				<th>Mass</th>
 				<th>Retention Time</th>
 				<th>Intensity</th>
+				<th>Preferred Annotation</th>
 				</tr>
 				{% for peak in peak_values %}
 				<tr>
@@ -53,6 +54,7 @@
 				<td>{{peak.mass|floatformat:4}}</td>
 				<td>{{peak.retention_time|floatformat:2}}</td>
 				<td>{{peak.intensity|floatformat:2}}</td>
+				<td>{{peak.preferred_candidate_annotation.compound.name}}</td>
 				</tr>				
 				{% endfor %}
 				</table>

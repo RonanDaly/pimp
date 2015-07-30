@@ -30,16 +30,27 @@ DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
 
 MANAGERS = ADMINS
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+#         # 'ENGINE': 'django.db.backends.mysql',
+#         # 'NAME': 'pimp_prod',
+#         'NAME': os.path.join(BASE_DIR, 'testdb.db'),                      # Or path to database file if using sqlite3.
+#         'USER': 'root',                      # Not used with sqlite3.
+#         'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
+#         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
+#         'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        # 'ENGINE': 'django.db.backends.mysql',
-        # 'NAME': 'pimp_prod',
-        'NAME': os.path.join(BASE_DIR, 'testdb.db'),                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'frank_test_db',
+        'USER': 'frank_test_db',
+        'PASSWORD': 'frank_test_db_pass',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 

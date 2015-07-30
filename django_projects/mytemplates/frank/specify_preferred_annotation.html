@@ -1,0 +1,31 @@
+{% extends 'frank/frankbase.html' %}
+
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block body_block %}
+
+        <h4>{{fragmentation_set.name}}</h4>
+	<p>Peak: {{peak}}</p>
+	<p>Suggested Annotation: {{annotation.compound.name}}</p>
+
+        <form id="preferred_annotation_form" method="post" action="/frank/my_fragmentation_sets/{{fragmentation_set.slug}}/{{peak.slug}}/{{annotation.id}}/specify_preferred_annotation">
+
+            {% csrf_token %}
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+	<input type = "submit" name="submit" value="Submit">
+	</form>
+
+{% endblock %}

@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django.template.defaultfilters import slugify
 import os
 from pimp.settings_dev import MEDIA_ROOT
-import hashlib
 
 # The default Django User model provides the following attributes:
 #	username
@@ -54,10 +53,11 @@ class Experiment(models.Model):
 
     # Upon saving an instance of the model, a unique slug is derived for referencing in the URL
     def save(self, *args, **kwargs):
-        ## The experiment id is going to be one greater than the total number of existing experiments in the database.
-        experiment_number = Experiment.objects.count()+1
-        # The slug is simply the experiment title plus the next available index
-        self.slug = slugify(self.title)+'-'+str(experiment_number)
+        # If the object has already been created, we do not want to modify the slug
+        if not self.id:
+            experiment_number = Experiment.objects.count()+1
+            # The slug is simply the experiment title plus the next available index
+            self.slug = slugify(self.title)+'-'+str(experiment_number)
         super(Experiment, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -79,10 +79,11 @@ class ExperimentalCondition(models.Model):
     slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
-        ## The id is going to be one greater than the total number of existing experimentalConditions in the database.
-        condition_number = ExperimentalCondition.objects.count()+1
-        # The slug is simply the name of the experimental condition and the next available index
-        self.slug = slugify(self.name)+'-'+str(condition_number)
+        if not self.id:
+            ## The id is going to be one greater than the total number of existing experimentalConditions in the database.
+            condition_number = ExperimentalCondition.objects.count()+1
+            # The slug is simply the name of the experimental condition and the next available index
+            self.slug = slugify(self.name)+'-'+str(condition_number)
         super(ExperimentalCondition, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -97,10 +98,11 @@ class Sample(models.Model):
     slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
-        ## The sample id is going to be one greater than the total number of existing samples in the database.
-        sample_number = Sample.objects.count()+1
-        # The slug is simply the concatination of the name of the sample and the next available id
-        self.slug = slugify(self.name)+'-'+str(sample_number)
+        if not self.id:
+            ## The sample id is going to be one greater than the total number of existing samples in the database.
+            sample_number = Sample.objects.count()+1
+            # The slug is simply the concatination of the name of the sample and the next available id
+            self.slug = slugify(self.name)+'-'+str(sample_number)
         super(Sample, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -141,7 +143,7 @@ class SampleFile(models.Model):
     name = models.CharField(max_length = 250, blank = False)
     polarity = models.CharField(max_length = 250, choices = FILE_TYPES)
     sample = models.ForeignKey(Sample, blank = False)
-    address = models.FileField(upload_to = get_upload_file_name)
+    address = models.FileField(upload_to = get_upload_file_name, max_length=500)
 
     def __unicode__(self):
          return self.name
@@ -155,10 +157,11 @@ class FragmentationSet(models.Model):
     slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
-        ## The fragmentation set id is going to be one greater than the total number of existing sets in the database.
-        set_number = FragmentationSet.objects.count()+1
-        # The slug is simply the concatination of the name of the fragmentation set and the next available id
-        self.slug = slugify(self.name)+'-'+str(set_number)
+        if not self.id:
+            ## The fragmentation set id is going to be one greater than the total number of existing sets in the database.
+            set_number = FragmentationSet.objects.count()+1
+            # The slug is simply the concatination of the name of the fragmentation set and the next available id
+            self.slug = slugify(self.name)+'-'+str(set_number)
         super(FragmentationSet, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -179,10 +182,11 @@ class AnnotationQuery(models.Model):
     parent_annotation_query = models.ForeignKey('self', null=True)
 
     def save(self, *args, **kwargs):
-        ## The query id is going to be one greater than the total number of existing queries in the database.
-        query_number = AnnotationQuery.objects.count()+1
-        # The slug is simply the concatination of the name of the query and the next available id
-        self.slug = slugify(self.name)+'-'+str(query_number)
+        if not self.id:
+            ## The query id is going to be one greater than the total number of existing queries in the database.
+            query_number = AnnotationQuery.objects.count()+1
+            # The slug is simply the concatination of the name of the query and the next available id
+            self.slug = slugify(self.name)+'-'+str(query_number)
         super(AnnotationQuery, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -219,16 +223,17 @@ class Peak(models.Model):
     annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')
     fragmentation_set = models.ForeignKey(FragmentationSet)
     slug = models.SlugField(unique=True)
-    preferred_candidate_annotation = models.ForeignKey(AnnotationQuery, null=True)
-    preferred_candidate_description = models.CharField(max_length = 250, null=True)
+    preferred_candidate_annotation = models.ForeignKey('CandidateAnnotation', null=True, related_name = "preferred_annotation")
+    preferred_candidate_description = models.CharField(max_length = 500, null=True)
     preferred_candidate_user_selector = models.ForeignKey(User, null=True)
-    preferred_candidate_updated_date = models.DateTimeField(auto_now_add = True, blank = True)
+    preferred_candidate_updated_date = models.DateTimeField(null = True)
 
     def save(self, *args, **kwargs):
-        peak_number = Peak.objects.count()+1
-        # The slug has to contain both the peak number and the fragmentation set number to ensure slug field
-        # remains unique throughout celery processes
-        self.slug = slugify('Peak:'+str(peak_number)+'FS:'+str(self.fragmentation_set.id))
+        if not self.id:
+            peak_number = Peak.objects.count()+1
+            # The slug has to contain both the peak number and the fragmentation set number to ensure slug field
+            # remains unique throughout celery processes
+            self.slug = slugify('Peak:'+str(peak_number)+'FragSet:'+str(self.fragmentation_set.id))
         super(Peak, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -246,6 +251,13 @@ class CandidateAnnotation(models.Model):
     instrument_type = models.CharField(max_length=500, null=True)
     collision_energy = models.CharField(max_length=500, null=True)
     additional_information = models.CharField(max_length=500, null=True)
+    slug = models.SlugField(unique=True)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            annotation_number = CandidateAnnotation.objects.count()+1
+            self.slug = slugify('Annotation:'+str(annotation_number)+'Query:'+str(self.annotation_query.id))
+        super(CandidateAnnotation, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)

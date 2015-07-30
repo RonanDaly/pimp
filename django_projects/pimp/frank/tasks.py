@@ -288,6 +288,7 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
 
 
 def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
+
     return 'Done'
 
 
@@ -368,11 +369,15 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
     if input_file is not None:
         ## For each line which does not begin in a comment (in NIST.txt this is indicated by '>')
         for line in (line for line in input_file if not line.startswith('>')):
-            line = line.decode('iso-8859-1').encode('utf8')
+            line = line.decode('cp437').encode('utf-8', errors='strict')
+            ## Apparently NIST use a legacy encoding format...why? who knows!
+            ## Either way this took me ages to figure out and I'm really proud that I finally
+            ## have the correct greek characters in the compound names!!!!
             if line.startswith('Unknown:'):
                 line_tokens = [token.split() for token in line.splitlines()]
                 parent_ion_slug = line_tokens[0][1]
                 current_parent_peak = peaks_in_fragmentation_set.get(slug = parent_ion_slug)
+                print 'Annotations for '+current_parent_peak.slug
             elif line.startswith('Hit'):
                 annotation_description = line.splitlines()[0]
                 string_annotation_attributes = re.findall('<<(.*?)>>', annotation_description, re.DOTALL)
@@ -384,7 +389,6 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
                     compound_cas = None
                 compound_mass = Decimal(re.findall('Mw: (.*?);', annotation_description, re.DOTALL)[0])
                 compound_repository_identifier = re.findall('Id: (\d+).', annotation_description)[0]
-                print 'Creating Annotation for '+current_parent_peak.slug
                 try:
                     compound_object = Compound.objects.get_or_create(
                         formula = compound_formula,

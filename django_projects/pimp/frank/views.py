@@ -16,6 +16,8 @@ from matplotlib import patches as mpatches
 from decimal import *
 from django.db.models import Max
 import re
+import datetime
+from django.db import transaction
 
 ## Add a method to generate each context_dictionary for each view here
 ## Aim is to avoid repetition of code
@@ -144,21 +146,23 @@ def get_fragmentation_set_context_dict(fragmentation_set_name_slug):
 
 
 def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
-    fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
-    peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set)
+    fragmentation_set_object = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+    peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set_object)
     ## Display number of msn peaks
     fragmentation_spectra = Peak.objects.filter(parent_peak = peak)
-    associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+    associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set_object)
     candidate_annotations = {}
     for annotation_query in associated_annotation_queries:
         candidate_annotations[annotation_query] = CandidateAnnotation.objects.filter(peak=peak,annotation_query=annotation_query).order_by('-confidence')
     number_of_fragments_in_spectra = len(fragmentation_spectra)
+    preferred_annotation = peak.preferred_candidate_annotation
     context_dict = {
         'peak': peak,
         'fragmentation_peak_list': fragmentation_spectra,
         'number_of_fragments':number_of_fragments_in_spectra,
         'candidate_annotations' : candidate_annotations,
         'annotation_queries': associated_annotation_queries,
+        'preferred_annotation': preferred_annotation,
     }
     return context_dict
 
@@ -168,6 +172,19 @@ def get_define_annotation_query_context_dict(fragmentation_set_name_slug, form):
     context_dict = {
         'annotation_query_form': form,
         'fragmentation_set': fragmentation_set,
+    }
+    return context_dict
+
+
+def get_specify_preferred_annotation_context_dict(fragmentation_set_name_slug, peak_name_slug, annotation_id, form):
+    fragmentation_set_object = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+    peak_object = Peak.objects.get(slug = peak_name_slug)
+    annotation_object = CandidateAnnotation.objects.get(id = annotation_id)
+    context_dict = {
+        'fragmentation_set': fragmentation_set_object,
+        'peak': peak_object,
+        'annotation': annotation_object,
+        'form': form,
     }
     return context_dict
 
@@ -365,6 +382,32 @@ def define_annotation_query(request, fragmentation_set_name_slug):
         context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form)
         return render(request, 'frank/define_annotation_query.html', context_dict)
 
+@login_required
+def specify_preferred_annotation(request, fragmentation_set_name_slug, peak_name_slug, annotation_id):
+    if request.method == 'POST':
+        preferred_annotation_form = PreferredAnnotationForm(request.POST)
+        if preferred_annotation_form.is_valid():
+            justification_for_annotation = preferred_annotation_form.cleaned_data['preferred_candidate_description']
+            current_user = request.user
+            current_time = datetime.datetime.now()
+            annotation_object = CandidateAnnotation.objects.get(id=annotation_id)
+            peak_for_update = Peak.objects.get(slug = peak_name_slug)
+            peak_for_update.preferred_candidate_annotation = annotation_object
+            peak_for_update.preferred_candidate_description = justification_for_annotation
+            peak_for_update.preferred_candidate_user_selector = current_user
+            peak_for_update.preferred_candidate_updated_date = current_time
+            peak_for_update.save()
+            context_dict = get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug)
+            return render(request, 'frank/peak_summary.html', context_dict)
+        else:
+            print preferred_annotation_form.errors
+            context_dict = get_specify_preferred_annotation_context_dict(fragmentation_set_name_slug, peak_name_slug, annotation_id, preferred_annotation_form)
+            return render(request, 'frank/specify_preferred_annotation.html', context_dict)
+    else:
+        preferred_annotation_form = PreferredAnnotationForm()
+        context_dict = get_specify_preferred_annotation_context_dict(fragmentation_set_name_slug, peak_name_slug, annotation_id, preferred_annotation_form)
+        return render(request, 'frank/specify_preferred_annotation.html', context_dict)
+
 
 ### Additional methods go here
 
@@ -384,7 +427,6 @@ def generate_annotations(fragmentation_set, annotation_query):
     if annotation_query.massBank == True:
         tasks.massBank_batch_search.delay(fragmentation_set_id, annotation_query_id)
     if annotation_query.nist == True:
-        print 'NIST Called!'
         tasks.nist_batch_search.delay(fragmentation_set_id, annotation_query_id)
 
 

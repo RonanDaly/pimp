@@ -46,7 +46,7 @@ class CompoundAdmin(admin.ModelAdmin):
 class PeakAdmin(admin.ModelAdmin):
     list_display = ('id', 'source_file', 'mass', 'retention_time', 'intensity',
                     'parent_peak', 'msn_level', 'fragmentation_set',
-                    'slug', 'preferred_candidate_annotation'
+                    'slug', 'preferred_candidate_annotation',
     )
 
 # The fields to be displayed in the Candidate Annotation page of admin
