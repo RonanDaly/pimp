@@ -6,18 +6,28 @@ from frank.forms import *
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from frank import tasks
-import matplotlib
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-#matplotlib inline
-from matplotlib import pyplot as plt
 import numpy as np
-from matplotlib import patches as mpatches
 from decimal import *
 from django.db.models import Max
 import re
 import datetime
-from django.db import transaction
+
+##### No longer needed for plotting #######
+# import matplotlib
+# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+# from matplotlib.figure import Figure
+
+#### Now used to plot the graph ######
+from matplotlib import patches as mpatches
+from matplotlib import pyplot as plt
+from matplotlib import pylab
+from pylab import *
+import PIL
+import PIL.Image
+import StringIO
+from django.http import HttpResponse
+
+
 
 ## Add a method to generate each context_dictionary for each view here
 ## Aim is to avoid repetition of code
@@ -451,7 +461,7 @@ def run_network_sampler(request):
     return render(request,'frank/index.html')
 
 
-def make_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
+def make_frag_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
     parent_object = Peak.objects.get(slug = peak_name_slug)
     fragmentation_spectra = Peak.objects.filter(parent_peak = parent_object)
 
@@ -470,7 +480,7 @@ def make_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
         'weight':'bold'
     }
 
-    ###### PSEUDO RELATIVE INTENSITIES ########
+        ###### PSEUDO RELATIVE INTENSITIES ########
 
         # make blank figure
     figsize=(10, 6)
@@ -526,7 +536,11 @@ def make_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
         right = 'off',
     )
 
-    canvas = FigureCanvas(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
+    buffer = StringIO.StringIO()
+    canvas = plt.get_current_fig_manager().canvas
+    canvas.draw()
+    graphIMG = PIL.Image.fromstring("RGB", canvas.get_width_height(), canvas.tostring_rgb())
+    graphIMG.save(buffer, "PNG")
+    pylab.close()
+
+    return HttpResponse(buffer.getvalue(), content_type="image/png")

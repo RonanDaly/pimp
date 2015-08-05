@@ -24,7 +24,7 @@ urlpatterns = patterns ('',
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)'
         r'/(?P<peak_name_slug>[\w\-]+)$', views.peak_summary, name = 'peak_summary'),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)'
-        r'/(?P<peak_name_slug>[\w\-]+)/msn_spectra_plot.png$', views.make_spectra_plot, name = "make_spectra_plot"),
+        r'/(?P<peak_name_slug>[\w\-]+)/msn_spectra_plot.png$', views.make_frag_spectra_plot, name = "make_spectra_plot"),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)/'
         r'(?P<annotation_id>[\w\-]+)/specify_preferred_annotation$',
         views.specify_preferred_annotation, name = 'specify_preferred_annotation'),

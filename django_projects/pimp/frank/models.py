@@ -207,6 +207,14 @@ class Compound(models.Model):
     inchikey = models.CharField(max_length=500, null=True)
     cas_code = models.CharField(max_length=500, null=True)
     repository = models.ManyToManyField(Repository, through = 'CompoundRepository')
+    slug = models.SlugField(unique=True)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            compound_number = Compound.objects.count()+1
+            self.slug = slugify('Compound:'+str(compound_number))
+        super(Compound, self).save(*args, **kwargs)
+
 
     def __unicode__(self):
         return self.formula
