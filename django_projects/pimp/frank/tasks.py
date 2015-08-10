@@ -2,13 +2,10 @@ import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 from pimp.settings_dev import MEDIA_ROOT
 import os
-from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, Repository,\
-    CompoundRepository, FragmentationSet, Experiment, AnnotationQuery
+from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, AnnotationTool,\
+    CompoundAnnotationTool, FragmentationSet, Experiment, AnnotationQuery
 from djcelery import celery
 from decimal import *
-import urllib2
-import urllib
-from cookielib import CookieJar
 from frank.peakFactories import msnPeakBuilder
 from suds.client import Client, WebFault
 from django.contrib.auth.models import User
@@ -22,7 +19,7 @@ import frank.network_sampler as ns
 import re
 from subprocess import call
 from pimp.settings_dev import BASE_DIR
-from django.utils.encoding import force_str
+import jsonpickle
 
 
 from celery import shared_task
@@ -31,7 +28,6 @@ import subprocess
 ## Method to run simon's network sampler
 @celery.task
 def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query_slug):
-    import jsonpickle
     # fragmentation set is the fragmentation set we want to run the analysis on (slug)
     # annotation_query is the new annotation query slug
     fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_slug)
@@ -141,8 +137,11 @@ def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
 
 # Method to batch query the mass bank annotation tool using SOAP
 @celery.task
-def massBank_batch_search(fragmentation_set_id, annotation_query_id):
-    fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+def massBank_batch_search(annotation_query_id):
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    annotation_query.status = 'Processing'
+    fragmentation_set = annotation_query.fragmentation_set
+    annotation_query.save()
     sample_peak_qset = Peak.objects.filter(fragmentation_set=fragmentation_set)
     query_spectra = get_massBank_query_spectra(sample_peak_qset)
     # Now the query is structured, send it to mass Bank
@@ -150,7 +149,11 @@ def massBank_batch_search(fragmentation_set_id, annotation_query_id):
     negative_spectra = query_spectra['negative_spectra']
     positive_spectra_query_status = query_mass_bank(positive_spectra, 'Positive', annotation_query_id)
     negative_spectra_query_status = query_mass_bank(negative_spectra, 'Negative', annotation_query_id)
-    return 'Done'
+    if positive_spectra_query_status == 'Completed Successfully' and negative_spectra_query_status == 'Completed Successfully':
+        annotation_query.status = 'Completed Successfully'
+    else:
+        annotation_query.status = 'Completed with Errors'
+    annotation_query.save()
 
 # Method to format a query set of peaks for batch query of the mass bank annotation tool
 def get_massBank_query_spectra(sample_peak_query_set):
@@ -184,20 +187,14 @@ def get_massBank_query_spectra(sample_peak_query_set):
 def query_mass_bank(query_spectra, polarity, annotation_query_id):
     # Check to ensure there are spectra to send to mass bank, if not, simply return
     if len(query_spectra) == 0:
-        return 'Done'
+        return 'Completed Successfully'
     annotation_query_object = AnnotationQuery.objects.get(id=annotation_query_id)
-    mass_bank_parameters = annotation_query_object.massBank_params
-    # Obtain the parameters of the search from the database
-    mass_bank_parameters = re.findall('<(.*?)>', mass_bank_parameters, re.DOTALL)
-    mail_address = str(mass_bank_parameters[0])
-    number_of_instrument_types = len(mass_bank_parameters)
-    instruments = []
-    if number_of_instrument_types > 0:
-        for instrument_index in range(1,number_of_instrument_types):
-            instruments.append(str(mass_bank_parameters[instrument_index]))
+    mass_bank_parameters = jsonpickle.decode(annotation_query_object.annotation_tool_params)
+    mail_address = mass_bank_parameters['mail_address']
+    instruments = mass_bank_parameters['instrument_types']
     ion = polarity
     type = "1"
-    client = Client('http://www.massbank.jp/api/services/MassBankAPI?wsdl')
+    client = Client('http://www.massbank.jp/api/services/MassBankAPI?wsdl', faults=True)
     try:
         response = client.service.execBatchJob(
             type,
@@ -207,7 +204,7 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
             ion,
         )
     except WebFault, e:
-        print e.message
+        return 'Completed with Errors'
     job_id = response
     print 'JOB ID = '+job_id
     job_list = [job_id]
@@ -217,14 +214,14 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
             response2 = client.service.getJobStatus(job_list)
             print response2
         except WebFault, e:
-            print e.message
+            return 'Completed with Errors'
             # May also need to handle URLError here for if the connection fails
         if response2['status'] == 'Completed':
             break
     try:
         response3 = client.service.getJobResult(job_list)
     except WebFault, e:
-        print e.message
+        return 'Completed with Errors'
     results = response3
     ## results is a list
     print 'The length of the list is...'+str(len(results))
@@ -239,7 +236,7 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
             number_of_annotations = result_set_list['numResults']
         except AttributeError, ae:
             print 'No Result Set Was Found'
-        massBank = Repository.objects.get(name = 'MassBank')
+        massBank = AnnotationTool.objects.get(name = 'MassBank')
         peak_object = Peak.objects.get(slug=peak_identifier_slug)
         for index in range(0, number_of_annotations):
             each_annotation = annotations[index]
@@ -250,10 +247,10 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
                     exact_mass = each_annotation['exactMass'],
                     name=elements_of_title[0],
                 )[0]
-                compound_repository = CompoundRepository.objects.get_or_create(
+                compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
                     compound = compound_object,
-                    repository = massBank,
-                    repository_identifier = each_annotation['id'],
+                    annotation_tool = massBank,
+                    annotation_tool_identifier = each_annotation['id'],
                 )[0]
                 annotation_mass = Decimal(each_annotation['exactMass'])
                 difference_in_mass = peak_object.mass-annotation_mass
@@ -284,7 +281,7 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
                 )
             except ValidationError, e:
                 print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
-    return 'Done'
+    return 'Completed Successfully'
 
 
 def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
@@ -293,36 +290,55 @@ def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
 
 
 @celery.task
-def nist_batch_search(fragmentation_set_id, annotation_query_id):
+def nist_batch_search(annotation_query_id):
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    annotation_query.status = 'Processing'
+    annotation_query.save()
     query_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'.msp')
     nist_output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'_nist_out.txt')
-    nist_make_msp_file(fragmentation_set_id, query_file_name)
+    fragmentation_set_id = annotation_query.fragmentation_set.id
+    msp_file_status = nist_make_msp_file(fragmentation_set_id, query_file_name)
+    if msp_file_status == 'Completed with Errors':
+        annotation_query.status = 'Completed with Errors'
+        annotation_query.save()
+        return
     print 'Begin Querying NIST'
+    nist_parameters = jsonpickle.decode(annotation_query.annotation_tool_params)
+    library_list = nist_parameters['library']
+    max_number_of_hits = nist_parameters['max_hits']
+    search_type = nist_parameters['search_type']
+    nist_query_call = ["wine", "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe", search_type,
+                       "/HITS", str(max_number_of_hits), '/PATH', 'C:\\NIST14\\MSSEARCH']
+    for library in library_list:
+        if library == 'mainlib':
+            nist_query_call.extend(['/MAIN', 'mainlib'])
+        elif library == 'nist_msms':
+            nist_query_call.extend(['/LIB', 'nist_msms'])
+        elif library == 'nist_msms2':
+            nist_query_call.extend(['/LIB', 'nist_msms2'])
+        elif library == 'nist_ri':
+            nist_query_call.extend(['/LIB', 'nist_ri'])
+        elif library == 'replib':
+            nist_query_call.extend(['/REPL', 'replib'])
+    additional_parameters = ['/INP', query_file_name, '/OUT', nist_output_file_name, '/COL', 'pz,tz,cf,cn,nn,it,ce']
+    nist_query_call.extend(additional_parameters)
     try:
-        call(["wine",
-          "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
-          "M",
-          "/HITS",
-          "10",
-          "/PATH",
-          "C:\\NIST14\\MSSEARCH",
-          "/MAIN",
-          "mainlib",
-          "/INP",
-          query_file_name,
-          "/OUT",
-          nist_output_file_name,
-          "/COL",
-          "pz,tz,cf,cn,nn,it,ce"])
+        call(nist_query_call)
     except subprocess.CalledProcessError:
-        print 'CalledProcessError Occured'
+        annotation_query.status = 'Completed with Errors'
+        annotation_query.save()
     except OSError:
-        print 'Executable not found'
+        annotation_query.status = 'Completed with Errors'
+        annotation_query.save()
     print 'Finished Querying NIST'
-    nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id)
-    ### NEED CODE HERE TO POPULATE ANNOTATIONS ###
-    return 'Done'
+    annotation_list_status = nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id)
+    if annotation_list_status == 'Completed with Errors':
+        annotation_query.status = 'Completed with Errors'
+    else:
+        annotation_query.status = 'Completed Successfully'
+    annotation_query.save()
+    os.remove(query_file_name)
+    os.remove(nist_output_file_name)
 
 
 def nist_make_msp_file(fragmentation_set_id, query_file_name):
@@ -338,7 +354,7 @@ def nist_make_msp_file(fragmentation_set_id, query_file_name):
         output_file = open(query_file_name, 'w')
         print 'MSP File Open'
     except IOError:
-        return 'Error'
+        return 'Completed with Errors'
     fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
     peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set = fragmentation_set)
     number_of_msn_levels = peaks_in_fragmentation_set.aggregate(Max('msn_level'))
@@ -347,25 +363,25 @@ def nist_make_msp_file(fragmentation_set_id, query_file_name):
         peaks_in_msn_level = peaks_in_fragmentation_set.filter(msn_level=level)
         for peak in peaks_in_msn_level:
             fragmentation_spectra = peaks_in_fragmentation_set.filter(parent_peak = peak)
-            output_file.write('NAME: '+peak.slug+'\nDB#: '+str(peak.id)+'\nComments: None\nNum Peaks: '+str(len(fragmentation_spectra))+'\n')
+            output_file.write('NAME: '+peak.slug+'\nDB#: '+str(peak.id)+'\nComments: None\nPrecursormz:'+str(peak.mass)+'\nNum Peaks: '+str(len(fragmentation_spectra))+'\n')
             for fragment in fragmentation_spectra:
                 output_file.write(str(fragment.mass)+' '+str(fragment.intensity)+'\n')
             output_file.write('\n')
     output_file.close()
     print 'MSP File Finished'
-    return 'Done'
+    return 'Completed Successfully'
 
 
 def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id):
     annotation_query_object = AnnotationQuery.objects.get(id = annotation_query_id)
     fragmentation_set = FragmentationSet.objects.get(id = fragmentation_set_id)
     peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set = fragmentation_set)
-    nist_repository = Repository.objects.get(name = 'NIST')
+    nist_annotation_tool = AnnotationTool.objects.get(name = 'NIST')
     input_file = None
     try:
         input_file = open(nist_output_file_name, 'r')
     except IOError:
-        return 'Error'
+        return 'Completed with Errors'
     current_parent_peak = None
     if input_file is not None:
         ## For each line which does not begin in a comment (in NIST.txt this is indicated by '>')
@@ -377,6 +393,8 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
             if line.startswith('Unknown:'):
                 line_tokens = [token.split() for token in line.splitlines()]
                 parent_ion_slug = line_tokens[0][1]
+                if parent_ion_slug.startswith('<<') and parent_ion_slug.endswith('>>'):
+                    parent_ion_slug = parent_ion_slug[2:-2]
                 current_parent_peak = peaks_in_fragmentation_set.get(slug = parent_ion_slug)
                 print 'Annotations for '+current_parent_peak.slug
             elif line.startswith('Hit'):
@@ -389,7 +407,7 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
                 if compound_cas == '0-00-0':
                     compound_cas = None
                 compound_mass = Decimal(re.findall('Mw: (.*?);', annotation_description, re.DOTALL)[0])
-                compound_repository_identifier = re.findall('Id: (\d+).', annotation_description)[0]
+                compound_annotation_tool_identifier = re.findall('Id: (\d+).', annotation_description)[0]
                 try:
                     compound_object = Compound.objects.get_or_create(
                         formula = compound_formula,
@@ -397,10 +415,10 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
                         name=compound_name,
                         cas_code=compound_cas,
                     )[0]
-                    compound_repository = CompoundRepository.objects.get_or_create(
+                    compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
                         compound = compound_object,
-                        repository = nist_repository,
-                        repository_identifier = compound_repository_identifier,
+                        annotation_tool = nist_annotation_tool,
+                        annotation_tool_identifier = compound_annotation_tool_identifier,
                     )[0]
                     difference_in_mass = current_parent_peak.mass-compound_mass
                     ## Justin's suggestion - I am maybe doing this wrong
@@ -420,4 +438,4 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
                 except ValidationError, e:
                     print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
     print 'Database Populated'
-    return 'Done'
+    return 'Completed Successfully'

@@ -14,10 +14,47 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Analysis',
+            name='AnnotationQuery',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('timeCreated', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=250)),
+                ('time_created', models.DateTimeField(auto_now=True)),
+                ('status', models.CharField(default=b'Defined', max_length=250, choices=[(b'Submitted', b'Submitted'), (b'Processing', b'Processing'), (b'Completed Successfully', b'Completed Successfully'), (b'Completed with Errors', b'Completed with Errors')])),
+                ('slug', models.SlugField(unique=True)),
+                ('annotation_tool_params', models.CharField(max_length=500, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='AnnotationQueryHierarchy',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('parent_annotation_query', models.ForeignKey(related_name=b'parent_query', to='frank.AnnotationQuery')),
+                ('subquery_annotation_query', models.ForeignKey(related_name=b'subquery', to='frank.AnnotationQuery')),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='AnnotationTool',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(max_length=250)),
+                ('default_params', models.CharField(max_length=500)),
+                ('slug', models.SlugField(unique=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='AnnotationToolProtocols',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('annotation_tool', models.ForeignKey(to='frank.AnnotationTool')),
             ],
             options={
             },
@@ -28,7 +65,14 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('confidence', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('analysis', models.ForeignKey(to='frank.Analysis')),
+                ('mass_match', models.NullBooleanField()),
+                ('difference_from_peak_mass', models.DecimalField(null=True, max_digits=20, decimal_places=10)),
+                ('adduct', models.CharField(max_length=500, null=True)),
+                ('instrument_type', models.CharField(max_length=500, null=True)),
+                ('collision_energy', models.CharField(max_length=500, null=True)),
+                ('additional_information', models.CharField(max_length=500, null=True)),
+                ('slug', models.SlugField(unique=True)),
+                ('annotation_query', models.ForeignKey(to='frank.AnnotationQuery', null=True)),
             ],
             options={
             },
@@ -38,20 +82,23 @@ class Migration(migrations.Migration):
             name='Compound',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(max_length=500)),
                 ('formula', models.CharField(max_length=250)),
-                ('inchiKey', models.CharField(max_length=250)),
-                ('ppm', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('adduct', models.CharField(max_length=250)),
-                ('mass', models.DecimalField(max_digits=20, decimal_places=10)),
+                ('exact_mass', models.DecimalField(max_digits=20, decimal_places=10)),
+                ('inchikey', models.CharField(max_length=500, null=True)),
+                ('cas_code', models.CharField(max_length=500, null=True)),
+                ('slug', models.SlugField(unique=True)),
             ],
             options={
             },
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='CompoundRepository',
+            name='CompoundAnnotationTool',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('annotation_tool_identifier', models.CharField(max_length=500)),
+                ('annotation_tool', models.ForeignKey(to='frank.AnnotationTool')),
                 ('compound', models.ForeignKey(to='frank.Compound')),
             ],
             options={
@@ -64,12 +111,11 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('title', models.CharField(max_length=250)),
                 ('description', models.CharField(max_length=250)),
-                ('timeCreated', models.DateTimeField(auto_now=True)),
-                ('lastModified', models.DateTimeField(auto_now_add=True)),
-                ('ionisationMethod', models.CharField(max_length=250, choices=[(b'EIS', b'Electron Ionisation Spray')])),
-                ('detectionMethod', models.CharField(max_length=250, choices=[(b'LCMS DDA', b'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'), (b'GCMS EII', b'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'), (b'DIA', b'Data Independent Acquisition')])),
+                ('time_created', models.DateTimeField(auto_now=True)),
+                ('last_modified', models.DateTimeField(auto_now_add=True)),
+                ('ionisation_method', models.CharField(max_length=250, choices=[(b'EIS', b'Electron Ionisation Spray')])),
                 ('slug', models.SlugField(unique=True)),
-                ('createdBy', models.ForeignKey(related_name=b'experiment_creator', to=settings.AUTH_USER_MODEL)),
+                ('created_by', models.ForeignKey(related_name=b'experiment_creator', to=settings.AUTH_USER_MODEL)),
             ],
             options={
             },
@@ -89,25 +135,45 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='Peak',
+            name='ExperimentalProtocol',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('mass', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('retentionTime', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('intensity', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('msnLevel', models.IntegerField(default=0)),
-                ('annotations', models.ManyToManyField(to='frank.Compound', through='frank.CandidateAnnotation')),
-                ('parentPeak', models.ForeignKey(to='frank.Peak')),
+                ('name', models.CharField(max_length=500)),
             ],
             options={
             },
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='Repository',
+            name='FragmentationSet',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=250)),
+                ('time_created', models.DateTimeField(auto_now=True)),
+                ('status', models.CharField(default=b'Submitted', max_length=250, choices=[(b'Submitted', b'Submitted'), (b'Processing', b'Processing'), (b'Completed Successfully', b'Completed Successfully'), (b'Completed with Errors', b'Completed with Errors')])),
+                ('slug', models.SlugField(unique=True)),
+                ('experiment', models.ForeignKey(to='frank.Experiment')),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Peak',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('mass', models.DecimalField(max_digits=20, decimal_places=10)),
+                ('retention_time', models.DecimalField(max_digits=20, decimal_places=10)),
+                ('intensity', models.DecimalField(max_digits=20, decimal_places=10)),
+                ('msn_level', models.IntegerField(default=0)),
+                ('slug', models.SlugField(unique=True)),
+                ('preferred_candidate_description', models.CharField(max_length=500, null=True)),
+                ('preferred_candidate_updated_date', models.DateTimeField(null=True)),
+                ('annotations', models.ManyToManyField(to='frank.Compound', through='frank.CandidateAnnotation')),
+                ('fragmentation_set', models.ForeignKey(to='frank.FragmentationSet')),
+                ('parent_peak', models.ForeignKey(to='frank.Peak', null=True)),
+                ('preferred_candidate_annotation', models.ForeignKey(related_name=b'preferred_annotation', to='frank.CandidateAnnotation', null=True)),
+                ('preferred_candidate_user_selector', models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True)),
             ],
             options={
             },
@@ -121,7 +187,7 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(max_length=250)),
                 ('organism', models.CharField(max_length=250)),
                 ('slug', models.SlugField(unique=True)),
-                ('experimentalCondition', models.ForeignKey(to='frank.ExperimentalCondition')),
+                ('experimental_condition', models.ForeignKey(to='frank.ExperimentalCondition')),
             ],
             options={
             },
@@ -133,7 +199,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=250)),
                 ('polarity', models.CharField(max_length=250, choices=[(b'Positive', b'Positive'), (b'Negative', b'Negative')])),
-                ('address', models.FileField(upload_to=frank.models.get_upload_file_name)),
+                ('address', models.FileField(max_length=500, upload_to=frank.models.get_upload_file_name)),
                 ('sample', models.ForeignKey(to='frank.Sample')),
             ],
             options={
@@ -153,8 +219,14 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='peak',
-            name='sourceFile',
+            name='source_file',
             field=models.ForeignKey(to='frank.SampleFile'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='experiment',
+            name='detection_method',
+            field=models.ForeignKey(to='frank.ExperimentalProtocol', null=True),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -164,15 +236,9 @@ class Migration(migrations.Migration):
             preserve_default=True,
         ),
         migrations.AddField(
-            model_name='compoundrepository',
-            name='repository',
-            field=models.ForeignKey(to='frank.Repository'),
-            preserve_default=True,
-        ),
-        migrations.AddField(
             model_name='compound',
-            name='repository',
-            field=models.ManyToManyField(to='frank.Repository', through='frank.CompoundRepository'),
+            name='annotation_tool',
+            field=models.ManyToManyField(to='frank.AnnotationTool', through='frank.CompoundAnnotationTool'),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -188,9 +254,33 @@ class Migration(migrations.Migration):
             preserve_default=True,
         ),
         migrations.AddField(
-            model_name='analysis',
-            name='experiment',
-            field=models.ForeignKey(to='frank.Experiment'),
+            model_name='annotationtoolprotocols',
+            name='experimental_protocol',
+            field=models.ForeignKey(to='frank.ExperimentalProtocol'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='annotationtool',
+            name='suitable_experimental_protocols',
+            field=models.ManyToManyField(to='frank.ExperimentalProtocol', through='frank.AnnotationToolProtocols'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='annotationquery',
+            name='annotation_tool',
+            field=models.ForeignKey(to='frank.AnnotationTool'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='annotationquery',
+            name='fragmentation_set',
+            field=models.ForeignKey(to='frank.FragmentationSet'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='annotationquery',
+            name='source_annotation_queries',
+            field=models.ManyToManyField(to='frank.AnnotationQuery', through='frank.AnnotationQueryHierarchy'),
             preserve_default=True,
         ),
     ]

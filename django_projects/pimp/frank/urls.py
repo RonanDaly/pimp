@@ -20,7 +20,7 @@ urlpatterns = patterns ('',
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)$',
         views.fragmentation_set, name = 'fragmentation_set'),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)'
-        r'/define_annotation_query$', views.define_annotation_query, name = 'define_annotation_query'),
+        r'/(?P<annotation_tool_slug>[\w\-]+)/define_annotation_query_paramaters$', views.define_annotation_query, name = 'define_annotation_query'),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)'
         r'/(?P<peak_name_slug>[\w\-]+)$', views.peak_summary, name = 'peak_summary'),
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)'

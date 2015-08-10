@@ -5,7 +5,7 @@ import django
 django.setup()
 
 from experiments.models import DefaultParameter, Database
-from frank.models import Repository
+from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocols
 
 def populate():
     iqr_parameter = add_default_parameter(
@@ -74,12 +74,43 @@ def populate():
         name = "lipidmaps"
     )
 
-    mass_bank_repository = add_repository(
+    mass_bank_annotation_tool = add_annotation_tool(
         name = 'MassBank'
     )
 
-    mass_bank_repository = add_repository(
+    NIST_annotation_tool = add_annotation_tool(
         name = 'NIST'
+    )
+
+    network_sampler_annotation_tool = add_annotation_tool(
+        name = 'LCMS DDA Network Sampler'
+    )
+
+    lcms_dda_experimental_protocol = add_experimental_protocol(
+        name = 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
+    )
+
+    gcms_dia_experimental_protocol = add_experimental_protocol(
+        name = 'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
+    )
+
+    lcms_dia_experimental_protocol = add_experimental_protocol(
+        name = 'Liquid-Chromatography Data-Independent Acquisition'
+    )
+
+    mass_bank_protocols = add_annotation_tool_protocols(
+        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        mass_bank_annotation_tool
+    )
+
+    NIST_protocols = add_annotation_tool_protocols(
+        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        NIST_annotation_tool
+    )
+
+    network_sampler_annotation_tool = add_annotation_tool_protocols(
+        [lcms_dda_experimental_protocol],
+        network_sampler_annotation_tool
     )
 
 
@@ -102,13 +133,29 @@ def add_database(name):
     database.save()
     return database
 
-def add_repository(name):
-    repository = Repository.objects.get_or_create(
+def add_annotation_tool(name):
+    annotation_tool = AnnotationTool.objects.get_or_create(
        name = name,
     )[0]
-    print 'Creating default repository - '+name+'...'
-    repository.save()
-    return repository
+    print 'Creating default annotation tool - '+name+'...'
+    annotation_tool.save()
+    return annotation_tool
+
+def add_experimental_protocol(name):
+    experimental_protocol = ExperimentalProtocol.objects.get_or_create(
+       name = name,
+    )[0]
+    print 'Creating experimental protocol - '+name+'...'
+    experimental_protocol.save()
+    return experimental_protocol
+
+def add_annotation_tool_protocols(protocols_list, annotation_tool):
+    for protocol in protocols_list:
+        print 'Adding '+protocol.name+' to Annotation Tool '+annotation_tool.name
+        annotation_tool_protocol = AnnotationToolProtocols.objects.get_or_create(
+            annotation_tool = annotation_tool,
+            experimental_protocol = protocol
+        )
 
 # Execution starts here
 if __name__=='__main__':

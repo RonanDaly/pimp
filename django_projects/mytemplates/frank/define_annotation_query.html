@@ -6,9 +6,9 @@
 
 {% block body_block %}
 
-        <h4>Define Annotation Query Parameters</h4>
+        <h4>Define Annotation Query Parameters for {{annotation_tool.name}}</h4>
 
-        <form id="annotation_query_form" method="post" action="/frank/my_fragmentation_sets/{{fragmentation_set.slug}}/define_annotation_query">
+        <form id="annotation_query_form" method="post" action="/frank/my_fragmentation_sets/{{fragmentation_set.slug}}/{{annotation_tool.slug}}/define_annotation_query_paramaters">
 
             {% csrf_token %}
             {% for hidden in annotation_query_form.hidden_fields %}
@@ -20,10 +20,11 @@
 		<br>
                 {{ field.help_text }}
 		<br>
+		<br>
                 {{field.label}} {{ field }}
 		<br>
             {% endfor %}
-	<input type = "submit" name="submit" value="Submit">
+	<input type = "submit" name="submit" value="Create Annotation Query">
 	</form>
 
 {% endblock %}

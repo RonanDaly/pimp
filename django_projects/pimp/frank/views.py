@@ -11,6 +11,7 @@ from decimal import *
 from django.db.models import Max
 import re
 import datetime
+import jsonpickle
 
 ##### No longer needed for plotting #######
 # import matplotlib
@@ -135,7 +136,7 @@ def get_fragmentation_set_summary_context_dict(user):
     }
     return context_dict
 
-def get_fragmentation_set_context_dict(fragmentation_set_name_slug):
+def get_fragmentation_set_context_dict(fragmentation_set_name_slug, annotation_tool_selection_form):
     fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_name_slug)
     ## Display number of msn peaks
     ms1_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set, msn_level=1)
@@ -147,6 +148,7 @@ def get_fragmentation_set_context_dict(fragmentation_set_name_slug):
         experimental_file = SampleFile.objects.get(id=file_id.get('source_file'))
         ms1_peaks_by_file[experimental_file] = ms1_peaks.filter(source_file = experimental_file).order_by('mass')
     context_dict = {
+        'annotation_tool_form': annotation_tool_selection_form,
         'fragment_set': fragmentation_set,
         'number_of_peaks':number_of_ms1_peaks,
         'annotations': annotation_queries,
@@ -160,7 +162,7 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set_object)
     ## Display number of msn peaks
     fragmentation_spectra = Peak.objects.filter(parent_peak = peak)
-    associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set_object)
+    associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set_object, status='Completed Successfully')
     candidate_annotations = {}
     for annotation_query in associated_annotation_queries:
         candidate_annotations[annotation_query] = CandidateAnnotation.objects.filter(peak=peak,annotation_query=annotation_query).order_by('-confidence')
@@ -177,11 +179,13 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     return context_dict
 
 
-def get_define_annotation_query_context_dict(fragmentation_set_name_slug, form):
+def get_define_annotation_query_context_dict(fragmentation_set_name_slug, form, annotation_tool_slug):
     fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_name_slug)
+    annotation_tool = AnnotationTool.objects.get(slug=annotation_tool_slug)
     context_dict = {
         'annotation_query_form': form,
         'fragmentation_set': fragmentation_set,
+        'annotation_tool': annotation_tool,
     }
     return context_dict
 
@@ -347,8 +351,30 @@ def fragmentation_set_summary(request):
 
 @login_required
 def fragmentation_set(request, fragmentation_set_name_slug):
-    context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug)
-    return render(request, 'frank/fragmentation_set.html', context_dict)
+    if request.method == 'POST':
+        annotation_tool_selection_form = AnnotationToolSelectionForm(request.POST)
+        if annotation_tool_selection_form.is_valid():
+            user_tool_choice = annotation_tool_selection_form.cleaned_data['tool_selection'].name
+            annotation_query_form = None
+            if user_tool_choice == 'MassBank':
+                annotation_query_form = MassBankQueryForm()
+            elif user_tool_choice == 'NIST':
+                annotation_query_form = NISTQueryForm()
+            elif user_tool_choice == 'LCMS DDA Network Sampler':
+                annotation_query_form = NetworkSamplerQueryForm()
+            annotation_tool_slug = AnnotationTool.objects.get(name=user_tool_choice).slug
+            context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
+            return render(request, 'frank/define_annotation_query.html', context_dict)
+        else:
+            print annotation_tool_selection_form.errors
+            context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, annotation_tool_selection_form)
+            return render(request, 'frank/fragmentation_set.html', context_dict)
+    else:
+        fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_name_slug)
+        experiment = fragmentation_set.experiment
+        form = AnnotationToolSelectionForm(experiment_object=experiment)
+        context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
+        return render(request, 'frank/fragmentation_set.html', context_dict)
 
 
 @login_required
@@ -358,38 +384,40 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
 
 
 @login_required
-def define_annotation_query(request, fragmentation_set_name_slug):
+def define_annotation_query(request, fragmentation_set_name_slug, annotation_tool_slug):
     fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+    annotation_tool = AnnotationTool.objects.get(slug=annotation_tool_slug)
+    annotation_query_form = None
     if request.method == 'POST':
-        annotation_query_form = AnnotationQueryForm(request.POST)
+        if annotation_tool.name == 'MassBank':
+            annotation_query_form = MassBankQueryForm(request.POST)
+        elif annotation_tool.name== 'NIST':
+            annotation_query_form = NISTQueryForm(request.POST)
+        elif annotation_tool.name == 'LCMS DDA Network Sampler':
+            annotation_query_form = NetworkSamplerQueryForm(request.POST)
         if annotation_query_form.is_valid():
             new_annotation_query = annotation_query_form.save(commit=False)
             new_annotation_query.fragmentation_set = fragmentation_set
-            if new_annotation_query.massBank == True:
-                ## Need to build the massBank parameters and store them
-                massbank_mail_address = request.user.email
-                massbank_instrument_types = annotation_query_form.cleaned_data['mass_bank_instrument_types']
-                # MassBank parameters take the format email;instrumenttype1,instrumenttype2;
-                mass_bank_params = []
-                mass_bank_params.append('Email:<'+massbank_mail_address+'>\n')
-                instrument_types = []
-                instrument_types.append('Instrument Types:')
-                for instrument in massbank_instrument_types:
-                    name_of_instrument = str(instrument)
-                    instrument_types.append('<'+name_of_instrument+'>')
-                mass_bank_params.append(''.join(instrument_types))
-                new_annotation_query.massBank_params = ''.join(mass_bank_params)
-            new_annotation_query.save()
-            generate_annotations(fragmentation_set, new_annotation_query)
-            context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug)
+            currentUser = request.user
+            paramaterised_query_object = set_annotation_query_parameters(new_annotation_query, annotation_query_form, currentUser)
+            paramaterised_query_object.save()
+            generate_annotations(paramaterised_query_object)
+            experiment = fragmentation_set.experiment
+            form = AnnotationToolSelectionForm(experiment_object=experiment)
+            context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
             return render(request, 'frank/fragmentation_set.html', context_dict)
         else:
             print annotation_query_form.errors
-            context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form)
+            context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
             return render(request, 'frank/define_annotation_query.html', context_dict)
     else:
-        annotation_query_form = AnnotationQueryForm()
-        context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form)
+        if annotation_tool.name == 'MassBank':
+            annotation_query_form = MassBankQueryForm()
+        elif annotation_tool.name== 'NIST':
+            annotation_query_form = NISTQueryForm()
+        elif annotation_tool.name == 'LCMS DDA Network Sampler':
+            annotation_query_form = NetworkSamplerQueryForm()
+        context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
         return render(request, 'frank/define_annotation_query.html', context_dict)
 
 @login_required
@@ -424,24 +452,73 @@ def specify_preferred_annotation(request, fragmentation_set_name_slug, peak_name
 def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id):
     ## Remember to add the msnAnalysis method onto celery
     experiment = Experiment.objects.get(slug = experiment_name_slug)
-    experiment_type = experiment.detection_method
-    if experiment_type == 'LCMS DDA':
+    experiment_type = experiment.detection_method.name
+    if experiment_type == 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition':
         tasks.msnGeneratePeakList.delay(experiment_name_slug, fragmentation_set_id)
-    elif experiment_type == 'GCMS EII':
+    elif experiment_type == 'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation':
         tasks.gcmsGeneratePeakList.delay(experiment_name_slug, fragmentation_set_id)
 
 
-def generate_annotations(fragmentation_set, annotation_query):
-    fragmentation_set_id = fragmentation_set.id
-    annotation_query_id = annotation_query.id
-    if annotation_query.massBank == True:
-        tasks.massBank_batch_search.delay(fragmentation_set_id, annotation_query_id)
-    if annotation_query.nist == True:
-        tasks.nist_batch_search.delay(fragmentation_set_id, annotation_query_id)
+def generate_annotations(annotation_query_object):
+    annotation_tool = annotation_query_object.annotation_tool
+    if annotation_tool.name == 'MassBank':
+        tasks.massBank_batch_search.delay(annotation_query_object.id)
+    elif annotation_tool.name == 'NIST':
+        tasks.nist_batch_search.delay(annotation_query_object.id)
+    elif annotation_tool.name == 'LCMS DDA Network Sampler':
+        pass
+
+def set_annotation_query_parameters(annotation_query_object, annotation_query_form, currentUser):
+    print 'Set Annotation Query Parameters Called...'
+    if isinstance(annotation_query_form, MassBankQueryForm):
+        print 'Is MassBankQueryForm'
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='MassBank')
+        # Parameters for MassBank are...
+        #   type - (hardcoded) the type of search (1 = batch search)
+        #   mail_address - (generated automatically) the email of the recipiant of the results
+        #   query_spectra - (generated automatically) retrieved from the database
+        #   instruments - (selected by user) the instruments to be queried
+        #   ion - (generated automatically) the polarity of the query spectra
+        instrument_types_selected = annotation_query_form.cleaned_data['massbank_instrument_types']
+        instrument_list = []
+        for instrument in instrument_types_selected:
+            # Loop converts unicode to utf-8
+            instrument_list.append(str(instrument))
+        mail_address = currentUser.email
+        parameters = {
+            'mail_address': mail_address,
+            'instrument_types': instrument_list,
+        }
+        annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
+        return annotation_query_object
+    elif isinstance(annotation_query_form, NISTQueryForm):
+        print 'Is NISTQueryForm'
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='NIST')
+        # Parameters for NIST are...
+        #   number of hits - (selected by user) the maximum number of annotation hits for a spectra
+        #   search type - (selected by user) the type of search to be performed
+        #   main library - (selected by user) the library to be searched
+        maximum_number_of_hits = annotation_query_form.cleaned_data['maximum_number_of_hits']
+        selected_libraries = []
+        search_type = str(annotation_query_form.cleaned_data['search_type'])
+        libraries = annotation_query_form.cleaned_data['query_libraries']
+        for library in libraries:
+            # Loop converts unicode to utf-8
+            selected_libraries.append(str(library))
+        parameters = {
+            'max_hits': maximum_number_of_hits,
+            'search_type': search_type,
+            'library': selected_libraries,
+        }
+        annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
+        return annotation_query_object
+    # elif isinstance(annotation_query_form, NetworkSamplerQueryForm):
+    #     annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='LCMS DDA Network Sampler')
+    # elif isinstance(annotation_query_form, DefaultQueryForm):
+    #     annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='LCMS DDA Network Sampler')
 
 
 def run_network_sampler(request):
-    import jsonpickle
     default_params = {
             'n_samples': 1000,
             'n_burn': 500,

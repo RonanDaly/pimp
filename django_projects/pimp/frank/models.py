@@ -32,6 +32,8 @@ IONISATION_PROTOCOLS = (
     # Additional ionisation protocols could be added here if necessary
 )
 
+
+###### THIS SHOULD NOW BE DELETED #############
 # Define the choices for method of detection, dictates method of how peaks are derived
 DETECTION_PROTOCOLS = (
     ('LCMS DDA','Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'),
@@ -47,7 +49,7 @@ class Experiment(models.Model):
     time_created = models.DateTimeField(auto_now = True)
     last_modified = models.DateTimeField(auto_now_add = True, blank = True)
     ionisation_method = models.CharField(max_length = 250, choices = IONISATION_PROTOCOLS)
-    detection_method = models.CharField(max_length = 250, choices = DETECTION_PROTOCOLS)
+    detection_method = models.ForeignKey('ExperimentalProtocol', null=True)
     users = models.ManyToManyField(User, through = 'UserExperiments', through_fields = ('experiment', 'user'))
     slug = models.SlugField(unique=True)
 
@@ -174,27 +176,37 @@ class AnnotationQuery(models.Model):
     time_created = models.DateTimeField(auto_now = True)
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Defined')
     slug = models.SlugField(unique=True)
-    massBank = models.BooleanField(default = False)
-    nist = models.BooleanField(default = False)
-    massBank_params = models.CharField(max_length = 250, null=True)
+    annotation_tool = models.ForeignKey('AnnotationTool')
+    annotation_tool_params = models.CharField(max_length = 500, null=True)
     ### Note additional parameters required here ####
     ### Also need to add in the choice field for Simon's additional code
-    parent_annotation_query = models.ForeignKey('self', null=True)
+    source_annotation_queries = models.ManyToManyField('self', through = 'AnnotationQueryHierarchy', symmetrical=False)
 
     def save(self, *args, **kwargs):
         if not self.id:
             ## The query id is going to be one greater than the total number of existing queries in the database.
             query_number = AnnotationQuery.objects.count()+1
             # The slug is simply the concatination of the name of the query and the next available id
-            self.slug = slugify(self.name)+'-'+str(query_number)
+            self.slug = slugify(self.name)+'-'+str(query_number)+'FragSet-'+str(self.fragmentation_set.id)
         super(AnnotationQuery, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return 'Annotation Query '+str(self.id)
 
-# Class defining the respositories which are queried during an analysis
-class Repository (models.Model):
+# Class defining the respositories and annotation tools which are queried during an analysis
+class AnnotationTool (models.Model):
     name = models.CharField(max_length = 250, blank = False)
+    suitable_experimental_protocols = models.ManyToManyField('ExperimentalProtocol', through = 'AnnotationToolProtocols')
+    default_params = models.CharField(max_length = 500)
+    slug = models.SlugField(unique=True)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            ## The query id is going to be one greater than the total number of existing queries in the database.
+            tool_number = AnnotationQuery.objects.count()+1
+            # The slug is simply the concatination of the name of the query and the next available id
+            self.slug = slugify(self.name)+'-'+str(tool_number)
+        super(AnnotationTool, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return self.name
@@ -206,13 +218,13 @@ class Compound(models.Model):
     exact_mass = models.DecimalField(decimal_places=10, max_digits=20)
     inchikey = models.CharField(max_length=500, null=True)
     cas_code = models.CharField(max_length=500, null=True)
-    repository = models.ManyToManyField(Repository, through = 'CompoundRepository')
+    annotation_tool = models.ManyToManyField(AnnotationTool, through = 'CompoundAnnotationTool')
     slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
         if not self.id:
             compound_number = Compound.objects.count()+1
-            self.slug = slugify('Compound:'+str(compound_number))
+            self.slug = slugify('Compound:'+str(compound_number))+': '+self.formula
         super(Compound, self).save(*args, **kwargs)
 
 
@@ -271,11 +283,34 @@ class CandidateAnnotation(models.Model):
         return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)
 
 # Class defining which compounds were identified in which repositories
-class CompoundRepository (models.Model):
+class CompoundAnnotationTool (models.Model):
     compound = models.ForeignKey(Compound)
-    repository = models.ForeignKey(Repository)
+    annotation_tool = models.ForeignKey(AnnotationTool)
     # Store the reference used by the repository to identify the compound
-    repository_identifier = models.CharField(max_length=500)
+    annotation_tool_identifier = models.CharField(max_length=500)
 
     def __unicode__(self):
-        return 'Compound '+str(self.compound.id)+' from Repository '+str(self.repository.id)
+        return 'Compound '+str(self.compound.id)+' from AnnotationTool '+str(self.annotation_tool.id)
+
+# Class defining an experimental technique used to generate raw data.
+class ExperimentalProtocol (models.Model):
+    name = models.CharField(max_length=500)
+
+    def __unicode__(self):
+        return self.name
+
+# Class identifying which annotations tools are suitable for which experimental protocol
+class AnnotationToolProtocols (models.Model):
+    annotation_tool = models.ForeignKey(AnnotationTool)
+    experimental_protocol = models.ForeignKey(ExperimentalProtocol)
+
+    def __unicode__(self):
+        return self.id
+
+# Class identifying the relationship between annotation queries(parent) and subqueries
+class AnnotationQueryHierarchy (models.Model):
+    parent_annotation_query = models.ForeignKey(AnnotationQuery, related_name = "parent_query")
+    subquery_annotation_query = models.ForeignKey(AnnotationQuery, related_name = "subquery")
+
+    def __unicode__(self):
+        return self.id

@@ -31,11 +31,11 @@ class FragmentationSetAdmin(admin.ModelAdmin):
 # The fields to be displayed in the Annotation Query page of admin
 class AnnotationQueryAdmin(admin.ModelAdmin):
     list_display = ('name', 'fragmentation_set', 'time_created',
-                    'status', 'slug', 'massBank', 'nist', 'massBank_params',
+                    'status', 'slug', 'annotation_tool', 'annotation_tool_params',
     )
 
-# The fields to be displayed in the Repository page of admin
-class RepositoryAdmin(admin.ModelAdmin):
+# The fields to be displayed in the AnnotationTool page of admin
+class AnnotationToolAdmin(admin.ModelAdmin):
     list_display = ('name',)
 
 # The fields to be displayed in the Compound page of admin
@@ -56,9 +56,23 @@ class CandidateAnnotationAdmin(admin.ModelAdmin):
                     'adduct', 'instrument_type',
     )
 
-# The fields to be displayed in the CompoundRepository page of admin
-class CompoundRepositoryAdmin(admin.ModelAdmin):
-    list_display = ('compound', 'repository', 'repository_identifier')
+# The fields to be displayed in the CompoundAnnotationTool page of admin
+class CompoundAnnotationToolAdmin(admin.ModelAdmin):
+    list_display = ('compound', 'annotation_tool', 'annotation_tool_identifier')
+
+
+# The fields to be displayed in the ExperimentalProtocol page of the admin
+class ExperimentalProtocolAdmin (admin.ModelAdmin):
+    list_display = ('name',)
+
+
+# The fields to be displayed in the AnnotationToolProtocols page of the admin
+class AnnotationToolProtocolsAdmin (admin.ModelAdmin):
+    list_display = ('annotation_tool', 'experimental_protocol')
+
+
+class AnnotationQueryHierarchyAdmin (admin.ModelAdmin):
+    list_display = ('parent_annotation_query', 'subquery_annotation_query')
 
 
 # Register each of the models and admin classes for display to user in admin site
@@ -69,9 +83,12 @@ admin.site.register(Sample, SampleAdmin)
 admin.site.register(SampleFile, SampleFileAdmin)
 admin.site.register(FragmentationSet, FragmentationSetAdmin)
 admin.site.register(AnnotationQuery, AnnotationQueryAdmin)
-admin.site.register(Repository, RepositoryAdmin)
+admin.site.register(AnnotationTool, AnnotationToolAdmin)
 admin.site.register(Compound, CompoundAdmin)
 admin.site.register(Peak, PeakAdmin)
 admin.site.register(CandidateAnnotation, CandidateAnnotationAdmin)
-admin.site.register(CompoundRepository, CompoundRepositoryAdmin)
+admin.site.register(CompoundAnnotationTool, CompoundAnnotationToolAdmin)
+admin.site.register(ExperimentalProtocol, ExperimentalProtocolAdmin)
+admin.site.register(AnnotationToolProtocols, AnnotationToolProtocolsAdmin)
+admin.site.register(AnnotationQueryHierarchy, AnnotationQueryHierarchyAdmin)
 

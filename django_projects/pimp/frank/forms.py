@@ -1,6 +1,6 @@
 from django import forms
-from frank.models import Experiment, ExperimentalCondition, \
-    Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, \
+from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol,\
+    Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, AnnotationTool, \
     IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -21,8 +21,9 @@ class ExperimentForm(forms.ModelForm):
     )
     # Creation of an experiment can include the declaration of the detection method used
     # DETECTION_PROTOCOLS is declared in the 'frank.models'
-    detection_method = forms.ChoiceField(
-        choices = DETECTION_PROTOCOLS
+    detection_method = forms.ModelChoiceField(
+        queryset = ExperimentalProtocol.objects.all(),
+        empty_label=None,
     )
 
     class Meta:
@@ -138,25 +139,95 @@ MASS_BANK_INSTRUMENT_TYPES = (
     ('LC-ESI-TOF', 'LC-ESI-TOF'),
 )
 
+NIST_LIBRARIES = (
+    ('mainlib', 'Main EI MS Library'),
+    ('replib','Replicate EI MS Library'),
+    ('nist_msms', 'Tandem (MS/MS) Library - Small Molecules'),
+    ('nist_msms2', 'Tandem (MS/MS) Library - Biologically-Active Peptides'),
+    ('nist_ri', 'Retention Index Library'),
+)
+
+NIST_SEARCH_PARAMS = (
+    ('M', 'MS/MS in EI Library'),
+    ('P','Peptide MS/MS Search in a MS/MS Library'),
+    ('G', 'Generic MS/MS Search in a MS/MS Library'),
+)
+
+# Class in peak summary to select a suitable annotation tool
+class AnnotationToolSelectionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.experiment = None
+        if 'experiment_object' in kwargs:
+            self.experiment = kwargs.pop('experiment_object')
+        super(AnnotationToolSelectionForm, self).__init__(*args, **kwargs)
+        if self.experiment:
+            self.fields['tool_selection']=forms.ModelChoiceField(
+                queryset = AnnotationTool.objects.filter(
+                    suitable_experimental_protocols = self.experiment.detection_method
+                ),
+                empty_label=None,
+            )
+
+    tool_selection = forms.ModelChoiceField(
+        queryset=AnnotationTool.objects.all(),
+        empty_label=None,
+    )
+
 # The form is used to create a Annotation Query
 class AnnotationQueryForm(forms.ModelForm):
-    name = forms.CharField(max_length=60, help_text="Enter the name of the query.")
-    # A series of boolean checkboxes for selection of the annotation tools used to gather annotations
-    massBank = forms.BooleanField(label='massBank', required=False)
-    nist = forms.BooleanField(label='NIST', required=False)
-    # The parameters required for the annotation tools should be included here
-    mass_bank_instrument_types = forms.MultipleChoiceField(
-        choices = MASS_BANK_INSTRUMENT_TYPES,
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-    )
+    name = forms.CharField(max_length=60, help_text="Please enter the name of the query.")
 
     class Meta:
         model = AnnotationQuery
         fields = (
-            'name', 'massBank', 'nist',
+            'name',
         )
 
+class NISTQueryForm(AnnotationQueryForm):
+    maximum_number_of_hits = forms.IntegerField(
+        max_value = 20,
+        min_value = 1,
+        required =True,
+        help_text = "Please specify the maximum number of hits returned for each spectrum"
+    )
+    search_type = forms.ChoiceField(
+        choices = NIST_SEARCH_PARAMS,
+        help_text = "Please select the required NIST search type."
+    )
+    query_libraries = forms.MultipleChoiceField(
+        choices = NIST_LIBRARIES,
+        widget=forms.CheckboxSelectMultiple(),
+        help_text = "Please specify which library you wish to query."
+    )
+
+    def clean(self):
+        cleaned_data = super(NISTQueryForm, self).clean()
+        # get the absolute address of the uploaded file
+        user_selections = cleaned_data.get('query_libraries')
+        # if an absolute address has been registered
+        if user_selections==None:
+            self.add_error("query_libraries", "No libraries were selected. Please select at least one library to query.")
+            raise forms.ValidationError("No libraries were selected. Please select at least one library to query.")
+
+
+class MassBankQueryForm(AnnotationQueryForm):
+    massbank_instrument_types = forms.MultipleChoiceField(
+        choices= MASS_BANK_INSTRUMENT_TYPES,
+        widget = forms.CheckboxSelectMultiple(),
+        help_text = "Massbank supports the following instruments. Please select those that apply to the experiment.",
+    )
+
+    def clean(self):
+        cleaned_data = super(MassBankQueryForm, self).clean()
+        # get the absolute address of the uploaded file
+        user_selections = cleaned_data.get('massbank_instrument_types')
+        # if an absolute address has been registered
+        if user_selections==None:
+            self.add_error("massbank_instrument_types", "No instrument types were selected. Please select at least one instrument type.")
+            raise forms.ValidationError("No instrument types were selected. Please select at least one instrument type.")
+
+class NetworkSamplerQueryForm(AnnotationQueryForm):
+    pass
 
 # The form is used to specify a preferred annotation for a peak
 class PreferredAnnotationForm(forms.ModelForm):
