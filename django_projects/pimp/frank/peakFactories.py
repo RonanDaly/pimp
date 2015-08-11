@@ -1,6 +1,7 @@
 ##### File containing classes which assist in the deriving of peaks from mzXML files ######
 
 from frank.models import Peak, SampleFile, FragmentationSet, Experiment, ExperimentalCondition, Sample
+from decimal import *
 
 ## Class to derive those peaks which have an associated fragmentation spectrum from
 ## LC-MSN data sets
@@ -97,3 +98,80 @@ class msnPeakBuilder:
         )
         self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
         return newly_created_peak
+
+
+class gcmsPeakBuilder():
+    def __init__(self, output_file_list, fragmentation_set_id):
+        self.source_files_vector = output_file_list[0]
+        self.peak_list_files_vector = output_file_list[1]
+        self.fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+
+    def populate_database_peaks(self):
+        print 'Populating Database peaks...'
+        number_of_source_files = len(self.source_files_vector)
+        print 'Number of source files = '+str(number_of_source_files)
+        for index in range(0, number_of_source_files):
+            directory_of_mzXML_file = self.source_files_vector.levels[self.source_files_vector[index]-1]
+            print 'Processing '+directory_of_mzXML_file
+            directory_of_output_txt_file = self.peak_list_files_vector.levels[self.peak_list_files_vector[index]-1]
+            grouped_peaks = self.group_peaks(directory_of_output_txt_file, directory_of_mzXML_file)
+            self.add_peaks_to_database(grouped_peaks)
+        print 'Peaks Populated'
+        return 'Completed Successfully'
+
+    def group_peaks(self, file_directory, source_directory):
+        input_file = None
+        try:
+            input_file = open(file_directory, 'r')
+        except IOError:
+            return 'Completed with Errors'
+        current_parent_peak = None
+        peak_dictionary = {}
+        source_file_object = SampleFile.objects.get(address = source_directory)
+        if input_file is not None:
+            current_group_id = -1 # An initial value
+            for line in input_file:
+                # We are only interested in the lines which begin with a peak id
+                if line[0].isdigit():
+                    line_tokens = line.split('\t')
+                    peak_id = int(line_tokens[0])
+                    peak_mass = Decimal(line_tokens[1])
+                    peak_retention_time = Decimal(line_tokens[2])
+                    peak_intensity = Decimal(line_tokens[3])
+                    peak_relation_id = int(line_tokens[4])
+                    new_peak = Peak(
+                        source_file = source_file_object,
+                        mass = peak_mass,
+                        retention_time = peak_retention_time,
+                        intensity = peak_intensity,
+                        parent_peak = None,
+                        msn_level = 2,
+                        fragmentation_set = self.fragmentation_set,
+                    )
+                    if current_group_id != peak_relation_id:
+                        current_group_id = peak_relation_id
+                        peak_dictionary[peak_relation_id]=[]
+                    peak_dictionary[peak_relation_id].append(new_peak)
+        return peak_dictionary
+
+    def add_peaks_to_database(self, grouped_peaks):
+        for relation in grouped_peaks:
+            most_intense_peak = grouped_peaks[relation][0]
+            for peak in grouped_peaks[relation]:
+                if peak.intensity > most_intense_peak.intensity:
+                    most_intense_peak = peak
+            pseudo_ms1_peak = Peak.objects.create(
+                source_file = most_intense_peak.source_file,
+                mass = most_intense_peak.mass,
+                retention_time = most_intense_peak.retention_time,
+                intensity = most_intense_peak.intensity,
+                parent_peak = None,
+                msn_level = 1,
+                fragmentation_set = self.fragmentation_set,
+            )
+            for peak in grouped_peaks[relation]:
+                peak.parent_peak = pseudo_ms1_peak
+                peak.save()
+        return
+
+

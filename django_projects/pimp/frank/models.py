@@ -237,7 +237,7 @@ class Peak(models.Model):
     source_file = models.ForeignKey(SampleFile, blank = False)
     mass = models.DecimalField(decimal_places = 10, max_digits = 20)
     retention_time = models.DecimalField(decimal_places = 10, max_digits = 20)
-    intensity = models.DecimalField(decimal_places = 10, max_digits = 20)
+    intensity = models.DecimalField(decimal_places = 10, max_digits = 30)
     parent_peak = models.ForeignKey('self', null=True)
     msn_level = models.IntegerField(default = 0)
     annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')

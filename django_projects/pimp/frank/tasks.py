@@ -6,7 +6,7 @@ from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, Annota
     CompoundAnnotationTool, FragmentationSet, Experiment, AnnotationQuery
 from djcelery import celery
 from decimal import *
-from frank.peakFactories import msnPeakBuilder
+from frank.peakFactories import msnPeakBuilder, gcmsPeakBuilder
 from suds.client import Client, WebFault
 from django.contrib.auth.models import User
 import time
@@ -131,9 +131,9 @@ def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
     output = r_frankMSnPeakMatrix(source_directory = filepath)
     peak_generator = msnPeakBuilder(output, fragmentation_set_object.id)
     peak_generator.populate_database_peaks()
-    fragmentation_set_object.status = 'Completed'
+    fragmentation_set_object.status = 'Completed Sucessfully'
     fragmentation_set_object.save()
-    return 'Done'
+    return
 
 # Method to batch query the mass bank annotation tool using SOAP
 @celery.task
@@ -282,11 +282,6 @@ def query_mass_bank(query_spectra, polarity, annotation_query_id):
             except ValidationError, e:
                 print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
     return 'Completed Successfully'
-
-
-def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
-
-    return 'Done'
 
 
 @celery.task
@@ -439,3 +434,33 @@ def nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annota
                     print '****WARNING INCORRECTLY FORMATED RESPONSE*****\n *****ANNOTATION IGNORED*****'
     print 'Database Populated'
     return 'Completed Successfully'
+
+
+@celery.task
+def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
+    fragmentation_set = FragmentationSet.objects.get(id = fragmentation_set_id)
+    fragmentation_set.status = 'Processing'
+    fragmentation_set.save()
+    experiment_object = Experiment.objects.get(slug = experiment_name_slug)
+    # From the experiment object derive the file directory of the .mzXML files
+    filepath = os.path.join(MEDIA_ROOT,
+                            'frank',
+                            experiment_object.created_by.username,
+                            experiment_object.slug,
+                            )
+    r_source = robjects.r['source']
+    r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/gcmsGeneratePeakList.R')
+    r_generateGCMSPeakMatrix = robjects.globalenv['generateGCMSPeakMatrix']
+    output = r_generateGCMSPeakMatrix(input_directory = filepath)
+    ### Just for debugging use pre-prepared data file
+    # output = [['~/ProjectTestData/GCMS/RTest/T1R3L.mzXML', '~/ProjectTestData/GCMS/RTest/T1R3R.mzXML'],['~/ProjectTestData/GCMS/RTest/T1R3L_output.txt', '~/ProjectTestData/GCMS/RTest/T1R3R_output.txt']]
+    #output = [['/home/scottiedog27/Git/MScProjectRepo/pimp/django_projects/pimp_data/frank/testuser/rat-cadaver-experiment-6/rat-leg-right-day-0-7/replicate-2-9/Positive/T0R2R.mzXML',],
+    #         ['/home/scottiedog27/ProjectTestData/GCMS/RTest/TestOutput.txt',]]
+    peak_generator = gcmsPeakBuilder(output, fragmentation_set.id)
+    peak_generator.populate_database_peaks()
+    fragmentation_set.status = 'Completed Sucessfully'
+    fragmentation_set.save()
+    return
+
+
+

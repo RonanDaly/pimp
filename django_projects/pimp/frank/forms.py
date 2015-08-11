@@ -151,6 +151,7 @@ NIST_SEARCH_PARAMS = (
     ('M', 'MS/MS in EI Library'),
     ('P','Peptide MS/MS Search in a MS/MS Library'),
     ('G', 'Generic MS/MS Search in a MS/MS Library'),
+    ('I', 'Identity')
 )
 
 # Class in peak summary to select a suitable annotation tool

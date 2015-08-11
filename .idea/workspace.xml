@@ -2,42 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="07fc88d6-be44-4e3f-80ff-ea804361aae9" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/.name" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0002_auto_20150703_0041.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0003_auto_20150715_2216.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0004_auto_20150717_1719.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0005_auto_20150717_1900.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0006_peak_peak_slug.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0007_auto_20150717_2344.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0008_auto_20150719_1136.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0009_auto_20150723_1357.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0010_auto_20150723_1436.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0011_auto_20150723_2121.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0012_auto_20150724_0057.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0013_auto_20150724_1316.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0014_auto_20150725_1433.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0015_annotationquery_nist.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0016_compound_cas_code.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0017_auto_20150729_2258.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0018_auto_20150730_1731.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0019_auto_20150730_1835.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0020_candidateannotation_slug.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0021_compound_slug.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/testdb.db" afterPath="$PROJECT_DIR$/django_projects/pimp/testdb.db" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/admin.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/admin.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/mytemplates/frank/define_annotation_query.html" afterPath="$PROJECT_DIR$/django_projects/mytemplates/frank/define_annotation_query.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/mytemplates/frank/experiment.html" afterPath="$PROJECT_DIR$/django_projects/mytemplates/frank/experiment.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/mytemplates/frank/fragmentation_set.html" afterPath="$PROJECT_DIR$/django_projects/mytemplates/frank/fragmentation_set.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/models.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/pimp.iml" afterPath="$PROJECT_DIR$/.idea/pimp.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" afterPath="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" afterPath="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/views.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/views.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="pimp.iws" />
@@ -59,6 +28,18 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
+      <file leaf-file-name="tests.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tests.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="54" column="0" selection-start-line="54" selection-start-column="0" selection-end-line="54" selection-end-column="0" />
+              <folding>
+                <element signature="e#0#32#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="urls.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/urls.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -69,70 +50,24 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="views.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/views.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="509" column="39" selection-start-line="509" selection-start-column="39" selection-end-line="509" selection-end-column="39" />
-              <folding>
-                <element signature="e#0#35#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="peakFactories.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="peakFactories.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="7" column="58" selection-start-line="7" selection-start-column="4" selection-end-line="7" selection-end-column="58" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-85.85714">
-              <caret line="237" column="42" selection-start-line="237" selection-start-column="42" selection-end-line="237" selection-end-column="42" />
+            <state vertical-scroll-proportion="0.60032624">
+              <caret line="159" column="48" selection-start-line="159" selection-start-column="48" selection-end-line="159" selection-end-column="48" />
               <folding>
-                <element signature="e#0#28#0" expanded="true" />
+                <element signature="e#93#195#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="settings_dev.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.69344264">
-              <caret line="37" column="47" selection-start-line="37" selection-start-column="47" selection-end-line="37" selection-end-column="47" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="populate_pimp.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/django_projects/pimp/populate_pimp.py">
+      <file leaf-file-name="tests.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../WebApplication/fmk_project/fmk/tests.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="85" column="40" selection-start-line="85" selection-start-column="16" selection-end-line="85" selection-end-column="40" />
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="tasks.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-10.857142">
-              <caret line="340" column="36" selection-start-line="340" selection-start-column="36" selection-end-line="340" selection-end-column="36" />
-              <folding>
-                <element signature="e#0#32#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -141,10 +76,32 @@
         <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/forms.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="193" column="37" selection-start-line="193" selection-start-column="37" selection-end-line="193" selection-end-column="37" />
+              <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
               <folding>
                 <element signature="e#0#24#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tasks.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="456" column="5" selection-start-line="456" selection-start-column="5" selection-end-line="456" selection-end-column="5" />
+              <folding>
+                <element signature="e#0#32#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="43" selection-start-line="1" selection-start-column="43" selection-end-line="1" selection-end-column="43" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -159,12 +116,14 @@
       <list>
         <option value="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/admin.py" />
-        <option value="$PROJECT_DIR$/django_projects/pimp/frank/models.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/views.py" />
-        <option value="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" />
-        <option value="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/frank/models.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" />
       </list>
     </option>
   </component>
@@ -174,8 +133,8 @@
   <component name="ProjectFrameBounds">
     <option name="x" value="65" />
     <option name="y" value="54" />
-    <option name="width" value="1292" />
-    <option name="height" value="686" />
+    <option name="width" value="1301" />
+    <option name="height" value="689" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -277,6 +236,9 @@
       </pane>
       <pane id="Scope" />
     </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../WebApplication/fmk_project/fmk/tests.py" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
@@ -416,10 +378,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="54" width="1292" height="686" extended-state="0" />
+    <frame x="65" y="54" width="1301" height="689" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.066563465" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.066103" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -475,18 +437,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/populate_pimp.py">
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="85" column="40" selection-start-line="85" selection-start-column="16" selection-end-line="85" selection-end-column="40" />
-          <folding />
+        <state vertical-scroll-proportion="0.90538335">
+          <caret line="37" column="47" selection-start-line="37" selection-start-column="47" selection-end-line="37" selection-end-column="47" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py">
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/populate_pimp.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="7" column="58" selection-start-line="7" selection-start-column="4" selection-end-line="7" selection-end-column="58" />
+        <state vertical-scroll-proportion="0.02446982">
+          <caret line="85" column="40" selection-start-line="85" selection-start-column="16" selection-end-line="85" selection-end-column="40" />
           <folding />
         </state>
       </provider>
@@ -499,52 +463,68 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/forms.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="193" column="37" selection-start-line="193" selection-start-column="37" selection-end-line="193" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#24#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/views.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="509" column="39" selection-start-line="509" selection-start-column="39" selection-end-line="509" selection-end-column="39" />
+        <state vertical-scroll-proportion="0.47960848">
+          <caret line="458" column="34" selection-start-line="458" selection-start-column="14" selection-end-line="458" selection-end-column="34" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-10.857142">
-          <caret line="340" column="36" selection-start-line="340" selection-start-column="36" selection-end-line="340" selection-end-column="36" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="43" selection-start-line="1" selection-start-column="43" selection-end-line="1" selection-end-column="43" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../WebApplication/fmk_project/fmk/tests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/forms.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#24#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="54" column="0" selection-start-line="54" selection-start-column="0" selection-end-line="54" selection-end-column="0" />
           <folding>
             <element signature="e#0#32#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-85.85714">
-          <caret line="237" column="42" selection-start-line="237" selection-start-column="42" selection-end-line="237" selection-end-column="42" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="456" column="5" selection-start-line="456" selection-start-column="5" selection-end-line="456" selection-end-column="5" />
           <folding>
-            <element signature="e#0#28#0" expanded="true" />
+            <element signature="e#0#32#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py">
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.69344264">
-          <caret line="37" column="47" selection-start-line="37" selection-start-column="47" selection-end-line="37" selection-end-column="47" />
+        <state vertical-scroll-proportion="0.60032624">
+          <caret line="159" column="48" selection-start-line="159" selection-start-column="48" selection-end-line="159" selection-end-column="48" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#93#195#0" expanded="true" />
           </folding>
         </state>
       </provider>
