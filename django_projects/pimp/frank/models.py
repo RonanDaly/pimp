@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.template.defaultfilters import slugify
 import os
 from pimp.settings_dev import MEDIA_ROOT
+from projects import models as projectModel
 
 # The default Django User model provides the following attributes:
 #	username
@@ -30,15 +31,6 @@ ANALYSIS_STATUS = (
 IONISATION_PROTOCOLS = (
     ('EIS','Electron Ionisation Spray'),
     # Additional ionisation protocols could be added here if necessary
-)
-
-
-###### THIS SHOULD NOW BE DELETED #############
-# Define the choices for method of detection, dictates method of how peaks are derived
-DETECTION_PROTOCOLS = (
-    ('LCMS DDA','Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'),
-    ('LCMS DIA', 'Liquid-Chromatography Data-Independent Acquisition'),
-    ('GCMS EII','Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'),
 )
 
 # Class defining the experiments created by the users

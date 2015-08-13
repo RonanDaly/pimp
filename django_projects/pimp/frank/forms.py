@@ -1,7 +1,7 @@
 from django import forms
 from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol,\
     Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, AnnotationTool, \
-    IONISATION_PROTOCOLS, DETECTION_PROTOCOLS, FILE_TYPES
+    IONISATION_PROTOCOLS, FILE_TYPES
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 

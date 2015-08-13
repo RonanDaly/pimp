@@ -161,7 +161,7 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     fragmentation_set_object = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
     peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set = fragmentation_set_object)
     ## Display number of msn peaks
-    fragmentation_spectra = Peak.objects.filter(parent_peak = peak)
+    fragmentation_spectra = Peak.objects.filter(parent_peak = peak).order_by('mass')
     associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set_object, status='Completed Successfully')
     candidate_annotations = {}
     for annotation_query in associated_annotation_queries:

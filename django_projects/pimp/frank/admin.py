@@ -1,77 +1,123 @@
 from django.contrib import admin
 from frank.models import *
 
-# The fields to be displayed in the Experiment page of django admin
+#### MODEL ADMIN CLASSES #####
+
 class ExperimentAdmin (admin.ModelAdmin):
+    """
+    Class to show the fields of the Experiment model in the django admin pages
+    """
     list_display = ('title', 'description', 'created_by', 'time_created',
                     'last_modified', 'ionisation_method', 'detection_method',
                     'slug'
     )
 
-# The fields to be displayed in the User Experiments page of admin
+
 class UserExperimentsAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the UserExperiments model in the django admin pages
+    """
     list_display = ('user', 'experiment')
 
-# The fields to be displayed in the Experimental Condition page of admin
+
 class ExperimentalConditionAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the ExperimentalCondition model in the django admin pages
+    """
     list_display = ('name', 'description', 'experiment', 'slug')
 
-# The fields to be displayed in the Sample page of admin
+
 class SampleAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the Sample model in the django admin pages
+    """
     list_display = ('name', 'description', 'experimental_condition', 'organism', 'slug')
 
-# The fields to be displayed in the Sample File page of admin
+
 class SampleFileAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the SampleFile model in the django admin pages
+    """
     list_display = ('name','polarity', 'address', 'sample')
 
-# The fields to be displayed in the Fragmentation Set page of admin
+
 class FragmentationSetAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the FragmentationSet model in the django admin pages
+    """
     list_display = ('name', 'experiment', 'time_created', 'status', 'slug')
 
-# The fields to be displayed in the Annotation Query page of admin
+
 class AnnotationQueryAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the AnnotationQuery model in the django admin pages
+    """
     list_display = ('name', 'fragmentation_set', 'time_created',
                     'status', 'slug', 'annotation_tool', 'annotation_tool_params',
     )
 
-# The fields to be displayed in the AnnotationTool page of admin
+
 class AnnotationToolAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the AnnotationTool model in the django admin pages
+    """
     list_display = ('name',)
 
-# The fields to be displayed in the Compound page of admin
+
+
 class CompoundAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the Compound model in the django admin pages
+    """
     list_display = ('name', 'formula', 'exact_mass', 'inchikey', 'cas_code',)
 
-# The fields to be displayed in the Peak page of admin
+
+
 class PeakAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the Peak model in the django admin pages
+    """
     list_display = ('id', 'source_file', 'mass', 'retention_time', 'intensity',
                     'parent_peak', 'msn_level', 'fragmentation_set',
                     'slug', 'preferred_candidate_annotation',
     )
 
-# The fields to be displayed in the Candidate Annotation page of admin
+
 class CandidateAnnotationAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the CandidateAnnotation model in the django admin pages
+    """
     list_display = ('compound', 'peak', 'confidence', 'annotation_query',
                     'mass_match', 'difference_from_peak_mass',
                     'adduct', 'instrument_type',
     )
 
-# The fields to be displayed in the CompoundAnnotationTool page of admin
+
 class CompoundAnnotationToolAdmin(admin.ModelAdmin):
+    """
+    Class to show the fields of the CompoundAnnotation model in the django admin pages
+    """
     list_display = ('compound', 'annotation_tool', 'annotation_tool_identifier')
 
 
-# The fields to be displayed in the ExperimentalProtocol page of the admin
 class ExperimentalProtocolAdmin (admin.ModelAdmin):
+    """
+    Class to show the fields of the ExperimentalProtocol model in the django admin pages
+    """
     list_display = ('name',)
 
 
-# The fields to be displayed in the AnnotationToolProtocols page of the admin
 class AnnotationToolProtocolsAdmin (admin.ModelAdmin):
+    """
+    Class to show the fields of the AnnotationToolProtocols model in the django admin pages
+    """
     list_display = ('annotation_tool', 'experimental_protocol')
 
 
 class AnnotationQueryHierarchyAdmin (admin.ModelAdmin):
+    """
+    Class to show the fields of the AnnotationQueryHierarchy model in the django admin pages
+    """
     list_display = ('parent_annotation_query', 'subquery_annotation_query')
 
 
@@ -91,4 +137,3 @@ admin.site.register(CompoundAnnotationTool, CompoundAnnotationToolAdmin)
 admin.site.register(ExperimentalProtocol, ExperimentalProtocolAdmin)
 admin.site.register(AnnotationToolProtocols, AnnotationToolProtocolsAdmin)
 admin.site.register(AnnotationQueryHierarchy, AnnotationQueryHierarchyAdmin)
-

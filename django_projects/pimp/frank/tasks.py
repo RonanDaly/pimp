@@ -124,7 +124,7 @@ def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
                             )
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
     r_source = robjects.r['source']
-    r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/frankMSnPeakMatrix.R')
+    r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/Frank_R/frankMSnPeakMatrix.R')
     r_frankMSnPeakMatrix = robjects.globalenv['frankMSnPeakMatrix']
     fragmentation_set_object.status = 'Processing'
     fragmentation_set_object.save()
@@ -289,8 +289,8 @@ def nist_batch_search(annotation_query_id):
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
     annotation_query.save()
-    query_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'.msp')
-    nist_output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', annotation_query.name+str(annotation_query_id)+'_nist_out.txt')
+    query_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', str(annotation_query.id)+'.msp')
+    nist_output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', str(annotation_query.id)+'_nist_out.txt')
     fragmentation_set_id = annotation_query.fragmentation_set.id
     msp_file_status = nist_make_msp_file(fragmentation_set_id, query_file_name)
     if msp_file_status == 'Completed with Errors':
@@ -317,23 +317,31 @@ def nist_batch_search(annotation_query_id):
             nist_query_call.extend(['/REPL', 'replib'])
     additional_parameters = ['/INP', query_file_name, '/OUT', nist_output_file_name, '/COL', 'pz,tz,cf,cn,nn,it,ce']
     nist_query_call.extend(additional_parameters)
+    nist_call_successfull = False
+    print nist_query_call
     try:
         call(nist_query_call)
+        nist_call_successfull = True
     except subprocess.CalledProcessError:
         annotation_query.status = 'Completed with Errors'
         annotation_query.save()
+        print 'Error Calling NIST'
     except OSError:
         annotation_query.status = 'Completed with Errors'
         annotation_query.save()
+        print 'Error Calling NIST'
     print 'Finished Querying NIST'
-    annotation_list_status = nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id)
+    if nist_call_successfull == True:
+        annotation_list_status = nist_get_annotation_list(fragmentation_set_id, nist_output_file_name, annotation_query_id)
+        os.remove(nist_output_file_name)
+    if msp_file_status == 'Completed with Errors':
+        os.remove(query_file_name)
     if annotation_list_status == 'Completed with Errors':
         annotation_query.status = 'Completed with Errors'
     else:
         annotation_query.status = 'Completed Successfully'
     annotation_query.save()
-    os.remove(query_file_name)
-    os.remove(nist_output_file_name)
+    #os.remove(query_file_name)
 
 
 def nist_make_msp_file(fragmentation_set_id, query_file_name):
@@ -449,7 +457,7 @@ def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
                             experiment_object.slug,
                             )
     r_source = robjects.r['source']
-    r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/gcmsGeneratePeakList.R')
+    r_source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/Frank_R/gcmsGeneratePeakList.R')
     r_generateGCMSPeakMatrix = robjects.globalenv['generateGCMSPeakMatrix']
     output = r_generateGCMSPeakMatrix(input_directory = filepath)
     ### Just for debugging use pre-prepared data file
