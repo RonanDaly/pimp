@@ -30,6 +30,7 @@ class ExperimentForm(forms.ModelForm):
         model = Experiment
         fields = ('title', 'description', 'ionisation_method', 'detection_method')
 
+
 # The form that is used to create a new experimental condition
 class ExperimentalConditionForm(forms.ModelForm):
     name = forms.CharField(max_length=60, help_text="Enter the name of the experiment condition.")

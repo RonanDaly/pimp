@@ -21,7 +21,7 @@ frankMSnPeakMatrix <- function (source_directory, peak_detection_method = "centW
                   fitgauss=gaussian_fit, verbose.column=verbose_column)
   xset <- group(xset)
   
-  source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/frankXcmsSetFragments.R')
+  source('~/Git/MScProjectRepo/pimp/django_projects/pimp/frank/Frank_R/frankXcmsSetFragments.R')
   frags <- frankXcmsSetFragments(xset, cdf.corrected = FALSE, min.rel.int=0.01, max.frags = 5000, 
                             msnSelect=c("precursor_int"), specFilter=c("specPeaks"), match.ppm=7, 
                             sn=3, mzgap=0.005, min.r=0.75, min.diff=10)

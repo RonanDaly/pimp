@@ -1,48 +1,69 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
-
-{% block body_block %}
+{% block content %}
 
 	<h4>{{experiment.title}}</h4>
+		<div>		
+			<table>
+				<tr><td>Description: {{experiment.description}}</td></tr>
+				<tr><td>Date Created: {{experiment.time_created}}</td></tr>
+				<tr><td>Ionisation Method: {{experiment.get_ionisation_method_display}}</td></tr>
+				<tr><td>Experiment Type: {{experiment.detection_method}}</td></tr>
+			</table>
+		</div>
+		</br>
+		<div>
+			<h4>Experimental Conditions</h4>
+				<a href="{% url 'add_experimental_condition' experiment.slug %}">Add Experimental Condition</a>
+		</div>
+		{% if conditions %}
+		<div>
+			<table class="table">
+				<tr>
+					<th>Experimental Condition</th>
+					<th>Description</th>
+				</tr>
+			{% for condition in conditions %}
+				<tr>
+					<td><a href="{% url 'condition_summary' experiment.slug condition.slug %}">{{condition.name}}</a></td>
+					<td>{{condition.description}}</td>
+				</tr>
+			{% endfor %}
+			</table>
+		</div>
+		{% else %}
+			<p>No existing experimental condiditons</p>
+		{% endif %}
+		</br>
+		<h4>Fragment Sets</h4>
+			<a href="{% url 'create_fragmentation_set' experiment.slug %}">Generate New Fragment Set</a>
+			</br>			
+			{% if fragmentation_sets %}
+			<div>			
+				<table class="table">
+					<tr>
+						<th>Name</th>
+						<th>Status</th>
+						<th>Time Created</th>
+					</tr>
+					{% for fragment_set in fragmentation_sets %}
+						<tr>
+							<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>	
+							<td>{{fragment_set.status}}</td>
+							<td>{{fragment_set.time_created}}</td>
+						</tr>
+					{% endfor %}
+				</table>
+			</div>
+			</br>
+			{% else %}
+				<p>No existing peak sets associated with this experiment<p>
+			{% endif %}	
+		</br></br>		
 		<table>
-			<tr><td>Description: {{experiment.description}}</td></tr>
-			<tr><td>Date Created: {{experiment.time_created}}</td></tr>
-			<tr><td>Ionisation Method: {{experiment.get_ionisation_method_display}}</td></tr>
-			<tr><td>Experiment Type: {{experiment.detection_method}}</td></tr>
-		</table></br>
-		<h4>Experimental Conditions</h4>
-<a href="/frank/my_experiments/{{experiment.slug}}/add_experimental_condition">Add Experimental Condition</a>
+			<tr><td><a href="{% url 'my_experiments' %}">My Experiments</a></td></tr>
+			<tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragmentation Sets</a></td></tr>
 		</table>
-	{% if conditions %}
-		<table>
-		{% for condition in conditions %}
-			<tr><td><a href="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}">{{condition.name}}</a></td></tr>
-		{% endfor %}
-		</table>
-	{% else %}
-		<p>No existing experimental condiditons</p>
-	{% endif %}
-	</br>
-	<h4>Fragment Sets</h4>
-	<a href="/frank/my_experiments/{{experiment.slug}}/create_fragmentation_set">Generate New Fragment Set</a>
-	{% if fragmentation_sets %}
-		<table>
-		{% for fragment_set in fragmentation_sets %}
-			<tr><td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}">{{fragment_set.name}}</a></td>
-		<td>{{fragment_set.status}}</td>
-		<td>{{fragment_set.time_created}}</td>
-		</tr>
-		{% endfor %}
-		</table>
-	{% else %}
-		<p>No existing peak sets associated with this experiment<p>
-	{% endif %}	
-	<table>
-		
-	<tr><td><a href="/frank/">Home</a></td></tr>
-	</table>	
-	</br>
 {% endblock %}

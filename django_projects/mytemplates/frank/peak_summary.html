@@ -1,93 +1,93 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
 
-{% block body_block %}
+{% block content %}
 
-        <h4>{{peak}}</h4>
-	<p>Mass: {{peak.mass}}</p>
-	<p>Retention Time: {{peak.retention_time|floatformat:2}}</p>
-	<p>Intensity: {{peak.intensity|floatformat:2}}</p>
+        <h2>Peak {{peak.id}}</h2>
+	<p>Mass: {{peak.mass|floatformat:4}}</p>
+	<p>Retention Time: {{peak.retention_time|floatformat:4}}</p>
+	<p>Intensity: {{peak.intensity|floatformat:4}}</p>
 	<p>Number of Fragments: {{number_of_fragments}}</p>
 	</br>
 	{% if preferred_annotation %}
-	<p>Preferred Annotation: {{preferred_annotation.compound.name}}</p>
-	<p>Preferred Annotation Formula: {{preferred_annotation.compound.formula}}</p>
-	<p>Selected By: {{peak.preferred_candidate_user_selector}}</p>
-	<p>Last Updated: {{peak.preferred_candidate_updated_date}}</p>
-	</br>
+		<p>Preferred Annotation: {{preferred_annotation.compound.name}}</p>
+		<p>Preferred Annotation Formula: {{preferred_annotation.compound.formula}}</p>
+		<p>Selected By: {{peak.preferred_candidate_user_selector}}</p>
+		<p>Last Updated: {{peak.preferred_candidate_updated_date}}</p>
+		<p>Selection Criteria: {{peak.preferred_candidate_description}}</p>
+		</br>
 	{% else %}
-	<p>No Specified Preferred Annotation</p>
+		<p>No Specified Preferred Annotation</p>
 	{% endif %}
 
-	<p>MS2 Fragment Spectrum</p>     
+	<h3>MS2 Fragment Spectrum</h3>     
 	{% if fragmentation_peak_list %}
 
 		<div>
-			<img src="/frank/my_fragmentation_sets/{{peak.fragmentation_set.slug}}/{{peak.slug}}/msn_spectra_plot.png">
+			<img src="{% url 'make_spectra_plot' peak.fragmentation_set.slug peak.slug %}">
 		</div>
 		</br>
-		<table>
-		<tr>
-		<th>Fragment Identifier</th>
-		<th>Mass</th>
-		<th>Retention Time</th>
-		<th>Intensity</th>
-		</tr>
-
-		{% for fragment in fragmentation_peak_list %}
-		<tr>
-		<td><a href="/frank/my_fragmentation_sets/{{fragment.fragmentation_set.slug}}/{{fragment.slug}}">{{fragment}}</a></td>
-		<td>{{fragment.mass|floatformat:2}}</td>
-		<td>{{fragment.retention_time|floatformat:2}}</td>
-		<td>{{fragment.intensity|floatformat:2}}</td>
-		</tr>
-		{% endfor %}
+		<table class="table">
+			<tr>
+				<th>Fragment Identifier</th>
+				<th>Mass</th>
+				<th>Retention Time</th>
+				<th>Intensity</th>
+			</tr>
+			{% for fragment in fragmentation_peak_list %}
+			<tr>
+				<td><a href="{% url 'peak_summary' fragment.fragmentation_set.slug fragment.slug %}">{{fragment}}</a></td>
+				<td>{{fragment.mass|floatformat:4}}</td>
+				<td>{{fragment.retention_time|floatformat:4}}</td>
+				<td>{{fragment.intensity|floatformat:2}}</td>
+			</tr>
+			{% endfor %}
 		</table>
 	{% else %}
-		<h1>No peaks to display</h1>
+		<p>No peaks to display</p>
 	{% endif %}
 	<br/>
 	<h3>Candidate Annotations</h3>
-	 {% if candidate_annotations %}
-	  {% for annotation_query,annotations in candidate_annotations.items %}
-	  	<h4>{{annotation_query.name}}</h4>
-	  	{% if annotation_query.parent_annotation_query %}
-	  		<p>Parent: {{annotation_query.parent_annotation_query.name}}</p>
-	  	{% endif %}
-		<table border=1>
-		<tr>
-		<th>Compound Title</th>
-		<th>Compound ID</th>
-		<th>Compound Formula</th>
-		<th>Compound Mass</th>
-		<th>Confidence Value</th>
-		<th>Additional information</th>
-		<th>Mass Differential</th>
-		<th></th>
-		</tr>
-		{% for annotation in annotations %}
-		<tr>
-		<td>{{annotation.compound.name}}</td>
-		<td>{{annotation.compound.id}}</td>
-		<td>{{annotation.compound}}</td>
-		<td>{{annotation.compound.exact_mass|floatformat:4}}</td>
-		<td>{{annotation.confidence|floatformat:3}}</td>
-		<td>{{annotation.additional_information}}</td>		
-		<td>{{annotation.difference_from_peak_mass|floatformat:3}}</td>
-		<td><a href="/frank/my_fragmentation_sets/{{peak.fragmentation_set.slug}}/{{peak.slug}}/{{annotation.id}}/specify_preferred_annotation">Prefer Annotation</td>
-		</tr>
-		{% endfor %}
-		</table>
-	  {% endfor %}
+	{% if candidate_annotations %}
+		{% for annotation_query,annotations in candidate_annotations.items %}
+	  		<h5>{{annotation_query.name}}</h5>
+			<table class="table">
+				{% if annotations %}				
+				<tr>
+					<th>Compound Name</th>
+					<th>Compound Formula</th>
+					<th>Compound Mass</th>
+					<th>Confidence Value</th>
+					<th>Difference In Mass</th>
+					<th>Adduct</th>
+					<th>Collision Energy</th>
+					<th></th>
+				</tr>
+				{% for annotation in annotations %}
+					<tr>
+						<td>{{annotation.compound.name}}</td>
+						<td>{{annotation.compound.formula}}</td>
+						<td>{{annotation.compound.exact_mass|floatformat:4}}</td>
+						<td>{{annotation.confidence|floatformat:3}}</td>		
+						<td>{{annotation.difference_from_peak_mass|floatformat:3}}</td>
+						<td>{{annotation.adduct}}</td>
+						<td>{{annotation.collision_energy}}</td>
+						<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+					</tr>
+				{% endfor %}
+				{% endif %}
+			</table>
+	  	{% endfor %}
 	{% else %}
-		<h1>No annotations to display</h1>
+		<p>No current annotations for this peak</p>
 	{% endif %}
 
 	<table>	
-	<tr><td><a href="/frank/">Home</a></td></tr>
+		<tr><td><a href="{% url 'fragmentation_set' peak.fragmentation_set.slug %}">{{peak.fragmentation_set.name}}</a></td></tr>
+		<tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragmentation Sets</a></td></tr>
+		<tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
 	</table>	
 
 {% endblock %}

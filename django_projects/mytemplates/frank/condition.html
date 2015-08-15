@@ -1,30 +1,44 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
 
-{% block body_block %}
+{% block content %}
 
-	<h4>{{experiment.title}}: {{condition.name}}</h4>
+	<h2>{{experiment.title}}: {{condition.name}}</h2>
 		<table>
-			<tr><td>{{condition.description}}</td></tr>
+			<tr><td>Description: {{condition.description}}</td></tr>
 		</table>
-		
-		<a href="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/add_sample">Add Sample</a>
-		<table>
+		</br></br>
+		<a href="{% url 'add_sample' experiment.slug condition.slug %}">Add Sample</a>
+		</br></br>		
 		{% for sample in samples %}
-			<tr><td>{{sample.name}}</td>
-			{% for file in sample_files %}
-				{% if file.sample == sample %}
-				<td>{{file.name}} File</td>
-				{% endif %}	 		
-			{% endfor %}
-			<td><a href="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/{{sample.slug}}/add_sample_file">Add Sample File</a></td></tr>
+			<div>
+				<p>Name: {{sample.name}}</p>
+				<p>Description: {{sample.description}}</p>
+				<p>Organism: {{sample.organism}}</p>
+					<table class="table">
+						<tr>
+							<th>File Name</th>
+							<th>Polarity</th>
+						</tr>
+						{% for file in sample_files %}
+							{% if file.sample == sample %}
+							<tr>
+								<td>{{file.name}}</td>
+								<td>{{file.polarity}}</td>
+							</tr>
+							{% endif %}
+						{% endfor %}
+					</table>
+				<a href="{% url 'add_sample_file' experiment.slug condition.slug sample.slug %}">Add Sample File</a>
+			</div>
 		{% endfor %}
-		</table>
+	</br>
 	<table>
-	<tr><td><a href="/frank/">Home</a></td></tr>
+	<tr><td><a href="{% url 'experiment_summary' experiment.slug %}">{{experiment.title}}</a></td></tr>
+	<tr><td><a href="{% url 'my_experiments' %}">My Experiments</a></td></tr>
+	<tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
 	</table>	
 
 {% endblock %}

@@ -2,10 +2,11 @@ from django.conf.urls import patterns, url
 from frank import views
 
 urlpatterns = patterns ('',
-    url(r'^$', views.index, name = 'frank_index'),
-    url(r'^my_experiments/$', views.my_experiments, name = 'my_experiments'),
-    url(r'^my_experiments/add_experiment/$', views.add_experiment, name = 'add_experiment'),
-    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/$', views.experiment_summary, name = 'experiment_summary'),
+    url(r'^$', views.index, name='frank_index'),
+    url(r'^my_experiments/$', views.my_experiments, name='my_experiments'),
+    url(r'^my_experiments/add_experiment/$', views.add_experiment, name ='add_experiment'),
+    url(r'^my_experiments/delete_experiment/(?P<experiment_name_slug>[\w\-]+)/$', views.delete_experiment, name ='delete_experiment'),
+    url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/$', views.experiment_summary, name='experiment_summary'),
     url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/add_experimental_condition/$',
         views.add_experimental_condition, name = 'add_experimental_condition'),
     url(r'^my_experiments/(?P<experiment_name_slug>[\w\-]+)/(?P<condition_name_slug>[\w\-]+)/$',

@@ -1,14 +1,12 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
-
-{% block body_block %}
+{% block content %}
 
         <h4>{{experiment.title}}: {{condition.name}}: {{sample.name}}</h4>
 
-        <form id="sample_form" method="post" action="/frank/my_experiments/{{experiment.slug}}/{{condition.slug}}/{{sample.slug}}/add_sample_file/" enctype="multipart/form-data">
+        <form id="sample_form" method="post" action="{% url 'add_sample_file' experiment.slug condition.slug sample.slug %}" enctype="multipart/form-data">
 
             {% csrf_token %}
             {% for hidden in sampleFileForm.hidden_fields %}

@@ -1,4 +1,4 @@
-{% extends 'frank/frankbase.html' %}
+{% extends 'base.html' %}
 
 {% load staticfiles %}
 
@@ -6,11 +6,11 @@
 
 {% block body_block %}
 
-        <h4>{{fragmentation_set.name}}</h4>
-	<p>Peak: {{peak}}</p>
+        <h2>{{fragmentation_set.name}}</h2>
+	<p>Peak: {{peak.id}}</p>
 	<p>Suggested Annotation: {{annotation.compound.name}}</p>
 
-        <form id="preferred_annotation_form" method="post" action="/frank/my_fragmentation_sets/{{fragmentation_set.slug}}/{{peak.slug}}/{{annotation.id}}/specify_preferred_annotation">
+        <form id="preferred_annotation_form" method="post" action="{% url 'specify_preferred_annotation' fragmentation_set.slug peak.slug annotation.id %}">
 
             {% csrf_token %}
             {% for hidden in form.hidden_fields %}

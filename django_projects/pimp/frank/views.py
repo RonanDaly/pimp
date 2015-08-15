@@ -12,6 +12,7 @@ from django.db.models import Max
 import re
 import datetime
 import jsonpickle
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 
 ##### No longer needed for plotting #######
 # import matplotlib
@@ -202,6 +203,13 @@ def get_specify_preferred_annotation_context_dict(fragmentation_set_name_slug, p
     }
     return context_dict
 
+def get_delete_experiment_context_dict(experiment_name_slug):
+    experiment = Experiment.objects.get(slug=experiment_name_slug)
+    context_dict = {
+        'experiment': experiment,
+    }
+    return context_dict
+
 # Create your views here.
 
 # View for the Index page of frank
@@ -247,6 +255,23 @@ def experiment_summary(request, experiment_name_slug):
     context_dict = get_experiment_summary_context_dict(experiment_name_slug)
     return render(request, 'frank/experiment.html', context_dict)
 
+
+@login_required
+def delete_experiment(request, experiment_name_slug):
+    if request.method == 'POST':
+        try:
+            experiment = Experiment.objects.get(slug=experiment_name_slug)
+        except ObjectDoesNotExist:
+            return render(request, 'frank/index.html')
+        except MultipleObjectsReturned:
+            return render(request, 'frank/index.html')
+
+
+
+        return render(request, 'frank/index.html')
+    else:
+        context_dict = get_delete_experiment_context_dict(experiment_name_slug)
+        return render(request, 'frank/delete_experiment.html', context_dict)
 
 @login_required
 def add_experimental_condition(request, experiment_name_slug):

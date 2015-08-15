@@ -1,85 +1,82 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
-
-{% block body_block %}
+{% block content %}
 
         <h2>{{fragment_set.name}}</h2>
 	<p>{{fragment_set.experiment}}</p>
 	<p>Number of MS1 Peaks: {{number_of_peaks}}</p>
 	
-	<h4>Annotation Sets</h4>
+	<h3>Annotation Sets</h3>
 	{% if annotation_tool_form %}
-		<form id="annotation_tool_form" method="post" action="/frank/my_fragmentation_sets/{{fragment_set.slug}}">
+		<form id="annotation_tool_form" method="post" action="{% url 'fragmentation_set' fragment_set.slug %}">
 
-            {% csrf_token %}
-            {% for field in annotation_tool_form.visible_fields %}
-                {{ field.errors }}
-		<br>
-                {{ field.help_text }}
-		<br>
-                {{ field }}
-		<br>
-            {% endfor %}
-	<input type = "submit" name="submit" value="Create New Annotation Set">
-	</form>
+            		{% csrf_token %}
+            		{% for field in annotation_tool_form.visible_fields %}
+                		{{ field.errors }}
+				</br>
+                		{{ field.help_text }}
+				</br>
+                		{{ field }}
+				</br>
+            		{% endfor %}
+			<input type = "submit" name="submit" value="Create New Annotation Set">
+		</form>
 	{% endif %}
 	</br>
 	{% if annotations %}
-		<table>
-		<tr>
-			<th>Name</th>
-			<th>Time Created</th>
-			<th>Current Status</th>
-			<th>Parent</th>
-		</tr>
-		{% for annotation in annotations %}
-		<tr>
-		<td>{{annotation.name}}</td>
-		<td>{{annotation.time_created}}</td>
-		<td>{{annotation.status}}</td>
-		<td>{{annotation.parent_annotation_query.name}}</td>
-		</tr>
-		{% endfor %}	
+		<table class="table">
+			<tr>
+				<th>Name</th>
+				<th>Time Created</th>
+				<th>Current Status</th>
+			
+			</tr>
+			{% for annotation in annotations %}
+				<tr>
+					<td>{{annotation.name}}</td>
+					<td>{{annotation.time_created}}</td>
+					<td>{{annotation.status}}</td>
+				</tr>
+			{% endfor %}	
 		</table>
 	{% else %}
-		<h4>No annotation queries have been performed on this peak set</h4>
+		<p>No annotation queries have been performed on this peak set</p>
 	{% endif %}
 
-	<h4>MS1 Peaks</h4>
+	<h3>MS1 Peaks</h3>
 	{% if peaks_by_file %}
 		{% for file,peak_values in peaks_by_file.items %}
 			<div>
-				<h4>{{file}}</h4>
-				<table>
-				<tr>
-				<th>Identifier</th>
-				<th>Mass</th>
-				<th>Retention Time</th>
-				<th>Intensity</th>
-				<th>Preferred Annotation</th>
-				<th>Compound Formula</th>
-				</tr>
-				{% for peak in peak_values %}
-				<tr>
-				<td><a href="/frank/my_fragmentation_sets/{{fragment_set.slug}}/{{peak.slug}}">{{peak.id}}</a>
-				</td>
-				<td>{{peak.mass|floatformat:4}}</td>
-				<td>{{peak.retention_time|floatformat:2}}</td>
-				<td>{{peak.intensity|floatformat:2}}</td>
-				<td>{{peak.preferred_candidate_annotation.compound.name}}</td>
-				<td>{{peak.preferred_candidate_annotation.compound.formula}}</td>
-				</tr>				
-				{% endfor %}
+				<h5>{{file}}</h5>
+				<table class="table">
+					<tr>
+						<th>Identifier</th>
+						<th>Mass</th>
+						<th>Retention Time</th>
+						<th>Intensity</th>
+						<th>Preferred Annotation</th>
+						<th>Compound Formula</th>
+					</tr>
+					{% for peak in peak_values %}
+						<tr>
+							<td><a href="{% url 'peak_summary' fragment_set.slug peak.slug %}">{{peak.id}}</a></td>
+							<td>{{peak.mass|floatformat:4}}</td>
+							<td>{{peak.retention_time|floatformat:4}}</td>
+							<td>{{peak.intensity|floatformat:4}}</td>
+							<td>{{peak.preferred_candidate_annotation.compound.name}}</td>
+							<td>{{peak.preferred_candidate_annotation.compound.formula}}</td>
+						</tr>				
+					{% endfor %}
 				</table>
 			</div>
 		{% endfor %}
 	{% endif %}
 	</br>
 	<table>	
-	<tr><td><a href="/frank/">Home</a></td></tr>
+		<tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragment Sets</a></td></tr>		
+		<tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
 	</table>	
 
 {% endblock %}

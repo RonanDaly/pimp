@@ -1,14 +1,12 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
-
-{% block body_block %}
+{% block content %}
 
         <h4>Generate A New Fragmentation Set</h4>
 
-        <form id="fragmentation_set_form" method="post" action="/frank/my_experiments/{{experiment.slug}}/create_fragmentation_set">
+        <form id="fragmentation_set_form" method="post" action="{% url 'create_fragmentation_set' experiment.slug %}">
 
             {% csrf_token %}
             {% for hidden in frag_set_form.hidden_fields %}

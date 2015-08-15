@@ -1,14 +1,12 @@
-{% extends 'frank/frankbase.html' %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-{% block title %}{% endblock %}
-
-{% block body_block %}
+{% block content %}
 
         <h2>Add Experiment</h2>
 
-        <form id="experiment_form" method="post" action="/frank/my_experiments/add_experiment/">
+        <form id="experiment_form" method="post" action="{% url 'add_experiment' %}">
 
             {% csrf_token %}
             {% for hidden in experiment_form.hidden_fields %}

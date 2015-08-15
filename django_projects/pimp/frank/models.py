@@ -33,6 +33,37 @@ IONISATION_PROTOCOLS = (
     # Additional ionisation protocols could be added here if necessary
 )
 
+
+# Method to generate the absolute directory of the uploaded file
+def get_upload_file_name(instance, filename):
+    # Retrive the sample, experimental condition and experiment to which the sample file is to be associated
+    sample_object = instance.sample
+    experimental_condition_object = sample_object.experimental_condition
+    experiment_object = experimental_condition_object.experiment
+    # The directory of the file upload is concatinated to the root directory
+    filepath = os.path.join(MEDIA_ROOT,
+                            'frank',
+                            experiment_object.created_by.username,
+                            experiment_object.slug,
+                            experimental_condition_object.slug,
+                            sample_object.slug,
+                            instance.polarity
+                            )
+    try:
+        # If the directory doesn't exist then it must be created.
+        os.makedirs(filepath)
+    except OSError as e:
+        if e.errno == 17:
+            # Directory already exists
+            pass
+    # Finally, the filename is contatinated to the directory
+    upload_location = os.path.join(filepath, filename)
+    return upload_location
+    ## Remember to fix the problem that if two identical files are added to the same experiment
+    ## then Django will create a duplicate file in the directory
+    ## Should probably be done in the form.
+
+
 # Class defining the experiments created by the users
 class Experiment(models.Model):
     title = models.CharField(max_length = 250, blank = False)
@@ -102,35 +133,6 @@ class Sample(models.Model):
     def __unicode__(self):
         return 'Sample '+str(self.id)+ ' in '+ self.experimental_condition.experiment.title
 
-
-# Method to generate the absolute directory of the uploaded file
-def get_upload_file_name(instance, filename):
-    # Retrive the sample, experimental condition and experiment to which the sample file is to be associated
-    sample_object = instance.sample
-    experimental_condition_object = sample_object.experimental_condition
-    experiment_object = experimental_condition_object.experiment
-    # The directory of the file upload is concatinated to the root directory
-    filepath = os.path.join(MEDIA_ROOT,
-                            'frank',
-                            experiment_object.created_by.username,
-                            experiment_object.slug,
-                            experimental_condition_object.slug,
-                            sample_object.slug,
-                            instance.polarity
-                            )
-    try:
-        # If the directory doesn't exist then it must be created.
-        os.makedirs(filepath)
-    except OSError as e:
-        if e.errno == 17:
-            # Directory already exists
-            pass
-    # Finally, the filename is contatinated to the directory
-    upload_location = os.path.join(filepath, filename)
-    return upload_location
-    ## Remember to fix the problem that if two identical files are added to the same experiment
-    ## then Django will create a duplicate file in the directory
-    ## Should probably be done in the form.
 
 # Class corresponding to the sampke files corresponding to the sample
 class SampleFile(models.Model):
