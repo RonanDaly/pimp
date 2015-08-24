@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='AnnotationQuery',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=250)),
+                ('name', models.CharField(unique=True, max_length=250)),
                 ('time_created', models.DateTimeField(auto_now=True)),
                 ('status', models.CharField(default=b'Defined', max_length=250, choices=[(b'Submitted', b'Submitted'), (b'Processing', b'Processing'), (b'Completed Successfully', b'Completed Successfully'), (b'Completed with Errors', b'Completed with Errors')])),
                 ('slug', models.SlugField(unique=True)),
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
             name='AnnotationTool',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=250)),
+                ('name', models.CharField(unique=True, max_length=250)),
                 ('default_params', models.CharField(max_length=500)),
                 ('slug', models.SlugField(unique=True)),
             ],
@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='AnnotationToolProtocols',
+            name='AnnotationToolProtocol',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('annotation_tool', models.ForeignKey(to='frank.AnnotationTool')),
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
             name='Compound',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=500)),
+                ('name', models.CharField(unique=True, max_length=225)),
                 ('formula', models.CharField(max_length=250)),
                 ('exact_mass', models.DecimalField(max_digits=20, decimal_places=10)),
                 ('inchikey', models.CharField(max_length=500, null=True)),
@@ -109,11 +109,10 @@ class Migration(migrations.Migration):
             name='Experiment',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('title', models.CharField(max_length=250)),
+                ('title', models.CharField(unique=True, max_length=250)),
                 ('description', models.CharField(max_length=250)),
                 ('time_created', models.DateTimeField(auto_now=True)),
-                ('last_modified', models.DateTimeField(auto_now_add=True)),
-                ('ionisation_method', models.CharField(max_length=250, choices=[(b'EIS', b'Electron Ionisation Spray')])),
+                ('ionisation_method', models.CharField(max_length=250, choices=[(b'EIS', b'Electron Ionisation Spray'), (b'EII', b'Electron Impact Ionisation')])),
                 ('slug', models.SlugField(unique=True)),
                 ('created_by', models.ForeignKey(related_name=b'experiment_creator', to=settings.AUTH_USER_MODEL)),
             ],
@@ -125,7 +124,7 @@ class Migration(migrations.Migration):
             name='ExperimentalCondition',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=250)),
+                ('name', models.CharField(unique=True, max_length=250)),
                 ('description', models.CharField(max_length=250)),
                 ('slug', models.SlugField(unique=True)),
                 ('experiment', models.ForeignKey(to='frank.Experiment')),
@@ -148,7 +147,7 @@ class Migration(migrations.Migration):
             name='FragmentationSet',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=250)),
+                ('name', models.CharField(unique=True, max_length=250)),
                 ('time_created', models.DateTimeField(auto_now=True)),
                 ('status', models.CharField(default=b'Submitted', max_length=250, choices=[(b'Submitted', b'Submitted'), (b'Processing', b'Processing'), (b'Completed Successfully', b'Completed Successfully'), (b'Completed with Errors', b'Completed with Errors')])),
                 ('slug', models.SlugField(unique=True)),
@@ -164,8 +163,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('mass', models.DecimalField(max_digits=20, decimal_places=10)),
                 ('retention_time', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('intensity', models.DecimalField(max_digits=20, decimal_places=10)),
-                ('msn_level', models.IntegerField(default=0)),
+                ('intensity', models.DecimalField(max_digits=30, decimal_places=10)),
+                ('msn_level', models.IntegerField()),
                 ('slug', models.SlugField(unique=True)),
                 ('preferred_candidate_description', models.CharField(max_length=500, null=True)),
                 ('preferred_candidate_updated_date', models.DateTimeField(null=True)),
@@ -183,7 +182,7 @@ class Migration(migrations.Migration):
             name='Sample',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=250)),
+                ('name', models.CharField(unique=True, max_length=250)),
                 ('description', models.CharField(max_length=250)),
                 ('organism', models.CharField(max_length=250)),
                 ('slug', models.SlugField(unique=True)),
@@ -199,7 +198,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=250)),
                 ('polarity', models.CharField(max_length=250, choices=[(b'Positive', b'Positive'), (b'Negative', b'Negative')])),
-                ('address', models.FileField(max_length=500, upload_to=frank.models.get_upload_file_name)),
+                ('address', models.FileField(max_length=500, upload_to=frank.models._get_upload_file_name)),
                 ('sample', models.ForeignKey(to='frank.Sample')),
             ],
             options={
@@ -207,7 +206,7 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='UserExperiments',
+            name='UserExperiment',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('experiment', models.ForeignKey(to='frank.Experiment')),
@@ -226,13 +225,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='experiment',
             name='detection_method',
-            field=models.ForeignKey(to='frank.ExperimentalProtocol', null=True),
+            field=models.ForeignKey(to='frank.ExperimentalProtocol'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='experiment',
             name='users',
-            field=models.ManyToManyField(to=settings.AUTH_USER_MODEL, through='frank.UserExperiments'),
+            field=models.ManyToManyField(to=settings.AUTH_USER_MODEL, through='frank.UserExperiment'),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -254,7 +253,7 @@ class Migration(migrations.Migration):
             preserve_default=True,
         ),
         migrations.AddField(
-            model_name='annotationtoolprotocols',
+            model_name='annotationtoolprotocol',
             name='experimental_protocol',
             field=models.ForeignKey(to='frank.ExperimentalProtocol'),
             preserve_default=True,
@@ -262,7 +261,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='annotationtool',
             name='suitable_experimental_protocols',
-            field=models.ManyToManyField(to='frank.ExperimentalProtocol', through='frank.AnnotationToolProtocols'),
+            field=models.ManyToManyField(to='frank.ExperimentalProtocol', through='frank.AnnotationToolProtocol'),
             preserve_default=True,
         ),
         migrations.AddField(

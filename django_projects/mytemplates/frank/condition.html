@@ -13,7 +13,7 @@
 		<a href="{% url 'add_sample' experiment.slug condition.slug %}">Add Sample</a>
 		</br></br>		
 		{% for sample in samples %}
-			<div>
+			<div class="container">
 				<p>Name: {{sample.name}}</p>
 				<p>Description: {{sample.description}}</p>
 				<p>Organism: {{sample.organism}}</p>
@@ -33,6 +33,7 @@
 					</table>
 				<a href="{% url 'add_sample_file' experiment.slug condition.slug sample.slug %}">Add Sample File</a>
 			</div>
+			</br></br>
 		{% endfor %}
 	</br>
 	<table>

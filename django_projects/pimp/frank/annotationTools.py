@@ -1,4 +1,4 @@
-__author__ = 'scottiedog27'
+__author__ = 'scott greig'
 
 from frank.models import *
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
@@ -11,20 +11,29 @@ from pimp.settings_dev import BASE_DIR
 from subprocess import call, CalledProcessError
 import os
 from django.db.models import Max
+from urllib2 import URLError
 
 class MassBankQueryTool():
+    """
+    Class to query the external API for MassBank - can be modified when MassBank installed on internal server
+    """
 
     def __init__(self, annotation_query_id, fragmentation_set_id):
-        if isinstance(annotation_query_id, int)==False:
-            raise TypeError('Annotation Query ID must be an integer')
-        if isinstance(fragmentation_set_id, int)==False:
-            raise TypeError('Annotation Query ID must be an integer')
+        """
+        Constructor for the MassBankQuery Tool
+        :param annotation_query_id: Integer id of a AnnotationQuery model instance
+        :param fragmentation_set_id: Integer id of a FragmentationSet model instance
+        """
+        # Check to ensure these id'd correspond to existing model instances
         try:
             self.annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
             self.fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+            self.annotation_tool = self.annotation_query.annotation_tool
         except MultipleObjectsReturned:
             raise
         except ObjectDoesNotExist:
+            raise
+        except TypeError:
             raise
 
     def get_mass_bank_annotations(self):
@@ -33,12 +42,15 @@ class MassBankQueryTool():
         :return:
         """
         print 'Forming MassBank Query Spectra'
+        # The query spectra comprise grouping of parent ions and there associated fragments
         query_spectra = self._generate_query_spectra()
+        # If both there are query spectra to be sent, extract the positive and negative spectra
         if query_spectra:
             positive_spectra = query_spectra['positive_spectra']
             negative_spectra = query_spectra['negative_spectra']
         try:
             print 'Querying MassBank...'
+            # Queries are only sent to MassBank if there are spectra to be sent
             if len(positive_spectra)>0:
                 print 'Sending Positive Spectra...'
                 positive_annotations = self._query_mass_bank(positive_spectra, 'Positive')
@@ -53,6 +65,8 @@ class MassBankQueryTool():
                     print 'Populating Negative Annotations...'
                     self._populate_annotations_table(positive_annotations)
         except WebFault:
+            raise
+        except URLError:
             raise
         except AttributeError:
             raise
@@ -127,9 +141,12 @@ class MassBankQueryTool():
         # The polarity of the spectra is included - although can be 'both'
         # However, positive and negative were seperated to improve identification
         ion = polarity
-        # Type refers to the type of seach - '1' denotes 'Batch Search Service'
-        type = "1"
-        client = Client('http://www.massbank.jp/api/services/MassBankAPI?wsdl')
+        # get the search parameters from the database
+        search_parameters = jsonpickle.decode(self.annotation_tool.default_params)
+        search_type = search_parameters['type']
+        client_address = search_parameters['client']
+        type = search_type
+        client = Client(client_address)
         try:
             # Submit the batch search to MassBank an job ID is returned
             submission_response = client.service.execBatchJob(
@@ -141,6 +158,8 @@ class MassBankQueryTool():
             )
         except WebFault:
             raise
+        except URLError:
+            raise
         job_id = submission_response
         job_list = [job_id]
         for seconds in range(0, 200):
@@ -151,6 +170,8 @@ class MassBankQueryTool():
                 job_status = client.service.getJobStatus(job_list)
                 print job_status
             except WebFault:
+                raise
+            except URLError:
                 raise
             if job_status['status'] == 'Completed':
                 break
@@ -183,7 +204,6 @@ class MassBankQueryTool():
             except AttributeError:
                 raise
             try:
-                massBank = AnnotationTool.objects.get(name = 'MassBank')
                 peak_object = Peak.objects.get(slug=peak_identifier_slug)
             except MultipleObjectsReturned:
                 raise
@@ -200,7 +220,7 @@ class MassBankQueryTool():
                     )[0]
                     compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
                         compound = compound_object,
-                        annotation_tool = massBank,
+                        annotation_tool = self.annotation_tool,
                         annotation_tool_identifier = each_annotation['id'],
                     )[0]
                     annotation_mass = Decimal(each_annotation['exactMass'])
@@ -249,15 +269,16 @@ class MassBankQueryTool():
 class NISTQueryTool():
 
     def __init__(self, annotation_query_id):
-        if isinstance(annotation_query_id, int)==False:
-            raise TypeError('Annotation Query ID must be an integer')
         try:
             self.annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+            self.fragmentation_set = self.annotation_query.fragmentation_set
+            self.annotation_tool = self.annotation_query.annotation_tool
         except ObjectDoesNotExist:
             raise
         except MultipleObjectsReturned:
             raise
-        self.fragmentation_set = self.annotation_query.fragmentation_set
+        except TypeError:
+            raise
         self.query_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', str(self.annotation_query.id)+'.msp')
         self.nist_output_file_name = os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank','NISTQueryFiles', str(self.annotation_query.id)+'_nist_out.txt')
 
@@ -291,6 +312,7 @@ class NISTQueryTool():
     def _generate_nist_call(self):
         # From the annotation query - get the user selected parameters
         nist_parameters = jsonpickle.decode(self.annotation_query.annotation_tool_params)
+        tool_parameters = jsonpickle.decode(self.annotation_tool.default_params)
         library_list = nist_parameters['library']
         if len(library_list)==0:
             raise ValueError('No NIST Libraries were selected by the user')
@@ -299,12 +321,12 @@ class NISTQueryTool():
             raise ValueError('The maximum number of hits exceeds specified bounds (between 1 and 100)')
         search_type = nist_parameters['search_type']
         nist_query_call = ["wine",
-                           "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
+                           tool_parameters['source'],
                            search_type,
                            "/HITS",
                            str(max_number_of_hits),
                            '/PATH',
-                           'C:\\NIST14\\MSSEARCH']
+                           tool_parameters['library_path']]
         for library in library_list:
             if library == 'mainlib':
                 nist_query_call.extend(['/MAIN', 'mainlib'])
@@ -319,7 +341,6 @@ class NISTQueryTool():
         additional_parameters = ['/INP', self.query_file_name,
                                  '/OUT', self.nist_output_file_name]
         nist_query_call.extend(additional_parameters)
-        print nist_query_call
         return nist_query_call
 
 
@@ -376,12 +397,6 @@ class NISTQueryTool():
     def _populate_annotation_list(self):
         peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set = self.fragmentation_set)
         try:
-            nist_annotation_tool = AnnotationTool.objects.get(name = 'NIST')
-        except MultipleObjectsReturned:
-            raise
-        except ObjectDoesNotExist:
-            raise
-        try:
             with open(self.nist_output_file_name, "r") as input_file:
                 current_parent_peak = None
                 ## For each line which does not begin in a comment (in NIST.txt this is indicated by '>')
@@ -427,7 +442,7 @@ class NISTQueryTool():
                             )[0]
                             compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
                                 compound = compound_object,
-                                annotation_tool = nist_annotation_tool,
+                                annotation_tool = self.annotation_tool,
                                 annotation_tool_identifier = compound_annotation_tool_identifier,
                             )[0]
                             difference_in_mass = current_parent_peak.mass-compound_mass

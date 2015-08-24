@@ -8,12 +8,11 @@ class ExperimentAdmin (admin.ModelAdmin):
     Class to show the fields of the Experiment model in the django admin pages
     """
     list_display = ('title', 'description', 'created_by', 'time_created',
-                    'last_modified', 'ionisation_method', 'detection_method',
-                    'slug'
+                    'ionisation_method', 'detection_method', 'slug'
     )
 
 
-class UserExperimentsAdmin(admin.ModelAdmin):
+class UserExperimentAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the UserExperiments model in the django admin pages
     """
@@ -61,7 +60,7 @@ class AnnotationToolAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the AnnotationTool model in the django admin pages
     """
-    list_display = ('name',)
+    list_display = ('name', "default_params")
 
 
 
@@ -89,7 +88,7 @@ class CandidateAnnotationAdmin(admin.ModelAdmin):
     """
     list_display = ('compound', 'peak', 'confidence', 'annotation_query',
                     'mass_match', 'difference_from_peak_mass',
-                    'adduct', 'instrument_type',
+                    'adduct', 'instrument_type', 'collision_energy'
     )
 
 
@@ -107,7 +106,7 @@ class ExperimentalProtocolAdmin (admin.ModelAdmin):
     list_display = ('name',)
 
 
-class AnnotationToolProtocolsAdmin (admin.ModelAdmin):
+class AnnotationToolProtocolAdmin (admin.ModelAdmin):
     """
     Class to show the fields of the AnnotationToolProtocols model in the django admin pages
     """
@@ -123,7 +122,7 @@ class AnnotationQueryHierarchyAdmin (admin.ModelAdmin):
 
 # Register each of the models and admin classes for display to user in admin site
 admin.site.register(Experiment, ExperimentAdmin)
-admin.site.register(UserExperiments, UserExperimentsAdmin)
+admin.site.register(UserExperiment, UserExperimentAdmin)
 admin.site.register(ExperimentalCondition, ExperimentalConditionAdmin)
 admin.site.register(Sample, SampleAdmin)
 admin.site.register(SampleFile, SampleFileAdmin)
@@ -135,5 +134,5 @@ admin.site.register(Peak, PeakAdmin)
 admin.site.register(CandidateAnnotation, CandidateAnnotationAdmin)
 admin.site.register(CompoundAnnotationTool, CompoundAnnotationToolAdmin)
 admin.site.register(ExperimentalProtocol, ExperimentalProtocolAdmin)
-admin.site.register(AnnotationToolProtocols, AnnotationToolProtocolsAdmin)
+admin.site.register(AnnotationToolProtocol, AnnotationToolProtocolAdmin)
 admin.site.register(AnnotationQueryHierarchy, AnnotationQueryHierarchyAdmin)

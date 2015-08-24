@@ -12,8 +12,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='peak',
-            name='intensity',
-            field=models.DecimalField(max_digits=30, decimal_places=10),
+            model_name='compound',
+            name='name',
+            field=models.CharField(max_length=225),
         ),
     ]

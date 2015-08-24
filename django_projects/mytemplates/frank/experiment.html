@@ -38,7 +38,9 @@
 		{% endif %}
 		</br>
 		<h4>Fragment Sets</h4>
-			<a href="{% url 'create_fragmentation_set' experiment.slug %}">Generate New Fragment Set</a>
+			{% if create_frag_set %}			
+				<a href="{% url 'create_fragmentation_set' experiment.slug %}">Generate New Fragment Set</a>
+			{% endif %}			
 			</br>			
 			{% if fragmentation_sets %}
 			<div>			
@@ -50,7 +52,11 @@
 					</tr>
 					{% for fragment_set in fragmentation_sets %}
 						<tr>
+							{% if fragment_set.status == 'Completed Successfully' %}
 							<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>	
+							{% else %}
+							<td>{{fragment_set.name}}</a></td>
+							{% endif %}	
 							<td>{{fragment_set.status}}</td>
 							<td>{{fragment_set.time_created}}</td>
 						</tr>

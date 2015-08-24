@@ -42,9 +42,6 @@ class MSNPeakBuilder(PeakBuilder):
         # Ensure correct argument types are passed
         if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) == False:
             raise TypeError('Invalid R dataframe - should be of type robjects.DataFrame')
-        if fragmentation_set_id is None or isinstance(fragmentation_set_id, int) == False:
-            raise TypeError('Invalid Fragmentation Set ID - should be of type int')
-
         required_fields = ['peakID', 'MSnParentPeakID', 'msLevel', 'rt', 'mz', 'intensity', 'SourceFile']
         # Ensure dictionary keys (column names) of dataframe are correct
         for field in required_fields:
@@ -58,6 +55,8 @@ class MSNPeakBuilder(PeakBuilder):
         except MultipleObjectsReturned:
             raise
         except ObjectDoesNotExist:
+            raise
+        except TypeError:
             raise
 
         # Extract the peak data from the R dataframe output
@@ -93,7 +92,8 @@ class MSNPeakBuilder(PeakBuilder):
         # The starting index is the last element in the r_dataframe
         starting_index = self.total_number_of_peaks-1
         # Iterate through the peaks in reverse order
-        for peak_array_index in range(starting_index, 0, -1):
+        for peak_array_index in range(starting_index, -1, -1):
+            print 'Processing Peak: '+str(peak_array_index+1)+' of '+str(self.total_number_of_peaks)
             # Determine the peak id and the id of any precursor peak
             parent_peak_id = int(self.parent_peak_id_vector[peak_array_index])
             peak_id = int(self.peak_ID_vector[peak_array_index])
@@ -203,9 +203,6 @@ class GCMSPeakBuilder(PeakBuilder):
         # Ensure correct argument types are passed
         if output_file_list is None or isinstance(output_file_list, robjects.DataFrame) == False:
             raise TypeError('Invalid R dataframe - should be of type robjects.DataFrame')
-        if fragmentation_set_id is None or isinstance(fragmentation_set_id, int) == False:
-            raise TypeError('Invalid Fragmentation Set ID - should be of type int')
-
         required_fields = ['mzXMLFiles', 'txtOutputFiles']
         # Ensure dictionary keys (column names) of dataframe are correct
         for field in required_fields:
@@ -219,6 +216,8 @@ class GCMSPeakBuilder(PeakBuilder):
         except MultipleObjectsReturned:
             raise
         except ObjectDoesNotExist:
+            raise
+        except TypeError:
             raise
         # Extract the filepaths of the source mzXML and text output files
         self.source_files_vector = output_file_list.rx2('mzXMLFiles')

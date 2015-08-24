@@ -4,8 +4,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
 import django
 django.setup()
 
+import jsonpickle
 from experiments.models import DefaultParameter, Database
-from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocols
+from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
 
 def populate():
     iqr_parameter = add_default_parameter(
@@ -75,15 +76,24 @@ def populate():
     )
 
     mass_bank_annotation_tool = add_annotation_tool(
-        name = 'MassBank'
+        name = 'MassBank',
+        default_params= {
+            'client': 'http://www.massbank.jp/api/services/MassBankAPI?wsdl',
+            'type': '1',
+        }
     )
 
     NIST_annotation_tool = add_annotation_tool(
-        name = 'NIST'
+        name = 'NIST',
+        default_params={
+            'source': 'C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe',
+            'library_path': 'C:\\NIST14\\MSSEARCH',
+        }
     )
 
     network_sampler_annotation_tool = add_annotation_tool(
-        name = 'LCMS DDA Network Sampler'
+        name = 'LCMS DDA Network Sampler',
+        default_params = {},
     )
 
     lcms_dda_experimental_protocol = add_experimental_protocol(
@@ -109,7 +119,7 @@ def populate():
     )
 
     network_sampler_annotation_tool = add_annotation_tool_protocols(
-        [lcms_dda_experimental_protocol],
+        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
         network_sampler_annotation_tool
     )
 
@@ -133,9 +143,11 @@ def add_database(name):
     database.save()
     return database
 
-def add_annotation_tool(name):
+def add_annotation_tool(name, default_params):
+    default_params = jsonpickle.encode(default_params)
     annotation_tool = AnnotationTool.objects.get_or_create(
-       name = name,
+        name = name,
+        default_params = default_params,
     )[0]
     print 'Creating default annotation tool - '+name+'...'
     annotation_tool.save()
@@ -152,7 +164,7 @@ def add_experimental_protocol(name):
 def add_annotation_tool_protocols(protocols_list, annotation_tool):
     for protocol in protocols_list:
         print 'Adding '+protocol.name+' to Annotation Tool '+annotation_tool.name
-        annotation_tool_protocol = AnnotationToolProtocols.objects.get_or_create(
+        annotation_tool_protocol = AnnotationToolProtocol.objects.get_or_create(
             annotation_tool = annotation_tool,
             experimental_protocol = protocol
         )

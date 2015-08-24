@@ -21,7 +21,7 @@
 						<td><a href="{% url 'experiment_summary' experiment.slug %}">{{experiment.title}}</a></td>
 						<td>{{experiment.time_created}}</td>
 						<td>{{experiment.created_by}}</td>
-						<td>{{experiment.get_ionisationMethod_display}}</td>
+						<td>{{experiment.ionisation_method}}</td>
 						<td>{{experiment.detection_method}}</td>
 					</tr>
 				{% endfor %}
@@ -30,7 +30,8 @@
 		<h3>No existing experiments</h3>
 	{% endif %}
 
-	<table class="table">
+	</br></br>	
+	<table>
 		<tr><td><a href="{% url 'add_experiment' %}">Add New Experiment</a></td></tr>	
 		<tr><td><a href="{% url 'frank_index' %}">Frank Home</a></td></tr>
 	</table>	

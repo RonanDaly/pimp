@@ -127,7 +127,7 @@ def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
     try:
         peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
         peak_generator.populate_database_peaks()
-        fragmentation_set_object.status = 'Completed Sucessfully'
+        fragmentation_set_object.status = 'Completed Successfully'
     except ValueError as value_error:
         print value_error.message
         fragmentation_set_object.status = 'Completed with Errors'
@@ -159,6 +159,9 @@ def massBank_batch_search(annotation_query_id):
         annotation_query.status = 'Completed Successfully'
     except WebFault as web_fault:
         print web_fault.message
+        annotation_query.status = 'Completed with Errors'
+    except URLError as url_error:
+        print url_error.message
         annotation_query.status = 'Completed with Errors'
     except AttributeError as attribute_error:
         print attribute_error.message
@@ -229,7 +232,7 @@ def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
     try:
         peak_generator = GCMSPeakBuilder(output, fragmentation_set.id)
         peak_generator.populate_database_peaks()
-        fragmentation_set.status = 'Completed Sucessfully'
+        fragmentation_set.status = 'Completed Successfully'
     except IOError as io_error:
         print io_error.message
         fragmentation_set.status = 'Completed with Errors'

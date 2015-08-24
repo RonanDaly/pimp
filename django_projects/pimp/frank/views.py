@@ -58,10 +58,15 @@ def get_experiment_summary_context_dict(experiment_name_slug):
     fragmentation_set_list = FragmentationSet.objects.filter(
             experiment = experiment
     )
+    can_add_frag_set = False
+    sample_files_in_experiment = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
+    if len(sample_files_in_experiment) > 1:
+        can_add_frag_set = True
     context_dict = {
         'experiment': experiment,
         'conditions': experimental_conditions,
         'fragmentation_sets': fragmentation_set_list,
+        'create_frag_set': can_add_frag_set
     }
     return context_dict
 
@@ -213,6 +218,7 @@ def get_delete_experiment_context_dict(experiment_name_slug):
 # Create your views here.
 
 # View for the Index page of frank
+@login_required
 def index(request):
     return render(request, 'frank/index.html')
 
@@ -237,7 +243,7 @@ def add_experiment(request):
             # The user id is used to indicate the creator of the experiment
             experiment.created_by = active_user
             experiment.save()
-            new_user = UserExperiments.objects.create(user = active_user, experiment = experiment)
+            new_user = UserExperiment.objects.create(user = active_user, experiment = experiment)
             context_dict = get_my_experiments_context_dict(user = active_user)
             return render(request, 'frank/my_experiments.html', context_dict)
         else:
@@ -255,23 +261,6 @@ def experiment_summary(request, experiment_name_slug):
     context_dict = get_experiment_summary_context_dict(experiment_name_slug)
     return render(request, 'frank/experiment.html', context_dict)
 
-
-@login_required
-def delete_experiment(request, experiment_name_slug):
-    if request.method == 'POST':
-        try:
-            experiment = Experiment.objects.get(slug=experiment_name_slug)
-        except ObjectDoesNotExist:
-            return render(request, 'frank/index.html')
-        except MultipleObjectsReturned:
-            return render(request, 'frank/index.html')
-
-
-
-        return render(request, 'frank/index.html')
-    else:
-        context_dict = get_delete_experiment_context_dict(experiment_name_slug)
-        return render(request, 'frank/delete_experiment.html', context_dict)
 
 @login_required
 def add_experimental_condition(request, experiment_name_slug):
@@ -494,9 +483,7 @@ def generate_annotations(annotation_query_object):
         pass
 
 def set_annotation_query_parameters(annotation_query_object, annotation_query_form, currentUser):
-    print 'Set Annotation Query Parameters Called...'
     if isinstance(annotation_query_form, MassBankQueryForm):
-        print 'Is MassBankQueryForm'
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='MassBank')
         # Parameters for MassBank are...
         #   type - (hardcoded) the type of search (1 = batch search)
@@ -517,7 +504,6 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     elif isinstance(annotation_query_form, NISTQueryForm):
-        print 'Is NISTQueryForm'
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='NIST')
         # Parameters for NIST are...
         #   number of hits - (selected by user) the maximum number of annotation hits for a spectra

@@ -14,13 +14,16 @@
 				<th>Created</th>
 				<th>Current Status</th>
 			</tr>
-			{% for frag_set in fragmentation_sets %}
+			{% for fragment_set in fragmentation_sets %}
 				<tr>
-					<td><a href="{% url 'fragmentation_set' frag_set.slug %}">{{frag_set.name}}</a></td>
-					<td>{{frag_set.experiment}}</td>
-					<td>{{frag_set.time_created}}</td>
-					<td>{{frag_set.status}}</td>
-				</tr>
+					{% if fragment_set.status == 'Completed Successfully' %}
+						<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>	
+					{% else %}
+						<td>{{fragment_set.name}}</a></td>
+					{% endif %}	
+						<td>{{fragment_set.experiment}}</td>
+						<td>{{fragment_set.status}}</td>
+						<td>{{fragment_set.time_created}}</td>
 			{% endfor %}
 		</table>
 	{% else %}

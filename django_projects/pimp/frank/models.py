@@ -1,10 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.template.defaultfilters import slugify
 import os
 from pimp.settings_dev import MEDIA_ROOT
-from projects import models as projectModel
+from django.db.models import Max
 
 # The default Django User model provides the following attributes:
 #	username
@@ -19,7 +18,7 @@ FILE_TYPES = (
     ('Negative', 'Negative'),
 )
 
-# A tuple containing the 'state' of the analysis to provide the user with feedback
+# A tuple containing the 'state' of an analysis to provide the user with feedback
 ANALYSIS_STATUS = (
     ('Submitted', 'Submitted'),
     ('Processing', 'Processing'),
@@ -30,12 +29,18 @@ ANALYSIS_STATUS = (
 # Define the choices for ionisation protocol
 IONISATION_PROTOCOLS = (
     ('EIS','Electron Ionisation Spray'),
+    ('EII', 'Electron Impact Ionisation'),
     # Additional ionisation protocols could be added here if necessary
 )
 
 
-# Method to generate the absolute directory of the uploaded file
-def get_upload_file_name(instance, filename):
+def _get_upload_file_name(instance, filename):
+    """
+    Method to determine, and create the filepath of the upload location for an mzXML file
+    :param instance:    SampleFile instance for upload
+    :param filename:    The name of the file including the extension (e.g. "myfile.mzXML")
+    :return: upload_location    String containing the filepath of the uploaded file
+    """
     # Retrive the sample, experimental condition and experiment to which the sample file is to be associated
     sample_object = instance.sample
     experimental_condition_object = sample_object.experimental_condition
@@ -54,257 +59,473 @@ def get_upload_file_name(instance, filename):
         os.makedirs(filepath)
     except OSError as e:
         if e.errno == 17:
-            # Directory already exists
+            # Directory already exists so no need for it to be created
             pass
     # Finally, the filename is contatinated to the directory
     upload_location = os.path.join(filepath, filename)
     return upload_location
-    ## Remember to fix the problem that if two identical files are added to the same experiment
-    ## then Django will create a duplicate file in the directory
-    ## Should probably be done in the form.
 
 
-# Class defining the experiments created by the users
 class Experiment(models.Model):
-    title = models.CharField(max_length = 250, blank = False)
-    description = models.CharField(max_length = 250)
-    created_by = models.ForeignKey(User, related_name = "experiment_creator")
-    time_created = models.DateTimeField(auto_now = True)
-    last_modified = models.DateTimeField(auto_now_add = True, blank = True)
-    ionisation_method = models.CharField(max_length = 250, choices = IONISATION_PROTOCOLS)
-    detection_method = models.ForeignKey('ExperimentalProtocol', null=True)
-    users = models.ManyToManyField(User, through = 'UserExperiments', through_fields = ('experiment', 'user'))
+    """
+    Model class containing the details of the experiment. Analogous to a PiMP project.
+    """
+    title = models.CharField(max_length=250, blank=False, unique=True)
+    description = models.CharField(max_length=250)
+    created_by = models.ForeignKey(User, related_name="experiment_creator")
+    time_created = models.DateTimeField(auto_now=True)
+    ionisation_method = models.CharField(max_length=250, choices=IONISATION_PROTOCOLS)
+    detection_method = models.ForeignKey('ExperimentalProtocol')
+    users = models.ManyToManyField(User, through='UserExperiment', through_fields=('experiment', 'user'))
     slug = models.SlugField(unique=True)
 
-    # Upon saving an instance of the model, a unique slug is derived for referencing in the URL
+    """
+    For integration, this model could be integrated with the PiMP Project model
+    if the ionisation_method and detection_method fields were added in PiMP. These
+    are used to distinguish between the distinct experimental types implemented in
+    Frank and are therefore required. Alternatively, a ForeignKey reference to a PiMP
+    project could be added, to ensure Frank remains stand-alone.
+    """
+
+
     def save(self, *args, **kwargs):
-        # If the object has already been created, we do not want to modify the slug
-        if not self.id:
-            experiment_number = Experiment.objects.count()+1
-            # The slug is simply the experiment title plus the next available index
-            self.slug = slugify(self.title)+'-'+str(experiment_number)
+        """
+        Override the existing save method to update the slugfield to reflect the experiment name
+        :param args:    Any arguments passed to the save method
+        :param kwargs:  Any keyword arguments passed to the save method
+        """
+        # The slug is simply the title of the experiment
+        self.slug = slugify(self.title)
         super(Experiment, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the model instance
+        :return: String:    A string containing the instance id and experiment title
+        """
         return 'Experiment '+str(self.id)+': '+self.title
 
-## Class defining the many-to-many relationships between a user and experiments
-class UserExperiments(models.Model):
+
+class UserExperiment(models.Model):
+    """
+    Model class defining the users with access to each Experiment Model instance
+    """
     user = models.ForeignKey(User)
     experiment = models.ForeignKey(Experiment)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the model instance
+        :return: String:    A string containing the username and experiment title
+        """
         return self.user.username +' access to '+self.experiment.title
 
-# Class to define the experimental conditions of an experiment
+
 class ExperimentalCondition(models.Model):
-    name = models.CharField(max_length = 250, blank = False)
+    """
+    Model class defining an experimental condition in the experiment.
+    """
+    name = models.CharField(max_length = 250, blank = False, unique=True)
     description = models.CharField(max_length = 250)
     experiment = models.ForeignKey(Experiment)
     slug = models.SlugField(unique=True)
 
+
     def save(self, *args, **kwargs):
-        if not self.id:
-            ## The id is going to be one greater than the total number of existing experimentalConditions in the database.
-            condition_number = ExperimentalCondition.objects.count()+1
-            # The slug is simply the name of the experimental condition and the next available index
-            self.slug = slugify(self.name)+'-'+str(condition_number)
+        """
+        Method overriding the 'Model' superclass save method
+        :param args:    Arguments passed to the save method
+        :param kwargs:  Keyword arguments passed to the save method
+        """
+        # The slug field is populated with the name of the experimental condition
+        self.slug = slugify(self.name)
         super(ExperimentalCondition, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the model instance
+        :return: String:    A string containing the experimental condition and the title of the experiment
+        """
         return self.name+' in '+self.experiment.title
 
-# Class to define the samples which may be included in each experimental condition
+
 class Sample(models.Model):
-    name = models.CharField(max_length = 250, blank = False)
+    """
+    Model class defining an instance of an experimental sample
+    """
+    name = models.CharField(max_length = 250, blank = False, unique=True)
     description = models.CharField(max_length = 250, blank = False)
     experimental_condition = models.ForeignKey(ExperimentalCondition)
     organism = models.CharField(max_length = 250)
     slug = models.SlugField(unique=True)
 
+
     def save(self, *args, **kwargs):
-        if not self.id:
-            ## The sample id is going to be one greater than the total number of existing samples in the database.
-            sample_number = Sample.objects.count()+1
-            # The slug is simply the concatination of the name of the sample and the next available id
-            self.slug = slugify(self.name)+'-'+str(sample_number)
+        """
+        Method to override the save method of the superclass 'Model'
+        :param args:    Arguments passed to the save method
+        :param kwargs:  Keyword arguments passed to the save method
+        """
+        # The slug field is populated with the sample name
+        self.slug = slugify(self.name)
         super(Sample, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the Sample.
+        :return: String:    A string representation including the id and title of the associated experiment
+        """
         return 'Sample '+str(self.id)+ ' in '+ self.experimental_condition.experiment.title
 
 
-# Class corresponding to the sampke files corresponding to the sample
 class SampleFile(models.Model):
+    """
+    Model class defining the mzXML files associated with an experimental sample
+    """
     name = models.CharField(max_length = 250, blank = False)
     polarity = models.CharField(max_length = 250, choices = FILE_TYPES)
     sample = models.ForeignKey(Sample, blank = False)
-    address = models.FileField(upload_to = get_upload_file_name, max_length=500)
+    address = models.FileField(upload_to = _get_upload_file_name, max_length=500)
+
 
     def __unicode__(self):
-         return self.name
+        """
+        Method to return a unicode representation of the SampleFile instance
+        :return: String:    A string representation of the sample file name
+        """
+        return self.name
 
-# Class defining a Fragmentation Set of an Experiment - i.e. a collection of peaks
+
 class FragmentationSet(models.Model):
-    name = models.CharField(max_length = 250)
+    """
+    Model instance to define the collection of peaks derived from the sample files of an experiment
+    """
+    name = models.CharField(max_length = 250, unique=True)
     experiment = models.ForeignKey(Experiment)
     time_created = models.DateTimeField(auto_now = True)
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Submitted')
     slug = models.SlugField(unique=True)
 
+
     def save(self, *args, **kwargs):
-        if not self.id:
-            ## The fragmentation set id is going to be one greater than the total number of existing sets in the database.
-            set_number = FragmentationSet.objects.count()+1
-            # The slug is simply the concatination of the name of the fragmentation set and the next available id
-            self.slug = slugify(self.name)+'-'+str(set_number)
+        """
+        Method to override the save method of the Model superclass
+        :param args:    The arguments passed to the save method
+        :param kwargs:  The keyword argument passed to the save method
+        """
+        # The slug is simply the name of the FragmentationSet instance
+        self.slug = slugify(self.name)
         super(FragmentationSet, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the FragmentationSet
+        :return: String:    The string contains the 'id' of the FragmentationSet
+        """
         return 'Fragmentation Set '+str(self.id)
 
-# Class defining an Annotation Query - i.e. a collection of candidate annotations
+
 class AnnotationQuery(models.Model):
-    name = models.CharField(max_length = 250)
+    """
+    Model class defining a query made to one of the Annotation Tools - termed 'Annotation Query'
+    """
+    name = models.CharField(max_length = 250, unique=True)
     fragmentation_set = models.ForeignKey(FragmentationSet)
     time_created = models.DateTimeField(auto_now = True)
     status = models.CharField(max_length = 250, choices = ANALYSIS_STATUS, default='Defined')
     slug = models.SlugField(unique=True)
     annotation_tool = models.ForeignKey('AnnotationTool')
+    # The annotation_tool_params are a jsonpickle dict of any additional search parameters required
+    # by the AnnotationTool itself
     annotation_tool_params = models.CharField(max_length = 500, null=True)
-    ### Note additional parameters required here ####
-    ### Also need to add in the choice field for Simon's additional code
+    # Some AnnotationTools may subquery an existing set of CandidateAnnotations
     source_annotation_queries = models.ManyToManyField('self', through = 'AnnotationQueryHierarchy', symmetrical=False)
 
+
     def save(self, *args, **kwargs):
-        if not self.id:
-            ## The query id is going to be one greater than the total number of existing queries in the database.
-            query_number = AnnotationQuery.objects.count()+1
-            # The slug is simply the concatination of the name of the query and the next available id
-            self.slug = slugify(self.name)+'-'+str(query_number)+'FragSet-'+str(self.fragmentation_set.id)
+        """
+        Method to override the save method of the Model superclass
+        :param args:    Arguments passed to the save method
+        :param kwargs:  Keyword arguments passed to the save method
+        """
+        # The slug is simply the name of the AnnotationQuery instance
+        self.slug = slugify(self.name)
         super(AnnotationQuery, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the AnnotationQuery
+        :return: String:    A string containing the 'id' of the AnnotationQuery
+        """
         return 'Annotation Query '+str(self.id)
 
-# Class defining the respositories and annotation tools which are queried during an analysis
+
 class AnnotationTool (models.Model):
-    name = models.CharField(max_length = 250, blank = False)
-    suitable_experimental_protocols = models.ManyToManyField('ExperimentalProtocol', through = 'AnnotationToolProtocols')
+    """
+    Model class representing an AnnotationTool - i.e. any tool which creates or modifies CandidateAnnotations
+    """
+    name = models.CharField(max_length = 250, blank = False, unique=True)
+    suitable_experimental_protocols = models.ManyToManyField('ExperimentalProtocol', through = 'AnnotationToolProtocol')
     default_params = models.CharField(max_length = 500)
+    # The tool's default parameters are a jsonpickle dict of any default params required by the tool
+    # such as filepaths etc.
     slug = models.SlugField(unique=True)
 
+
     def save(self, *args, **kwargs):
-        if not self.id:
-            ## The query id is going to be one greater than the total number of existing queries in the database.
-            tool_number = AnnotationQuery.objects.count()+1
-            # The slug is simply the concatination of the name of the query and the next available id
-            self.slug = slugify(self.name)+'-'+str(tool_number)
+        """
+        Method to override the Model superclass save method
+        :param args:    Arguments passed to the method
+        :param kwargs:  Keyword arguments passed to the method
+        """
+        # The slug for the AnnotationTool is simply its name
+        self.slug = slugify(self.name)
         super(AnnotationTool, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the AnnotationTool instance
+        :return: String A string representation of the tool's name
+        """
         return self.name
 
-# Class defining the compounds identified from the repositories
+
 class Compound(models.Model):
-    name = models.CharField(max_length=500)
+    """
+    Model class representing a Compound identified by spectral database searches
+    """
+    name = models.CharField(max_length=225)
     formula = models.CharField(max_length = 250)
     exact_mass = models.DecimalField(decimal_places=10, max_digits=20)
+    # Inchikey included to improve compatability with PiMP, however, it should be noted that
+    # at present this unique identifier is not returned by any of the existing implemented tools
     inchikey = models.CharField(max_length=500, null=True)
+    # cas_code is returned from NIST spectral search and therefore has been stored
     cas_code = models.CharField(max_length=500, null=True)
     annotation_tool = models.ManyToManyField(AnnotationTool, through = 'CompoundAnnotationTool')
     slug = models.SlugField(unique=True)
 
+
     def save(self, *args, **kwargs):
+        """
+        Method to override the save method of the Model superclass
+        :param args:    Arguments passed to the method
+        :param kwargs:  Keyword arguments passed to the method
+        """
+        """
+        At the time of implementation it made sense to ensure the compound slug remains static as this
+        is not user defined. However, the name of the compound could not be used as, in some instances,
+        the chemical name exceeds the maximum number of chars of the slugfield. The formula would not be
+        suitable because of isomers.
+        """
         if not self.id:
-            compound_number = Compound.objects.count()+1
-            self.slug = slugify('Compound:'+str(compound_number))+': '+self.formula
+            # i.e. if the instance does not have a primary key it hasn't yet been commited to the database
+            compound_id_max = Compound.objects.aggregate(Max('id'))['id__max']
+            # Try to determine the maximum primary key of the existing compounds in the database
+            if compound_id_max == None:
+                # if none is returned, this would be the first compound
+                compound_id_max = 0
+            # Increment the id by one
+            compound_number = compound_id_max+1
+            self.slug = slugify('Compound: '+str(compound_number)+'Formula: '+self.formula)
         super(Compound, self).save(*args, **kwargs)
 
 
     def __unicode__(self):
-        return self.formula
+        """
+        Method to return a unicode representation of the compound
+        :return: String:    This is simply the name of the compound
+        """
+        return self.name
 
 
-# Class defining the peaks derived from the source files
 class Peak(models.Model):
+    """
+    Model class defining a peak, characterised by a mass, retention time and intensity
+    """
+    # Store where the peak originated from
     source_file = models.ForeignKey(SampleFile, blank = False)
     mass = models.DecimalField(decimal_places = 10, max_digits = 20)
     retention_time = models.DecimalField(decimal_places = 10, max_digits = 20)
     intensity = models.DecimalField(decimal_places = 10, max_digits = 30)
+    # Each peak can only ever have one parent ion, which should also be present in the peak table
     parent_peak = models.ForeignKey('self', null=True)
-    msn_level = models.IntegerField(default = 0)
+    msn_level = models.IntegerField()
+    # Each peak can have any number of candidate annotations
     annotations = models.ManyToManyField(Compound, through = 'CandidateAnnotation')
+    # Although the source file is stored, the fragmentation set the peak is derived from is included
     fragmentation_set = models.ForeignKey(FragmentationSet)
     slug = models.SlugField(unique=True)
+    # A preferred annotation can be allocated to the Peak, alongside a description and the identity of the user
+    # who specfied the preference.
     preferred_candidate_annotation = models.ForeignKey('CandidateAnnotation', null=True, related_name = "preferred_annotation")
     preferred_candidate_description = models.CharField(max_length = 500, null=True)
     preferred_candidate_user_selector = models.ForeignKey(User, null=True)
     preferred_candidate_updated_date = models.DateTimeField(null = True)
 
+    """
+    During implementation it was considered as to whether or not the preferred annotation
+    should be seperate model in itself and is a transitive dependency. Although it could be
+    a distinct table, it isn't envisaged that this will introduce redundancy as the update time,
+    description, and candidate annotation will be unique to that given peak.
+    """
+
+
     def save(self, *args, **kwargs):
+        """
+        Method to override the save method of the Model superclass
+        :param args:    Arguments passed to the method
+        :param kwargs:  Keyword arguments passed to the method
+        """
+        # As before (see Compound.save()) the peak id is set at the creation of the instance.
+        # However, the justification in this instance is because a peak does not have an intuitive name.
         if not self.id:
-            peak_number = Peak.objects.count()+1
-            # The slug has to contain both the peak number and the fragmentation set number to ensure slug field
-            # remains unique throughout celery processes
+            peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set = self.fragmentation_set)
+            peak_id_max = peaks_in_fragmentation_set.aggregate(Max('id'))['id__max']
+            # Derive the highest peak id for all peaks within the fragmentation set
+            if peak_id_max == None:
+                peak_id_max = 0
+            # The peak number will be one greater than the current max id
+            peak_number = peak_id_max+1
+            """
+            Note: Some identification of which fragmentation set the peak belongs to must
+            be included in the slug. Otherwise if the creation of multiple fragmentation sets
+            are ongoing concurrently the unique constraint of the slug field will be broken.
+            """
             self.slug = slugify('Peak:'+str(peak_number)+'FragSet:'+str(self.fragmentation_set.id))
         super(Peak, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the Peak instance
+        :return: String:    A sting specifying the 'id' of the peak
+        """
         return 'Peak '+str(self.id)
 
-# Class defining the candidate annotations which are assigned to peaks
+
 class CandidateAnnotation(models.Model):
+    """
+    A model to store the details of the candidate annotations. These are distinct from the compound model in
+    that the information relates to how the reference spectra was measured and which peak it relates to.
+    """
     compound = models.ForeignKey(Compound)
     peak = models.ForeignKey(Peak)
+    # Although each spectral library returns a confidence value, these values are typically unique to each tool
     confidence = models.DecimalField(decimal_places = 10, max_digits = 20)
     annotation_query = models.ForeignKey(AnnotationQuery, null=True)
+    # This is a boolean to denote whether the annotation is a close match by mass to the measured m/z of the peak
     mass_match = models.NullBooleanField(null=True)
+    # The difference in m/z between the peak m/z and the mass returned by the annotation tool
     difference_from_peak_mass = models.DecimalField(decimal_places = 10, max_digits = 20, null=True)
+    # Additional useful information such as the adduct, instrument type and collision energy are also stored
     adduct = models.CharField(max_length=500, null=True)
     instrument_type = models.CharField(max_length=500, null=True)
     collision_energy = models.CharField(max_length=500, null=True)
+    # Additional information stores the full returned candidate annotation information for a spectral reference library
+    # but may be used by other tools to provide relevant information
     additional_information = models.CharField(max_length=500, null=True)
     slug = models.SlugField(unique=True)
 
+
     def save(self, *args, **kwargs):
+        """
+        Method to override the save method of the Model superclass
+        :param args:    Arguments passed to the method
+        :param kwargs:  Keyword arguments passed to the method
+        """
+        # As before in the Compound and Peak save methods, a candidate annotation does not have an intuitive
+        # slug and therefore the next available id is used to identify it.
         if not self.id:
-            annotation_number = CandidateAnnotation.objects.count()+1
+            annotations_in_query = CandidateAnnotation.objects.filter(annotation_query = self.annotation_query)
+            annotation_id_max = annotations_in_query.aggregate(Max('id'))['id__max']
+            if annotation_id_max == None:
+                annotation_id_max = 0
+            annotation_number = annotation_id_max+1
             self.slug = slugify('Annotation:'+str(annotation_number)+'Query:'+str(self.annotation_query.id))
         super(CandidateAnnotation, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the CandidateAnnotation instance
+        :return: String:    A string containing the annotation and the peak to which it is associated
+        """
         return 'Annotation '+str(self.id)+' for Peak '+str(self.peak.id)
 
-# Class defining which compounds were identified in which repositories
+
 class CompoundAnnotationTool (models.Model):
+    """
+    A model class to represent the origin of the compounds - i.e. which compound has been identified in which
+    repository. However, it should be noted this is a Many-To-Many table as the same compound may be
+    identified in many different spectral reference libraries.
+    """
     compound = models.ForeignKey(Compound)
     annotation_tool = models.ForeignKey(AnnotationTool)
-    # Store the reference used by the repository to identify the compound
+    # Store the unique reference used by the repository to identify the compound
     annotation_tool_identifier = models.CharField(max_length=500)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the CompoundAnnotation instance
+        :return: String:    The Compound id and the AnnotationTool id are included.
+        """
         return 'Compound '+str(self.compound.id)+' from AnnotationTool '+str(self.annotation_tool.id)
 
-# Class defining an experimental technique used to generate raw data.
+
 class ExperimentalProtocol (models.Model):
+    """
+    A model class to represent the distinct experimental procedures implemented to generate the source files.
+    For example GCMS-EII, LCMS-DDA, LCMS-DIA etc.
+    """
     name = models.CharField(max_length=500)
 
+
     def __unicode__(self):
+        """
+        Method to return a unicode representation of the ExperimentalProtocol instance
+        :return: String A string of the name of the experimental protocol
+        """
         return self.name
 
-# Class identifying which annotations tools are suitable for which experimental protocol
-class AnnotationToolProtocols (models.Model):
+
+class AnnotationToolProtocol (models.Model):
+    """
+    A model to represent the relationship between the AnnotationTools and the ExperimentalProtocols.
+    Some of the developed AnnotationTools may, in future, be unsuitable for certain experimental protocols.
+    """
     annotation_tool = models.ForeignKey(AnnotationTool)
     experimental_protocol = models.ForeignKey(ExperimentalProtocol)
 
-    def __unicode__(self):
-        return self.id
 
-# Class identifying the relationship between annotation queries(parent) and subqueries
+    def __unicode__(self):
+        """
+        Method to return a unicode representation of an AnnotationToolProtocol instance
+        :return: String:    A containing the id of the AnnotationToolProtocol
+        """
+        return 'AnnotationToolProtocol'+str(self.id)
+
+
 class AnnotationQueryHierarchy (models.Model):
+    """
+    A model representing the relationship between distinct AnnotationQueries
+    """
+    # An AnnotationQuery can be subqueried by specific AnnotationTools
     parent_annotation_query = models.ForeignKey(AnnotationQuery, related_name = "parent_query")
     subquery_annotation_query = models.ForeignKey(AnnotationQuery, related_name = "subquery")
 
+
     def __unicode__(self):
-        return self.id
+        """
+        Method to return a unicode representation of an AnnotationQueryHierarchy
+        :return: String:
+        """
+        return 'AnnotationQueryHierarchy'+str(self.id)
