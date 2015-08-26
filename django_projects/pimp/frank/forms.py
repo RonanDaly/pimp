@@ -97,14 +97,10 @@ class SampleFileForm(forms.ModelForm):
             #derive the name of the file
             filename = inputFile.name
             # check the file extension is '.mzXML'
-            if filename.endswith('.mzXML'):
-                print 'Valid file'
-            else:
-                print 'Invalid file format'
+            if filename.endswith('.mzXML')==False:
                 self.add_error("address", "Incorrect file format. Please upload an mzXML file")
                 raise forms.ValidationError("Incorrect file format. Please upload an mzXML file")
         else:
-            print 'No file Selected'
             self.add_error("address", "No file selected. Please upload an mzXML file")
             raise forms.ValidationError("No file selected. Please upload an mzXML file")
 

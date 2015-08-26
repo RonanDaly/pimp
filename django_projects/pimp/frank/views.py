@@ -28,6 +28,7 @@ import PIL
 import PIL.Image
 import StringIO
 from django.http import HttpResponse
+from django.db import transaction
 
 
 
@@ -248,7 +249,6 @@ def add_experiment(request):
             return render(request, 'frank/my_experiments.html', context_dict)
         else:
             # if the form is invalid, display the errors
-            print form.errors
             context_dict = get_add_experiment_context_dict(form)
             return render(request, 'frank/add_experiment.html', context_dict)
     else:
@@ -274,7 +274,6 @@ def add_experimental_condition(request, experiment_name_slug):
             context_dict = get_experiment_summary_context_dict(experiment_name_slug)
             return render(request, 'frank/experiment.html', context_dict)
         else:
-            print form.errors
             context_dict = get_add_experimental_condition_context_dict(experiment_name_slug, form)
             return render(request, 'frank/add_experimental_condition.html', context_dict)
     else:
@@ -302,7 +301,6 @@ def add_sample (request, experiment_name_slug, condition_name_slug):
             context_dict = get_condition_summary_context_dict(experiment_name_slug, condition_name_slug)
             return render(request, 'frank/condition.html', context_dict)
         else:
-            print sample_form.errors
             context_dict = get_add_sample_context_dict(experiment_name_slug, condition_name_slug, sample_form)
             return render(request, 'frank/add_sample.html', context_dict)
     else:
@@ -322,11 +320,18 @@ def add_sample_file(request, experiment_name_slug, condition_name_slug, sample_s
             new_sample = sample_file_form.save(commit=False)
             new_sample.sample = sample
             new_sample.name = new_sample.address.name
-            new_sample.save()
-            context_dict = get_condition_summary_context_dict(experiment_name_slug, condition_name_slug)
-            return render(request, 'frank/condition.html', context_dict)
+            try:
+                with transaction.atomic():
+                    new_sample.save()
+                context_dict = get_condition_summary_context_dict(experiment_name_slug, condition_name_slug)
+                return render(request, 'frank/condition.html', context_dict)
+            except ValidationError:
+                # Validation error will result from an attempt to add a duplicate
+                # file to a sample
+                sample_file_form.add_error("address", "This file already exists in the sample.")
+                context_dict = get_add_sample_file_context_dict(experiment_name_slug, condition_name_slug, sample_slug, sample_file_form)
+                return render(request, 'frank/add_sample_file.html', context_dict)
         else:
-            print sample_file_form.errors
             context_dict = get_add_sample_file_context_dict(experiment_name_slug, condition_name_slug, sample_slug, sample_file_form)
             return render(request, 'frank/add_sample_file.html', context_dict)
     else:
@@ -343,12 +348,18 @@ def create_fragmentation_set(request, experiment_name_slug):
         if fragment_set_form.is_valid():
             new_fragmentation_set = fragment_set_form.save(commit=False)
             new_fragmentation_set.experiment = experiment
-            new_fragmentation_set.save()
-            input_peak_list_to_database(experiment_name_slug, new_fragmentation_set.id)
-            context_dict = get_experiment_summary_context_dict(experiment_name_slug)
-            return render(request, 'frank/experiment.html', context_dict)
+            source_files = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
+            num_source_files = len(source_files)
+            if num_source_files > 0:
+                new_fragmentation_set.save()
+                input_peak_list_to_database(experiment_name_slug, new_fragmentation_set.id)
+                context_dict = get_experiment_summary_context_dict(experiment_name_slug)
+                return render(request, 'frank/experiment.html', context_dict)
+            else:
+                fragment_set_form.add_error("name", "No source files found for experiment.")
+                context_dict = get_create_fragmentation_set_context_dict(experiment_name_slug, fragment_set_form)
+                return render(request, 'frank/create_fragmentation_set.html', context_dict)
         else:
-            print fragment_set_form.errors
             context_dict = get_create_fragmentation_set_context_dict(experiment_name_slug, fragment_set_form)
             return render(request, 'frank/create_fragmentation_set.html', context_dict)
     else:
@@ -380,7 +391,6 @@ def fragmentation_set(request, fragmentation_set_name_slug):
             context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
             return render(request, 'frank/define_annotation_query.html', context_dict)
         else:
-            print annotation_tool_selection_form.errors
             context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, annotation_tool_selection_form)
             return render(request, 'frank/fragmentation_set.html', context_dict)
     else:
@@ -421,7 +431,6 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
             return render(request, 'frank/fragmentation_set.html', context_dict)
         else:
-            print annotation_query_form.errors
             context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
             return render(request, 'frank/define_annotation_query.html', context_dict)
     else:
@@ -452,7 +461,6 @@ def specify_preferred_annotation(request, fragmentation_set_name_slug, peak_name
             context_dict = get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug)
             return render(request, 'frank/peak_summary.html', context_dict)
         else:
-            print preferred_annotation_form.errors
             context_dict = get_specify_preferred_annotation_context_dict(fragmentation_set_name_slug, peak_name_slug, annotation_id, preferred_annotation_form)
             return render(request, 'frank/specify_preferred_annotation.html', context_dict)
     else:

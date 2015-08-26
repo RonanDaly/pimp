@@ -4,6 +4,7 @@ from django.template.defaultfilters import slugify
 import os
 from pimp.settings_dev import MEDIA_ROOT
 from django.db.models import Max
+from django.core.exceptions import ValidationError
 
 # The default Django User model provides the following attributes:
 #	username
@@ -28,7 +29,7 @@ ANALYSIS_STATUS = (
 
 # Define the choices for ionisation protocol
 IONISATION_PROTOCOLS = (
-    ('EIS','Electron Ionisation Spray'),
+    ('ESI','Electrospray Ionisation'),
     ('EII', 'Electron Impact Ionisation'),
     # Additional ionisation protocols could be added here if necessary
 )
@@ -63,6 +64,9 @@ def _get_upload_file_name(instance, filename):
             pass
     # Finally, the filename is contatinated to the directory
     upload_location = os.path.join(filepath, filename)
+    existing_file = os.path.isfile(upload_location)
+    if existing_file:
+        raise ValidationError('Files cannot be duplicated')
     return upload_location
 
 
