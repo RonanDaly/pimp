@@ -90,7 +90,7 @@ class AddExperimentViewTest(TestCase):
             title = 'Experiment 2',
             description = 'This is another experiment',
             created_by = self.user,
-            ionisation_method = 'EIS',
+            ionisation_method = 'ESI',
             detection_method = experimental_protocol,
         )
 
@@ -107,7 +107,7 @@ class AddExperimentViewTest(TestCase):
                 'add_experiment'),
                 {'title': 'Experiment 1',
                 'description': 'This is a test experiment',
-                'ionisation_method': 'EIS',
+                'ionisation_method': 'ESI',
                 'detection_method': '1'
                 }
             )

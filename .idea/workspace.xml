@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="07fc88d6-be44-4e3f-80ff-ea804361aae9" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/forms.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/Frank_R/frankMSnPeakMatrix.R" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/Frank_R/frankMSnPeakMatrix.R" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/models.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" afterPath="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/django_projects/pimp/frank/views.py" afterPath="$PROJECT_DIR$/django_projects/pimp/frank/views.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="pimp.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -28,7 +22,32 @@
     <favorites_list name="pimp" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="tests.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tests.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.5057851">
+              <caret line="99" column="37" selection-start-line="99" selection-start-column="37" selection-end-line="99" selection-end-column="37" />
+              <folding>
+                <element signature="e#0#32#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="31" column="9" selection-start-line="31" selection-start-column="6" selection-end-line="31" selection-end-column="9" />
+              <folding>
+                <element signature="e#0#28#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -57,11 +76,11 @@
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/network_sampler.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/peakFactories.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/tasks.py" />
-        <option value="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/urls.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/populate_pimp.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/frank/views.py" />
         <option value="$PROJECT_DIR$/django_projects/pimp/pimp/settings_dev.py" />
+        <option value="$PROJECT_DIR$/django_projects/pimp/frank/tests.py" />
       </list>
     </option>
   </component>
@@ -320,9 +339,9 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="715" y="24" width="651" height="744" extended-state="4" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.038402457" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.038402457" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -679,16 +698,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tests.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.484375">
-          <caret line="873" column="32" selection-start-line="873" selection-start-column="32" selection-end-line="873" selection-end-column="32" />
-          <folding>
-            <element signature="e#0#32#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/urls.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.4921875">
@@ -731,16 +740,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3203125">
-          <caret line="507" column="7" selection-start-line="507" selection-start-column="7" selection-end-line="507" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#28#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tasks.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.4609375">
@@ -762,6 +761,26 @@
         <state vertical-scroll-proportion="0.3984375">
           <caret line="20" column="29" selection-start-line="20" selection-start-column="29" selection-end-line="20" selection-end-column="29" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="31" column="9" selection-start-line="31" selection-start-column="6" selection-end-line="31" selection-end-column="9" />
+          <folding>
+            <element signature="e#0#28#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/django_projects/pimp/frank/tests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5057851">
+          <caret line="99" column="37" selection-start-line="99" selection-start-column="37" selection-end-line="99" selection-end-column="37" />
+          <folding>
+            <element signature="e#0#32#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
