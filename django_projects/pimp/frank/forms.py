@@ -152,6 +152,11 @@ NIST_SEARCH_PARAMS = (
     ('I', 'Identity')
 )
 
+TRANSFORMATION_TYPES = (
+    ('M+H', 'M+H'),
+    ('M+K', 'M+K'),
+)
+
 # Class in peak summary to select a suitable annotation tool
 class AnnotationToolSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -181,6 +186,12 @@ class AnnotationQueryForm(forms.ModelForm):
         fields = (
             'name',
         )
+
+class PrecursorMassFilterForm(AnnotationQueryForm):
+    transformations = forms.MultipleChoiceField(
+        choices = TRANSFORMATION_TYPES,
+        help_text = "Please choose which transformation types to include in the filter"
+    )
 
 class NISTQueryForm(AnnotationQueryForm):
     maximum_number_of_hits = forms.IntegerField(

@@ -419,6 +419,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = NISTQueryForm(request.POST)
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
             annotation_query_form = NetworkSamplerQueryForm(request.POST)
+        elif annotation_tool.name == 'Precursor Mass Filter':
+            annotation_query_form = PrecursorMassFilterForm(request.POST)
         if annotation_query_form.is_valid():
             new_annotation_query = annotation_query_form.save(commit=False)
             new_annotation_query.fragmentation_set = fragmentation_set
@@ -440,6 +442,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = NISTQueryForm()
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
             annotation_query_form = NetworkSamplerQueryForm()
+        elif annotation_tool.name == 'Precursor Mass Filter':
+            annotation_query_form = PrecursorMassFilterForm()
         context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
         return render(request, 'frank/define_annotation_query.html', context_dict)
 
@@ -489,6 +493,8 @@ def generate_annotations(annotation_query_object):
         tasks.nist_batch_search.delay(annotation_query_object.id)
     elif annotation_tool.name == 'LCMS DDA Network Sampler':
         pass
+    elif annotation_tool.name == 'Precursor Mass Filter':
+        tasks.precursor_mass_filter(annotation_query_object.id)
 
 def set_annotation_query_parameters(annotation_query_object, annotation_query_form, currentUser):
     if isinstance(annotation_query_form, MassBankQueryForm):
@@ -529,6 +535,11 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
             'search_type': search_type,
             'library': selected_libraries,
         }
+        annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
+        return annotation_query_object
+    elif isinstance(annotation_query_form, PrecursorMassFilterForm):
+        parameters = {'hello':12}
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Precursor Mass Filter')
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     # elif isinstance(annotation_query_form, NetworkSamplerQueryForm):

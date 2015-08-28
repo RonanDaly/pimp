@@ -211,6 +211,53 @@ def nist_batch_search(annotation_query_id):
         annotation_query.status = 'Completed with Errors'
     annotation_query.save()
 
+# This really should not be here!
+TRANSFORMATIONS = {
+    "M+2H": [1.00727645199076,0.5,0.0],
+    "M+H+NH4": [9.52055100354076,0.5,0.0],
+    "M+H+Na": [11.99824876604076,0.5,0.0],
+    "M+H+K": [19.98521738604076,0.5,0.0],
+    "M+ACN+2H": [21.520551003540763,0.5,0.0],
+    "M+2Na": [22.98922108009076,0.5,0.0],
+    "M+H": [1.00727645199076,1.0,0.0],
+    "M+HC13": [1.00727645199076,1.0,-1.00335],
+    "M+H2C13": [1.00727645199076,1.0,-2.00670],
+    "M+NH4": [18.03382555509076,1.0,0.0],
+    "M+Na": [22.98922108009076,1.0,0.0],
+    "M+NaC13": [22.98922108009076,1.0,-1.00335],
+    "M+CH3OH+H": [33.033491201890754,1.0,0.0],
+    "M+K": [38.963158320090756,1.0,0.0],
+    "M+KC13": [38.963158320090756,1.0,-1.00335],
+    "M+ACN+H": [42.03382555509076,1.0,0.0],
+    "M+2Na-H": [44.97116570819076,1.0,0.0],
+    "M+IsoProp+H": [61.06479132949075,1.0,0.0],
+    "M+ACN+Na": [64.01577018319077,1.0,0.0],
+    "M+2K-H": [76.91904018819076,1.0,0.0],
+    "M+DMSO+H": [79.02121199569076,1.0,0.0],
+    "M+2ACN+H": [83.06037465819077,1.0,0.0],
+}
+
+@celery.task
+def precursor_mass_filter(annotation_query_id):
+    import math
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    annotation_query.status = 'Processing'
+    annotation_query.save()
+
+    parent_annotation_query = AnnotationQuery.objects.get(id=1)
+
+    fragmentation_set = annotation_query.fragmentation_set
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msn_level=1)
+    for peak in peaks:
+        print peak
+        peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query=parent_annotation_query)
+        for a in peak_annotations:
+            transformed_mass = float(peak.mass) - TRANSFORMATIONS["M+H"][0]
+            if math.fabs(transformed_mass - float(a.compound.exact_mass))/transformed_mass < 1e-6*5:
+                print "HIT"
+            
+
+
 
 @celery.task
 def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
