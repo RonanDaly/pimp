@@ -212,7 +212,7 @@ def nist_batch_search(annotation_query_id):
     annotation_query.save()
 
 # This really should not be here!
-TRANSFORMATIONS = {
+POSITIVE_TRANSFORMATIONS = {
     "M+2H": [1.00727645199076,0.5,0.0],
     "M+H+NH4": [9.52055100354076,0.5,0.0],
     "M+H+Na": [11.99824876604076,0.5,0.0],
@@ -245,16 +245,30 @@ def precursor_mass_filter(annotation_query_id):
     annotation_query.save()
 
     parent_annotation_query = AnnotationQuery.objects.get(id=1)
+    parameters = jsonpickle.decode(annotation_query.annotation_tool_params)
+    transforms_to_use = parameters['positive_transforms']
+
+    print "Running precursor mass filter with adducts: ",transforms_to_use
 
     fragmentation_set = annotation_query.fragmentation_set
-    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msn_level=1)
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
+        msn_level = 1, source_file__polarity='Positive')
     for peak in peaks:
-        print peak
         peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query=parent_annotation_query)
         for a in peak_annotations:
-            transformed_mass = float(peak.mass) - TRANSFORMATIONS["M+H"][0]
-            if math.fabs(transformed_mass - float(a.compound.exact_mass))/transformed_mass < 1e-6*5:
-                print "HIT"
+            for t in transforms_to_use:
+                transformed_mass = float(peak.mass) - POSITIVE_TRANSFORMATIONS[t][0]
+                mass_error = 1e6*math.fabs(transformed_mass - float(a.compound.exact_mass))/transformed_mass
+                if mass_error < 5:
+                    new_annotation = CandidateAnnotation(peak = peak,
+                        annotation_query = annotation_query,compound = a.compound,
+                        mass_match = True, confidence = a.confidence, 
+                        difference_from_peak_mass = peak.mass - a.compound.exact_mass , adduct = t,
+                        instrument_type = a.instrument_type, collision_energy = a.collision_energy)
+                    new_annotation.save()
+
+    annotation_query.status="Completed Successfully"
+    annotation_query.save()
             
 
 

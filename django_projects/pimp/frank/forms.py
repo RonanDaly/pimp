@@ -188,10 +188,12 @@ class AnnotationQueryForm(forms.ModelForm):
         )
 
 class PrecursorMassFilterForm(AnnotationQueryForm):
-    transformations = forms.MultipleChoiceField(
+    positive_transforms = forms.MultipleChoiceField(
         choices = TRANSFORMATION_TYPES,
         help_text = "Please choose which transformation types to include in the filter"
-    )
+        )
+    def clean(self):
+        cleaned_data = super(PrecursorMassFilterForm, self).clean()
 
 class NISTQueryForm(AnnotationQueryForm):
     maximum_number_of_hits = forms.IntegerField(

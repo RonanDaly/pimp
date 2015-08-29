@@ -538,7 +538,9 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     elif isinstance(annotation_query_form, PrecursorMassFilterForm):
-        parameters = {'hello':12}
+        positive_transforms = annotation_query_form.cleaned_data['positive_transforms']
+        parameters = {}
+        parameters['positive_transforms'] = positive_transforms
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Precursor Mass Filter')
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
