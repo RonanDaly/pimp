@@ -31,6 +31,7 @@
 				<th>Name</th>
 				<th>Time Created</th>
 				<th>Current Status</th>
+				<th>Parent(s)</th>
 				<th>Children</th>
 			</tr>
 			{% for annotation in annotations %}
@@ -39,9 +40,14 @@
 					<td>{{annotation.time_created}}</td>
 					<td>{{annotation.status}}</td>
 					<td>
-					{% for a in annotation.source_annotation_queries.all %}
-						{{ a.name }}
-					{% endfor %}
+						{% for a in annotation.annotationquery_set.all %}
+							{{ a.name }}
+						{% endfor %}
+					</td>
+					<td>
+						{% for a in annotation.source_annotation_queries.all %}
+							{{ a.name }}
+						{% endfor %}
 					</td>
 				</tr>
 			{% endfor %}	
