@@ -2,28 +2,36 @@
 
 {% load staticfiles %}
 
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/registration_form.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+{% endblock %}
+
 {% block content %}
-
-        <h4>Add Experimental Condition</h4>
-
-	{% if experimental_condition_form %}
-        <form id="experimental_condition_form" method="post" action="{% url 'add_experimental_condition' experiment_slug %}">
-
-            {% csrf_token %}
-            {% for hidden in experimental_condition_form.hidden_fields %}
-                {{ hidden }}
-            {% endfor %}
-
-            {% for field in experimental_condition_form.visible_fields %}
-                {{ field.errors }}
-		<br>
-                {{ field.help_text }}
-		<br>
-                {{ field }}
-		<br>
-            {% endfor %}
-
-            <input type="submit" name="submit" value="Add Condition" />
-	{% endif %}        
-	</form>
+{% if user.is_authenticated %}
+<div class="row-fluid" id="main-container">
+	<div class="span12" style="margin-left:0px;">
+		<form class="form-signin" method="POST" action="{% url 'add_experimental_condition' experiment_slug %}">
+			{% csrf_token %}
+			<h2 class="form-signin-heading">Add Condition</h2>
+				{% for field in experimental_condition_form.visible_fields %}
+					<span style="font-size:11px">
+						{{ field.help_text }}
+					</span>					
+					<span style="color:red; font-size:11px">
+						{{ field.errors }}
+					</span>
+					<span style="font-size:11px">
+						{{ field }}
+					</span>
+					</br>
+				{% endfor %}
+			<button class="btn btn-large btn-primary" type="submit">Create Condition</button>
+			<a href="{% url 'experiment_summary' experiment_slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+		</form>
+	</div>
+</div>
+{% else %}
+<p>Please log in or register to create experiment</p>
+{% endif %}
 {% endblock %}
