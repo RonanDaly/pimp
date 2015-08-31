@@ -12,21 +12,19 @@ Getting started with PiMP and GitLab
 -------------
 
 #### Collaborative development
-PiMP follows a regulated collaborative development method, which means not everyone can the join but many research groups or individuals participate to its development. It is really likely that you will have to collaborate with other developers in the future, and other developers may also need your help at some point, so for this reason we ask every developer to set their email address as public. Please go to [your profile page](http://newtcrc-panda.ibls.gla.ac.uk/profile) and make sure this is all set.
+PiMP follows a regulated collaborative development method, which means not everyone can join but many research groups or individuals participate to its development. It is really likely that you will have to collaborate with other developers in the future, and other developers may also need your help at some point, so for this reason we ask every developer to set their email address as public. Please go to [your profile page](http://newtcrc-panda.ibls.gla.ac.uk/profile) and make sure this is all set.
 
 #### SSH key
 You won't be able to pull or push project code via SSH until you [add an SSH key](http://newtcrc-panda.ibls.gla.ac.uk/profile/keys/new) to your profile. You need help setting up your key? Take a look at [this tutorial](http://newtcrc-panda.ibls.gla.ac.uk/help/ssh/README). 
 
 
-Installation
+![alt text](django_projects/static/img/tool_icon.png) Installation
 -------------
 
 #### <i class="icon-cog"></i> Python & Django Installation
 
 Django is a high-level Python MVC Web framework that encourages rapid development and clean, pragmatic design. 
-
 PiMP currently uses python 2.7 and Django 1.7, to install python and Django please follow [these instructions](https://docs.djangoproject.com/en/1.7/intro/install/).
-
 Before you go further, please make sure you are familiar with Django documentation which is accessible [here](https://docs.djangoproject.com/en/1.7/). 
 
 > **Note: Django specific MVC naming system**
