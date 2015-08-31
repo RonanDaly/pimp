@@ -1,4 +1,4 @@
-Welcome to PiMP!
+![alt text](django_projects/static/img/PiMP_logo.png) Welcome to PiMP!
 ===================
 
 PiMP is an integrated, web-enabled tool for LC-MS data analysis and visualization.
