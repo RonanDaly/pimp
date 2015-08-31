@@ -12,7 +12,7 @@ Getting started with PiMP and GitLab
 -------------
 
 #### Collaborative development
-PiMP follows a regulated collaborative development method, which means not everyone can the join but many research groups or individuals participate to its development. It is really likely that you will have to collaborate with other developers in the future, and other developers may also need your help at some point, so for this reason we ask every developer to set their email address as public. Please go to your profile page and make sure this is all set.
+PiMP follows a regulated collaborative development method, which means not everyone can the join but many research groups or individuals participate to its development. It is really likely that you will have to collaborate with other developers in the future, and other developers may also need your help at some point, so for this reason we ask every developer to set their email address as public. Please go to [your profile page](http://newtcrc-panda.ibls.gla.ac.uk/profile) and make sure this is all set.
 
 #### SSH key
 You won't be able to pull or push project code via SSH until you [add an SSH key](http://newtcrc-panda.ibls.gla.ac.uk/profile/keys/new) to your profile. You need help setting up your key? Take a look at [this tutorial](http://newtcrc-panda.ibls.gla.ac.uk/help/ssh/README). 
