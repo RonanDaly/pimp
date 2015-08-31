@@ -244,9 +244,11 @@ def precursor_mass_filter(annotation_query_id):
     annotation_query.status = 'Processing'
     annotation_query.save()
 
-    parent_annotation_query = AnnotationQuery.objects.get(id=1)
     parameters = jsonpickle.decode(annotation_query.annotation_tool_params)
+    parent_annotation_queries = AnnotationQuery.objects.filter(slug__in=parameters['parents'])
+    print parent_annotation_queries
     transforms_to_use = parameters['positive_transforms']
+    mass_tol = parameters['mass_tol']
 
     print "Running precursor mass filter with adducts: ",transforms_to_use
 
@@ -254,12 +256,12 @@ def precursor_mass_filter(annotation_query_id):
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
         msn_level = 1, source_file__polarity='Positive')
     for peak in peaks:
-        peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query=parent_annotation_query)
+        peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query__in=parent_annotation_queries)
         for a in peak_annotations:
             for t in transforms_to_use:
-                transformed_mass = float(peak.mass) - POSITIVE_TRANSFORMATIONS[t][0]
+                transformed_mass = (float(peak.mass) - POSITIVE_TRANSFORMATIONS[t][0])/POSITIVE_TRANSFORMATIONS[t][1] + POSITIVE_TRANSFORMATIONS[t][2]
                 mass_error = 1e6*math.fabs(transformed_mass - float(a.compound.exact_mass))/transformed_mass
-                if mass_error < 5:
+                if mass_error < mass_tol:
                     new_annotation = CandidateAnnotation(peak = peak,
                         annotation_query = annotation_query,compound = a.compound,
                         mass_match = True, confidence = a.confidence, 

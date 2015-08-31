@@ -387,6 +387,8 @@ def fragmentation_set(request, fragmentation_set_name_slug):
                 annotation_query_form = NISTQueryForm()
             elif user_tool_choice == 'LCMS DDA Network Sampler':
                 annotation_query_form = NetworkSamplerQueryForm()
+            elif user_tool_choice == 'Precursor Mass Filter':
+                annotation_query_form = PrecursorMassFilterForm(fragmentation_set_name_slug)
             annotation_tool_slug = AnnotationTool.objects.get(name=user_tool_choice).slug
             context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
             return render(request, 'frank/define_annotation_query.html', context_dict)
@@ -420,7 +422,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
             annotation_query_form = NetworkSamplerQueryForm(request.POST)
         elif annotation_tool.name == 'Precursor Mass Filter':
-            annotation_query_form = PrecursorMassFilterForm(request.POST)
+            annotation_query_form = PrecursorMassFilterForm(fragmentation_set_name_slug,request.POST)
+
         if annotation_query_form.is_valid():
             new_annotation_query = annotation_query_form.save(commit=False)
             new_annotation_query.fragmentation_set = fragmentation_set
@@ -431,8 +434,10 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             experiment = fragmentation_set.experiment
             form = AnnotationToolSelectionForm(experiment_object=experiment)
             context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
+            print "asdlkdaslkadskjlads"
             return render(request, 'frank/fragmentation_set.html', context_dict)
         else:
+            print "here",annotation_query_form
             context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
             return render(request, 'frank/define_annotation_query.html', context_dict)
     else:
@@ -443,7 +448,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
             annotation_query_form = NetworkSamplerQueryForm()
         elif annotation_tool.name == 'Precursor Mass Filter':
-            annotation_query_form = PrecursorMassFilterForm()
+            annotation_query_form = PrecursorMassFilterForm(fragmentation_set_name_slug)
+        print annotation_query_form
         context_dict = get_define_annotation_query_context_dict(fragmentation_set_name_slug, annotation_query_form, annotation_tool_slug)
         return render(request, 'frank/define_annotation_query.html', context_dict)
 
@@ -538,9 +544,10 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     elif isinstance(annotation_query_form, PrecursorMassFilterForm):
-        positive_transforms = annotation_query_form.cleaned_data['positive_transforms']
         parameters = {}
-        parameters['positive_transforms'] = positive_transforms
+        parameters['positive_transforms'] = annotation_query_form.cleaned_data['positive_transforms']
+        parameters['parents'] = annotation_query_form.cleaned_data['parent_annotation_queries']
+        parameters['mass_tol'] = annotation_query_form.cleaned_data['mass_tol']
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Precursor Mass Filter')
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object

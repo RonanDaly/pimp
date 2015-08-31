@@ -153,9 +153,30 @@ NIST_SEARCH_PARAMS = (
 )
 
 TRANSFORMATION_TYPES = (
-    ('M+H', 'M+H'),
-    ('M+K', 'M+K'),
+    ("M+H","M+H"),
+    ("M+Na","M+Na"),
+    ("M+K","M+K"),
+    ('M+2H','M+2H'),
+    ("M+H+NH4","M+H+NH4"), 
+    ("M+H+Na","M+H+Na"),
+    ("M+H+K","M+H+K"),
+    ("M+ACN+2H","M+ACN+2H"),
+    ("M+2Na","M+2Na"),
+    ("M+HC13","M+HC13"),
+    ("M+H2C13" ,"M+H2C13" ),
+    ("M+NH4","M+NH4"),
+    ("M+NaC13","M+NaC13"),
+    ("M+CH3OH+H","M+CH3OH+H"),
+    ("M+KC13","M+KC13"),
+    ("M+ACN+H" ,"M+ACN+H" ),
+    ("M+2Na-H" ,"M+2Na-H" ),
+    ("M+IsoProp+H","M+IsoProp+H"),
+    ("M+ACN+Na","M+ACN+Na"),
+    ("M+2K-H","M+2K-H"),
+    ("M+DMSO+H","M+DMSO+H"),
+    ("M+2ACN+H","M+2ACN+H"),
 )
+
 
 # Class in peak summary to select a suitable annotation tool
 class AnnotationToolSelectionForm(forms.Form):
@@ -188,12 +209,45 @@ class AnnotationQueryForm(forms.ModelForm):
         )
 
 class PrecursorMassFilterForm(AnnotationQueryForm):
+    possible_parents = []
+    def __init__(self,fragmentation_set_name_slug,*args, **kwargs):
+        super(PrecursorMassFilterForm,self).__init__(*args, **kwargs)
+        fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+        parent_annotations = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+        possible_parents = ()
+        for a in parent_annotations:
+            possible_parents = possible_parents + ((a.slug,a.name),)
+        self.fields['parent_annotation_queries'] = forms.MultipleChoiceField(
+            choices = possible_parents,
+            required = True,
+            help_text = "Please choose a parent Annotation Query to filter") 
+
+    parent_annotation_queries = forms.MultipleChoiceField(
+        choices = possible_parents,
+        help_text = "Please choose a parent Annotation Query to filter")
+
     positive_transforms = forms.MultipleChoiceField(
         choices = TRANSFORMATION_TYPES,
+        required = True,
+        initial = ['M+H'],
+        widget=forms.CheckboxSelectMultiple(),
         help_text = "Please choose which transformation types to include in the filter"
         )
+
+    mass_tol = forms.IntegerField(
+        min_value= 0,
+        max_value = 100,
+        initial = 5,
+        required = True,
+        help_text = "Please specify mass tolerance (in ppm)")
+
     def clean(self):
         cleaned_data = super(PrecursorMassFilterForm, self).clean()
+        user_selections = cleaned_data.get('positive_transforms')
+        if user_selections == None:
+            self.add_error("np_transforms", "No transformations were selected. Please select at least one transformation to query.")
+            raise forms.ValidationError("No transformations were selected. Please select at least one transformation to query.")
+
 
 class NISTQueryForm(AnnotationQueryForm):
     maximum_number_of_hits = forms.IntegerField(
