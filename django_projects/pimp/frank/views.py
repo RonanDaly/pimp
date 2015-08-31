@@ -1,18 +1,13 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth import authenticate, login, logout
 from frank.models import *
 from frank.forms import *
-from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from frank import tasks
-import numpy as np
 from decimal import *
 from django.db.models import Max
-import re
 import datetime
 import jsonpickle
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.exceptions import ValidationError
 
 ##### No longer needed for plotting #######
 # import matplotlib

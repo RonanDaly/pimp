@@ -18,12 +18,14 @@ class ExperimentForm(forms.ModelForm):
     # IONISATION_PROTOCOLS is declared in 'frank.models'
     ionisation_method = forms.ChoiceField(
         choices = IONISATION_PROTOCOLS,
+        help_text="Select the ionisation source.",
     )
     # Creation of an experiment can include the declaration of the detection method used
     # DETECTION_PROTOCOLS is declared in the 'frank.models'
     detection_method = forms.ModelChoiceField(
         queryset = ExperimentalProtocol.objects.all(),
         empty_label=None,
+        help_text="Select the experimental protocol.",
     )
 
     class Meta:

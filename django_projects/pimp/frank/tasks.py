@@ -152,6 +152,7 @@ def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
 def massBank_batch_search(annotation_query_id):
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
+    annotation_query.save()
     fragmentation_set = annotation_query.fragmentation_set
     try:
         mass_bank_query_tool = MassBankQueryTool(annotation_query_id, fragmentation_set.id)

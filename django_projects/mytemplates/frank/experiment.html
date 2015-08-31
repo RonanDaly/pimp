@@ -1,75 +1,211 @@
 {% extends "base.html" %}
 
-{% load staticfiles %}
+{% load project_tags %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
+<style>
+#overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: #FFF;
+    opacity: 0.9;
+    filter: alpha(opacity=90);
+    z-index: 10000;
+}
+#loading_img {
+    /*width: 50px;
+    height: 57px;*/
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -100px 0 0 -100px;
+}
+#loading_text {
+    /*width: 50px;
+    height: 57px;*/
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 100px 0 0 -160px;
+}
+.introduction_text {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #9298A3;
+}
+.project-date-info {
+    font-size: 12px;
+    color: #9298A3;
+    line-height: 18px;
+}
+.project-title-link {
+    font-size: 16px;
+    color: rgb(0, 53, 94);
+    font-weight: bold;
+}
+.project-title-link-no-link{
+    font-size: 16px;
+    color: rgb(0, 53, 94);
+    font-weight: bold;
+}
+.project-title-link:hover {
+    color: #005580;
+    text-decoration: underline;
+}
+.sample-info {
+    background-color: rgb(253, 253, 253);
+    padding-top: 8px;
+    border-radius: 5px;
+}
+.center-text {
+    text-align: center;
+}
+.text-in-table{
+    margin-bottom: 0px;
+    margin-top: 0px;
+}
+.wrapper{
+    background-color: rgb(253, 253, 253);
+}
+</style>
+<script type="text/javascript">
+    <!--//--><![CDATA[//><!--
+                var images = new Array()
+                function preload() {
+                    for (i = 0; i < preload.arguments.length; i++) {
+                        images[i] = new Image()
+                        images[i].src = preload.arguments[i]
+                    }
+                }
+                preload(
+                    "{{ STATIC_URL }}img/PiMP_logo.gif"
+                )
+    //--><!]]>
+$(function() {
+
+    var loading = function() {
+        // add the overlay with loading image to the page
+        var over = '<div id="overlay">' +
+            '<img id="loading_img" src="{{ STATIC_URL }}img/PiMP_logo.gif">' +
+            '<p id="loading_text">Your data environment is being generated, please wait.<p>' +
+            '</div>';
+        $(over).appendTo('body');
+
+        // click on the overlay to remove it
+        // $('#overlay').click(function() {
+        //     $(this).remove();
+        // });
+
+        // hit escape to close the overlay
+        // $(document).keyup(function(e) {
+        //     if (e.which === 27) {
+        //         $('#overlay').remove();
+        //     }
+        // });
+    };
+
+    // you won't need this button click
+    // just call the loading function directly
+    $('.analysis_result_button').click(loading);
+
+});
+</script>
+{% endblock %}
 
 {% block content %}
+<div class="row" style="margin-bottom: 10px;">
+    <div class="span4"><h3>{{experiment.title}}</h3></div>
+</div>
 
-	<h4>{{experiment.title}}</h4>
-		<div>		
-			<table>
-				<tr><td>Description: {{experiment.description}}</td></tr>
-				<tr><td>Date Created: {{experiment.time_created}}</td></tr>
-				<tr><td>Ionisation Method: {{experiment.get_ionisation_method_display}}</td></tr>
-				<tr><td>Experiment Type: {{experiment.detection_method}}</td></tr>
-			</table>
-		</div>
-		</br>
-		<div>
-			<h4>Experimental Conditions</h4>
-				<a href="{% url 'add_experimental_condition' experiment.slug %}">Add Experimental Condition</a>
-		</div>
-		{% if conditions %}
-		<div>
-			<table class="table">
-				<tr>
-					<th>Experimental Condition</th>
-					<th>Description</th>
-				</tr>
-			{% for condition in conditions %}
-				<tr>
-					<td><a href="{% url 'condition_summary' experiment.slug condition.slug %}">{{condition.name}}</a></td>
-					<td>{{condition.description}}</td>
-				</tr>
-			{% endfor %}
-			</table>
-		</div>
-		{% else %}
-			<p>No existing experimental condiditons</p>
-		{% endif %}
-		</br>
-		<h4>Fragment Sets</h4>
-			{% if create_frag_set %}			
-				<a href="{% url 'create_fragmentation_set' experiment.slug %}">Generate New Fragment Set</a>
-			{% endif %}			
-			</br>			
-			{% if fragmentation_sets %}
-			<div>			
-				<table class="table">
-					<tr>
-						<th>Name</th>
-						<th>Status</th>
-						<th>Time Created</th>
-					</tr>
-					{% for fragment_set in fragmentation_sets %}
-						<tr>
-							{% if fragment_set.status == 'Completed Successfully' %}
-							<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>	
-							{% else %}
-							<td>{{fragment_set.name}}</a></td>
-							{% endif %}	
-							<td>{{fragment_set.status}}</td>
-							<td>{{fragment_set.time_created}}</td>
-						</tr>
-					{% endfor %}
-				</table>
-			</div>
-			</br>
-			{% else %}
-				<p>No existing peak sets associated with this experiment<p>
-			{% endif %}	
-		</br></br>		
-		<table>
-			<tr><td><a href="{% url 'my_experiments' %}">My Experiments</a></td></tr>
-			<tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragmentation Sets</a></td></tr>
-		</table>
+<div class="row" style="margin-bottom: 10p;">
+	<div class="span10">
+	<table>
+		<tr><td>Description: {% if  experiment.description %}{{ experiment.description}}{% else %}No description available{% endif %}</td></tr>
+		<tr><td>Date Created: {{experiment.time_created}}</td></tr>
+		<tr><td>Ionisation Method: {{experiment.get_ionisation_method_display}}</td></tr>
+		<tr><td>Experiment Type: {{experiment.detection_method}}</td></tr>
+	</table>
+	</div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="row" style="margin-bottom: 10px;">
+    <div class="span4"><h3>Experimental Conditions</h3></div>
+    <div class="span8 span-create-project">{% if user.is_staff %}<a class="btn btn-primary btn-create-project" href="{% url 'add_experimental_condition' experiment.slug %}">Create Experimental Condition</a>{% endif %}</div>
+</div>
+    {% if conditions %}
+    <!div class="bs-docs-grid">
+    <div class="row">
+            <div class="span6">
+                {% for condition in conditions %}
+                {% if not forloop.counter|divisibleby:2 %}
+                <div class="row-fluid">
+                    <div class="span12">
+                        {% include "frank/condition_info.html" with condition=condition %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% if conditions|length > 1 %}
+            <div class="span6">
+                {% for condition in conditions %}
+                {% if forloop.counter|divisibleby:2 %}
+                <div class="row-fluid">
+                    <div class="span12">
+                        {% include "frank/condition_info.html" with condition=condition %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    <!/div>
+    {% else %}
+    <p>Please create a new experimental condition, for upload of files to samples.</p>
+    {% endif %}
+<div class="row" style="margin-bottom: 10px;">
+    <div class="span4"><h3>Fragmentation Sets</h3></div>
+    <div class="span8 span-create-project">{% if experiment.experimentalcondition_set.all.0.sample_set.all.0.samplefile_set.all.count > 0 %}<a class="btn btn-primary btn-create-project" href="{% url 'create_fragmentation_set' experiment.slug %}">Create Fragmentation Set</a>{% endif %}</div>
+</div>
+    {% if fragmentation_sets %}
+    <!div class="bs-docs-grid">
+    <div class="row">
+            <div class="span6">
+                {% for fragmentation_set in fragmentation_sets %}
+                {% if not forloop.counter|divisibleby:2 %}
+                <div class="row-fluid">
+                    <div class="span12">
+                        {% include "frank/frag_set_info.html" with fragmentation_set=fragmentation_set %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% if fragmentation_sets|length > 1 %}
+            <div class="span6">
+                {% for fragmentation_set in fragmentation_sets %}
+                {% if forloop.counter|divisibleby:2 %}
+                <div class="row-fluid">
+                    <div class="span12">
+                        {% include "frank/frag_set_info.html" with fragmentation_set=fragmentation_set %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    <!/div>
+    {% else %}
+    <p>Once files are uploaded, please create a fragmentation set to derive peaks from your source files.</p>
+    {% endif %}
+{% else %}
+<p>User is not authenticated</p>
+{% endif %}
 {% endblock %}
