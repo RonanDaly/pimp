@@ -425,6 +425,15 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             currentUser = request.user
             paramaterised_query_object = set_annotation_query_parameters(new_annotation_query, annotation_query_form, currentUser)
             paramaterised_query_object.save()
+
+            parameters = jsonpickle.decode(paramaterised_query_object.annotation_tool_params)
+            for a in parameters['parents']:
+                parent_query = AnnotationQuery.objects.get(slug=a)
+                AnnotationQueryHierarchy.objects.create(
+                    parent_annotation_query = parent_query,
+                    subquery_annotation_query = paramaterised_query_object)
+
+
             generate_annotations(paramaterised_query_object)
             experiment = fragmentation_set.experiment
             form = AnnotationToolSelectionForm(experiment_object=experiment)
