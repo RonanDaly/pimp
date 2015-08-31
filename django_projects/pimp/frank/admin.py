@@ -2,6 +2,10 @@ from django.contrib import admin
 from frank.models import *
 
 #### MODEL ADMIN CLASSES #####
+"""
+ These classes simply define which attributes of the model classes are to be
+ displayed in the Django admin pages.
+"""
 
 class ExperimentAdmin (admin.ModelAdmin):
     """
