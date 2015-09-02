@@ -11,7 +11,7 @@
 {% if user.is_authenticated %}
 <div class="row-fluid" id="main-container">
 	<div class="span12" style="margin-left:0px;">
-		<form class="form-signin" method="POST" action="{% url 'add_experimental_condition' experiment_slug %}">
+		<form class="form-signin" method="POST" action="{% url 'add_experimental_condition' experiment.slug %}">
 			{% csrf_token %}
 			<h2 class="form-signin-heading">Add Condition</h2>
 				{% for field in experimental_condition_form.visible_fields %}
@@ -27,7 +27,7 @@
 					</br>
 				{% endfor %}
 			<button class="btn btn-large btn-primary" type="submit">Create Condition</button>
-			<a href="{% url 'experiment_summary' experiment_slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+			<a href="{% url 'experiment_summary' experiment.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
 		</form>
 	</div>
 </div>

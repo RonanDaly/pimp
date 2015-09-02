@@ -1,7 +1,5 @@
-"""
-Script containing the Classes which are responsible for populating the database
-from the outputs of the various R scripts used to extract the peaks from the mzXML files
-"""
+__author__ = 'Scott Greig'
+
 from frank.models import Peak, SampleFile, FragmentationSet, Experiment, ExperimentalCondition, Sample
 from decimal import *
 from abc import ABCMeta, abstractmethod
@@ -9,19 +7,22 @@ import rpy2.robjects as robjects
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.exceptions import ValidationError
 
-class PeakBuilder():
+
+class PeakBuilder:
     """
     Abstract class to for all classes which are required to populate the database of the peaks
     derived from the various R scripts used.
     """
+
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def populate_database_peaks(self):
         """
         Abstract method to populate the database of peaks from the R script outputs
-        :return:Method is not instantiated
+        :return:Error   Method is not instantiated
         """
+
         raise NotImplementedError('Subclass must instantiate populate_database_peaks(self)')
 
 
@@ -39,15 +40,16 @@ class MSNPeakBuilder(PeakBuilder):
         :param fragmentation_set_id: The unique database 'id' of the FragmentationSet to be populated
         :return: None
         """
+
         # Ensure correct argument types are passed
-        if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) == False:
+        if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) is False:
             raise TypeError('Invalid R dataframe - should be of type robjects.DataFrame')
         required_fields = ['peakID', 'MSnParentPeakID', 'msLevel', 'rt', 'mz', 'intensity', 'SourceFile']
         # Ensure dictionary keys (column names) of dataframe are correct
         for field in required_fields:
             if field not in r_dataframe.colnames:
                 raise ValueError(
-                    'Invalid R dataframe - column \''+field+'\' is required'
+                    'Invalid R dataframe - column \'' + field + '\' is required'
                 )
         # Ensure value of fragmentation set is valid
         try:
@@ -69,7 +71,7 @@ class MSNPeakBuilder(PeakBuilder):
         # sample_file_vector contains the 'name' (not filepath) of the source file from which the peak was derived
         # e.g. "Beer3_Top10_POS.mzXML"
         self.sample_file_vector = r_dataframe.rx2('SourceFile')
-        if isinstance(self.sample_file_vector, robjects.FactorVector)==False:
+        if isinstance(self.sample_file_vector, robjects.FactorVector) is False:
             raise TypeError('Invalid R dataframe - SourceFile field should be Factor Vector')
         self.total_number_of_peaks = len(self.peak_ID_vector)
         if self.total_number_of_peaks <= 1:
@@ -81,13 +83,13 @@ class MSNPeakBuilder(PeakBuilder):
         # Limit the sample files to those in the experiment
         self.sample_files = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
 
-
     def populate_database_peaks(self):
         """
         Method to populate the database peaks using the output of the R scripts
         which extract the peaks data from the mzXML files.
         :return: True:  Indicates that the database has been populated
         """
+
         print 'Populating database peaks...'
         # The starting index is the last element in the r_dataframe
         starting_index = self.total_number_of_peaks-1
@@ -104,19 +106,18 @@ class MSNPeakBuilder(PeakBuilder):
             if parent_peak_id != 0 and existing_peak is False:
                 # Obtain the database object for the parent ion
                 try:
-                    parent_peak_object = self._getParentPeak(parent_peak_id)
-                    self._createAPeak(peak_array_index, parent_peak_object)
+                    parent_peak_object = self._get_parent_peak(parent_peak_id)
+                    self._create_a_peak(peak_array_index, parent_peak_object)
                 except ValidationError:
                     raise
         # Else ignore the peak
         # Here peaks without any precursor ion are ignored, however,
-        # the recursive method _getParentPeak() will follow the hierarchy
+        # the recursive method _get_parent_peak() will follow the hierarchy
         # of precursor ions, creating those that have fragments associated with them
         print 'Finished populating peaks...'
         return True
 
-
-    def _getParentPeak(self, parent_id_from_r):
+    def _get_parent_peak(self, parent_id_from_r):
         """
         A recursive method to build a hierarchy of peaks from the leaf to root peak
         :param parent_id_from_r:    The numerical, R-assigned, id of the precursor peak
@@ -146,22 +147,22 @@ class MSNPeakBuilder(PeakBuilder):
             precursor_peak_object = None
             if parent_precursor_peak_id_in_r != 0:
                 # However, if the parent is itself a fragment this must be created in advance of the parent peak
-                precursor_peak_object = self._getParentPeak(parent_precursor_peak_id_in_r)
+                precursor_peak_object = self._get_parent_peak(parent_precursor_peak_id_in_r)
             # Finally, create the parent peak
             try:
-                parent_peak_object = self._createAPeak(array_index_of_parent_ion, precursor_peak_object)
+                parent_peak_object = self._create_a_peak(array_index_of_parent_ion, precursor_peak_object)
             except ValidationError:
                 raise
             return parent_peak_object
 
-
-    def _createAPeak(self, peak_array_index, parent_peak_object):
+    def _create_a_peak(self, peak_array_index, parent_peak_object):
         """
         Method to add a peak to the database
         :param peak_array_index:    The index of the peak data in the R-dataframe to be added to the database
         :param parent_peak_object:  The parent peak object corresponding to the precursor ion of the peak to be created
         :return newly_created_peak: The created Peak model object
         """
+
         # If valid parameters then create the peak model instance
         sample_file_name = self.sample_file_vector.levels[self.sample_file_vector[peak_array_index]-1]
         peak_source_file = self.sample_files.get(name=sample_file_name)
@@ -171,13 +172,13 @@ class MSNPeakBuilder(PeakBuilder):
         peak_msn_level = int(self.msn_level_vector[peak_array_index])
         try:
             newly_created_peak = Peak.objects.create(
-                    source_file = peak_source_file,
-                    mass = peak_mass,
-                    retention_time = peak_retention_time,
-                    intensity = peak_intensity,
-                    parent_peak = parent_peak_object,
-                    msn_level = peak_msn_level,
-                    fragmentation_set = self.fragmentation_set,
+                source_file=peak_source_file,
+                mass=peak_mass,
+                retention_time=peak_retention_time,
+                intensity=peak_intensity,
+                parent_peak=parent_peak_object,
+                msn_level=peak_msn_level,
+                fragmentation_set=self.fragmentation_set,
             )
             self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
         except ValidationError:
@@ -201,7 +202,7 @@ class GCMSPeakBuilder(PeakBuilder):
 
         # Check the input parameters are valid
         # Ensure correct argument types are passed
-        if output_file_list is None or isinstance(output_file_list, robjects.DataFrame) == False:
+        if output_file_list is None or isinstance(output_file_list, robjects.DataFrame) is False:
             raise TypeError('Invalid R dataframe - should be of type robjects.DataFrame')
         required_fields = ['mzXMLFiles', 'txtOutputFiles']
         # Ensure dictionary keys (column names) of dataframe are correct
@@ -221,32 +222,32 @@ class GCMSPeakBuilder(PeakBuilder):
             raise
         # Extract the filepaths of the source mzXML and text output files
         self.source_files_vector = output_file_list.rx2('mzXMLFiles')
-        if isinstance(self.source_files_vector, robjects.FactorVector)==False:
+        if isinstance(self.source_files_vector, robjects.FactorVector) is False:
             raise TypeError('Invalid R dataframe - mzXMLFiles field should be Factor Vector')
         self.peak_list_files_vector = output_file_list.rx2('txtOutputFiles')
-        if isinstance(self.peak_list_files_vector, robjects.FactorVector)==False:
+        if isinstance(self.peak_list_files_vector, robjects.FactorVector) is False:
             raise TypeError('Invalid R dataframe - txtOutputFiles field should be Factor Vector')
         # Ensure the R Script has returned peaks to be populated
         self.number_of_source_files = len(self.source_files_vector)
         if self.number_of_source_files < 1:
             raise ValueError('No peaks to populate')
 
-
     def populate_database_peaks(self):
         """
         Method to populate gcms peaks from a R generated Text file
         :return: True:  Indicator of completion of the population of the peaks
         """
+
         print 'Populating Database peaks...'
         print 'Number of source files = '+str(self.number_of_source_files)
         for index in range(0, self.number_of_source_files):
             # Index must be decreased by 1 due to the indexing used in R (starts at 1, not the conventional 0)
-            directory_of_mzXML_file = self.source_files_vector.levels[self.source_files_vector[index]-1]
-            print 'Processing Peaks From '+directory_of_mzXML_file
+            directory_of_mzxml_file = self.source_files_vector.levels[self.source_files_vector[index]-1]
+            print 'Processing Peaks From '+directory_of_mzxml_file
             directory_of_output_txt_file = self.peak_list_files_vector.levels[self.peak_list_files_vector[index]-1]
             # Group the peaks into a dictionary
             try:
-                grouped_peaks = self._group_peaks(directory_of_output_txt_file, directory_of_mzXML_file)
+                grouped_peaks = self._group_peaks(directory_of_output_txt_file, directory_of_mzxml_file)
             except IOError:
                 raise
             except ValueError:
@@ -269,20 +270,21 @@ class GCMSPeakBuilder(PeakBuilder):
         """
         Method to extract the peak data from a Text file and group the peaks into a python dictionary
         :param file_directory:  The directory of the text file containing the peak data
-        :param source_directory:    The directory of the source file (the mzXML file) from which the peaks are derived from
+        :param source_directory:    The directory of the source file (the mzXML file)
+                                    from which the peaks are derived from
         :return: peak_dictionary:   A dictionary of the peaks grouped by their relation.id
         """
-        current_parent_peak = None
-        peak_dictionary = {}
 
+        peak_dictionary = {}
         # Try to retrieve the source_file object
         try:
-            source_file_object = SampleFile.objects.get(address = source_directory)
+            source_file_object = SampleFile.objects.get(address=source_directory)
         except MultipleObjectsReturned:
             raise
         except ObjectDoesNotExist:
             raise
         # Try to retrive the peak data from the source file
+        input_file = None
         try:
             with open(file_directory, "r") as input_file:
                 current_group_id = -1
@@ -294,7 +296,6 @@ class GCMSPeakBuilder(PeakBuilder):
                         line_tokens = line.split('\t')
                         # The tokens are extracted containing the peak data
                         try:
-                            peak_id = int(line_tokens[0])
                             peak_mass = Decimal(line_tokens[1])
                             peak_retention_time = Decimal(line_tokens[2])
                             peak_intensity = Decimal(line_tokens[3])
@@ -303,39 +304,40 @@ class GCMSPeakBuilder(PeakBuilder):
                             raise
                         except InvalidOperation:
                             raise
-                        # Create a new peak object, however, this should not be commited to the database until the correct
-                        # precursor ion has been allocated to the peak
+                        # Create a new peak object, however, this should not be commited to the database
+                        # until the correct precursor ion has been allocated to the peak
                         new_peak = Peak(
-                            source_file = source_file_object,
-                            mass = peak_mass,
-                            retention_time = peak_retention_time,
-                            intensity = peak_intensity,
-                            parent_peak = None,
-                            msn_level = 2,
-                            fragmentation_set = self.fragmentation_set,
+                            source_file=source_file_object,
+                            mass=peak_mass,
+                            retention_time=peak_retention_time,
+                            intensity=peak_intensity,
+                            parent_peak=None,
+                            msn_level=2,
+                            fragmentation_set=self.fragmentation_set,
                         )
                         # If the relation_id of the peak does not belong to the current grouping, create a new group
                         # in the dictionary
                         if current_group_id != peak_relation_id:
                             current_group_id = peak_relation_id
-                            peak_dictionary[peak_relation_id]=[]
+                            peak_dictionary[peak_relation_id] = []
                         # Finally, add the new peak object to the created_peaks dictionary
                         peak_dictionary[peak_relation_id].append(new_peak)
         except IOError:
             raise
         finally:
             # Using 'with' should close the file but make sure
-            if input_file.closed==False:
+            if input_file.closed is False:
                 input_file.close()
         return peak_dictionary
-
 
     def _add_peaks_to_database(self, grouped_peaks):
         """
         Method to add the peaks to the database in their correct groupings
-        :param grouped_peaks: A dictionary containing all of the peaks to be added to the database, grouped by their relation.id
+        :param grouped_peaks: A dictionary containing all of the peaks to be added to the database, grouped by
+                                their relation.id
         :return True:   Boolean indicates that the peaks have been successfully added to the database
         """
+
         for relation in grouped_peaks:
             most_intense_peak = grouped_peaks[relation][0]
             # By default, set the most intense peak to be the first peak in the group
@@ -345,13 +347,13 @@ class GCMSPeakBuilder(PeakBuilder):
             # Identify the peak with the greatest intensity - this is the pseudo-ms1 peak
             try:
                 pseudo_ms1_peak = Peak.objects.create(
-                    source_file = most_intense_peak.source_file,
-                    mass = most_intense_peak.mass,
-                    retention_time = most_intense_peak.retention_time,
-                    intensity = most_intense_peak.intensity,
-                    parent_peak = None,
-                    msn_level = 1,
-                    fragmentation_set = self.fragmentation_set,
+                    source_file=most_intense_peak.source_file,
+                    mass=most_intense_peak.mass,
+                    retention_time=most_intense_peak.retention_time,
+                    intensity=most_intense_peak.intensity,
+                    parent_peak=None,
+                    msn_level=1,
+                    fragmentation_set=self.fragmentation_set,
                 )
                 for peak in grouped_peaks[relation]:
                     peak.parent_peak = pseudo_ms1_peak

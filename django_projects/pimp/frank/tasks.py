@@ -1,3 +1,5 @@
+__author__ = "Scott Greig"
+
 import rpy2.robjects as robjects
 from pimp.settings_dev import MEDIA_ROOT
 from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, AnnotationTool,\
@@ -5,7 +7,7 @@ from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, Annota
 from djcelery import celery
 from decimal import *
 from frank.peakFactories import MSNPeakBuilder, GCMSPeakBuilder
-from suds.client import Client, WebFault
+from suds.client import WebFault
 import os
 from frank.models import *
 import frank.network_sampler as ns
@@ -13,14 +15,20 @@ from pimp.settings_dev import BASE_DIR
 import jsonpickle
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from frank.annotationTools import MassBankQueryTool, NISTQueryTool
+from urllib2 import URLError
 
 
-from celery import shared_task
-import subprocess
-
-## Method to run simon's network sampler
 @celery.task
 def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query_slug):
+    """
+    Method to run the Network Sampler developed by Simon Rogers
+    :author Simon Rogers
+    :param fragmentation_set_slug: A string containing the unique slug for the fragmentation set
+    :param sample_file_name: A string for the sample file name
+    :param annotation_query_slug: A string containing the unique slug for the annotation query
+    :return: edge_dict:
+    """
+
     # fragmentation set is the fragmentation set we want to run the analysis on (slug)
     # annotation_query is the new annotation query slug
     fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_slug)
@@ -29,7 +37,7 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
     sample_file = SampleFile.objects.filter(name=sample_file_name)
     # check if the new annotation query already has annotations attached and delete them if it does
     # might want to remove this at some point, but it's useful for debugging
-    old_annotations = CandidateAnnotation.objects.filter(annotation_query = new_annotation_query)
+    old_annotations = CandidateAnnotation.objects.filter(annotation_query=new_annotation_query)
     if old_annotations:
         print "Deleting old annotations..."
         for annotation in old_annotations:
@@ -38,7 +46,7 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
     new_annotation_query.status = 'Submitted'
     new_annotation_query.save()
     # Extract the peaks
-    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,msn_level=1,source_file=sample_file)
+    peaks = Peak.objects.filter(fragmentation_set=fragmentation_set, msn_level=1, source_file=sample_file)
     print "Found " + str(len(peaks)) + " peaks"
 
     peakset = ns.FragSet()
@@ -90,12 +98,12 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
     for m in peakset.measurements:
         peak = Peak.objects.get(id=m.id)
         for annotation in m.annotations:
-            compound = Compound.objects.get(id = annotation.id)
+            compound = Compound.objects.get(id=annotation.id)
             parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid)
             add_info_string = "Prior: {:5.4f}, Edges: {:5.2f}".format(peakset.prior_probability[m][annotation],peakset.posterior_edges[m][annotation])
-            an = CandidateAnnotation.objects.create(compound=compound,peak=peak,confidence=peakset.posterior_probability[m][annotation],
-                annotation_query=new_annotation_query,difference_from_peak_mass = parent_annotation.difference_from_peak_mass,
-                mass_match=parent_annotation.mass_match,additional_information = add_info_string)
+            an = CandidateAnnotation.objects.create(compound=compound, peak=peak, confidence=peakset.posterior_probability[m][annotation],
+                annotation_query=new_annotation_query, difference_from_peak_mass=parent_annotation.difference_from_peak_mass,
+                mass_match=parent_annotation.mass_match, additional_information=add_info_string)
 
     edge_dict = sampler.global_edge_count()
     new_annotation_query.status = 'Completed'
@@ -103,31 +111,50 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
     return edge_dict
 
 
-
-## Method to derive the peaks from the mzXML file for LCMS-MSN data sets
 @celery.task
-def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
+def msn_generate_peak_list(experiment_slug, fragmentation_set_id):
+    """
+    Method to extract peak data from a collection of sample files
+    :param experiment_slug: Integer id of the experiment from which the files orginate
+    :param fragmentation_set_id:    Integer id of the fragmentation set to be populated
+    :return: True   Boolean value denoting the completion of the task
+    """
+
     # Determine the directory of the experiment
-    experiment_object = Experiment.objects.get(slug = experiment_slug)
+    experiment_object = Experiment.objects.get(slug=experiment_slug)
     # From the experiment object derive the file directory of the .mzXML files
-    filepath = os.path.join(MEDIA_ROOT,
-                            'frank',
-                            experiment_object.created_by.username,
-                            experiment_object.slug,
-                            )
+    filepath = os.path.join(
+        MEDIA_ROOT,
+        'frank',
+        experiment_object.created_by.username,
+        experiment_object.slug,
+    )
+    # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
+    # Store the source function as a variable
     r_source = robjects.r['source']
+    # Derive the location of the R script based on the local directory
     location_of_script = os.path.join(BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
+    # Source the script in R
     r_source(location_of_script)
-    r_frankMSnPeakMatrix = robjects.globalenv['frankMSnPeakMatrix']
+    # Store the function of the R script ('frankMSNPeakMatrix') as a variable
+    r_frank_msn_peak_matrix = robjects.globalenv['frankMSnPeakMatrix']
+    # Update the status of the task for the user
     fragmentation_set_object.status = 'Processing'
     fragmentation_set_object.save()
-    output = r_frankMSnPeakMatrix(source_directory = filepath)
-    peak_generator = None
+    # The script can then be run by passing the root directory of the experiment to the R script
+    # The script goes through the hierarchy and finds all mxXML files for processing
+    output = r_frank_msn_peak_matrix(source_directory=filepath)
     try:
+        # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
+        # into the database.
         peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
+        # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
         peak_generator.populate_database_peaks()
+        # Upon completion the status of the fragmentation set is updated, to inform the user of completion
         fragmentation_set_object.status = 'Completed Successfully'
+    # Should the addition of the peaks to the database fail, the exceptions are passed back up
+    # and the status is updated.
     except ValueError as value_error:
         print value_error.message
         fragmentation_set_object.status = 'Completed with Errors'
@@ -147,17 +174,27 @@ def msnGeneratePeakList(experiment_slug, fragmentation_set_id):
     return True
 
 
-# Method to batch query the mass bank annotation tool using SOAP
 @celery.task
-def massBank_batch_search(annotation_query_id):
+def massbank_batch_search(annotation_query_id):
+    """
+    Method to query the MassBank spectral reference library
+    :param annotation_query_id: Integer id of the annotation query to be performed
+    :return: True   Boolean denoting the completion of the query
+    """
+
+    # Get the annotation query object and update the status to update the user
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
     annotation_query.save()
+    # Derive the associated fragmentation set from the annotation query
     fragmentation_set = annotation_query.fragmentation_set
     try:
+        # The MassBank query tool performs the formatting, sending of the query and population of the database
         mass_bank_query_tool = MassBankQueryTool(annotation_query_id, fragmentation_set.id)
         mass_bank_query_tool.get_mass_bank_annotations()
         annotation_query.status = 'Completed Successfully'
+    # In order to inform the user of any errors, exceptions are raised and the status is reflected
+    # to reflect the end of the process
     except WebFault as web_fault:
         print web_fault.message
         annotation_query.status = 'Completed with Errors'
@@ -185,13 +222,25 @@ def massBank_batch_search(annotation_query_id):
 
 @celery.task
 def nist_batch_search(annotation_query_id):
+    """
+    Method to retrieve candidate annotations from the NIST spectral reference library
+    :param annotation_query_id: Integer id of the annotation query to be performed
+    :return: True:  Boolean indicating the completion of the task
+    """
+
+    # Get the annotation object to be performed and update the process status for the user
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
     annotation_query.save()
     try:
+        # A NIST query tool, is used to write the query files to a temporary file, which
+        # NIST uses to generate candidate annotations which are written to a temporary file
+        # The NIST query tool updates the database from the NIST output file.
         nist_annotation_tool = NISTQueryTool(annotation_query_id)
         nist_annotation_tool.get_nist_annotations()
         annotation_query.status = 'Completed Successfully'
+        # As before, to prevent to maintain the celery workers, any errors which cannot be resolved
+        # by the NISTQueryTool are raised and the status of the task is updated.
     except IOError as io_error:
         print io_error
         annotation_query.status = 'Completed with Errors'
@@ -214,25 +263,43 @@ def nist_batch_search(annotation_query_id):
 
 
 @celery.task
-def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
-    fragmentation_set = FragmentationSet.objects.get(id = fragmentation_set_id)
+def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
+    """
+    Method to derive peak data from GCMS peak data from a collection of source files
+    :param experiment_name_slug: Integer id for the experiment
+    :param fragmentation_set_id:    Integer id for the fragmentation set
+    :return:True    Boolean indicating the completion of the task
+    """
+
+    # Get the fragmentation set object corresponding to the id
+    fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+    # Update the status of the set
     fragmentation_set.status = 'Processing'
     fragmentation_set.save()
-    experiment_object = Experiment.objects.get(slug = experiment_name_slug)
+    # Obtain the experiment corresponding to the id
+    experiment_object = Experiment.objects.get(slug=experiment_name_slug)
     # From the experiment object derive the file directory of the .mzXML files
-    filepath = os.path.join(MEDIA_ROOT,
-                            'frank',
-                            experiment_object.created_by.username,
-                            experiment_object.slug,
-                            )
+    filepath = os.path.join(
+        MEDIA_ROOT,
+        'frank',
+        experiment_object.created_by.username,
+        experiment_object.slug,
+    )
+    # Store the source function
     r_source = robjects.r['source']
+    # Derive the source of the GCMS R script from the local install
     location_of_script = os.path.join(BASE_DIR, 'frank', 'Frank_R', 'gcmsGeneratePeakList.R')
+    # The script is then sourced in R
     r_source(location_of_script)
-    r_generateGCMSPeakMatrix = robjects.globalenv['generateGCMSPeakMatrix']
-    output = r_generateGCMSPeakMatrix(input_directory = filepath)
+    # Then store the function for extracting the peak data
+    r_generate_gcms_peak_matrix = robjects.globalenv['generateGCMSPeakMatrix']
+    output = r_generate_gcms_peak_matrix(input_directory=filepath)
     try:
+        # The peak generator takes the R dataframe output of the R script and populates the database
+        # from the peak list
         peak_generator = GCMSPeakBuilder(output, fragmentation_set.id)
         peak_generator.populate_database_peaks()
+        # Finally, update the status of the process for display to the user
         fragmentation_set.status = 'Completed Successfully'
     except IOError as io_error:
         print io_error.message
@@ -253,4 +320,4 @@ def gcmsGeneratePeakList(experiment_name_slug, fragmentation_set_id):
         print multiple_error.message
         fragmentation_set.status = 'Completed with Errors'
     fragmentation_set.save()
-    return
+    return True

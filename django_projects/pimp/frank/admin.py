@@ -1,18 +1,22 @@
+__author__ = 'scott greig'
+
 from django.contrib import admin
 from frank.models import *
 
-#### MODEL ADMIN CLASSES #####
+
 """
- These classes simply define which attributes of the model classes are to be
+ ModelAdminClasses - These classes simply define which attributes of the model classes are to be
  displayed in the Django admin pages.
 """
+
 
 class ExperimentAdmin (admin.ModelAdmin):
     """
     Class to show the fields of the Experiment model in the django admin pages
     """
-    list_display = ('title', 'description', 'created_by', 'time_created',
-                    'ionisation_method', 'detection_method', 'slug'
+    list_display = (
+        'title', 'description', 'created_by', 'time_created',
+        'ionisation_method', 'detection_method', 'slug'
     )
 
 
@@ -41,7 +45,7 @@ class SampleFileAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the SampleFile model in the django admin pages
     """
-    list_display = ('name','polarity', 'address', 'sample')
+    list_display = ('name', 'polarity', 'address', 'sample')
 
 
 class FragmentationSetAdmin(admin.ModelAdmin):
@@ -55,8 +59,9 @@ class AnnotationQueryAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the AnnotationQuery model in the django admin pages
     """
-    list_display = ('name', 'fragmentation_set', 'time_created',
-                    'status', 'slug', 'annotation_tool', 'annotation_tool_params',
+    list_display = (
+        'name', 'fragmentation_set', 'time_created',
+        'status', 'slug', 'annotation_tool', 'annotation_tool_params',
     )
 
 
@@ -67,7 +72,6 @@ class AnnotationToolAdmin(admin.ModelAdmin):
     list_display = ('name', "default_params")
 
 
-
 class CompoundAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the Compound model in the django admin pages
@@ -75,14 +79,14 @@ class CompoundAdmin(admin.ModelAdmin):
     list_display = ('name', 'formula', 'exact_mass', 'inchikey', 'cas_code',)
 
 
-
 class PeakAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the Peak model in the django admin pages
     """
-    list_display = ('id', 'source_file', 'mass', 'retention_time', 'intensity',
-                    'parent_peak', 'msn_level', 'fragmentation_set',
-                    'slug', 'preferred_candidate_annotation',
+    list_display = (
+        'id', 'source_file', 'mass', 'retention_time', 'intensity',
+        'parent_peak', 'msn_level', 'fragmentation_set',
+        'slug', 'preferred_candidate_annotation',
     )
 
 
@@ -90,9 +94,10 @@ class CandidateAnnotationAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the CandidateAnnotation model in the django admin pages
     """
-    list_display = ('compound', 'peak', 'confidence', 'annotation_query',
-                    'mass_match', 'difference_from_peak_mass',
-                    'adduct', 'instrument_type', 'collision_energy'
+    list_display = (
+        'compound', 'peak', 'confidence', 'annotation_query',
+        'mass_match', 'difference_from_peak_mass',
+        'adduct', 'instrument_type', 'collision_energy'
     )
 
 
