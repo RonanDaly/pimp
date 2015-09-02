@@ -731,18 +731,18 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             paramaterised_query_object.save()
             # This section added by Simon
             parameters = jsonpickle.decode(paramaterised_query_object.annotation_tool_params)
-            for a in parameters['parents']:
-                parent_query = AnnotationQuery.objects.get(slug=a)
-                AnnotationQueryHierarchy.objects.create(
-                    parent_annotation_query = parent_query,
-                    subquery_annotation_query = paramaterised_query_object)
+            if 'parents' in parameters:
+                for a in parameters['parents']:
+                    parent_query = AnnotationQuery.objects.get(slug=a)
+                    AnnotationQueryHierarchy.objects.create(
+                        parent_annotation_query = parent_query,
+                        subquery_annotation_query = paramaterised_query_object)
             # End of Simon's addition
             # Finally, begin running the retrieval of the annotations as a background process
             generate_annotations(paramaterised_query_object)
             # Return the user to the 'fragmentation_set' page
             form = AnnotationToolSelectionForm(experiment_object=experiment)
             context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
-            print "asdlkdaslkadskjlads"
             return render(request, 'frank/fragmentation_set.html', context_dict)
         else:
             # If the form is invalid then display the form errors back to the user
