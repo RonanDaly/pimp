@@ -643,6 +643,8 @@ def fragmentation_set(request, fragmentation_set_name_slug):
                 annotation_query_form = NISTQueryForm(experiment_object=experiment)
             elif user_tool_choice == 'LCMS DDA Network Sampler':
                 annotation_query_form = NetworkSamplerQueryForm()
+            elif user_tool_choice == 'Precursor Mass Filter':
+                annotation_query_form = PrecursorMassFilterForm(fragmentation_set_name_slug)
             # For the context dictionary, the annotation tool slug is required to render the page
             annotation_tool_slug = AnnotationTool.objects.get(name=user_tool_choice).slug
             # redirect the user to the 'define_annotation_query' page which displays the form
@@ -709,6 +711,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = NISTQueryForm(request.POST, experiment_object=experiment)
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
             annotation_query_form = NetworkSamplerQueryForm(request.POST)
+        elif annotation_tool.name == 'Precursor Mass Filter':
+            annotation_query_form = PrecursorMassFilterForm(fragmentation_set_name_slug,request.POST)
         # Check that the form is valid
         if annotation_query_form.is_valid():
             # Check that the form is valid
@@ -725,11 +729,20 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             )
             # Finally commit the query to the database
             paramaterised_query_object.save()
+            # This section added by Simon
+            parameters = jsonpickle.decode(paramaterised_query_object.annotation_tool_params)
+            for a in parameters['parents']:
+                parent_query = AnnotationQuery.objects.get(slug=a)
+                AnnotationQueryHierarchy.objects.create(
+                    parent_annotation_query = parent_query,
+                    subquery_annotation_query = paramaterised_query_object)
+            # End of Simon's addition
             # Finally, begin running the retrieval of the annotations as a background process
             generate_annotations(paramaterised_query_object)
             # Return the user to the 'fragmentation_set' page
             form = AnnotationToolSelectionForm(experiment_object=experiment)
             context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
+            print "asdlkdaslkadskjlads"
             return render(request, 'frank/fragmentation_set.html', context_dict)
         else:
             # If the form is invalid then display the form errors back to the user
@@ -748,6 +761,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = NISTQueryForm(experiment_object=experiment)
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
             annotation_query_form = NetworkSamplerQueryForm()
+        elif annotation_tool.name == 'Precursor Mass Filter':
+            annotation_query_form = PrecursorMassFilterForm(fragmentation_set_name_slug)
         context_dict = get_define_annotation_query_context_dict(
             fragmentation_set_name_slug,
             annotation_query_form,
@@ -854,6 +869,8 @@ def generate_annotations(annotation_query_object):
     elif annotation_tool.name == 'LCMS DDA Network Sampler':
         # To be added later by Simon for the LCMS Network Sampler
         pass
+    elif annotation_tool.name == 'Precursor Mass Filter':
+        tasks.precursor_mass_filter(annotation_query_object.id)
 
 
 def set_annotation_query_parameters(annotation_query_object, annotation_query_form, current_user):
@@ -927,7 +944,16 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         # Pickle the parameters and add them to the annotation_query_object
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
-
+    # Simon contribution
+    elif isinstance(annotation_query_form, PrecursorMassFilterForm):
+        parameters = {}
+        parameters['positive_transforms'] = annotation_query_form.cleaned_data['positive_transforms']
+        parameters['parents'] = annotation_query_form.cleaned_data['parent_annotation_queries']
+        parameters['mass_tol'] = annotation_query_form.cleaned_data['mass_tol']
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Precursor Mass Filter')
+        annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
+        return annotation_query_object
+    # End of Simon contribution
 
 def run_network_sampler(request):
     """
