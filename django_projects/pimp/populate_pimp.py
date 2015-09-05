@@ -91,10 +91,10 @@ def populate():
         }
     )
 
-    network_sampler_annotation_tool = add_annotation_tool(
-        name = 'LCMS DDA Network Sampler',
-        default_params = {},
-    )
+    # network_sampler_annotation_tool = add_annotation_tool(
+    #     name = 'LCMS DDA Network Sampler',
+    #     default_params = {},
+    # )
 
     # this needs to be filled in properly
     precursor_mass_filter_annotation_tool = add_annotation_tool(
@@ -103,11 +103,11 @@ def populate():
     )
 
     lcms_dda_experimental_protocol = add_experimental_protocol(
-        name = 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
+        name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
     )
 
     gcms_dia_experimental_protocol = add_experimental_protocol(
-        name = 'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
+        name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
     )
 
     lcms_dia_experimental_protocol = add_experimental_protocol(
@@ -124,10 +124,10 @@ def populate():
         NIST_annotation_tool
     )
 
-    network_sampler_annotation_tool = add_annotation_tool_protocols(
-        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
-        network_sampler_annotation_tool
-    )
+    # network_sampler_annotation_tool = add_annotation_tool_protocols(
+    #     [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+    #     network_sampler_annotation_tool
+    # )
 
     # this needs to be filled in properly
     mass_filter_protocols = add_annotation_tool_protocols(

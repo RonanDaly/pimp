@@ -242,11 +242,17 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     # Get all peaks which comprise the fragmentation spectrum of the peak
     fragmentation_spectra = Peak.objects.filter(parent_peak=peak).order_by('mass')
     # Get the annotation queries which have been performed on the Fragmentation Set
-    associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set=fragmentation_set_object, status='Completed Successfully')
+    associated_annotation_queries = AnnotationQuery.objects.filter(
+        fragmentation_set=fragmentation_set_object,
+        status='Completed Successfully'
+    )
     candidate_annotations = {}
     # Group the candidate annotations by the annotation query which generated them
     for annotation_query in associated_annotation_queries:
-        candidate_annotations[annotation_query] = CandidateAnnotation.objects.filter(peak=peak,annotation_query=annotation_query).order_by('-confidence')
+        candidate_annotations[annotation_query] = CandidateAnnotation.objects.filter(
+            peak=peak,
+            annotation_query=annotation_query
+        ).order_by('-confidence')
     # Determine the number of peaks in the fragmentation spectra
     number_of_fragments_in_spectra = len(fragmentation_spectra)
     # And determine if the peak has a preferred annotation associated with it
@@ -735,8 +741,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
                 for a in parameters['parents']:
                     parent_query = AnnotationQuery.objects.get(slug=a)
                     AnnotationQueryHierarchy.objects.create(
-                        parent_annotation_query = parent_query,
-                        subquery_annotation_query = paramaterised_query_object)
+                        parent_annotation_query=parent_query,
+                        subquery_annotation_query=paramaterised_query_object)
             # End of Simon's addition
             # Finally, begin running the retrieval of the annotations as a background process
             generate_annotations(paramaterised_query_object)
@@ -803,7 +809,8 @@ def specify_preferred_annotation(request, fragmentation_set_name_slug, peak_name
             peak_for_update.preferred_candidate_description = justification_for_annotation
             peak_for_update.preferred_candidate_user_selector = current_user
             peak_for_update.preferred_candidate_updated_date = current_time
-            peak_for_update.save()
+            with transaction.atomic():
+                peak_for_update.save()
             # Return the user to the 'peak_summary' page
             context_dict = get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug)
             return render(request, 'frank/peak_summary.html', context_dict)
@@ -955,6 +962,7 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         return annotation_query_object
     # End of Simon contribution
 
+
 def run_network_sampler(request):
     """
     Method for testing the Network sampler.
@@ -964,11 +972,11 @@ def run_network_sampler(request):
     """
 
     default_params = {
-            'n_samples': 1000,
-            'n_burn': 500,
-            'delta': 1,
-            'transformation_file': 'all_transformations_masses.txt',
-        }
+        'n_samples': 1000,
+        'n_burn': 500,
+        'delta': 1,
+        'transformation_file': 'all_transformations_masses.txt',
+    }
     frag_slug = 'beer-3-frag-set-5'
     aq_slug = 'beer-3-annotations-4'
     aq = AnnotationQuery.objects.get(slug=aq_slug)

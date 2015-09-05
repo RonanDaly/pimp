@@ -99,7 +99,7 @@ class MSNPeakBuilder(PeakBuilder):
             # Determine the peak id and the id of any precursor peak
             parent_peak_id = int(self.parent_peak_id_vector[peak_array_index])
             peak_id = int(self.peak_ID_vector[peak_array_index])
-            # If there is a parent peak and peak has not been previously created
+            # If the peak has a parent peak in the peak list and the product peak has yet been previously created
             existing_peak = False
             if peak_id in self.created_peaks_dict:
                 existing_peak = True

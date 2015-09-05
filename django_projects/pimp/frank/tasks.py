@@ -261,7 +261,11 @@ def nist_batch_search(annotation_query_id):
         annotation_query.status = 'Completed with Errors'
     annotation_query.save()
 
-# This really should not be here!
+
+"""
+The following are additions by Simon Rogers
+"""
+# This really should not be here! - Simon's Addition
 POSITIVE_TRANSFORMATIONS = {
     "M+2H": [1.00727645199076,0.5,0.0],
     "M+H+NH4": [9.52055100354076,0.5,0.0],
@@ -321,7 +325,10 @@ def precursor_mass_filter(annotation_query_id):
 
     annotation_query.status="Completed Successfully"
     annotation_query.save()
-            
+
+"""
+End of additions by Simon Rogers
+"""
 
 
 

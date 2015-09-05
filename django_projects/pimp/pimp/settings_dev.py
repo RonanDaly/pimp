@@ -5,6 +5,8 @@ djcelery.setup_loader()
 
 CELERYD_LOG_COLOR = False
 
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -51,6 +53,7 @@ DATABASES = {
 #         'PASSWORD': 'frankpass',
 #         'HOST': 'localhost',
 #         'PORT': '',
+#         'TEST_NAME': 'frank_test_user$test_frank_project'
 #     }
 # }
 
@@ -230,3 +233,4 @@ LOGGING = {
         },
     }
 }
+
