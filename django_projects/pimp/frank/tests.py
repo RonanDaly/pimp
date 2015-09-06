@@ -3,8 +3,7 @@ from frank.models import *
 from frank.forms import *
 from frank.admin import *
 from frank.views import *
-from peakFactories import *
-from annotationTools import *
+from annotationTools import MassBankQueryTool
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.template.defaultfilters import slugify
@@ -19,6 +18,7 @@ from peakFactories import MSNPeakBuilder, GCMSPeakBuilder, PeakBuilder
 import rpy2.robjects as robjects
 import rpy2.rlike.container as rlc
 import mock
+import re
 
 
 """
@@ -801,6 +801,12 @@ class CreateFragmentationSetViewTest(TestCase):
         }))
         self.assertEqual(response.status_code, 200)
 
+        """
+        The following tests have been commented out, due to the duration of time required
+        to run them. However, these can be uncommented for complete testing of the background
+        processes.
+        """
+
     # def test_create_of_new_lcms_fragmentation_set(self):
     #
     #     """
@@ -1039,135 +1045,135 @@ class PeakBuilderTests(TestCase):
         self.assertRaises(TypeError, PeakBuilder)
 
 
-class MSNPeakBuilderTests(TestCase):
-
-    """
-    Test class for the testing of the MSNPeakBuilderClass
-    """
-
-    def setUp(self):
-
-        """
-        Set up of testing parameters
-        """
-
-        self.fragmentation_set = create_lcms_fragmentation_set()
-        self.sample_file = SampleFile.objects.filter(
-            sample__experimental_condition__experiment=self.fragmentation_set.experiment
-        )[0]
-        string_factor_filenames = robjects.StrVector((
-            self.sample_file.name, self.sample_file.name, self.sample_file.name,
-            self.sample_file.name, self.sample_file.name, self.sample_file.name
-        ))
-        factor_vector_filenames = string_factor_filenames.factor()
-        peak_ID_vector = robjects.IntVector((1, 2, 3, 4, 5, 6))
-        msn_parent_peak_ID_vector = robjects.IntVector((0, 1, 1, 1, 2, 0))
-        ms_level_vector = robjects.IntVector((1, 2, 2, 2, 3, 1))
-        rt_vector = robjects.FloatVector((100.1, 100.1, 100.1, 100.1, 100.1, 127.7))
-        mz_vector = robjects.FloatVector((222.2, 101.1, 78.9, 65.5, 50.0, 280.1))
-        intensity_vector = robjects.FloatVector((2220.2, 1010.1, 780.9, 650.5, 200.1, 2100.1))
-        sample_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
-        group_peak_vector = robjects.IntVector((0, 0, 0, 0, 0, 0))
-        collision_energy_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
-        valid_data = rlc.OrdDict([
-            ('peakID', peak_ID_vector),
-            ('MSnParentPeakID', msn_parent_peak_ID_vector),
-            ('msLevel', ms_level_vector),
-            ('rt', rt_vector),
-            ('mz', mz_vector),
-            ('intensity', intensity_vector),
-            ('Sample', sample_vector),
-            ('GroupPeakMSN', group_peak_vector),
-            ('CollisionEnergy', collision_energy_vector),
-            ('SourceFile', factor_vector_filenames),
-        ])
-        self.valid_r_dataframe_input = robjects.DataFrame(valid_data)
-        self.valid_fragmentation_set_id_input = self.fragmentation_set.id
-        self.invalid_type_r_dataframe_input = ""
-        self.invalid_type_fragmentation_set_id_input = ""
-        self.invalid_type_r_dataframe_input = ""
-        self.invalid_type_fragmentation_set_id_input = ""
-        self.invalid_value_fragmentation_set_id_input = -1
-
-    def test_MSNPeakBuilder_init_invalid_parameter_types_supplied(self):
-
-        """
-        Test that MSNPeakBuilder cannot be instantiated with invalid types of parameters
-        """
-
-        # Check with no given parameters
-        with self.assertRaises(TypeError):
-            MSNPeakBuilder()
-        # Check with None parameters given
-        with self.assertRaises(TypeError):
-            MSNPeakBuilder(None, None)
-        # Check with invalid type for fragmentation_set_id
-        with self.assertRaises(TypeError):
-            MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
-        # Check with invalid type for parameter r_dataframe
-        with self.assertRaises(TypeError):
-            MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.valid_fragmentation_set_id_input)
-        # Check with invalid types for both the r_dataframe and fragmentation_set_id types
-        with self.assertRaises(TypeError):
-            MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
-        # Check to ensure the fragmentation_set_id given corresponds to an existing fragmentation set
-        with self.assertRaises(ValueError):
-            MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_value_fragmentation_set_id_input)
-
-    def test_MSNPeakBuilder_init_valid_parameters_supplied(self):
-
-        """
-        Test that MSNPeakBuilder can be instantiated with valid parameters
-        """
-
-        self.assertTrue(isinstance(
-            MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input), MSNPeakBuilder)
-        )
-
-    def test_createAPeak_valid_parameters(self):
-
-        """
-        Test that createAPeak creates new Peak model instance when passed valid parameters
-        """
-
-        peak_array_index = 2
-        parent_peak_object = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
-        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-        self.assertTrue(isinstance(peak_builder_object._createAPeak(peak_array_index, parent_peak_object), Peak))
-
-    def test_getParentPeak(self):
-
-        """
-        Test that getParentPeak returns the precursor peak of a given fragment
-        """
-
-        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-        parent_id_from_r = 2
-        # Ensure the parent peak is created
-        parent_peak = peak_builder_object._getParentPeak(parent_id_from_r)
-        self.assertTrue(isinstance(parent_peak, Peak))
-        # Also check that the parent peak's precursor was created
-        self.assertTrue(isinstance(parent_peak.parent_peak, Peak))
-
-    def test_populate_database_peaks(self):
-
-        """
-        Test to ensure that populate_database_peaks does not throw any errors
-        """
-
-        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-        peak_builder_object.populate_database_peaks()
-        peak_query_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
-        # Check all test peaks with fragments have been created - using test data m/z to identify them
-        self.assertTrue(isinstance(peak_query_set.get(mass=222.2), Peak))
-        self.assertTrue(isinstance(peak_query_set.get(mass=101.1), Peak))
-        self.assertTrue(isinstance(peak_query_set.get(mass=78.9), Peak))
-        self.assertTrue(isinstance(peak_query_set.get(mass=65.5), Peak))
-        self.assertTrue(isinstance(peak_query_set.get(mass=50.0), Peak))
-        # The final test peak should not be created as it has no associated fragments or parent ion,
-        # therefore is of no interest
-        with self.assertRaises(ObjectDoesNotExist):
-            peak_query_set.get(mass=280.1)
+# class MSNPeakBuilderTests(TestCase):
+#
+#     """
+#     Test class for the testing of the MSNPeakBuilderClass
+#     """
+#
+#     def setUp(self):
+#
+#         """
+#         Set up of testing parameters
+#         """
+#
+#         self.fragmentation_set = create_lcms_fragmentation_set()
+#         self.sample_file = SampleFile.objects.filter(
+#             sample__experimental_condition__experiment=self.fragmentation_set.experiment
+#         )[0]
+#         string_factor_filenames = robjects.StrVector((
+#             self.sample_file.name, self.sample_file.name, self.sample_file.name,
+#             self.sample_file.name, self.sample_file.name, self.sample_file.name
+#         ))
+#         factor_vector_filenames = string_factor_filenames.factor()
+#         peak_ID_vector = robjects.IntVector((1, 2, 3, 4, 5, 6))
+#         msn_parent_peak_ID_vector = robjects.IntVector((0, 1, 1, 1, 2, 0))
+#         ms_level_vector = robjects.IntVector((1, 2, 2, 2, 3, 1))
+#         rt_vector = robjects.FloatVector((100.1, 100.1, 100.1, 100.1, 100.1, 127.7))
+#         mz_vector = robjects.FloatVector((222.2, 101.1, 78.9, 65.5, 50.0, 280.1))
+#         intensity_vector = robjects.FloatVector((2220.2, 1010.1, 780.9, 650.5, 200.1, 2100.1))
+#         sample_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
+#         group_peak_vector = robjects.IntVector((0, 0, 0, 0, 0, 0))
+#         collision_energy_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
+#         valid_data = rlc.OrdDict([
+#             ('peakID', peak_ID_vector),
+#             ('MSnParentPeakID', msn_parent_peak_ID_vector),
+#             ('msLevel', ms_level_vector),
+#             ('rt', rt_vector),
+#             ('mz', mz_vector),
+#             ('intensity', intensity_vector),
+#             ('Sample', sample_vector),
+#             ('GroupPeakMSN', group_peak_vector),
+#             ('CollisionEnergy', collision_energy_vector),
+#             ('SourceFile', factor_vector_filenames),
+#         ])
+#         self.valid_r_dataframe_input = robjects.DataFrame(valid_data)
+#         self.valid_fragmentation_set_id_input = self.fragmentation_set.id
+#         self.invalid_type_r_dataframe_input = ""
+#         self.invalid_type_fragmentation_set_id_input = ""
+#         self.invalid_type_r_dataframe_input = ""
+#         self.invalid_type_fragmentation_set_id_input = ""
+#         self.invalid_value_fragmentation_set_id_input = -1
+#
+#     def test_MSNPeakBuilder_init_invalid_parameter_types_supplied(self):
+#
+#         """
+#         Test that MSNPeakBuilder cannot be instantiated with invalid types of parameters
+#         """
+#
+#         # Check with no given parameters
+#         with self.assertRaises(TypeError):
+#             MSNPeakBuilder()
+#         # Check with None parameters given
+#         with self.assertRaises(TypeError):
+#             MSNPeakBuilder(None, None)
+#         # Check with invalid type for fragmentation_set_id
+#         with self.assertRaises(TypeError):
+#             MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
+#         # Check with invalid type for parameter r_dataframe
+#         with self.assertRaises(TypeError):
+#             MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.valid_fragmentation_set_id_input)
+#         # Check with invalid types for both the r_dataframe and fragmentation_set_id types
+#         with self.assertRaises(TypeError):
+#             MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
+#         # Check to ensure the fragmentation_set_id given corresponds to an existing fragmentation set
+#         with self.assertRaises(ValueError):
+#             MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_value_fragmentation_set_id_input)
+#
+#     def test_MSNPeakBuilder_init_valid_parameters_supplied(self):
+#
+#         """
+#         Test that MSNPeakBuilder can be instantiated with valid parameters
+#         """
+#
+#         self.assertTrue(isinstance(
+#             MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input), MSNPeakBuilder)
+#         )
+#
+#     def test_createAPeak_valid_parameters(self):
+#
+#         """
+#         Test that createAPeak creates new Peak model instance when passed valid parameters
+#         """
+#
+#         peak_array_index = 2
+#         parent_peak_object = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
+#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+#         self.assertTrue(isinstance(peak_builder_object._createAPeak(peak_array_index, parent_peak_object), Peak))
+#
+#     def test_getParentPeak(self):
+#
+#         """
+#         Test that getParentPeak returns the precursor peak of a given fragment
+#         """
+#
+#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+#         parent_id_from_r = 2
+#         # Ensure the parent peak is created
+#         parent_peak = peak_builder_object._getParentPeak(parent_id_from_r)
+#         self.assertTrue(isinstance(parent_peak, Peak))
+#         # Also check that the parent peak's precursor was created
+#         self.assertTrue(isinstance(parent_peak.parent_peak, Peak))
+#
+#     def test_populate_database_peaks(self):
+#
+#         """
+#         Test to ensure that populate_database_peaks does not throw any errors
+#         """
+#
+#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+#         peak_builder_object.populate_database_peaks()
+#         peak_query_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+#         # Check all test peaks with fragments have been created - using test data m/z to identify them
+#         self.assertTrue(isinstance(peak_query_set.get(mass=222.2), Peak))
+#         self.assertTrue(isinstance(peak_query_set.get(mass=101.1), Peak))
+#         self.assertTrue(isinstance(peak_query_set.get(mass=78.9), Peak))
+#         self.assertTrue(isinstance(peak_query_set.get(mass=65.5), Peak))
+#         self.assertTrue(isinstance(peak_query_set.get(mass=50.0), Peak))
+#         # The final test peak should not be created as it has no associated fragments or parent ion,
+#         # therefore is of no interest
+#         with self.assertRaises(ObjectDoesNotExist):
+#             peak_query_set.get(mass=280.1)
 
 
 class GCMSPeakBuilderTests(TestCase):
@@ -1191,10 +1197,17 @@ class GCMSPeakBuilderTests(TestCase):
         pass
 
 
-class MassBankQueryTool(TestCase):
+class MassBankQueryToolTests(TestCase):
 
     def setUp(self):
-        pass
+        run_population_script()
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.annotationquery = AnnotationQuery.objects.get_or_create(
+            name='TestQuery',
+            fragmentation_set=self.fragmentation_set,
+            annotation_tool=AnnotationTool.objects.get(name='MassBank'),
+        )[0]
+        self.mass_bank_tool = MassBankQueryTool(self.annotationquery.id, self.fragmentation_set.id)
 
     def test_MassBankQueryTool_init_valid_parameters(self):
         pass
@@ -1205,14 +1218,59 @@ class MassBankQueryTool(TestCase):
     def test_MassBankQueryTool_generate_query_spectra(self):
         pass
 
-    def test_GCMSPeakBuilder_query_mass_bank(self):
+    def test_MassBankQueryTool_query_mass_bank(self):
         pass
 
-    def test_GCMSPeakBuilder_populate_annotations_table(self):
-        pass
+    def test_MassBankQueryTool_populate_annotations_table(self):
+        # Set up false returned candidate annotations
+        peak_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+        peak_identifier = peak_set[0].slug
+        annotation_results = [{
+                'queryName': peak_identifier,
+                'results': [{
+                    'title': 'Catechin; LC-ESI-QTOF; MS2; CE:40 eV; [M-H]-',
+                    'formula': 'C15H14O6',
+                    'exactMass': 290.07904,
+                    'score': 0.1896,
+                    'id': 'PB002431',
+                },
+                    {
+                        'title': '3alpha,7beta,12beta-Trihydroxy-5beta-cholan-24-oic acid; LC-ESI-TOF; MS; -60 V',
+                        'formula': 'C24H40O5',
+                        'exactMass': 408.28757,
+                        'score': 0.0843,
+                        'id': 'NU000207'
+                    },
+                    {
+                        'title': 'Triclopyr; LC-ESI-QQ; MS2; CE:30 V; [M-H]-',
+                        'formula': 'C7H4Cl3NO3',
+                        'exactMass': 254.92568,
+                        'score': 0.1641,
+                        'id': 'WA000228'
+                    }
+
+                ],
+                'numResults': 2,
+        }]
+        self.mass_bank_tool._populate_annotations_table(annotation_results)
+        candidate_compound1 = Compound.objects.get(
+            name='Catechin',
+            formula='C15H14O6',
+            exact_mass=290.07904
+        )
+        self.assertTrue(candidate_compound1, Compound)
+        candidate_annotation  = CandidateAnnotation.objects.get(
+            compound=candidate_compound1,
+            confidence=0.1896,
+            annotation_query=self.annotationquery,
+            adduct='[M-H]-',
+            instrument_type='LC-ESI-QTOF',
+            collision_energy='40 eV'
+        )
+        self.assertTrue(candidate_annotation, CandidateAnnotation)
 
 
-class NISTQueryTool(TestCase):
+class NISTQueryToolTests(TestCase):
 
     def setUp(self):
         pass
