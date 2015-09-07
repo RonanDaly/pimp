@@ -468,7 +468,7 @@ class PreferredAnnotationForm(forms.ModelForm):
 
     preferred_candidate_description = forms.CharField(
         max_length=500,
-        help_text="Enter justification of preferred annotation.",
+        help_text="Please enter a justification for the preferred annotation.",
         widget=forms.Textarea,
     )
 

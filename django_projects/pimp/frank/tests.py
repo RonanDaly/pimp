@@ -335,6 +335,68 @@ def create_lcms_fragmentation_set():
             )
     return fragmentation_set
 
+def add_genuine_spectrum(fragmentation_set):
+
+    """
+    Method to add a genuine spectrum to a fragmentation set
+    """
+    source_file = SampleFile.objects.filter(
+            sample__experimental_condition__experiment=fragmentation_set.experiment
+        )[0]
+    parent_peak = Peak.objects.create(
+        source_file=source_file,
+        mass=109.0761,
+        retention_time=302.2270,
+        intensity=1559883.3750,
+        parent_peak=None,
+        msn_level=1,
+        fragmentation_set=fragmentation_set
+    )
+    peak1 = Peak.objects.create(
+        source_file=source_file,
+        mass=65.0388,
+        retention_time=300.3950,
+        intensity=70030.99,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak2 = Peak.objects.create(
+        source_file=source_file,
+        mass=67.0543,
+        retention_time=300.3950,
+        intensity=3235.91,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak3 = Peak.objects.create(
+        source_file=source_file,
+        mass=80.0495,
+        retention_time=300.3950,
+        intensity=2457.76,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak4 = Peak.objects.create(
+        source_file=source_file,
+        mass=82.0650,
+        retention_time=300.3950,
+        intensity=4333.99,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak5 = Peak.objects.create(
+        source_file=source_file,
+        mass=92.0495,
+        retention_time=300.3950,
+        intensity=153425.52,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
 
 """
 Views.py Tests - Mostly this consisted of testing the pages render. However, in the case of the
@@ -882,6 +944,12 @@ class CreateFragmentationSetViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFormError(response, 'frag_set_form', 'name', 'No source files found for experiment.')
 
+        """
+        As before, these tests take significant time to run and as such have been commented out.
+        However, these can be included for completeness of testing. At present they demonstrate
+        the inability of the application to distinguish between GCMS and LCMS MS/MS datasets.
+        """
+
     # def test_upload_of_data_files_which_correspond_to_the_wrong_experimental_protocol(self):
     #
     #     """
@@ -1021,13 +1089,200 @@ class PeakSummaryViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-# Define annotation query
+class DefineAnnotationQueryViewTest(TestCase):
 
-# Specify Preferred Annotation
+    """
+    Test for the define_annotation_query view in frank.views. Here we want to test that
+    the page renders for the selection of all three currently available annotation tools.
+    In addition, we want to ensure the submission of valid parameters for each of the
+    annotation tools generates valid candidate annotations.
+    """
 
-# Set Annotation Query Parameters
+    def setUp(self):
+        self.client = create_logged_in_client()
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.massbank = AnnotationTool.objects.get(name='MassBank')
+        self.nist = AnnotationTool.objects.get(name='NIST')
+        self.precursormz = AnnotationTool.objects.get(name='Precursor Mass Filter')
+        # To ensure genuine candidates can be found, the spectrum
+        # for a peak is added
+        add_genuine_spectrum(self.fragmentation_set)
 
-# Make Frag Spectra Plot
+    def test_define_annotation_query_view_renders_for_authenticated_user(self):
+
+        """
+        Method to test that the define annotation query view renders for each of
+        the three annotation tools which may be selected.
+        """
+
+        # Check for Massbank tool
+        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
+            response = self.client.get(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.massbank.slug,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+        # Check for NIST tool
+        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
+            response = self.client.get(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.nist.slug,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+        # Check for Precursormz tool
+        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
+            response = self.client.get(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.precursormz.slug,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_define_annotation_query_view_generates_nist_annotations(self):
+
+        """
+        Method to test that the submission of valid parameters to the define
+        annotation query view generates annotations from NIST.
+        """
+
+        with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+            response = self.client.post(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.nist.slug,
+            }), {
+                'name': 'NIST Test Annotations',
+                'maximum_number_of_hits': 5,
+                'search_type': 'G',
+                'query_libraries': ['nist_msms', 'nist_msms2'],
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(CandidateAnnotation.objects.all()) > 0)
+
+
+    # def test_define_annotation_query_view_generates_massbank_annotations(self):
+    #
+    #     """
+    #     Method to test that the submission of valid parameters to the define
+    #     annotation query view generates annotations from MassBank.
+    #
+    #     This test has been commented out due to the temporary suspension of the service
+    #     """
+    #
+    #     with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+    #         response = self.client.post(reverse('define_annotation_query', kwargs={
+    #             'fragmentation_set_name_slug': self.fragmentation_set.slug,
+    #             'annotation_tool_slug': self.massbank.slug,
+    #         }), {
+    #             'name': 'Massbank Test Annotations',
+    #             'massbank_instrument_types': ['LC-ESI-IT', 'LC-ESI-ITFT'],
+    #         })
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTrue(len(CandidateAnnotation.objects.all()) > 0)
+
+
+    def test_define_annotation_query_view_generates_precursormz_annotations(self):
+
+        """
+        Method to test that the submission of valid parameters to the define
+        annotation query view generates annotations using the PrecursorMz tool.
+        """
+
+        # First a populated Annotation Query must be made
+        with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+            response = self.client.post(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.nist.slug,
+            }), {
+                'name': 'NIST Test Annotations',
+                'maximum_number_of_hits': 5,
+                'search_type': 'G',
+                'query_libraries': ['nist_msms', 'nist_msms2'],
+            })
+        nist_parent_query = AnnotationQuery.objects.get(name='NIST Test Annotations')
+
+        with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+            response = self.client.post(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.precursormz.slug,
+            }), {
+                'name': 'PrecursorMzTest',
+                'parent_annotation_queries': [nist_parent_query.slug],
+                'positive_transforms': ['M+H'],
+                'mass_tol': 5,
+            })
+        self.assertEqual(response.status_code, 200)
+        precursormz_query = AnnotationQuery.objects.get(name='PrecursorMzTest')
+        self.assertTrue(len(CandidateAnnotation.objects.filter(annotation_query=precursormz_query)) > 0)
+
+
+class SpecifyPreferredCandidateAnnotationViewTest(TestCase):
+
+    """
+    Test for the specify_preferred_annotation view in frank.views. Here we want to test that
+    the page renders and that submission of the preferred annotation updates the Peak instance.
+    """
+
+    def setUp(self):
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        add_genuine_spectrum(self.fragmentation_set)
+        self.client = create_logged_in_client()
+        self.peak = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
+        self.massbank = AnnotationTool.objects.get(name='MassBank')
+        self.annotation_query = AnnotationQuery.objects.get_or_create(
+            name='testquery',
+            fragmentation_set=self.fragmentation_set,
+            annotation_tool=self.massbank,
+        )[0]
+        self.compound = Compound.objects.get_or_create(
+            name='Glycine',
+            formula='C4H8',
+            exact_mass=123.456,
+        )[0]
+        self.annotation = CandidateAnnotation.objects.get_or_create(
+            compound=self.compound,
+            peak=self.peak,
+            confidence=0.81,
+            annotation_query=self.annotation_query,
+            mass_match=False,
+            adduct='M+H',
+            difference_from_peak_mass=1.07,
+        )[0]
+        self.user = create_test_user()
+
+    def test_specify_preferred_annotation_view_renders_for_authenticated_user(self):
+
+        """
+        Test to ensure the preferred annotation page of the application renders for the
+        authenticated user.
+        """
+
+        with self.assertTemplateUsed(template_name='frank/specify_preferred_annotation.html'):
+            response = self.client.get(reverse('specify_preferred_annotation', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'peak_name_slug': self.peak.slug,
+                'annotation_id': self.annotation.id,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+    def test_specify_preferred_annotation_view_updates_peak(self):
+
+        """
+        Test to ensure the preferred annotation page of the application updates the
+        Peak object upon submission of the form
+        """
+
+        with self.assertTemplateUsed(template_name='frank/peak_summary.html'):
+            response = self.client.post(reverse('specify_preferred_annotation', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'peak_name_slug': self.peak.slug,
+                'annotation_id': self.annotation.id,
+            }), {
+                'preferred_candidate_description': 'This is my justification',
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(isinstance(self.peak.preferred_candidate_annotation, CandidateAnnotation))
 
 
 class PeakBuilderTests(TestCase):
@@ -1045,159 +1300,113 @@ class PeakBuilderTests(TestCase):
         self.assertRaises(TypeError, PeakBuilder)
 
 
-# class MSNPeakBuilderTests(TestCase):
-#
-#     """
-#     Test class for the testing of the MSNPeakBuilderClass
-#     """
-#
-#     def setUp(self):
-#
-#         """
-#         Set up of testing parameters
-#         """
-#
-#         self.fragmentation_set = create_lcms_fragmentation_set()
-#         self.sample_file = SampleFile.objects.filter(
-#             sample__experimental_condition__experiment=self.fragmentation_set.experiment
-#         )[0]
-#         string_factor_filenames = robjects.StrVector((
-#             self.sample_file.name, self.sample_file.name, self.sample_file.name,
-#             self.sample_file.name, self.sample_file.name, self.sample_file.name
-#         ))
-#         factor_vector_filenames = string_factor_filenames.factor()
-#         peak_ID_vector = robjects.IntVector((1, 2, 3, 4, 5, 6))
-#         msn_parent_peak_ID_vector = robjects.IntVector((0, 1, 1, 1, 2, 0))
-#         ms_level_vector = robjects.IntVector((1, 2, 2, 2, 3, 1))
-#         rt_vector = robjects.FloatVector((100.1, 100.1, 100.1, 100.1, 100.1, 127.7))
-#         mz_vector = robjects.FloatVector((222.2, 101.1, 78.9, 65.5, 50.0, 280.1))
-#         intensity_vector = robjects.FloatVector((2220.2, 1010.1, 780.9, 650.5, 200.1, 2100.1))
-#         sample_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
-#         group_peak_vector = robjects.IntVector((0, 0, 0, 0, 0, 0))
-#         collision_energy_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
-#         valid_data = rlc.OrdDict([
-#             ('peakID', peak_ID_vector),
-#             ('MSnParentPeakID', msn_parent_peak_ID_vector),
-#             ('msLevel', ms_level_vector),
-#             ('rt', rt_vector),
-#             ('mz', mz_vector),
-#             ('intensity', intensity_vector),
-#             ('Sample', sample_vector),
-#             ('GroupPeakMSN', group_peak_vector),
-#             ('CollisionEnergy', collision_energy_vector),
-#             ('SourceFile', factor_vector_filenames),
-#         ])
-#         self.valid_r_dataframe_input = robjects.DataFrame(valid_data)
-#         self.valid_fragmentation_set_id_input = self.fragmentation_set.id
-#         self.invalid_type_r_dataframe_input = ""
-#         self.invalid_type_fragmentation_set_id_input = ""
-#         self.invalid_type_r_dataframe_input = ""
-#         self.invalid_type_fragmentation_set_id_input = ""
-#         self.invalid_value_fragmentation_set_id_input = -1
-#
-#     def test_MSNPeakBuilder_init_invalid_parameter_types_supplied(self):
-#
-#         """
-#         Test that MSNPeakBuilder cannot be instantiated with invalid types of parameters
-#         """
-#
-#         # Check with no given parameters
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder()
-#         # Check with None parameters given
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(None, None)
-#         # Check with invalid type for fragmentation_set_id
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
-#         # Check with invalid type for parameter r_dataframe
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         # Check with invalid types for both the r_dataframe and fragmentation_set_id types
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
-#         # Check to ensure the fragmentation_set_id given corresponds to an existing fragmentation set
-#         with self.assertRaises(ValueError):
-#             MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_value_fragmentation_set_id_input)
-#
-#     def test_MSNPeakBuilder_init_valid_parameters_supplied(self):
-#
-#         """
-#         Test that MSNPeakBuilder can be instantiated with valid parameters
-#         """
-#
-#         self.assertTrue(isinstance(
-#             MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input), MSNPeakBuilder)
-#         )
-#
-#     def test_createAPeak_valid_parameters(self):
-#
-#         """
-#         Test that createAPeak creates new Peak model instance when passed valid parameters
-#         """
-#
-#         peak_array_index = 2
-#         parent_peak_object = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
-#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         self.assertTrue(isinstance(peak_builder_object._createAPeak(peak_array_index, parent_peak_object), Peak))
-#
-#     def test_getParentPeak(self):
-#
-#         """
-#         Test that getParentPeak returns the precursor peak of a given fragment
-#         """
-#
-#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         parent_id_from_r = 2
-#         # Ensure the parent peak is created
-#         parent_peak = peak_builder_object._getParentPeak(parent_id_from_r)
-#         self.assertTrue(isinstance(parent_peak, Peak))
-#         # Also check that the parent peak's precursor was created
-#         self.assertTrue(isinstance(parent_peak.parent_peak, Peak))
-#
-#     def test_populate_database_peaks(self):
-#
-#         """
-#         Test to ensure that populate_database_peaks does not throw any errors
-#         """
-#
-#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         peak_builder_object.populate_database_peaks()
-#         peak_query_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
-#         # Check all test peaks with fragments have been created - using test data m/z to identify them
-#         self.assertTrue(isinstance(peak_query_set.get(mass=222.2), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=101.1), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=78.9), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=65.5), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=50.0), Peak))
-#         # The final test peak should not be created as it has no associated fragments or parent ion,
-#         # therefore is of no interest
-#         with self.assertRaises(ObjectDoesNotExist):
-#             peak_query_set.get(mass=280.1)
+class MSNPeakBuilderTests(TestCase):
 
-
-class GCMSPeakBuilderTests(TestCase):
+    """
+    Test class for the testing of the MSNPeakBuilderClass
+    """
 
     def setUp(self):
-        pass
 
-    def test_GCMSPeakBuilder_init_valid_parameters(self):
-        pass
+        """
+        Set up of testing parameters
+        """
 
-    def test_GCMSPeakBuilder_init_invalid_parameters(self):
-        pass
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.sample_file = SampleFile.objects.filter(
+            sample__experimental_condition__experiment=self.fragmentation_set.experiment
+        )[0]
+        string_factor_filenames = robjects.StrVector((
+            self.sample_file.name, self.sample_file.name, self.sample_file.name,
+            self.sample_file.name, self.sample_file.name, self.sample_file.name
+        ))
+        factor_vector_filenames = string_factor_filenames.factor()
+        peak_ID_vector = robjects.IntVector((1, 2, 3, 4, 5, 6))
+        msn_parent_peak_ID_vector = robjects.IntVector((0, 1, 1, 1, 2, 0))
+        ms_level_vector = robjects.IntVector((1, 2, 2, 2, 3, 1))
+        rt_vector = robjects.FloatVector((100.1, 100.1, 100.1, 100.1, 100.1, 127.7))
+        mz_vector = robjects.FloatVector((222.2, 101.1, 78.9, 65.5, 50.0, 280.1))
+        intensity_vector = robjects.FloatVector((2220.2, 1010.1, 780.9, 650.5, 200.1, 2100.1))
+        sample_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
+        group_peak_vector = robjects.IntVector((0, 0, 0, 0, 0, 0))
+        collision_energy_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
+        valid_data = rlc.OrdDict([
+            ('peakID', peak_ID_vector),
+            ('MSnParentPeakID', msn_parent_peak_ID_vector),
+            ('msLevel', ms_level_vector),
+            ('rt', rt_vector),
+            ('mz', mz_vector),
+            ('intensity', intensity_vector),
+            ('Sample', sample_vector),
+            ('GroupPeakMSN', group_peak_vector),
+            ('CollisionEnergy', collision_energy_vector),
+            ('SourceFile', factor_vector_filenames),
+        ])
+        self.valid_r_dataframe_input = robjects.DataFrame(valid_data)
+        self.valid_fragmentation_set_id_input = self.fragmentation_set.id
 
-    def test_GCMSPeakBuilder_populate_database_peaks(self):
-        pass
 
-    def test_GCMSPeakBuilder_group_peaks(self):
-        pass
+    def test_MSNPeakBuilder_init_valid_parameters_supplied(self):
 
-    def test_GCMSPeakBuilder_add_peaks_to_database(self):
-        pass
+        """
+        Test that MSNPeakBuilder can be instantiated with valid parameters
+        """
+
+        self.assertTrue(isinstance(
+            MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input), MSNPeakBuilder)
+        )
+
+    def test_createAPeak_valid_parameters(self):
+
+        """
+        Test that createAPeak creates new Peak model instance when passed valid parameters
+        """
+
+        peak_array_index = 2
+        parent_peak_object = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
+        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+        self.assertTrue(isinstance(peak_builder_object._create_a_peak(peak_array_index, parent_peak_object), Peak))
+
+    def test_getParentPeak(self):
+
+        """
+        Test that getParentPeak returns the precursor peak of a given fragment
+        """
+
+        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+        parent_id_from_r = 2
+        # Ensure the parent peak is created
+        parent_peak = peak_builder_object._get_parent_peak(parent_id_from_r)
+        self.assertTrue(isinstance(parent_peak, Peak))
+        # Also check that the parent peak's precursor was created
+        self.assertTrue(isinstance(parent_peak.parent_peak, Peak))
+
+    def test_populate_database_peaks(self):
+
+        """
+        Test to ensure that populate_database_peaks does not throw any errors
+        """
+
+        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+        peak_builder_object.populate_database_peaks()
+        peak_query_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+        # Check all test peaks with fragments have been created - using test data m/z to identify them
+        self.assertTrue(isinstance(peak_query_set.get(mass=222.2), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=101.1), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=78.9), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=65.5), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=50.0), Peak))
+        # The final test peak should not be created as it has no associated fragments or parent ion,
+        # therefore is of no interest
+        with self.assertRaises(ObjectDoesNotExist):
+            peak_query_set.get(mass=280.1)
 
 
 class MassBankQueryToolTests(TestCase):
+
+    """
+    Test Class for the testing of the MassBankQueryTool
+    """
 
     def setUp(self):
         run_population_script()
@@ -1209,19 +1418,16 @@ class MassBankQueryToolTests(TestCase):
         )[0]
         self.mass_bank_tool = MassBankQueryTool(self.annotationquery.id, self.fragmentation_set.id)
 
-    def test_MassBankQueryTool_init_valid_parameters(self):
-        pass
-
-    def test_MassBankQueryTool_init_invalid_parameters(self):
-        pass
-
-    def test_MassBankQueryTool_generate_query_spectra(self):
-        pass
-
-    def test_MassBankQueryTool_query_mass_bank(self):
-        pass
 
     def test_MassBankQueryTool_populate_annotations_table(self):
+
+        """
+        Due to the suspended batch service of MassBanK (from 17/08/15)
+        it was decided that ensuring the populate annotations table
+        method be unit tested was a priority as this could not be tested
+        functionally.
+        """
+
         # Set up false returned candidate annotations
         peak_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
         peak_identifier = peak_set[0].slug
@@ -1268,34 +1474,6 @@ class MassBankQueryToolTests(TestCase):
             collision_energy='40 eV'
         )
         self.assertTrue(candidate_annotation, CandidateAnnotation)
-
-
-class NISTQueryToolTests(TestCase):
-
-    def setUp(self):
-        pass
-
-    def test_NISTQueryTool_init_valid_parameters(self):
-        pass
-
-    def test_NISTQueryTool_init_invalid_parameters(self):
-        pass
-
-    def test_NISTQueryTool_get_nist_annotations(self):
-        pass
-
-    def test_NISTQueryTool_generate_nist_call(self):
-        pass
-
-    def test_NISTQueryTool_query_nist(self):
-        pass
-
-    def test_NISTQueryTool_write_nist_msp_file(self):
-        pass
-
-    def test_populate_annotation_list(self):
-        pass
-
 
 
 """
