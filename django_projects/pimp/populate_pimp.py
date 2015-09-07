@@ -110,9 +110,9 @@ def populate():
         name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
     )
 
-    lcms_dia_experimental_protocol = add_experimental_protocol(
-        name = 'Liquid-Chromatography Data-Independent Acquisition'
-    )
+    # lcms_dia_experimental_protocol = add_experimental_protocol(
+    #     name = 'Liquid-Chromatography Data-Independent Acquisition'
+    # )
 
     mass_bank_protocols = add_annotation_tool_protocols(
         [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
