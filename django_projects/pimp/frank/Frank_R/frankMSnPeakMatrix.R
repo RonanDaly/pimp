@@ -4,7 +4,8 @@ frankMSnPeakMatrix <- function (source_directory, peak_detection_method = "centW
                                 mz_differential = 0.001, integration = 0, gaussian_fit = FALSE, 
                                 verbose_column = TRUE 
                                 ){
-  
+
+  ########################## JOE WANDY'S SCRIPT #######################  
   require(xcms)
   require(Hmisc)
   require(gtools)

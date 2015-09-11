@@ -21,6 +21,9 @@
                 {{ field }}
 		<br>
             {% endfor %}
-	<input type = "submit" name="submit" value="Submit">
+	</br>
+	</br>
+	<button class="btn btn-large btn-primary" type="submit">Upload Sample File</button>
+	<a href="{% url 'condition_summary' experiment.slug condition.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
 	</form>
 {% endblock %}

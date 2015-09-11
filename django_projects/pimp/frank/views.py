@@ -20,7 +20,6 @@ import StringIO
 from django.http import HttpResponse
 from django.db import transaction
 
-
 """
 To reduce code repetition, add a method for the context_dict
 of each page here at the top of the page.
@@ -242,11 +241,17 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     # Get all peaks which comprise the fragmentation spectrum of the peak
     fragmentation_spectra = Peak.objects.filter(parent_peak=peak).order_by('mass')
     # Get the annotation queries which have been performed on the Fragmentation Set
-    associated_annotation_queries = AnnotationQuery.objects.filter(fragmentation_set=fragmentation_set_object, status='Completed Successfully')
+    associated_annotation_queries = AnnotationQuery.objects.filter(
+        fragmentation_set=fragmentation_set_object,
+        status='Completed Successfully'
+    )
     candidate_annotations = {}
     # Group the candidate annotations by the annotation query which generated them
     for annotation_query in associated_annotation_queries:
-        candidate_annotations[annotation_query] = CandidateAnnotation.objects.filter(peak=peak,annotation_query=annotation_query).order_by('-confidence')
+        candidate_annotations[annotation_query] = CandidateAnnotation.objects.filter(
+            peak=peak,
+            annotation_query=annotation_query
+        ).order_by('-confidence')
     # Determine the number of peaks in the fragmentation spectra
     number_of_fragments_in_spectra = len(fragmentation_spectra)
     # And determine if the peak has a preferred annotation associated with it
@@ -735,8 +740,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
                 for a in parameters['parents']:
                     parent_query = AnnotationQuery.objects.get(slug=a)
                     AnnotationQueryHierarchy.objects.create(
-                        parent_annotation_query = parent_query,
-                        subquery_annotation_query = paramaterised_query_object)
+                        parent_annotation_query=parent_query,
+                        subquery_annotation_query=paramaterised_query_object)
             # End of Simon's addition
             # Finally, begin running the retrieval of the annotations as a background process
             generate_annotations(paramaterised_query_object)
@@ -803,7 +808,8 @@ def specify_preferred_annotation(request, fragmentation_set_name_slug, peak_name
             peak_for_update.preferred_candidate_description = justification_for_annotation
             peak_for_update.preferred_candidate_user_selector = current_user
             peak_for_update.preferred_candidate_updated_date = current_time
-            peak_for_update.save()
+            with transaction.atomic():
+                peak_for_update.save()
             # Return the user to the 'peak_summary' page
             context_dict = get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug)
             return render(request, 'frank/peak_summary.html', context_dict)
@@ -836,6 +842,7 @@ run in the background.
 
 
 def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id):
+
     """
     Method to start the extraction of peaks from the uploaded mzXML data files
     :param experiment_name_slug: A string containing the unique slug of an experiment
@@ -854,6 +861,7 @@ def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id):
 
 
 def generate_annotations(annotation_query_object):
+
     """
     Method to begin the retrieval of candidate annotations as a background task
     :param annotation_query_object: The Annotation Query to be performed
@@ -874,6 +882,7 @@ def generate_annotations(annotation_query_object):
 
 
 def set_annotation_query_parameters(annotation_query_object, annotation_query_form, current_user):
+
     """
     Method to format the annotation query parameters specified by the user into a
     jsonpickle format for storage in the database
@@ -955,7 +964,9 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         return annotation_query_object
     # End of Simon contribution
 
+
 def run_network_sampler(request):
+
     """
     Method for testing the Network sampler.
     __author__: Simon Rogers
@@ -964,11 +975,11 @@ def run_network_sampler(request):
     """
 
     default_params = {
-            'n_samples': 1000,
-            'n_burn': 500,
-            'delta': 1,
-            'transformation_file': 'all_transformations_masses.txt',
-        }
+        'n_samples': 1000,
+        'n_burn': 500,
+        'delta': 1,
+        'transformation_file': 'all_transformations_masses.txt',
+    }
     frag_slug = 'beer-3-frag-set-5'
     aq_slug = 'beer-3-annotations-4'
     aq = AnnotationQuery.objects.get(slug=aq_slug)
@@ -1017,13 +1028,17 @@ def make_frag_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug)
     ax = fig.add_subplot(1, 1, 1)
 
     # plot the parent peak first
-    plt.plot((parent_mass, parent_mass), (0, parent_intensity), linewidth=2.0, color='b')
+    plt.plot((parent_mass, parent_mass), (0, parent_intensity/parent_intensity), linewidth=2.0, color='b')
     x = parent_mass
-    y = parent_intensity
+    y = parent_intensity/parent_intensity
     label = "%.5f" % parent_mass
     plt.text(x, y, label, **parent_fontspec)
 
-    highest_intensity = fragmentation_spectra.aggregate(Max('intensity'))['intensity__max']
+    if len(fragmentation_spectra) > 0:
+        highest_intensity = fragmentation_spectra.aggregate(Max('intensity'))['intensity__max']
+        scale = parent_intensity/highest_intensity
+    else:
+        scale = 1
     # scale the highest intensity value to the value of the parent intensity
     """
     Due to the relatively low intensities of the product ions, the fragments
@@ -1031,18 +1046,16 @@ def make_frag_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug)
     visual comparison. Otherwise the graph would be redundant to the users.
     """
 
-    scale = parent_intensity/highest_intensity
-
     # plot all the fragment peaks of this parent peak
     num_peaks = len(fragment_masses)
     for j in range(num_peaks):
         mass = fragment_masses[j]
-        intensity = (fragment_intensities[j]*scale)
+        intensity = (fragment_intensities[j]*scale/parent_intensity)
         plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
 
     # set range of x- and y-axes
     xlim_upper = int(parent_mass + 50)
-    ylim_upper = int(round(parent_intensity*Decimal(1.25)))
+    ylim_upper = 1.5
     plt.xlim([0, xlim_upper])
     plt.ylim([0, ylim_upper])
 

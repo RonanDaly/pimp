@@ -1,5 +1,7 @@
 generateGCMSPeakMatrix <- function(input_directory){
   
+  ################## ADAPTED FROM KARL BURGESS' SCRIPT ##########################
+  
   require(rJava)
   require(mzmatch.R)
   # mzmatch.init(version.1=FALSE)

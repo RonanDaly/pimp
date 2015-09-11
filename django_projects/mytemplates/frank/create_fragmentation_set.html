@@ -21,7 +21,8 @@
                 {{ field }}
 		<br>
             {% endfor %}
-	<input type = "submit" name="submit" value="Submit">
+	<button class="btn btn-large btn-primary" type="submit">Extract Peaks</button>
+	<a href="{% url 'experiment_summary' experiment.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
 	</form>
 
 {% endblock %}

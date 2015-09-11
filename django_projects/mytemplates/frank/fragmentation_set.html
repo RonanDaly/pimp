@@ -21,7 +21,7 @@
                 		{{ field }}
 				</br>
             		{% endfor %}
-			<input type = "submit" name="submit" value="Create New Annotation Set">
+			<input type = "submit" name="submit" value="Create New Annotation Query">
 		</form>
 	{% endif %}
 	</br>
@@ -40,12 +40,12 @@
 					<td>{{annotation.time_created}}</td>
 					<td>{{annotation.status}}</td>
 					<td>
-						{% for a in annotation.annotationquery_set.all %}
+						{% for a in annotation.source_annotation_queries.all %}
 							{{ a.name }}
 						{% endfor %}
 					</td>
 					<td>
-						{% for a in annotation.source_annotation_queries.all %}
+						{% for a in annotation.annotationquery_set.all %}
 							{{ a.name }}
 						{% endfor %}
 					</td>

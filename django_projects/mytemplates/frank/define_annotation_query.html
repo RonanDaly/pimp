@@ -22,7 +22,8 @@
                 {{field.label}} {{ field }}
 		<br>
             {% endfor %}
-	<input type = "submit" name="submit" value="Create Annotation Query">
+	<button class="btn btn-large btn-primary" type="submit">Retrieve Annotations</button>
+	<a href="{% url 'fragmentation_set' fragmentation_set.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
 	</form>
 
 {% endblock %}

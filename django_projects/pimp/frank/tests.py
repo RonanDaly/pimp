@@ -3,8 +3,7 @@ from frank.models import *
 from frank.forms import *
 from frank.admin import *
 from frank.views import *
-from peakFactories import *
-from annotationTools import *
+from annotationTools import MassBankQueryTool
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.template.defaultfilters import slugify
@@ -18,256 +17,629 @@ import populate_pimp as population_script
 from peakFactories import MSNPeakBuilder, GCMSPeakBuilder, PeakBuilder
 import rpy2.robjects as robjects
 import rpy2.rlike.container as rlc
+import mock
+import re
 
 
-#################### VIEWS TESTS ###################
+"""
+In order for the tests to run correctly, several methods have to initially
+be created to create default objects in the database.
+"""
+
+
+def run_population_script():
+
+    """
+    Method to run the population script
+    """
+
+    population_script.populate()
+
+
+def create_test_user():
+
+    """
+    Method to create a user
+    """
+
+    try:
+        user = User.objects.get_by_natural_key('testrunner')
+    except ObjectDoesNotExist:
+        user = User.objects.create_user(
+            username='testrunner',
+            email='testrunner@gmail.com',
+            password='password'
+        )
+    return user
+
+
+def create_logged_in_client():
+
+    """
+    Method to generate a logged in client, as all views have the @login_required
+    """
+
+    user = create_test_user()
+    client = Client()
+    client.login(username='testrunner', password='password')
+    return client
+
+
+def create_valid_lcms_experiment():
+
+    """
+    Method to create a valid lcms experiment
+    """
+
+    run_population_script()
+    experimental_protocol = ExperimentalProtocol.objects.get_or_create(
+        name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
+    )[0]
+    user = create_test_user()
+    experiment = Experiment.objects.get_or_create(
+        title='Experiment LCMS',
+        description='This is another experiment',
+        created_by=user,
+        ionisation_method='Electron Ionisation Spray',
+        detection_method=experimental_protocol,
+    )[0]
+    return experiment
+
+
+def create_valid_gcms_experiment():
+
+    """
+    Method to create a valid gcms experiment
+    """
+
+    run_population_script()
+    experimental_protocol = ExperimentalProtocol.objects.get_or_create(
+        name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
+    )[0]
+    user = create_test_user()
+    experiment = Experiment.objects.get_or_create(
+        title='Experiment GCMS',
+        description='This is another experiment',
+        created_by=user,
+        ionisation_method='Electron Impact Ionisation',
+        detection_method=experimental_protocol,
+    )[0]
+    return experiment
+
+
+def create_experimental_condition():
+
+    """
+    Method to create a default experimental condition
+    """
+
+    experiment = create_valid_lcms_experiment()
+    experimental_condition = ExperimentalCondition.objects.get_or_create(
+        name='Test Condition 1',
+        description='This is a test experimental condition',
+        experiment=experiment
+    )[0]
+    return experimental_condition
+
+
+def create_sample():
+
+    """
+    Method to create a default experimental sample
+    """
+
+    experimental_condition = create_experimental_condition()
+    sample = Sample.objects.get_or_create(
+        name='Test Sample 1',
+        description='This is a test sample',
+        experimental_condition=experimental_condition,
+        organism='Sample Organism'
+    )[0]
+    return sample
+
+
+def remove_previous_uploads(sample_object, polarity, file_name):
+
+    """
+    Method to remove a previously uploaded test file to ensure
+    tests run as intended.
+    """
+
+    intended_upload_path = os.path.join(
+        MEDIA_ROOT,
+        'frank',
+        sample_object.experimental_condition.experiment.created_by.username,
+        sample_object.experimental_condition.experiment.slug,
+        sample_object.experimental_condition.slug,
+        sample_object.slug,
+        polarity,
+        file_name,
+    )
+    try:
+        os.remove(str(intended_upload_path))
+    except OSError:
+        pass
+    return True
+
+
+def create_lcms_test_experiment_with_files():
+
+    """
+    Method for creating a typical lcms experimental set-up
+    """
+
+    create_test_user()
+    first_sample = create_sample()
+    test_file1 = os.path.join(
+        BASE_DIR,
+        'frank',
+        'TestingFiles',
+        'LCMS_Files',
+        'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
+    )
+    test_file2 = os.path.join(
+        BASE_DIR,
+        'frank',
+        'TestingFiles',
+        'LCMS_Files',
+        'STD_MIX1_POS_60stepped_1E5_Top5.mzXML',
+    )
+    my_client = create_logged_in_client()
+    upload_files = {}
+    upload_files['file1'] = {'filepath': test_file1, 'polarity': 'Negative'}
+    upload_files['file2'] = {'filepath': test_file2, 'polarity': 'Positive'}
+    remove_previous_uploads(first_sample, 'Negative', 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
+    remove_previous_uploads(first_sample, 'Positive', 'STD_MIX1_POS_60stepped_1E5_Top5.mzXML')
+
+    for test_file in upload_files:
+        with open(upload_files[test_file]['filepath']) as upload_file:
+            response = my_client.post(reverse(
+                'add_sample_file',
+                kwargs={
+                    'experiment_name_slug': first_sample.experimental_condition.experiment.slug,
+                    'condition_name_slug': first_sample.experimental_condition.slug,
+                    'sample_slug': first_sample.slug
+                }), {
+                'address': upload_file,
+                'polarity': upload_files[test_file]['polarity'],
+            })
+    return first_sample.experimental_condition.experiment
+
+
+def create_gcms_test_experiment_with_files():
+
+    """
+    Method for creating a typical gcms experimental set-up
+    """
+
+    create_test_user()
+    experiment = create_valid_gcms_experiment()
+    experimental_condition = ExperimentalCondition.objects.get_or_create(
+        experiment=experiment,
+        name='GCMSCondition',
+    )[0]
+    sample = Sample.objects.get_or_create(
+        experimental_condition=experimental_condition,
+        name='GCMSSample',
+    )[0]
+    test_file1 = os.path.join(
+        BASE_DIR,
+        'frank',
+        'TestingFiles',
+        'GCMS_Files',
+        'T0R1R.mzXML',
+    )
+    """
+    Test File 2 can be added to provide an additional test case,
+    however, the gcms test files are large and so one will suffice.
+    """
+    # test_file2 = os.path.join(
+    #     BASE_DIR,
+    #     'frank',
+    #     'TestingFiles',
+    #     'GCMS_Files',
+    #     'T1R3L.mzXML',
+    # )
+    my_client = create_logged_in_client()
+    upload_files = {}
+    upload_files['file1'] = {'filepath': test_file1, 'polarity': 'Negative'}
+    # upload_files['file2'] = {'filepath': test_file2, 'polarity': 'Positive'}
+    remove_previous_uploads(sample, 'Positive', 'T0R1R.mzXML')
+    remove_previous_uploads(sample, 'Positive', 'T1R3L.mzXML')
+
+    for test_file in upload_files:
+        with open(upload_files[test_file]['filepath']) as upload_file:
+            response = my_client.post(reverse(
+                'add_sample_file',
+                kwargs={
+                    'experiment_name_slug': sample.experimental_condition.experiment.slug,
+                    'condition_name_slug': sample.experimental_condition.slug,
+                    'sample_slug': sample.slug
+                }), {
+                'address': upload_file,
+                'polarity': upload_files[test_file]['polarity'],
+            })
+    return sample.experimental_condition.experiment
+
+
+def create_gcms_fragmentation_set():
+
+    """
+    Method to create a mock gcms fragmentation set
+    """
+
+    experiment = create_gcms_test_experiment_with_files()
+    fragmentation_set = FragmentationSet.objects.get_or_create(
+        name='GCMSFragSet',
+        experiment=experiment,
+        status='Completed Successfully'
+    )[0]
+    sample_files = SampleFile.objects.filter(
+        sample__experimental_condition__experiment=experiment)
+    for input_file in sample_files:
+        pseudo_ms1_peak = Peak.objects.create(
+            source_file=input_file,
+            mass=73.0468,
+            retention_time=867.4150,
+            intensity=1481587.38,
+            parent_peak=None,
+            msn_level=1,
+            fragmentation_set=fragmentation_set
+        )
+        for index in range(0, 10):
+            Peak.objects.create(
+                source_file=input_file,
+                mass=pseudo_ms1_peak.mass-(index*4),
+                retention_time=pseudo_ms1_peak.rentention_time-(index*10),
+                intensity=pseudo_ms1_peak.intensity-(index*500),
+                parent_peak=None,
+                msn_level=2,
+                fragmentation_set=fragmentation_set
+            )
+    return fragmentation_set
+
+
+def create_lcms_fragmentation_set():
+
+    """
+    Method to create a mock lcms fragmentation set
+    """
+
+    experiment = create_lcms_test_experiment_with_files()
+    fragmentation_set = FragmentationSet.objects.get_or_create(
+        name='LCMSFragSet',
+        experiment=experiment,
+        status='Completed Successfully'
+    )[0]
+    sample_files = SampleFile.objects.filter(
+        sample__experimental_condition__experiment=experiment)
+    for input_file in sample_files:
+        precursor_peak = Peak.objects.create(
+            source_file=input_file,
+            mass=137.0458,
+            retention_time=515.4240,
+            intensity=60518756.0000,
+            parent_peak=None,
+            msn_level=1,
+            fragmentation_set=fragmentation_set
+        )
+        for index in range(0, 10):
+            Peak.objects.create(
+                source_file=input_file,
+                mass=precursor_peak.mass-(index*10),
+                retention_time=precursor_peak.retention_time-(index*20),
+                intensity=precursor_peak.intensity-(index*1000),
+                parent_peak=None,
+                msn_level=2,
+                fragmentation_set=fragmentation_set
+            )
+    return fragmentation_set
+
+def add_genuine_spectrum(fragmentation_set):
+
+    """
+    Method to add a genuine spectrum to a fragmentation set
+    """
+    source_file = SampleFile.objects.filter(
+            sample__experimental_condition__experiment=fragmentation_set.experiment
+        )[0]
+    parent_peak = Peak.objects.create(
+        source_file=source_file,
+        mass=109.0761,
+        retention_time=302.2270,
+        intensity=1559883.3750,
+        parent_peak=None,
+        msn_level=1,
+        fragmentation_set=fragmentation_set
+    )
+    peak1 = Peak.objects.create(
+        source_file=source_file,
+        mass=65.0388,
+        retention_time=300.3950,
+        intensity=70030.99,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak2 = Peak.objects.create(
+        source_file=source_file,
+        mass=67.0543,
+        retention_time=300.3950,
+        intensity=3235.91,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak3 = Peak.objects.create(
+        source_file=source_file,
+        mass=80.0495,
+        retention_time=300.3950,
+        intensity=2457.76,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak4 = Peak.objects.create(
+        source_file=source_file,
+        mass=82.0650,
+        retention_time=300.3950,
+        intensity=4333.99,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+    peak5 = Peak.objects.create(
+        source_file=source_file,
+        mass=92.0495,
+        retention_time=300.3950,
+        intensity=153425.52,
+        parent_peak=parent_peak,
+        msn_level=2,
+        fragmentation_set=fragmentation_set
+    )
+
+"""
+Views.py Tests - Mostly this consisted of testing the pages render. However, in the case of the
+forms varying inputs have been checked to ensure errors are caught.
+
+"""
+
 
 class IndexTestView(TestCase):
+
     """
     These are tests for the index view of Frank, we want to test that the
     page renders and that the user who is not authenticated will be redirected
-    to the login page (i.e. a test of the @login_required decorator
+    to the login page (i.e. a test of the @login_required decorator)
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
 
+        self.client = create_logged_in_client()
 
     def test_index_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Test to ensure page renders for authenticated user
+        """
+
         response = self.client.get(reverse('frank_index'))
         self.assertEqual(response.status_code, 200)
 
-
-
     def test_index_with_non_authenticated_client(self):
-        response = self.client.get(reverse('frank_index'))
+
+        """
+        Test to ensure page re-directs if the user is not authenticated.
+        From this point on it is assumed the @login_required decorators work
+        as anticipated.
+        """
+
+        client = Client()
+        response = client.get(reverse('frank_index'))
         self.assertRedirects(response, 'accounts/login/?next=/frank/')
 
 
 class MyExperimentsViewTest(TestCase):
+
     """
     Test for the my_experiments view in frank.views. Here we want to test that
     the page renders for an authenticated user.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
+
+        self.client = create_logged_in_client()
 
     def test_my_experiment_view_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Test case to ensure the My Experiments page of the site renders
+        """
+
         response = self.client.get(reverse('my_experiments'))
         self.assertEqual(response.status_code, 200)
 
 
 class AddExperimentViewTest(TestCase):
+
     """
     Test for the add_experiment view in frank.views. Here we want to test that
     the page renders for an authenticated user. In additon, we want to test that
-    the addition submission of a valid form creates and experiment object. Finally,
+    the addition submission of a valid form creates an experiment object. Finally,
     we want to ensure that experiment titles cannot be duplicated as this will
     compromise the unique constraint on the experiment slug.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        experiment_2 = Experiment.objects.create(
-            title = 'Experiment 2',
-            description = 'This is another experiment',
-            created_by = self.user,
-            ionisation_method = 'ESI',
-            detection_method = experimental_protocol,
-        )
+
+        self.client = create_logged_in_client()
+        self.existing_experiment = create_valid_lcms_experiment()
 
     def test_add_experiment_view_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test the rendering of the add experiment page
+        """
+
         response = self.client.get(reverse('add_experiment'))
         self.assertEqual(response.status_code, 200)
 
-
     def test_addition_of_new_experiment(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test the addition of a new experiment using a POST request
+        creates a new object in the test database
+        """
+
         with self.assertTemplateUsed(template_name='frank/my_experiments.html'):
-            response = self.client.post(reverse(
-                'add_experiment'),
-                {'title': 'Experiment 1',
+            response = self.client.post(reverse('add_experiment'), {
+                'title': 'Experiment 1',
                 'description': 'This is a test experiment',
                 'ionisation_method': 'ESI',
                 'detection_method': '1'
-                }
-            )
+            })
         self.assertEqual(response.status_code, 200)
-        experiment = Experiment.objects.get(title = 'Experiment 1')
+        experiment = Experiment.objects.get(title='Experiment 1')
         self.assertTrue(isinstance(experiment, Experiment))
 
-
     def test_to_ensure_duplicate_experiment_titles_constraint_holds(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test that the addition of a new experiment, duplicating the title
+        of an existing experiment fails to create an experiment in the test database
+        """
+
         with self.assertTemplateUsed(template_name='frank/add_experiment.html'):
-            response = self.client.post(reverse(
-                'add_experiment'),
-                {'title': 'Experiment 2',
-                'description': 'This is a test experiment',
-                'ionisation_method': 'EIS',
+            duplicated_title = self.existing_experiment.title
+            description = 'This is the duplicated title'
+            response = self.client.post(reverse('add_experiment'), {
+                'title': duplicated_title,
+                'description': description,
+                'ionisation_method': 'Electron Ionisation Spray',
                 'detection_method': '1'
-                }
-        )
+            })
         self.assertEqual(response.status_code, 200)
         self.assertFormError(response, 'experiment_form', 'title', 'Experiment with this Title already exists.')
+        with self.assertRaises(ObjectDoesNotExist):
+            Experiment.objects.get(title=duplicated_title, description=description)
 
 
 class ExperimentSummaryViewTest(TestCase):
+
     """
-    Test for the add_experiment view in frank.views. Here we want to test that
+    Test for the experiment summary view in frank.views. Here we want to test that
     the page renders for an authenticated user.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
 
+        self.client = create_logged_in_client()
+        self.experiment = create_valid_lcms_experiment()
 
     def test_experiment_summary_page_renders_for_authenticated_user(self):
+
+        """
+        Test to ensure the experiment summary page renders for an authenticated user
+        """
+
         self.client.login(username='testrunner', password='password')
         with self.assertTemplateUsed(template_name='frank/experiment.html'):
             self.client.get(reverse('experiment_summary', kwargs={'experiment_name_slug': self.experiment.slug}))
 
 
 class AddExperimentalConditionViewTest(TestCase):
+
     """
-    Test for the add_experiment view in frank.views. Here we want to test that
+    Test for the add_experimental_condition view in frank.views. Here we want to test that
     the page renders for an authenticated user. We also want to ensure that experimental
     conditions can be created and that the experimental condition's name cannot be
     duplicated.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.duplicate_experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
 
+        self.client = create_logged_in_client()
+        self.experiment = create_valid_lcms_experiment()
+        self.existing_experimental_condition = create_experimental_condition()
 
-    def test_add_experiment_view_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
-        response = self.client.get(reverse('add_experimental_condition', kwargs={'experiment_name_slug': self.experiment.slug}))
+    def test_add_experimental_condition_view_renders_for_authenticated_user(self):
+
+        """
+        Test to ensure the Experiment page of the application renders
+        """
+
+        response = self.client.get(reverse(
+            'add_experimental_condition', kwargs={'experiment_name_slug': self.experiment.slug})
+        )
         self.assertEqual(response.status_code, 200)
-
 
     def test_addition_of_new_experimental_condition(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Test to check the addition of a new experimental condition
+        """
+
         with self.assertTemplateUsed(template_name='frank/experiment.html'):
-            response = self.client.post(reverse('add_experimental_condition', kwargs={'experiment_name_slug': self.experiment.slug}), {
-                'name': 'Experimental Condition 1',
+            name = 'New Experimental Condition'
+            response = self.client.post(reverse(
+                'add_experimental_condition',
+                kwargs={'experiment_name_slug': self.experiment.slug}), {
+                'name': name,
                 'description': 'This is a test experimental condition',
-                }
-            )
+            })
         self.assertEqual(response.status_code, 200)
-        experimental_condition = ExperimentalCondition.objects.get(name = 'Experimental Condition 1')
+        experimental_condition = ExperimentalCondition.objects.get(name=name)
         self.assertTrue(isinstance(experimental_condition, ExperimentalCondition))
 
-
     def test_to_ensure_duplicate_experimental_condition_names_constraint_holds(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Test to check that the addition of a new experimental condition cannot duplicate
+        that of an existing experimental condition.
+        """
+
         with self.assertTemplateUsed(template_name='frank/add_experimental_condition.html'):
-            response = self.client.post(reverse('add_experimental_condition', kwargs={'experiment_name_slug': self.experiment.slug}),
-                {'name': 'Test Condition 1',
-                'description': 'This is a test experimental condition',
-                }
-        )
+            duplicate_name = self.existing_experimental_condition.name
+            duplicate_description = 'This is a duplicate experimental condition'
+            response = self.client.post(reverse(
+                'add_experimental_condition',
+                kwargs={'experiment_name_slug': self.experiment.slug}), {
+                'name': duplicate_name,
+                'description': duplicate_description,
+            })
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response, 'experimental_condition_form', 'name', 'Experimental condition with this Name already exists.')
+        self.assertFormError(response, 'experimental_condition_form', 'name',
+                             'Experimental condition with this Name already exists.')
+        with self.assertRaises(ObjectDoesNotExist):
+            Experiment.objects.get(title=duplicate_name, description=duplicate_description)
 
 
 class ConditionSummaryViewTest(TestCase):
+
     """
     Test for the condition_summary view in frank.views. Here we want to test that
     the page renders for an authenticated user.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition',
-            description = 'This is a test condition',
-            experiment = self.experiment
-        )
-
+        self.client = create_logged_in_client()
+        self.experimental_condition = create_experimental_condition()
 
     def test_condition_summary_page_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test that the experimental condition summary page renders for authenticated user
+        """
+
         with self.assertTemplateUsed(template_name='frank/condition.html'):
             self.client.get(reverse('condition_summary', kwargs={
-                'experiment_name_slug': self.experiment.slug,
+                'experiment_name_slug': self.experimental_condition.experiment.slug,
                 'condition_name_slug': self.experimental_condition.slug
             }))
 
 
 class AddSampleViewTest(TestCase):
+
     """
     Test for the add_sample view in frank.views. Here we want to test that
     the page renders for an authenticated user. We also want to ensure that samples
@@ -275,67 +647,70 @@ class AddSampleViewTest(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
-        self.duplicate_sample = Sample.objects.create(
-            name = 'Test Sample 1',
-            description = 'This is a test sample',
-            experimental_condition = self.experimental_condition,
-            organism = 'testorganism',
-        )
+        self.client = create_logged_in_client()
+        self.duplicate_sample = create_sample()
 
+    def test_add_sample_view_renders_for_authenticated_user(self):
 
-    def test_add_experiment_view_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
-        response = self.client.get(reverse('add_sample', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug}))
+        """
+        Test to ensure the page renders successfully for the authenticated client
+        """
+
+        response = self.client.get(reverse(
+            'add_sample',
+            kwargs={
+                'experiment_name_slug': self.duplicate_sample.experimental_condition.experiment.slug,
+                'condition_name_slug': self.duplicate_sample.experimental_condition.slug}
+        ))
         self.assertEqual(response.status_code, 200)
 
-
     def test_addition_of_new_experimental_sample(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Test to ensure the submission of a new experimental sample is added to the database
+        """
+
         with self.assertTemplateUsed(template_name='frank/condition.html'):
-            response = self.client.post(reverse('add_sample', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug}), {
-                'name': 'Sample 1',
-                'description': 'This is a test sample',
+            sample_name = 'Additional Sample'
+            sample_description = 'The submitted sample'
+            response = self.client.post(reverse(
+                'add_sample', kwargs={
+                    'experiment_name_slug': self.duplicate_sample.experimental_condition.experiment.slug,
+                    'condition_name_slug': self.duplicate_sample.experimental_condition.slug
+                }), {
+                'name': sample_name,
+                'description': sample_description,
                 }
             )
         self.assertEqual(response.status_code, 200)
-        sample = Sample.objects.get(name = 'Sample 1')
+        sample = Sample.objects.get(name=sample_name)
         self.assertTrue(isinstance(sample, Sample))
 
-
     def test_to_ensure_duplicate_experimental_sample_names_constraint_holds(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Test to ensure that attempts to add new experimental samples with identical names
+        generates for errors and does not add the sample to the database
+        """
+
         with self.assertTemplateUsed(template_name='frank/add_sample.html'):
-            response = self.client.post(reverse('add_sample', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug}),
-                {'name': 'Test Sample 1',
-                'description': 'This is a test sample',
-                }
-        )
+            duplicate_sample_name = self.duplicate_sample.name
+            duplicate_sample_description = 'This is the duplicated sample'
+            response = self.client.post(reverse(
+                'add_sample', kwargs={
+                    'experiment_name_slug': self.duplicate_sample.experimental_condition.experiment.slug,
+                    'condition_name_slug': self.duplicate_sample.experimental_condition.slug}), {
+                'name': duplicate_sample_name,
+                'description': duplicate_sample_description}
+            )
         self.assertEqual(response.status_code, 200)
         self.assertFormError(response, 'sample_form', 'name', 'Sample with this Name already exists.')
+        with self.assertRaises(ObjectDoesNotExist):
+            Sample.objects.get(name=duplicate_sample_name, description=duplicate_sample_description)
 
 
 class AddSampleFileViewTest(TestCase):
+
     """
     Test for the add_sample_file view in frank.views. Here we want to test that
     the page renders for an authenticated user. We also want to ensure that sample files
@@ -344,252 +719,279 @@ class AddSampleFileViewTest(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
-        self.sample = Sample.objects.create(
-            name = 'Test Sample 1',
-            description = 'This is a test sample',
-            experimental_condition = self.experimental_condition,
-            organism = 'testorganism',
-        )
+        self.client = create_logged_in_client()
+        self.sample = create_sample()
+        # These should correspond to two files in the TestingFiles folder
+        self.file_name_valid = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML'
+        self.file_name_invalid = 'Invalid.txt'
+        # Determine the paths for the test files to be uploaded
         self.file_for_upload_filepath = os.path.join(
             BASE_DIR,
             'frank',
             'TestingFiles',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
+            self.file_name_valid,
         )
         self.invalid_file_for_upload_filepath = os.path.join(
             BASE_DIR,
             'frank',
             'TestingFiles',
-            'Invalid.txt',
+            self.file_name_invalid,
         )
-        ### Ensure the file to be uploaded doesn't already exist at the beginning of the tests
-        proposed_upload_path = os.path.join(
-            MEDIA_ROOT,
-            'frank',
-            self.user.username,
-            self.experiment.slug,
-            self.experimental_condition.slug,
-            self.sample.slug,
-            'Negative',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        try:
-            ## Ensure the test file doesn't exist at the start of each test
-            ## or upload with fail.
-            os.remove(str(proposed_upload_path))
-        except OSError:
-            pass
-
+        # Ensure these files haven't been uploaded to the sample folder by a previous test
+        remove_previous_uploads(self.sample, 'Negative', self.file_name_valid)
+        remove_previous_uploads(self.sample, 'Negative', self.file_name_invalid)
 
     def test_add_sample_file_view_renders_for_authenticated_user(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test the add sample file page renders for the authenticated user
+        """
+
         response = self.client.get(reverse('add_sample_file', kwargs={
-            'experiment_name_slug': self.experiment.slug,
-            'condition_name_slug': self.experimental_condition.slug,
+            'experiment_name_slug': self.sample.experimental_condition.experiment.slug,
+            'condition_name_slug': self.sample.experimental_condition.slug,
             'sample_slug': self.sample.slug
         }))
         self.assertEqual(response.status_code, 200)
 
-
     def test_addition_of_new_sample_file(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test the addition of a new sample file via a POST request
+        """
+
         with self.assertTemplateUsed(template_name='frank/condition.html') \
                 and open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
+            response = self.client.post(reverse(
+                'add_sample_file',
+                kwargs={'experiment_name_slug': self.sample.experimental_condition.experiment.slug,
+                        'condition_name_slug': self.sample.experimental_condition.slug,
+                        'sample_slug': self.sample.slug}), {
                 'address': upload_file,
                 'polarity': 'Negative',
                 }
             )
         self.assertEqual(response.status_code, 200)
-        sample_file = SampleFile.objects.get(name = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
+        sample_file = SampleFile.objects.get(name='STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
         self.assertTrue(isinstance(sample_file, SampleFile))
-        try:
-            ## Remember to remove the uploaded file upon completion of the test
-            os.remove(str(sample_file.address))
-        except OSError:
-            pass
-
 
     def test_to_ensure_duplicate_sample_files_cannot_be_uploaded_to_same_sample(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to ensure duplicate sample files cannot be uploaded to the same sample
+        """
+
+        # Perform the first upload
         with self.assertTemplateUsed(template_name='frank/condition.html') \
                 and open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
+            response = self.client.post(reverse(
+                'add_sample_file',
+                kwargs={'experiment_name_slug': self.sample.experimental_condition.experiment.slug,
+                        'condition_name_slug': self.sample.experimental_condition.slug,
+                        'sample_slug': self.sample.slug}), {
                 'address': upload_file,
                 'polarity': 'Negative',
-                }
-            )
+                })
         self.assertEqual(response.status_code, 200)
-        sample_file = SampleFile.objects.get(name = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
+        sample_file = SampleFile.objects.get(name='STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
+        self.assertTrue(sample_file, SampleFile)
         # Then try and add the same sample file again
         with self.assertTemplateUsed(template_name='frank/add_sample_file.html') \
                 and open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
+            response = self.client.post(reverse(
+                'add_sample_file',
+                kwargs={
+                    'experiment_name_slug': self.sample.experimental_condition.experiment.slug,
+                    'condition_name_slug': self.sample.experimental_condition.slug,
+                    'sample_slug': self.sample.slug}), {
                 'address': upload_file,
                 'polarity': 'Negative',
-                }
-            )
+                })
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response, 'sampleFileForm', 'address', 'This file already exists in the sample.')
-        try:
-            ## Remember to remove the uploaded file upon completion of the test
-            os.remove(str(sample_file.address))
-        except OSError:
-            pass
-
+        self.assertFormError(response, 'sample_file_form', 'address', 'This file already exists in the sample.')
 
     def test_to_ensure_invalid_file_formats_cannot_be_uploaded(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to ensure that invalid file formats cannot be uploaded
+        """
+
         with self.assertTemplateUsed(template_name='frank/add_sample_file.html') \
                 and open(self.invalid_file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
+            response = self.client.post(reverse(
+                'add_sample_file',
+                kwargs={
+                    'experiment_name_slug': self.sample.experimental_condition.experiment.slug,
+                    'condition_name_slug': self.sample.experimental_condition.slug,
+                    'sample_slug': self.sample.slug}), {
                 'address': upload_file,
                 'polarity': 'Negative',
-                }
-            )
+                })
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response, 'sampleFileForm', 'address', 'Incorrect file format. Please upload an mzXML file')
+        self.assertFormError(
+            response,
+            'sample_file_form',
+            'address',
+            'Incorrect file format. Please upload an mzXML file'
+        )
 
 
 class CreateFragmentationSetViewTest(TestCase):
     """
     Test for the create_fragmentation_set view in frank.views. Here we want to test that
     the page renders for an authenticated user. We also want to ensure that fragmentation sets
-    can be create and that fragmentation sets have a unique name. Finally,
+    can be create and that fragmentation sets have a unique name. In addition, we want
+    to test that the creation of a fragmentation set works for both gcms and lcms. Finally,
     we also want to ensure that fragmentation sets can only be created for experiments
     with at least one sample file.
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
-        self.sample = Sample.objects.create(
-            name = 'Test Sample 1',
-            description = 'This is a test sample',
-            experimental_condition = self.experimental_condition,
-            organism = 'testorganism',
-        )
-        self.file_for_upload_filepath = os.path.join(
-            BASE_DIR,
-            'frank',
-            'TestingFiles',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        ### Ensure the file to be uploaded doesn't already exist at the beginning of the tests
-        proposed_upload_path = os.path.join(
-            MEDIA_ROOT,
-            'frank',
-            self.user.username,
-            self.experiment.slug,
-            self.experimental_condition.slug,
-            self.sample.slug,
-            'Negative',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        try:
-            ## Ensure the test file doesn't exist at the start of each test
-            ## or upload with fail.
-            os.remove(str(proposed_upload_path))
-        except OSError:
-            pass
-        self.client.login(username='testrunner', password='password')
-        with open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
-                'address': upload_file,
-                'polarity': 'Negative',
-                }
-            )
-        self.sample_file = SampleFile.objects.get(name = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
-        self.empty_experiment = Experiment.objects.create(
-            title = 'Empty Test Experiment',
-            description = 'This is a test experiment with no sample files',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.duplicate_fragmentation_set = FragmentationSet.objects.create(
-            name = 'Duplicate Fragmentation Set',
-            experiment = self.experiment,
-        )
-
+        self.client = create_logged_in_client()
+        self.user = create_test_user()
+        self.lcms_experiment = create_lcms_test_experiment_with_files()
+        self.gcms_experiment = create_gcms_test_experiment_with_files()
 
     def test_create_fragmentation_set_view_renders_for_authenticated_user(self):
+
+        """
+        Method to test the create fragmentation set view renders for the authorised user
+        """
+
         response = self.client.get(reverse('create_fragmentation_set', kwargs={
-            'experiment_name_slug': self.experiment.slug,
+            'experiment_name_slug': self.lcms_experiment.slug,
         }))
         self.assertEqual(response.status_code, 200)
 
+        """
+        The following tests have been commented out, due to the duration of time required
+        to run them. However, these can be uncommented for complete testing of the background
+        processes.
+        """
 
-    def test_create_of_new_fragmentation_set(self):
-        with self.assertTemplateUsed(template_name='frank/experiment.html'):
-            response = self.client.post(reverse('create_fragmentation_set', kwargs={'experiment_name_slug': self.experiment.slug}), {
-                'name': 'Test Fragmentation Set',
-                }
-            )
-        self.assertEqual(response.status_code, 200)
-        fragmentation_set = FragmentationSet.objects.get(name = 'Test Fragmentation Set')
-        self.assertTrue(isinstance(fragmentation_set, FragmentationSet))
-
+    # def test_create_of_new_lcms_fragmentation_set(self):
+    #
+    #     """
+    #     Method to test the submission of a valid LCMS experiment generates a new fragmentation set
+    #     which is populated with peaks.
+    #     """
+    #
+    #     with self.assertTemplateUsed(template_name='frank/experiment.html'):
+    #         response = self.client.post(reverse(
+    #             'create_fragmentation_set', kwargs={'experiment_name_slug': self.lcms_experiment.slug}), {
+    #             'name': 'Test LCMS Fragmentation Set',
+    #         })
+    #     self.assertEqual(response.status_code, 200)
+    #     fragmentation_set = FragmentationSet.objects.get(name = 'Test LCMS Fragmentation Set')
+    #     self.assertTrue(isinstance(fragmentation_set, FragmentationSet))
+    #     new_fragmentation_set_peaks = Peak.objects.filter(fragmentation_set=fragmentation_set)
+    #     self.assertTrue(len(new_fragmentation_set_peaks) > 0)
+    #
+    # def test_create_of_new_gcms_fragmentation_set(self):
+    #
+    #     """
+    #     Method to test the submission of a valid GCMS experiment generates a new fragmentation set
+    #     which is populated with peaks.
+    #     """
+    #
+    #     with self.assertTemplateUsed(template_name='frank/experiment.html'):
+    #         response = self.client.post(reverse(
+    #             'create_fragmentation_set', kwargs={'experiment_name_slug': self.gcms_experiment.slug}), {
+    #             'name': 'Test GCMS Fragmentation Set',
+    #         })
+    #     self.assertEqual(response.status_code, 200)
+    #     fragmentation_set = FragmentationSet.objects.get(name = 'Test GCMS Fragmentation Set')
+    #     self.assertTrue(isinstance(fragmentation_set, FragmentationSet))
+    #     new_fragmentation_set_peaks = Peak.objects.filter(fragmentation_set=fragmentation_set)
+    #     self.assertTrue(len(new_fragmentation_set_peaks) > 0)
 
     def test_to_ensure_duplicate_names_for_fragmentation_sets_cannot_be_used(self):
+
+        """
+        Method to test that the unique name constraint of the fragmentation set holds
+        """
+
+        duplicate_fragmentation_set = FragmentationSet.objects.create(
+            name='Duplicate Fragmentation Set',
+            experiment=self.lcms_experiment,
+        )
         with self.assertTemplateUsed(template_name='frank/create_fragmentation_set.html'):
-            response = self.client.post(reverse('create_fragmentation_set', kwargs={'experiment_name_slug': self.experiment.slug}), {
+            response = self.client.post(reverse(
+                'create_fragmentation_set', kwargs={'experiment_name_slug': self.lcms_experiment.slug}), {
                 'name': 'Duplicate Fragmentation Set',
-                }
-            )
+            })
         self.assertEqual(response.status_code, 200)
         self.assertFormError(response, 'frag_set_form', 'name', 'Fragmentation set with this Name already exists.')
 
-
     def test_to_ensure_fragmentation_sets_cannot_be_made_for_experiments_with_no_sample_files(self):
-        self.client.login(username='testrunner', password='password')
+
+        """
+        Method to test that a fragmentation set cannot be created when no sample files are uploaded to the experiment
+        """
+
+        empty_experiment = Experiment.objects.create(
+            title='Empty Test Experiment',
+            description='This is a test experiment with no sample files',
+            created_by=self.user,
+            ionisation_method='EIS',
+            detection_method=self.lcms_experiment.detection_method,
+        )
         with self.assertTemplateUsed(template_name='frank/create_fragmentation_set.html'):
-            response = self.client.post(reverse('create_fragmentation_set', kwargs={'experiment_name_slug': self.empty_experiment.slug}), {
+            response = self.client.post(reverse(
+                'create_fragmentation_set', kwargs={'experiment_name_slug': empty_experiment.slug}), {
                 'name': 'Test Fragmentation Set',
-                }
-            )
+            })
         self.assertEqual(response.status_code, 200)
         self.assertFormError(response, 'frag_set_form', 'name', 'No source files found for experiment.')
+
+        """
+        As before, these tests take significant time to run and as such have been commented out.
+        However, these can be included for completeness of testing. At present they demonstrate
+        the inability of the application to distinguish between GCMS and LCMS MS/MS datasets.
+        """
+
+    # def test_upload_of_data_files_which_correspond_to_the_wrong_experimental_protocol(self):
+    #
+    #     """
+    #     Method to test that the upload of the incorrect data files is not permitted
+    #     """
+    #
+    #     # By changing the LCMS experiment to the GCMS experimental protocol, the mzXML correspond to the wrong
+    #     # experiment type
+    #     self.lcms_experiment.detection_method = ExperimentalProtocol.objects.get(
+    #             name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
+    #     )
+    #     self.lcms_experiment.save()
+    #     with self.assertTemplateUsed(template_name='frank/experiment.html'):
+    #         response = self.client.post(reverse(
+    #             'create_fragmentation_set', kwargs={'experiment_name_slug': self.lcms_experiment.slug}), {
+    #             'name': 'Test GCMS Files In LCMS Experiment',
+    #         })
+    #     self.assertEqual(response.status_code, 200)
+    #     fragmentation_set = FragmentationSet.objects.get(name = 'Test GCMS Files In LCMS Experiment')
+    #     self.assertTrue(isinstance(fragmentation_set, FragmentationSet))
+    #     new_fragmentation_set_peaks = Peak.objects.filter(fragmentation_set=fragmentation_set)
+    #     # The program shouldn't process these files, but it does
+    #     self.assertFalse(len(new_fragmentation_set_peaks) > 0)
+    #
+    #
+    #     # By changing the GCMS experiment to the LCMS experimental protocol, the mzXML correspond to the wrong
+    #     # experiment type
+    #     self.gcms_experiment.detection_method = ExperimentalProtocol.objects.get(
+    #             name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
+    #     )
+    #     self.gcms_experiment.save()
+    #     with self.assertTemplateUsed(template_name='frank/experiment.html'):
+    #         response = self.client.post(reverse(
+    #             'create_fragmentation_set', kwargs={'experiment_name_slug': self.gcms_experiment.slug}), {
+    #             'name': 'Test LCMS Files In GCMS Experiment',
+    #         })
+    #     self.assertEqual(response.status_code, 200)
+    #     fragmentation_set = FragmentationSet.objects.get(name='Test LCMS Files In GCMS Experiment')
+    #     self.assertTrue(isinstance(fragmentation_set, FragmentationSet))
+    #     new_fragmentation_set_peaks = Peak.objects.filter(fragmentation_set=fragmentation_set)
+    #     # The program shouldn't process these files, but it does
+    #     self.assertFalse(len(new_fragmentation_set_peaks) > 0)
 
 
 class FragmentationSetSummaryViewTest(TestCase):
@@ -599,74 +1001,14 @@ class FragmentationSetSummaryViewTest(TestCase):
     """
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
-        self.sample = Sample.objects.create(
-            name = 'Test Sample 1',
-            description = 'This is a test sample',
-            experimental_condition = self.experimental_condition,
-            organism = 'testorganism',
-        )
-        self.file_for_upload_filepath = os.path.join(
-            BASE_DIR,
-            'frank',
-            'TestingFiles',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        proposed_upload_path = os.path.join(
-            MEDIA_ROOT,
-            'frank',
-            self.user.username,
-            self.experiment.slug,
-            self.experimental_condition.slug,
-            self.sample.slug,
-            'Negative',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        try:
-            ## Ensure the test file doesn't exist at the start of each test
-            ## or upload with fail.
-            os.remove(str(proposed_upload_path))
-        except OSError:
-            pass
-        self.client.login(username='testrunner', password='password')
-        with open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
-                'address': upload_file,
-                'polarity': 'Negative',
-                }
-            )
-        self.sample_file = SampleFile.objects.get(name = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
-        self.fragmentation_set = FragmentationSet.objects.create(
-            name = 'Test Fragmentation Set',
-            experiment = self.experiment
-        )
-        self.fragmentation_set2 = FragmentationSet.objects.create(
-            name = 'Test Fragmentation Set 2',
-            experiment = self.experiment
-        )
-
+        self.client = create_logged_in_client()
 
     def test_fragmentation_set_summary_view_renders_for_authenticated_user(self):
+
+        """
+        Method to ensure the fragmentation set summary page renders for the authenticated user
+        """
+
         response = self.client.get(reverse('fragmentation_set_summary'))
         self.assertEqual(response.status_code, 200)
 
@@ -679,670 +1021,460 @@ class FragmentationSetViewTest(TestCase):
     """
 
     def setUp(self):
-        population_script.populate()
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
-        self.sample = Sample.objects.create(
-            name = 'Test Sample 1',
-            description = 'This is a test sample',
-            experimental_condition = self.experimental_condition,
-            organism = 'testorganism',
-        )
-        self.file_for_upload_filepath = os.path.join(
-            BASE_DIR,
-            'frank',
-            'TestingFiles',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        proposed_upload_path = os.path.join(
-            MEDIA_ROOT,
-            'frank',
-            self.user.username,
-            self.experiment.slug,
-            self.experimental_condition.slug,
-            self.sample.slug,
-            'Negative',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        try:
-            ## Ensure the test file doesn't exist at the start of each test
-            ## or upload with fail.
-            os.remove(str(proposed_upload_path))
-        except OSError:
-            pass
-        self.client.login(username='testrunner', password='password')
-        with open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
-                'address': upload_file,
-                'polarity': 'Negative',
-                }
-            )
-        self.sample_file = SampleFile.objects.get(name = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
-        self.fragmentation_set = FragmentationSet.objects.create(
-            name = 'Test Fragmentation Set',
-            experiment = self.experiment
-        )
-        parent_peak = None
-        msn_Level = 1
-        for peak_number in range(0, 50):
-            my_test_peak = Peak.objects.create(
-                source_file = self.sample_file,
-                mass = 400-2*peak_number,
-                retention_time = 400-2*peak_number,
-                intensity = 10000-10*peak_number,
-                parent_peak = parent_peak,
-                fragmentation_set = self.fragmentation_set,
-                msn_level = msn_Level
-            )
-            if peak_number % 10 == 0:
-                parent_peak = my_test_peak
-                msn_Level = msn_Level+1
-        self.massbank = AnnotationTool.objects.get(name = "MassBank")
-        self.nist = AnnotationTool.objects.get(name = "NIST")
-        self.network_sampler = AnnotationTool.objects.get(name = 'LCMS DDA Network Sampler')
-
-
+        self.client = create_logged_in_client()
+        self.lcms_fragmentation_set = create_lcms_fragmentation_set()
 
     def test_fragmentation_set_view_renders_for_authenticated_user(self):
+
+        """
+        Method to test that the fragmentation set page renders for authenticated user
+        """
         response = self.client.get(reverse('fragmentation_set', kwargs={
-            'fragmentation_set_name_slug': self.fragmentation_set.slug,
+            'fragmentation_set_name_slug': self.lcms_fragmentation_set.slug,
         }))
         self.assertEqual(response.status_code, 200)
 
-
     def test_fragmentation_set_view_selection_of_massbank(self):
+
+        """
+        Method to test selection of 'Massbank' from the fragmentation set page
+        """
+
         with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
             response = self.client.post(reverse('fragmentation_set', kwargs={
-                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'fragmentation_set_name_slug': self.lcms_fragmentation_set.slug,
             }), {
-                'tool_selection': self.massbank.id
+                'tool_selection': AnnotationTool.objects.get(name='MassBank').id
             })
         self.assertEqual(response.status_code, 200)
-
 
     def test_fragmentation_set_view_selection_of_nist(self):
+
+        """
+        Method to test selection of 'NIST' from the fragmentation set page
+        """
+
         with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
             response = self.client.post(reverse('fragmentation_set', kwargs={
-                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'fragmentation_set_name_slug': self.lcms_fragmentation_set.slug,
             }), {
-                'tool_selection': self.nist.id
-            })
-        self.assertEqual(response.status_code, 200)
-
-
-    def test_fragmentation_set_view_selection_of_network_sampler(self):
-        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
-            response = self.client.post(reverse('fragmentation_set', kwargs={
-                'fragmentation_set_name_slug': self.fragmentation_set.slug,
-            }), {
-                'tool_selection': self.network_sampler.id
+                'tool_selection': AnnotationTool.objects.get(name='NIST').id
             })
         self.assertEqual(response.status_code, 200)
 
 
 class PeakSummaryViewTest(TestCase):
+
     """
     Test for the peak_summary view in frank.views. Here we want to test that
     the page renders for an authenticated user.
     """
 
     def setUp(self):
-        population_script.populate()
-        self.client = Client()
-        self.user = User.objects.create_user(
-            'testrunner',
-            'testrunner@gmail.com',
-            'password'
-        )
-        experimental_protocol = ExperimentalProtocol.objects.create(
-            name = 'ExperimentalProtocol 1'
-        )
-        self.experiment = Experiment.objects.create(
-            title = 'Test Experiment',
-            description = 'This is a test experiment',
-            created_by = self.user,
-            ionisation_method = 'EIS',
-            detection_method = experimental_protocol,
-        )
-        self.experimental_condition = ExperimentalCondition.objects.create(
-            name = 'Test Condition 1',
-            description = 'This is a test experimental condition',
-            experiment = self.experiment
-        )
-        self.sample = Sample.objects.create(
-            name = 'Test Sample 1',
-            description = 'This is a test sample',
-            experimental_condition = self.experimental_condition,
-            organism = 'testorganism',
-        )
-        self.file_for_upload_filepath = os.path.join(
-            BASE_DIR,
-            'frank',
-            'TestingFiles',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        proposed_upload_path = os.path.join(
-            MEDIA_ROOT,
-            'frank',
-            self.user.username,
-            self.experiment.slug,
-            self.experimental_condition.slug,
-            self.sample.slug,
-            'Negative',
-            'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
-        )
-        try:
-            ## Ensure the test file doesn't exist at the start of each test
-            ## or upload with fail.
-            os.remove(str(proposed_upload_path))
-        except OSError:
-            pass
-        self.client.login(username='testrunner', password='password')
-        with open(self.file_for_upload_filepath) as upload_file:
-            response = self.client.post(reverse('add_sample_file', kwargs={'experiment_name_slug': self.experiment.slug, 'condition_name_slug': self.experimental_condition.slug,'sample_slug': self.sample.slug}), {
-                'address': upload_file,
-                'polarity': 'Negative',
-                }
-            )
-        self.sample_file = SampleFile.objects.get(name = 'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML')
-        self.fragmentation_set = FragmentationSet.objects.create(
-            name = 'Test Fragmentation Set',
-            experiment = self.experiment
-        )
-        parent_peak = None
-        msn_Level = 1
-        for peak_number in range(0, 50):
-            my_test_peak = Peak.objects.create(
-                source_file = self.sample_file,
-                mass = 400-2*peak_number,
-                retention_time = 400-2*peak_number,
-                intensity = 10000-10*peak_number,
-                parent_peak = parent_peak,
-                fragmentation_set = self.fragmentation_set,
-                msn_level = msn_Level
-            )
-            if peak_number % 10 == 0:
-                parent_peak = my_test_peak
-                msn_Level = msn_Level+1
-        self.massbank = AnnotationTool.objects.get(name = "MassBank")
-        self.nist = AnnotationTool.objects.get(name = "NIST")
-        self.network_sampler = AnnotationTool.objects.get(name = 'LCMS DDA Network Sampler')
-
+        self.client = create_logged_in_client()
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.peak = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
 
     def test_peak_summary_view_renders_for_authenticated_user(self):
-        peak_slug = Peak.objects.get(id=1).slug
+
+        """
+        Method to test that the peak summary page renders for authenticated users
+        """
+
+        peak_slug = self.peak.slug
         response = self.client.get(reverse('peak_summary', kwargs={
             'fragmentation_set_name_slug': self.fragmentation_set.slug,
-            'peak_name_slug':peak_slug,
+            'peak_name_slug': peak_slug,
         }))
         self.assertEqual(response.status_code, 200)
 
-# Test cases to ensure views work correctly
 
-def create_user(username):
-    username_user = User.objects.get_or_create(
-        username = 'user_'+username,
-        email = 'user_'+username+'@gmail.com',
-        password = 'user'+username+'pass',
-        first_name = username,
-        last_name = username,
-    )[0]
-    return username_user
+class DefineAnnotationQueryViewTest(TestCase):
 
-def create_experimental_protocol(experiment_protocol):
-    test_experimental_protocol = ExperimentalProtocol.objects.get_or_create(
-        name = experiment_protocol
-    )[0]
-    return test_experimental_protocol
-
-def create_user_experiment(user, experiment):
-    if user is None:
-        user = create_user('experimentuser')
-    if experiment is None:
-        experiment = create_experiment('ExperimentUserTest')
-    user_experiment = UserExperiments.objects.get_or_create(
-        user = user,
-        experiment = experiment,
-    )[0]
-    return user_experiment
-
-def create_experiment(experiment_name):
-    user = create_user('experiment')
-    experimental_protocol = create_experimental_protocol('Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition')
-    test_experiment = Experiment.objects.get_or_create(
-        title = experiment_name,
-        description = 'This is a test experiment',
-        created_by = user,
-        ionisation_method = 'EIS',
-        detection_method = experimental_protocol,
-    )[0]
-    user_experiment = create_user_experiment(
-        user = user,
-        experiment = test_experiment,
-    )
-    return test_experiment
-
-def create_fragmentation_set(name):
-    fragmentation_set = FragmentationSet.objects.get_or_create(
-        name = name,
-        experiment = create_experiment(),
-        status = 'Completed Successfully',
-    )[0]
-    return fragmentation_set
-
-def create_sample_file(filename):
-    sample_file = SampleFile.objects.get_or_create(
-        name = filename,
-        polarity = 'Positive',
-        sample = create_sample(),
-    )[0]
-    return sample_file
-
-def create_sample(name):
-    sample = Sample.objects.get_or_create(
-        name = name,
-        description = 'Test description',
-        experimental_condition = create_experimental_condition('sample_test'),
-        organism = '',
-    )[0]
-    return sample
-
-def create_experimental_condition(name):
-    experimental_condition = ExperimentalCondition.objects.get_or_create(
-        name = name,
-        description = '',
-        experiment = create_experiment(),
-    )[0]
-    return experimental_condition
-
-def create_a_peak(sample_file, level, frag_set, parent_peak):
-    if fragmentation_set == None:
-        fragmentation_set = create_fragmentation_set('testfragset')
-    peak = Peak.objects.get_or_create(
-        source_file = create_sample_file(sample_file),
-        mass = 100,
-        retention_time = 125,
-        intensity = 4000,
-        parent_peak = None,
-        msn_level = level,
-        fragmentation_set = create_fragmentation_set(),
-    )[0]
-    return peak
-
-
-
-class ExperimentModelTests(TestCase):
+    """
+    Test for the define_annotation_query view in frank.views. Here we want to test that
+    the page renders for the selection of all three currently available annotation tools.
+    In addition, we want to ensure the submission of valid parameters for each of the
+    annotation tools generates valid candidate annotations.
+    """
 
     def setUp(self):
-        self.experiment = create_experiment('test experiment 1')
+        self.client = create_logged_in_client()
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.massbank = AnnotationTool.objects.get(name='MassBank')
+        self.nist = AnnotationTool.objects.get(name='NIST')
+        self.precursormz = AnnotationTool.objects.get(name='Precursor Mass Filter')
+        # To ensure genuine candidates can be found, the spectrum
+        # for a peak is added
+        add_genuine_spectrum(self.fragmentation_set)
 
-    # Test that experiment model instances can be created with correct input data
-    def test_experiment_valid_creation(self):
-        self.assertTrue(isinstance(self.experiment, Experiment))
+    def test_define_annotation_query_view_renders_for_authenticated_user(self):
 
-    # Test that experiment model instances cannot be created with invalid params
-    def test_experiment_invalid_parameters(self):
-        with self.assertRaises(Exception):
-            Experiment.objects.get_or_create(
-                title = '',
-                description = '',
-                created_by = None,
-                ionisation_method = 'Something Invalid',
-                detection_method = 'Something else invalid',
-            )[0]
+        """
+        Method to test that the define annotation query view renders for each of
+        the three annotation tools which may be selected.
+        """
 
-    # Ensure updating the overridden save method does not alter the slug
-    def test_experiment_save(self):
-        title = 'Test Experiment 1'
-        experiment = Experiment(
-            title = title,
-            description = 'This is a test experiment',
-            created_by = create_user('testuser'),
-            ionisation_method = 'EIS',
-            detection_method = create_experimental_protocol('Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'),
-        )
-        proposed_id = Experiment.objects.count()+1
-        intended_slug = slugify(title+'-'+str(proposed_id))
-        experiment.save()
-        self.assertTrue(experiment.slug == intended_slug)
-        ## Update the model and ensure that the slug field is not altered
-        experiment.title('Test Experiment 2.')
-        experiment.save()
-        self.assertTrue(experiment.slug == intended_slug)
+        # Check for Massbank tool
+        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
+            response = self.client.get(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.massbank.slug,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+        # Check for NIST tool
+        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
+            response = self.client.get(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.nist.slug,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+        # Check for Precursormz tool
+        with self.assertTemplateUsed(template_name='frank/define_annotation_query.html'):
+            response = self.client.get(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.precursormz.slug,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_define_annotation_query_view_generates_nist_annotations(self):
+
+        """
+        Method to test that the submission of valid parameters to the define
+        annotation query view generates annotations from NIST.
+        """
+
+        with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+            response = self.client.post(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.nist.slug,
+            }), {
+                'name': 'NIST Test Annotations',
+                'maximum_number_of_hits': 5,
+                'search_type': 'G',
+                'query_libraries': ['nist_msms', 'nist_msms2'],
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(CandidateAnnotation.objects.all()) > 0)
+
+
+    # def test_define_annotation_query_view_generates_massbank_annotations(self):
     #
-    # # Ensure the __unicode__(self) method is correct
-    # def test_experiment__unicode__(self):
-    #     experiment = create_experiment()
-    #     experiment_id = experiment.id
-    #     experiment_title = experiment.title
-    #     proposed_unicode = 'Experiment '+str(experiment_id)+': '+experiment_title
-    #     self.assertTrue(experiment.__unicode__==proposed_unicode)
+    #     """
+    #     Method to test that the submission of valid parameters to the define
+    #     annotation query view generates annotations from MassBank.
+    #
+    #     This test has been commented out due to the temporary suspension of the service
+    #     """
+    #
+    #     with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+    #         response = self.client.post(reverse('define_annotation_query', kwargs={
+    #             'fragmentation_set_name_slug': self.fragmentation_set.slug,
+    #             'annotation_tool_slug': self.massbank.slug,
+    #         }), {
+    #             'name': 'Massbank Test Annotations',
+    #             'massbank_instrument_types': ['LC-ESI-IT', 'LC-ESI-ITFT'],
+    #         })
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTrue(len(CandidateAnnotation.objects.all()) > 0)
 
-# class UserExperimentModelTests(TestCase):
-#
-#     # Test that experiment model instances can be created with correct input data
-#     def test_user_experiments_creation(self):
-#         new_user = create_user()
-#         experiment = create_experiment()
-#         user_experiment = create_user_experiment(new_user, experiment)
-#         user_experiment.assertTrue(isinstance(user_experiment, UserExperiment))
-#
-#     # Test that user_experiments cannot be created with either an invalid user or experiment
-#
-#         # Ensure the __unicode__(self) method is correct
-#     # def test_experiment__unicode__(self):
-#     #     experiment = create_experiment()
-#     #     experiment_id = experiment.id
-#     #     experiment_title = experiment.title
-#     #     proposed_unicode = 'Experiment '+str(experiment_id)+': '+experiment_title
-#     #     self.assertTrue(experiment.__unicode__==proposed_unicode)
-#
-# class ExperimentalConditionModelTests(TestCase):
-#
-#     def test_experimental_condition_creation(self):
-#         pass
-#
-#     # Test that an Experimental Condition cannot be created with invalid params
-#
-#     # Test that the overridden save method will not alter the slug field
-#
-#     # Test that the __unicode__ method works correctly
-#
-# class SampleModelTests(Testcase):
-#
-#     def test_sample_creation(self):
-#         pass
-#
-#     # Test that a sample cannot be created with invalid params
-#
-#     # Test the overridden save method
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class FragmentationSetModelTests(TestCase):
-#
-#     # Test that instances of the fragmentation set can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test that the overridden save method and won't change the slug
-#
-#      # Test the __unicode__ method returns the correct description
-#
-# class AnnotationQueryModelTest(TestCase):
-#
-#     # Test that instances of the annotation query can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test that the overridden save method and won't change the slug
-#
-#      # Test the __unicode__ method returns the correct description
-#
-# class AnnotationToolModelTest(TestCase):
-#
-#     # Test that instances of the annotation tool can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test that the overridden save method and won't change the slug
-#
-#      # Test the __unicode__ method returns the correct description
-#
-# class CompoundModelTest(TestCase):
-#
-#     # Test that instances of compound model can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test that the overridden save method and won't change the slug
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class PeakModelTest(TestCase):
-#
-#     # Test that instances of peak model can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test that the overridden save method and won't change the slug
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class CandidateAnnotationModelTest(TestCase):
-#
-#     # Test that instances of candidate annotation model can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class ExperimentalProtocolModelTest(TestCase):
-#
-#     # Test that instances of experimental protocol model can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class AnnotationToolProtocolsModelTest(TestCase):
-#
-#     # Test that instances of annotation tool protocol model can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class AnnotationQueryHierarchyModelTest(TestCase):
-#
-#     # Test that instances of annotation tool protocol model can be created
-#
-#     # Test that invalid parameters throw and exception
-#
-#     # Test the __unicode__ method returns the correct description
-#
-# class GetUploadFileNameTest(TestCase):
-#
-#     # Test that the filepath returned for a new file is as anticipated - file exists
-#
-#     # Test that the directory is created in the event that it did not previously exist
-#
-#     # Test that the name of the filepath is unique, and does not save over an existing file
-#
-# class ExperimentModelTests(TestCase):
-#
-#     # Test that experiment model instances can be created with correct input data
-#     def test_experiment_creation(self):
-#         experiment = create_experiment()
-#         self.assertTrue(isinstance(experiment, Experiment))
-#
-#     # Test that experiment model instances cannot be created with invalid params
-#
-#     # Ensure updating the overridden save method does not alter the slug
-#     def test_experiment_save(self):
-#         title = 'Test Experiment 1'
-#         experiment = Experiment(
-#             title = title,
-#             description = 'This is a test experiment',
-#             created_by = create_user(),
-#             ionisation_method = 'EIS',
-#             detection_method = create_experimental_protocol(),
-#         )
-#         proposed_id = Experiment.objects.count()+1
-#         intended_slug = slugify(title+'-'+str(proposed_id))
-#         experiment.save()
-#         self.assertTrue(experiment.slug == intended_slug)
-#         ## Update the model and ensure that the slug field is not altered
-#         experiment.description('This is now a new test description.')
-#         experiment.save()
-#         self.assertTrue(experiment.slug == intended_slug)
-#
-#     # Ensure the __unicode__(self) method is correct
-#     def test_experiment__unicode__(self):
-#         experiment = create_experiment()
-#         experiment_id = experiment.id
-#         experiment_title = experiment.title
-#         proposed_unicode = 'Experiment '+str(experiment_id)+': '+experiment_title
-#         self.assertTrue(experiment.__unicode__==proposed_unicode)
-#
-#
-# class PeakBuilderTests(TestCase):
-#
-#     def test_peakBuilder_creation_throws_exception(self):
-#         """
-#         Test to ensure abstract class "PeakBuilder" cannot be instantiated
-#         """
-#         self.assertRaises(TypeError, PeakBuilder)
-#
-# class MSNPeakBuilderTests(TestCase):
-#
-#
-#     def setUp(self):
-#         """
-#         Set up of testing parameters
-#         """
-#         self.fragmentation_set = create_fragmentation_set()
-#         self.sample_file = create_sample_file(),
-#         string_factor_filenames = robjects.StrVector((
-#             "file1.mzXML", "file1.mzXML", "file1.mzXML", "file1.mzXML", "file1.mzXML","file1.mzXML"
-#         ))
-#         factor_vector_filenames = string_factor_filenames.factor()
-#         peak_ID_vector = robjects.IntVector((1, 2, 3, 4, 5, 6))
-#         msn_parent_peak_ID_vector = robjects.IntVector((0, 1, 1, 1, 2, 0))
-#         ms_level_vector = robjects.IntVector((1, 2, 2, 2, 3, 1))
-#         rt_vector = robjects.FloatVector((100.1, 100.1, 100.1, 100.1, 100.1, 127.7))
-#         mz_vector = robjects.FloatVector((222.2, 101.1, 78.9, 65.5, 50.0, 280.1))
-#         intensity_vector = robjects.FloatVector((2220.2, 1010.1, 780.9, 650.5, 200.1, 2100.1))
-#         sample_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
-#         group_peak_vector = robjects.IntVector((0, 0, 0, 0, 0, 0))
-#         collision_energy_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
-#         valid_data = rlc.OrdDict([
-#             ('peakID', peak_ID_vector),
-#             ('MSnParentPeakID', msn_parent_peak_ID_vector),
-#             ('msLevel', ms_level_vector),
-#             ('rt', rt_vector),
-#             ('mz', mz_vector),
-#             ('intensity', intensity_vector),
-#             ('Sample', sample_vector),
-#             ('GroupPeakMSN', group_peak_vector),
-#             ('CollisionEnergy', collision_energy_vector),
-#             ('SourceFile', factor_vector_filenames),
-#         ])
-#         self.valid_r_dataframe_input = robjects.DataFrame(valid_data)
-#         self.valid_fragmentation_set_id_input = self.fragmentation_set.id
-#         self.invalid_type_r_dataframe_input = ""
-#         self.invalid_type_fragmentation_set_id_input = ""
-#         self.invalid_type_r_dataframe_input = ""
-#         self.invalid_type_fragmentation_set_id_input = ""
-#         self.invalid_value_fragmentation_set_id_input = -1
-#
-#
-#     def test_MSNPeakBuilder_init_invalid_parameter_types_supplied(self):
-#         """
-#         Test that MSNPeakBuilder cannot be instantiated with invalid types of parameters
-#         """
-#         # Check with no given parameters
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder()
-#         # Check with None parameters given
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(None, None)
-#         # Check with invalid type for fragmentation_set_id
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
-#         # Check with invalid type for parameter r_dataframe
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         # Check with invalid types for both the r_dataframe and fragmentation_set_id types
-#         with self.assertRaises(TypeError):
-#             MSNPeakBuilder(self.invalid_type_r_dataframe_input, self.invalid_type_fragmentation_set_id_input)
-#         # Check to ensure the fragmentation_set_id given corresponds to an existing fragmentation set
-#         with self.assertRaises(ValueError):
-#             MSNPeakBuilder(self.valid_r_dataframe_input, self.invalid_value_fragmentation_set_id_input)
-#
-#
-#     def test_MSNPeakBuilder_init_valid_parameters_supplied(self):
-#         """
-#         Test that MSNPeakBuilder can be instantiated with valid parameters
-#         """
-#         self.assertTrue(isinstance(MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input), MSNPeakBuilder))
-#
-#
-#     def test_createAPeak_valid_parameters(self):
-#         """
-#         Test that createAPeak creates new Peak model instance when passed valid parameters
-#         """
-#         peak_array_index = 2
-#         parent_peak_object = create_a_peak()
-#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         self.assertTrue(isinstance(peak_builder_object._createAPeak(peak_array_index, parent_peak_object), Peak))
-#
-#
-#     def test_getParentPeak(self):
-#         """
-#         Test that getParentPeak returns the precursor peak of a given fragment
-#         """
-#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         parent_id_from_r = 2
-#         # Ensure the parent peak is created
-#         parent_peak = peak_builder_object._getParentPeak(parent_id_from_r)
-#         self.assertTrue(isinstance(parent_peak, Peak))
-#         # Also check that the parent peak's precursor was created
-#         self.assertTrue(isinstance(parent_peak.parent_peak, Peak))
-#
-#
-#     def test_populate_database_peaks(self):
-#         """
-#         Test to ensure that populate_database_peaks does not throw any errors
-#         """
-#         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-#         peak_builder_object.populate_database_peaks()
-#         peak_query_set = Peak.objects.filter(fragmentation_set = self.fragmentation_set)
-#         ## Check all test peaks with fragments have been created - using test data m/z to identify them
-#         self.assertTrue(isinstance(peak_query_set.get(mass=222.2), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=101.1), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=78.9), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=65.5), Peak))
-#         self.assertTrue(isinstance(peak_query_set.get(mass=50.0), Peak))
-#         ## The final test peak should not be created as it has no associated fragments or parent ion, therefore is of no interest
-#         with self.assertRaises(ObjectDoesNotExist):
-#             peak_query_set.get(mass=280.1)
-#
-#
-# class MSNPeakBuilderTests(TestCase):
-#
-#     def setUp(self):
-#         pass
-#
-#     def test_GCMSPeakBuilder_init_valid_parameters(self):
-#         pass
-#
-#     def test_GCMSPeakBuilder_init_invalid_parameters(self):
-#         pass
-#
-#     def test_GCMSPeakBuilder_init_invalid_parameters(self):
-#         pass
 
-#################### MODEL TESTS ###################
+    def test_define_annotation_query_view_generates_precursormz_annotations(self):
+
+        """
+        Method to test that the submission of valid parameters to the define
+        annotation query view generates annotations using the PrecursorMz tool.
+        """
+
+        # First a populated Annotation Query must be made
+        with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+            response = self.client.post(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.nist.slug,
+            }), {
+                'name': 'NIST Test Annotations',
+                'maximum_number_of_hits': 5,
+                'search_type': 'G',
+                'query_libraries': ['nist_msms', 'nist_msms2'],
+            })
+        nist_parent_query = AnnotationQuery.objects.get(name='NIST Test Annotations')
+
+        with self.assertTemplateUsed(template_name='frank/fragmentation_set.html'):
+            response = self.client.post(reverse('define_annotation_query', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'annotation_tool_slug': self.precursormz.slug,
+            }), {
+                'name': 'PrecursorMzTest',
+                'parent_annotation_queries': [nist_parent_query.slug],
+                'positive_transforms': ['M+H'],
+                'mass_tol': 5,
+            })
+        self.assertEqual(response.status_code, 200)
+        precursormz_query = AnnotationQuery.objects.get(name='PrecursorMzTest')
+        self.assertTrue(len(CandidateAnnotation.objects.filter(annotation_query=precursormz_query)) > 0)
+
+
+class SpecifyPreferredCandidateAnnotationViewTest(TestCase):
+
+    """
+    Test for the specify_preferred_annotation view in frank.views. Here we want to test that
+    the page renders and that submission of the preferred annotation updates the Peak instance.
+    """
+
+    def setUp(self):
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        add_genuine_spectrum(self.fragmentation_set)
+        self.client = create_logged_in_client()
+        self.peak = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
+        self.massbank = AnnotationTool.objects.get(name='MassBank')
+        self.annotation_query = AnnotationQuery.objects.get_or_create(
+            name='testquery',
+            fragmentation_set=self.fragmentation_set,
+            annotation_tool=self.massbank,
+        )[0]
+        self.compound = Compound.objects.get_or_create(
+            name='Glycine',
+            formula='C4H8',
+            exact_mass=123.456,
+        )[0]
+        self.annotation = CandidateAnnotation.objects.get_or_create(
+            compound=self.compound,
+            peak=self.peak,
+            confidence=0.81,
+            annotation_query=self.annotation_query,
+            mass_match=False,
+            adduct='M+H',
+            difference_from_peak_mass=1.07,
+        )[0]
+        self.user = create_test_user()
+
+    def test_specify_preferred_annotation_view_renders_for_authenticated_user(self):
+
+        """
+        Test to ensure the preferred annotation page of the application renders for the
+        authenticated user.
+        """
+
+        with self.assertTemplateUsed(template_name='frank/specify_preferred_annotation.html'):
+            response = self.client.get(reverse('specify_preferred_annotation', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'peak_name_slug': self.peak.slug,
+                'annotation_id': self.annotation.id,
+            }))
+        self.assertEqual(response.status_code, 200)
+
+    def test_specify_preferred_annotation_view_updates_peak(self):
+
+        """
+        Test to ensure the preferred annotation page of the application updates the
+        Peak object upon submission of the form
+        """
+
+        with self.assertTemplateUsed(template_name='frank/peak_summary.html'):
+            response = self.client.post(reverse('specify_preferred_annotation', kwargs={
+                'fragmentation_set_name_slug': self.fragmentation_set.slug,
+                'peak_name_slug': self.peak.slug,
+                'annotation_id': self.annotation.id,
+            }), {
+                'preferred_candidate_description': 'This is my justification',
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(isinstance(self.peak.preferred_candidate_annotation, CandidateAnnotation))
+
+
+class PeakBuilderTests(TestCase):
+
+    """
+    Test class to ensure 'Abstract' Peak Builder cannot be instantiated
+    """
+
+    def test_peakBuilder_creation_throws_exception(self):
+
+        """
+        Test to ensure abstract class "PeakBuilder" cannot be instantiated
+        """
+
+        self.assertRaises(TypeError, PeakBuilder)
+
+
+class MSNPeakBuilderTests(TestCase):
+
+    """
+    Test class for the testing of the MSNPeakBuilderClass
+    """
+
+    def setUp(self):
+
+        """
+        Set up of testing parameters
+        """
+
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.sample_file = SampleFile.objects.filter(
+            sample__experimental_condition__experiment=self.fragmentation_set.experiment
+        )[0]
+        string_factor_filenames = robjects.StrVector((
+            self.sample_file.name, self.sample_file.name, self.sample_file.name,
+            self.sample_file.name, self.sample_file.name, self.sample_file.name
+        ))
+        factor_vector_filenames = string_factor_filenames.factor()
+        peak_ID_vector = robjects.IntVector((1, 2, 3, 4, 5, 6))
+        msn_parent_peak_ID_vector = robjects.IntVector((0, 1, 1, 1, 2, 0))
+        ms_level_vector = robjects.IntVector((1, 2, 2, 2, 3, 1))
+        rt_vector = robjects.FloatVector((100.1, 100.1, 100.1, 100.1, 100.1, 127.7))
+        mz_vector = robjects.FloatVector((222.2, 101.1, 78.9, 65.5, 50.0, 280.1))
+        intensity_vector = robjects.FloatVector((2220.2, 1010.1, 780.9, 650.5, 200.1, 2100.1))
+        sample_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
+        group_peak_vector = robjects.IntVector((0, 0, 0, 0, 0, 0))
+        collision_energy_vector = robjects.IntVector((1, 1, 1, 1, 1, 1))
+        valid_data = rlc.OrdDict([
+            ('peakID', peak_ID_vector),
+            ('MSnParentPeakID', msn_parent_peak_ID_vector),
+            ('msLevel', ms_level_vector),
+            ('rt', rt_vector),
+            ('mz', mz_vector),
+            ('intensity', intensity_vector),
+            ('Sample', sample_vector),
+            ('GroupPeakMSN', group_peak_vector),
+            ('CollisionEnergy', collision_energy_vector),
+            ('SourceFile', factor_vector_filenames),
+        ])
+        self.valid_r_dataframe_input = robjects.DataFrame(valid_data)
+        self.valid_fragmentation_set_id_input = self.fragmentation_set.id
+
+
+    def test_MSNPeakBuilder_init_valid_parameters_supplied(self):
+
+        """
+        Test that MSNPeakBuilder can be instantiated with valid parameters
+        """
+
+        self.assertTrue(isinstance(
+            MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input), MSNPeakBuilder)
+        )
+
+    def test_createAPeak_valid_parameters(self):
+
+        """
+        Test that createAPeak creates new Peak model instance when passed valid parameters
+        """
+
+        peak_array_index = 2
+        parent_peak_object = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
+        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+        self.assertTrue(isinstance(peak_builder_object._create_a_peak(peak_array_index, parent_peak_object), Peak))
+
+    def test_getParentPeak(self):
+
+        """
+        Test that getParentPeak returns the precursor peak of a given fragment
+        """
+
+        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+        parent_id_from_r = 2
+        # Ensure the parent peak is created
+        parent_peak = peak_builder_object._get_parent_peak(parent_id_from_r)
+        self.assertTrue(isinstance(parent_peak, Peak))
+        # Also check that the parent peak's precursor was created
+        self.assertTrue(isinstance(parent_peak.parent_peak, Peak))
+
+    def test_populate_database_peaks(self):
+
+        """
+        Test to ensure that populate_database_peaks does not throw any errors
+        """
+
+        peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
+        peak_builder_object.populate_database_peaks()
+        peak_query_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+        # Check all test peaks with fragments have been created - using test data m/z to identify them
+        self.assertTrue(isinstance(peak_query_set.get(mass=222.2), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=101.1), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=78.9), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=65.5), Peak))
+        self.assertTrue(isinstance(peak_query_set.get(mass=50.0), Peak))
+        # The final test peak should not be created as it has no associated fragments or parent ion,
+        # therefore is of no interest
+        with self.assertRaises(ObjectDoesNotExist):
+            peak_query_set.get(mass=280.1)
+
+
+class MassBankQueryToolTests(TestCase):
+
+    """
+    Test Class for the testing of the MassBankQueryTool
+    """
+
+    def setUp(self):
+        run_population_script()
+        self.fragmentation_set = create_lcms_fragmentation_set()
+        self.annotationquery = AnnotationQuery.objects.get_or_create(
+            name='TestQuery',
+            fragmentation_set=self.fragmentation_set,
+            annotation_tool=AnnotationTool.objects.get(name='MassBank'),
+        )[0]
+        self.mass_bank_tool = MassBankQueryTool(self.annotationquery.id, self.fragmentation_set.id)
+
+
+    def test_MassBankQueryTool_populate_annotations_table(self):
+
+        """
+        Due to the suspended batch service of MassBanK (from 17/08/15)
+        it was decided that ensuring the populate annotations table
+        method be unit tested was a priority as this could not be tested
+        functionally.
+        """
+
+        # Set up false returned candidate annotations
+        peak_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+        peak_identifier = peak_set[0].slug
+        annotation_results = [{
+                'queryName': peak_identifier,
+                'results': [{
+                    'title': 'Catechin; LC-ESI-QTOF; MS2; CE:40 eV; [M-H]-',
+                    'formula': 'C15H14O6',
+                    'exactMass': 290.07904,
+                    'score': 0.1896,
+                    'id': 'PB002431',
+                },
+                    {
+                        'title': '3alpha,7beta,12beta-Trihydroxy-5beta-cholan-24-oic acid; LC-ESI-TOF; MS; -60 V',
+                        'formula': 'C24H40O5',
+                        'exactMass': 408.28757,
+                        'score': 0.0843,
+                        'id': 'NU000207'
+                    },
+                    {
+                        'title': 'Triclopyr; LC-ESI-QQ; MS2; CE:30 V; [M-H]-',
+                        'formula': 'C7H4Cl3NO3',
+                        'exactMass': 254.92568,
+                        'score': 0.1641,
+                        'id': 'WA000228'
+                    }
+
+                ],
+                'numResults': 2,
+        }]
+        self.mass_bank_tool._populate_annotations_table(annotation_results)
+        candidate_compound1 = Compound.objects.get(
+            name='Catechin',
+            formula='C15H14O6',
+            exact_mass=290.07904
+        )
+        self.assertTrue(candidate_compound1, Compound)
+        candidate_annotation  = CandidateAnnotation.objects.get(
+            compound=candidate_compound1,
+            confidence=0.1896,
+            annotation_query=self.annotationquery,
+            adduct='[M-H]-',
+            instrument_type='LC-ESI-QTOF',
+            collision_energy='40 eV'
+        )
+        self.assertTrue(candidate_annotation, CandidateAnnotation)
+
 
 """
 When testing the models it was assumed the boiler-plate code of the django

@@ -25,7 +25,8 @@
                 {{ field }}
 		<br>
             {% endfor %}
-	<input type = "submit" name="submit" value="Submit">
+	<button class="btn btn-large btn-primary" type="submit">Submit Annotation</button>
+	<a href="{% url 'peak_summary' fragmentation_set.slug peak.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
 	</form>
 
 {% endblock %}

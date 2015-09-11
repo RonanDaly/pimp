@@ -14,10 +14,11 @@ from django.db.models import Max
 from urllib2 import URLError
 
 
-MASS_OF_AN_ELECTRON = 1.00727645199076
+MASS_OF_AN_PROTON = 1.00727645199076
 
 
 class MassBankQueryTool:
+
     """
     Class to query the external API for MassBank - can also be used when MassBank installed on internal server
     """
@@ -42,6 +43,7 @@ class MassBankQueryTool:
             raise
 
     def get_mass_bank_annotations(self):
+
         """
         Method to form a query to massbank for retrieval of candidate annotations
         :return: True:  Boolean indicating the completion of the query
@@ -57,6 +59,8 @@ class MassBankQueryTool:
         if query_spectra:
             positive_spectra = query_spectra['positive_spectra']
             negative_spectra = query_spectra['negative_spectra']
+        else:
+            raise ValidationError('No spectra to be queried')
         try:
             print 'Querying MassBank...'
             # Queries are only sent to MassBank if there are spectra to be sent
@@ -96,6 +100,7 @@ class MassBankQueryTool:
         return True
 
     def _generate_query_spectra(self):
+
         """
         Method to format the query to be sent to MassBank
         :return: query_spectra: A dictionary containing both the 'positive_spectra' and 'negative_spectra'
@@ -141,6 +146,7 @@ class MassBankQueryTool:
         return query_spectra
 
     def _query_mass_bank(self, query_spectra, polarity):
+
         """
         Method to send the query to mass bank and retrieve the candidate annotation as a results set
         :return: mass_bank_results: The result set returned by mass_bank
@@ -203,7 +209,7 @@ class MassBankQueryTool:
                 break
         # If, at the end of the repetitions, MassBank has failed to complete the job in the alloted time
         if job_status['status'] != 'Completed':
-            raise WebFault('MassBank Service Unavailable or Busy')
+            raise ValidationError('MassBank Service Unavailable or Busy, No Results Returned.')
         else:  # MassBank completed the query
             try:
                 # If the job has been completed, then retrieve the results from MassBank
@@ -214,6 +220,7 @@ class MassBankQueryTool:
         return mass_bank_results
 
     def _populate_annotations_table(self, annotation_results):
+
         """
         Method to populate the database tables of the application using the results generated from massbank
         :param annotation_results:  The results set returned by MassBank (in python this is a dictionary)
@@ -261,7 +268,7 @@ class MassBankQueryTool:
                     # By default the mass of the annotation does not match that of the peak
                     # However, if the difference in mass is within the mass of an electron, it may
                     # be considered a match in mass
-                    if abs(difference_in_mass) <= MASS_OF_AN_ELECTRON:
+                    if abs(difference_in_mass) <= MASS_OF_AN_PROTON:
                         mass_match = True
                     # Try and obtain the adduct and collision energy from the description
                     adduct_label = None
@@ -315,6 +322,7 @@ class MassBankQueryTool:
 
 
 class NISTQueryTool:
+
     """
     Class representing the NIST spectral reference library
     """
@@ -352,6 +360,7 @@ class NISTQueryTool:
         )
 
     def get_nist_annotations(self):
+
         """
         Method to retrieve candidate annotations from the NIST spectral reference library
         :return True:   Boolean denoting the successfull completion of a query for annotations
@@ -389,6 +398,7 @@ class NISTQueryTool:
         return True
 
     def _generate_nist_call(self):
+
         """
         Method to construct the appropriate call to the NIST subprocess
         :return: nist_query_call:   A String call to NIST containing the user specified search parameters
@@ -433,6 +443,7 @@ class NISTQueryTool:
         return nist_query_call
 
     def _query_nist(self, nist_query_call):
+
         """
         Method to perform a subprocess call to NIST
         :param nist_query_call: A string containing the call to NIST
@@ -452,6 +463,7 @@ class NISTQueryTool:
         return True
 
     def _write_nist_msp_file(self):
+
         """
         Method to write the fragmentation spectra to a MSP file format for querying of NIST
         :return: True:  A boolean to confirm the output file was written successfully
@@ -514,6 +526,7 @@ class NISTQueryTool:
         return True
 
     def _populate_annotation_list(self):
+
         """
         Method to populate the candidate annotations into the database from NIST
         :return: True:  A boolean denoting the successfull populatation of the candidate annotations
@@ -590,7 +603,7 @@ class NISTQueryTool:
                             mass_match = False
                             # If the mass of the candidate annotation is within that of an electron,
                             # it is considered a match
-                            if abs(difference_in_mass) <= MASS_OF_AN_ELECTRON:
+                            if abs(difference_in_mass) <= MASS_OF_AN_PROTON:
                                 mass_match = True
                             # Add the candidate annotation to the database
                             CandidateAnnotation.objects.create(
