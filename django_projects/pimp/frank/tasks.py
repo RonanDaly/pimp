@@ -305,7 +305,7 @@ NEGATIVE_TRANSFORMATIONS = {
 
 @celery.task
 def precursor_mass_filter(annotation_query_id):
-    Runs a filter on the annotations 
+    # Runs a filter on the annotations 
     import math
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
