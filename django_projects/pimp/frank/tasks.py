@@ -16,6 +16,7 @@ import jsonpickle
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from frank.annotationTools import MassBankQueryTool, NISTQueryTool
 from urllib2 import URLError
+import datetime
 
 
 @celery.task
@@ -356,6 +357,64 @@ def precursor_mass_filter(annotation_query_id):
 """
 End of additions by Simon Rogers
 """
+
+
+@celery.task
+def clean_filter(annotation_query_id,user):
+    # This cleans a set of annotations by only keeping one annotation for each compound for each peak
+    # and only keeping annotations above a threshold
+    # the highest confidence annotation (abover the threshold) is set as the preferred annotation)
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    annotation_query.status = 'Processing'
+    annotation_query.save()
+    parameters = jsonpickle.decode(annotation_query.annotation_tool_params)
+    parent_annotation_queries = AnnotationQuery.objects.filter(slug__in=parameters['parents'])
+    preferred_threshold = parameters['preferred_threshold']
+
+    # Following does nothing yet
+    delete_original = parameters['delete_original']
+
+    fragmentation_set = annotation_query.fragmentation_set
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
+        msn_level = 1)
+
+    for peak in peaks:
+        peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query__in=parent_annotation_queries)
+        found_compounds = {}
+        best_annotation = None
+        for annotation in peak_annotations:
+            if annotation.compound in found_compounds:
+                this_annotation = found_compounds[annotation.compound]
+                if annotation.confidence > this_annotation.confidence:
+                    this_annotation.confidence = annotation.confidence
+                    this_annotation.instrument_type = annotation.instrument_type
+                    this_annotation.collision_energy = annotation.collision_energy
+                    this_annotation.save()
+                    if this_annotation.confidence > best_annotation.confidence:
+                        best_annotation = this_annotation
+
+            else:
+                if annotation.confidence > preferred_threshold:
+                    new_annotation = CandidateAnnotation(peak = peak,
+                        annotation_query = annotation_query,compound = annotation.compound,
+                        mass_match = annotation.mass_match , confidence = annotation.confidence, 
+                        difference_from_peak_mass = peak.mass - annotation.compound.exact_mass , adduct = annotation.adduct,
+                        instrument_type = annotation.instrument_type, collision_energy = annotation.collision_energy)
+                    new_annotation.save()
+                    found_compounds[annotation.compound] = new_annotation
+                    if best_annotation == None:
+                        best_annotation = new_annotation
+                    else:
+                        if new_annotation.confidence > best_annotation.confidence:
+                            best_annotation = new_annotation
+        peak.preferred_candidate_annotation = best_annotation
+        peak.preferred_candidate_description = "Added automatically with annotation query {} with threshold of {}".format(annotation_query.name,preferred_threshold)
+        peak.preferred_candidate_user_selector = user
+        peak.preferred_candidate_updated_date = datetime.datetime.now()
+        peak.save()
+
+        annotation_query.status = 'Completed Successfully'
+        annotation_query.save()
 
 
 
