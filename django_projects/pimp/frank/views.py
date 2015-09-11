@@ -957,6 +957,7 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
     elif isinstance(annotation_query_form, PrecursorMassFilterForm):
         parameters = {}
         parameters['positive_transforms'] = annotation_query_form.cleaned_data['positive_transforms']
+        parameters['negative_transforms'] = annotation_query_form.cleaned_data['negative_transforms']
         parameters['parents'] = annotation_query_form.cleaned_data['parent_annotation_queries']
         parameters['mass_tol'] = annotation_query_form.cleaned_data['mass_tol']
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Precursor Mass Filter')

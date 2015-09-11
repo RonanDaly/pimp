@@ -57,7 +57,7 @@ NIST_LCMS_SEARCH_PARAMS = (
 )
 
 # Simon's Transformation Types
-TRANSFORMATION_TYPES = (
+POSITIVE_TRANSFORMATION_TYPES = (
     ("M+H", "M+H"),
     ("M+Na", "M+Na"),
     ("M+K", "M+K"),
@@ -80,6 +80,11 @@ TRANSFORMATION_TYPES = (
     ("M+2K-H", "M+2K-H"),
     ("M+DMSO+H", "M+DMSO+H"),
     ("M+2ACN+H", "M+2ACN+H"),
+)
+
+NEGATIVE_TRANSFORMATION_TYPES = (
+    ("M-H","M-H"),
+    ("M-2H","M-2H"),
 )
 
 
@@ -316,11 +321,19 @@ class PrecursorMassFilterForm(AnnotationQueryForm):
         help_text = "Please choose a parent Annotation Query to filter")
 
     positive_transforms = forms.MultipleChoiceField(
-        choices = TRANSFORMATION_TYPES,
+        choices = POSITIVE_TRANSFORMATION_TYPES,
         required = True,
         initial = ['M+H'],
         widget=forms.CheckboxSelectMultiple(),
         help_text = "Please choose which transformation types to include in the filter"
+        )
+
+    negative_transforms = forms.MultipleChoiceField(
+        choices = NEGATIVE_TRANSFORMATION_TYPES,
+        required = True,
+        initial = ['M-H'],
+        widget = forms.CheckboxSelectMultiple(),
+        help_text = "Please choose which negative mode transformation types to include in the filter"
         )
 
     mass_tol = forms.IntegerField(
