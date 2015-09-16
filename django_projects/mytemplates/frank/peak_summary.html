@@ -21,7 +21,7 @@
 	{% endif %}
 
 	<h3>MS2 Fragment Spectrum</h3>     
-	{% if fragmentation_peak_list %}
+	{% if fragments %}
 
 		<div>
 			<img src="{% url 'make_spectra_plot' peak.fragmentation_set.slug peak.slug %}">

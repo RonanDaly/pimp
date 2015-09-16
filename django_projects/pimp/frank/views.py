@@ -267,7 +267,7 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     preferred_annotation = peak.preferred_candidate_annotation
     context_dict = {
         'peak': peak,
-        'fragmentation_peak_list': fragmentation_spectra,
+        # 'fragmentation_peak_list': fragmentation_spectra,
         'number_of_fragments': number_of_fragments_in_spectra,
         'candidate_annotations': candidate_annotations,
         'annotation_queries': associated_annotation_queries,
