@@ -33,6 +33,8 @@ urlpatterns = patterns(
         views.specify_preferred_annotation, name='specify_preferred_annotation'),
     url(r'^remove_preferred_annotations/(?P<fragmentation_set_name_slug>[\w\-]+)',
         views.remove_preferred_annotations, name='remove_preferred_annotations'),
+    url(r'^delete_annotation_query/(?P<fragmentation_set_name_slug>[\w\-]+)'
+        r'/(?P<annotation_query_slug>[\w\-]+)/$',views.delete_annotation_query, name='delete_annotation_query'),
     # Network sample URL added by Simon
     url(r'^network_sampler/$',views.run_network_sampler, name='network_sampler'),
 )

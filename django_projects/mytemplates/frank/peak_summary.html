@@ -8,15 +8,13 @@
         <h2>Peak {{peak.id}}</h2>
 	<p>Mass: {{peak.mass|floatformat:4}}</p>
 	<p>Retention Time: {{peak.retention_time|floatformat:4}}</p>
-	<p>Intensity: {{peak.intensity|floatformat:4}}</p>
+	<p>Intensity: {{peak.intensity|stringformat:".4e"}}</p>
 	<p>Number of Fragments: {{number_of_fragments}}</p>
 	</br>
 	{% if preferred_annotation %}
-		<p>Preferred Annotation: {{preferred_annotation.compound.name}}</p>
-		<p>Preferred Annotation Formula: {{preferred_annotation.compound.formula}}</p>
-		<p>Selected By: {{peak.preferred_candidate_user_selector}}</p>
-		<p>Last Updated: {{peak.preferred_candidate_updated_date}}</p>
-		<p>Selection Criteria: {{peak.preferred_candidate_description}}</p>
+		<div>Preferred Annotation: <b>{{preferred_annotation.compound.name}}</b> ({{preferred_annotation.compound.formula}})</div>
+		<div>Selected By: {{peak.preferred_candidate_user_selector}} ({{peak.preferred_candidate_updated_date}})</div>
+		<div>Selection Criteria: {{peak.preferred_candidate_description}}</div>
 		</br>
 	{% else %}
 		<p>No Specified Preferred Annotation</p>
@@ -35,13 +33,15 @@
 				<th>Mass</th>
 				<th>Retention Time</th>
 				<th>Intensity</th>
+				<th>Relative Intensity</th>
 			</tr>
-			{% for fragment in fragmentation_peak_list %}
+			{% for fragment,relative_intensity in fragments %}
 			<tr>
 				<td><a href="{% url 'peak_summary' fragment.fragmentation_set.slug fragment.slug %}">{{fragment}}</a></td>
 				<td>{{fragment.mass|floatformat:4}}</td>
 				<td>{{fragment.retention_time|floatformat:4}}</td>
-				<td>{{fragment.intensity|floatformat:2}}</td>
+				<td>{{fragment.intensity|stringformat:".4e"}}</td>
+				<td>{{relative_intensity|floatformat:0}}%</td>
 			</tr>
 			{% endfor %}
 		</table>

@@ -377,6 +377,9 @@ def clean_filter(annotation_query_id,user):
     # Following is true if the user wants the preferred annotations set
     do_preferred = parameters['do_preferred']
 
+    # Following is true if we should collapse multiple instances of the same compound
+    collapse_multiple = parameters['collapse_multiple']
+    
     fragmentation_set = annotation_query.fragmentation_set
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
         msn_level = 1)
@@ -404,7 +407,8 @@ def clean_filter(annotation_query_id,user):
                         difference_from_peak_mass = peak.mass - annotation.compound.exact_mass , adduct = annotation.adduct,
                         instrument_type = annotation.instrument_type, collision_energy = annotation.collision_energy)
                     new_annotation.save()
-                    found_compounds[annotation.compound] = new_annotation
+                    if collapse_multiple:
+                        found_compounds[annotation.compound] = new_annotation
                     if best_annotation == None:
                         best_annotation = new_annotation
                     else:

@@ -385,8 +385,8 @@ class Peak(models.Model):
     # A preferred annotation can be allocated to the Peak, alongside a description and the identity of the user
     # who specfied the preference.
     preferred_candidate_annotation = models.ForeignKey(
-        'CandidateAnnotation', null=True, related_name="preferred_annotation"
-    )
+        'CandidateAnnotation', null=True, related_name="preferred_annotation",
+        on_delete = models.SET_NULL)
     preferred_candidate_description = models.CharField(max_length=500, null=True)
     preferred_candidate_user_selector = models.ForeignKey(User, null=True)
     preferred_candidate_updated_date = models.DateTimeField(null=True)

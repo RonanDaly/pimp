@@ -327,6 +327,13 @@ class CleanFilterForm(AnnotationQueryForm):
     do_preferred = forms.BooleanField(
         help_text = "Automatically assign highest confidence annotation (if above threshold) to preferred annotation?",
         required = False,
+        initial = True,
+    )
+
+    collapse_multiple = forms.BooleanField(
+        help_text = "Collapse multiple annotations of the same compound into one?",
+        required = False,
+        initial = True
     )
 
     delete_original = forms.BooleanField(

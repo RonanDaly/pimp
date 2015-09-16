@@ -240,6 +240,15 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     peak = Peak.objects.get(slug=peak_name_slug, fragmentation_set=fragmentation_set_object)
     # Get all peaks which comprise the fragmentation spectrum of the peak
     fragmentation_spectra = Peak.objects.filter(parent_peak=peak).order_by('mass')
+
+    intensities = [float(i.intensity) for i in fragmentation_spectra]
+    max_intensity = max(intensities)
+    relative_intensities = [100.0*i/max_intensity for i in intensities]
+
+    fragments = []
+    for i,peak in enumerate(fragmentation_spectra):
+        fragments.append((peak,relative_intensities[i]))
+
     # Get the annotation queries which have been performed on the Fragmentation Set
     associated_annotation_queries = AnnotationQuery.objects.filter(
         fragmentation_set=fragmentation_set_object,
@@ -263,6 +272,7 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
         'candidate_annotations': candidate_annotations,
         'annotation_queries': associated_annotation_queries,
         'preferred_annotation': preferred_annotation,
+        'fragments': fragments,
     }
     return context_dict
 
@@ -977,11 +987,17 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         parameters['preferred_threshold'] = annotation_query_form.cleaned_data['preferred_threshold']
         parameters['delete_original'] = annotation_query_form.cleaned_data['delete_original']
         parameters['do_preferred'] = annotation_query_form.cleaned_data['do_preferred']
+        parameters['collapse_multiple'] = annotation_query_form.cleaned_data['collapse_multiple']
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Clean Annotations')
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     # End of Simon contribution
 
+
+def delete_annotation_query(request,fragmentation_set_name_slug,annotation_query_slug):
+    annotation_query = AnnotationQuery.objects.get(slug = annotation_query_slug)
+    annotation_query.delete()
+    return fragmentation_set(request,fragmentation_set_name_slug)
 
 def remove_preferred_annotations(request,fragmentation_set_name_slug):
     # Removes all of the preferred annotations for a particular fragmentation set
@@ -989,7 +1005,8 @@ def remove_preferred_annotations(request,fragmentation_set_name_slug):
     # This should perhaps be a celery task?
     this_fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
     peaks = Peak.objects.filter(fragmentation_set = this_fragmentation_set,
-                                preferred_candidate_annotation__isnull = False)
+                                preferred_candidate_annotation__isnull = False,
+                                msn_level = 1)
     for peak in peaks:
         remove_preferred_annotation(peak)
         peak.save()
