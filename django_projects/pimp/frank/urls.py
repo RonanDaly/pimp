@@ -31,6 +31,8 @@ urlpatterns = patterns(
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)'
         r'/(?P<annotation_id>[\w\-]+)/specify_preferred_annotation/$',
         views.specify_preferred_annotation, name='specify_preferred_annotation'),
+    url(r'^remove_preferred_annotations/(?P<fragmentation_set_name_slug>[\w\-]+)',
+        views.remove_preferred_annotations, name='remove_preferred_annotations'),
     # Network sample URL added by Simon
     url(r'^network_sampler/$',views.run_network_sampler, name='network_sampler'),
 )
