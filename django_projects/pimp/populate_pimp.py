@@ -102,6 +102,11 @@ def populate():
         default_params = {},
     )
 
+    clean_annotation_tool = add_annotation_tool(
+        name = 'Clean Annotations',
+        default_params = {},
+    )
+
     lcms_dda_experimental_protocol = add_experimental_protocol(
         name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
     )
@@ -132,6 +137,11 @@ def populate():
     # this needs to be filled in properly
     mass_filter_protocols = add_annotation_tool_protocols(
         [lcms_dda_experimental_protocol],precursor_mass_filter_annotation_tool
+    )
+
+    clean_filter_protocols = add_annotation_tool_protocols(
+        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        clean_annotation_tool
     )
 
 

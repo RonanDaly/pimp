@@ -52,33 +52,36 @@
 	<h3>Candidate Annotations</h3>
 	{% if candidate_annotations %}
 		{% for annotation_query,annotations in candidate_annotations.items %}
-	  		<h5>{{annotation_query.name}}</h5>
-			<table class="table">
-				{% if annotations %}				
-				<tr>
-					<th>Compound Name</th>
-					<th>Compound Formula</th>
-					<th>Compound Mass</th>
-					<th>Confidence Value</th>
-					<th>Difference In Mass</th>
-					<th>Adduct</th>
-					<th>Collision Energy</th>
-					<th></th>
-				</tr>
-				{% for annotation in annotations %}
+	  		<h5>{{annotation_query.name}}&nbsp;<a data-toggle="collapse" data-target="#{{forloop.counter}}">[Show]</a></h5>
+	  		
+	  		<div id="{{forloop.counter}}" class="collapse out">
+				<table class="table">
+					{% if annotations %}				
 					<tr>
-						<td><p>{{annotation.compound.name}}</p></td>
-						<td><p>{{annotation.compound.formula}}</p></td>
-						<td><p>{{annotation.compound.exact_mass|floatformat:4}}</p></td>
-						<td><p>{{annotation.confidence|floatformat:3}}</p></td>		
-						<td><p {% if annotation.mass_match == True %}style="color: rgb(59, 182, 59);"{% endif %}{% if annotation.mass_match == False %}style="color: rgb(232, 45, 45);"{% endif %}>{{annotation.difference_from_peak_mass|floatformat:3}}</p></td>
-						<td><p>{{annotation.adduct}}</p></td>
-						<td><p>{{annotation.collision_energy}}</p></td>
-						<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+						<th>Compound Name</th>
+						<th>Compound Formula</th>
+						<th>Compound Mass</th>
+						<th>Confidence Value</th>
+						<th>Difference In Mass</th>
+						<th>Adduct</th>
+						<th>Collision Energy</th>
+						<th></th>
 					</tr>
-				{% endfor %}
-				{% endif %}
-			</table>
+					{% for annotation in annotations %}
+						<tr>
+							<td><p>{{annotation.compound.name}}</p></td>
+							<td><p>{{annotation.compound.formula}}</p></td>
+							<td><p>{{annotation.compound.exact_mass|floatformat:4}}</p></td>
+							<td><p>{{annotation.confidence|floatformat:3}}</p></td>		
+							<td><p {% if annotation.mass_match == True %}style="color: rgb(59, 182, 59);"{% endif %}{% if annotation.mass_match == False %}style="color: rgb(232, 45, 45);"{% endif %}>{{annotation.difference_from_peak_mass|floatformat:3}}</p></td>
+							<td><p>{{annotation.adduct}}</p></td>
+							<td><p>{{annotation.collision_energy}}</p></td>
+							<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+						</tr>
+					{% endfor %}
+					{% endif %}
+				</table>
+			</div>
 	  	{% endfor %}
 	{% else %}
 		<p>No current annotations for this peak</p>

@@ -57,7 +57,7 @@ NIST_LCMS_SEARCH_PARAMS = (
 )
 
 # Simon's Transformation Types
-TRANSFORMATION_TYPES = (
+POSITIVE_TRANSFORMATION_TYPES = (
     ("M+H", "M+H"),
     ("M+Na", "M+Na"),
     ("M+K", "M+K"),
@@ -80,6 +80,11 @@ TRANSFORMATION_TYPES = (
     ("M+2K-H", "M+2K-H"),
     ("M+DMSO+H", "M+DMSO+H"),
     ("M+2ACN+H", "M+2ACN+H"),
+)
+
+NEGATIVE_TRANSFORMATION_TYPES = (
+    ("M-H","M-H"),
+    ("M-2H","M-2H"),
 )
 
 
@@ -293,6 +298,44 @@ class AnnotationQueryForm(forms.ModelForm):
             'name',
         )
 
+class CleanFilterForm(AnnotationQueryForm):
+
+    possible_parents = ()
+    def __init__(self,fragmentation_set_name_slug,*args,**kwargs):
+        super(CleanFilterForm,self).__init__(*args,**kwargs)
+        fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+        parent_annotations = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+        possible_parents = ()
+        for a in parent_annotations:
+            possible_parents = possible_parents + ((a.slug,a.name),)
+        self.fields['parent_annotation_queries'] = forms.MultipleChoiceField(
+            choices = possible_parents,
+            required = True,
+            help_text = "Please choose a parent Annotation Query to filter") 
+
+    parent_annotation_queries = forms.MultipleChoiceField(
+        choices = possible_parents,
+        help_text = "Please choose a parent Annotation Query to filter"
+    )
+
+    preferred_threshold = forms.DecimalField(
+        min_value = 0.0,
+        required = True,
+        help_text = "Please choose threshold for preferred annotations"
+    )
+
+    delete_original = forms.BooleanField(
+        help_text = "Delete parent annotation query object and annotations?",
+        required = False,
+    )
+
+    def clean(self):
+        cleaned_data = super(CleanFilterForm, self).clean()
+        user_selections = cleaned_data.get('parent_annotation_queries')
+        if user_selections == None:
+            self.add_error("parents", "No parents were selected. Please select at least one parent query.")
+            raise forms.ValidationError("No parents were selected. Please select at least one parent query.")
+
 
 class PrecursorMassFilterForm(AnnotationQueryForm):
     """
@@ -316,11 +359,19 @@ class PrecursorMassFilterForm(AnnotationQueryForm):
         help_text = "Please choose a parent Annotation Query to filter")
 
     positive_transforms = forms.MultipleChoiceField(
-        choices = TRANSFORMATION_TYPES,
+        choices = POSITIVE_TRANSFORMATION_TYPES,
         required = True,
         initial = ['M+H'],
         widget=forms.CheckboxSelectMultiple(),
         help_text = "Please choose which transformation types to include in the filter"
+        )
+
+    negative_transforms = forms.MultipleChoiceField(
+        choices = NEGATIVE_TRANSFORMATION_TYPES,
+        required = True,
+        initial = ['M-H'],
+        widget = forms.CheckboxSelectMultiple(),
+        help_text = "Please choose which negative mode transformation types to include in the filter"
         )
 
     mass_tol = forms.IntegerField(

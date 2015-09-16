@@ -16,6 +16,7 @@ import jsonpickle
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from frank.annotationTools import MassBankQueryTool, NISTQueryTool
 from urllib2 import URLError
+import datetime
 
 
 @celery.task
@@ -269,6 +270,10 @@ def nist_batch_search(annotation_query_id):
 The following are additions by Simon Rogers
 """
 # This really should not be here! - Simon's Addition
+# In both of the following, the first number is subtracted from the observed mass
+# and the second number is divided
+# hence the first number is the total mass gain of the adduct (including any reduction in electrons), divided by the charge
+# and the second number is the reciprocal of the charge
 POSITIVE_TRANSFORMATIONS = {
     "M+2H": [1.00727645199076,0.5,0.0],
     "M+H+NH4": [9.52055100354076,0.5,0.0],
@@ -293,9 +298,15 @@ POSITIVE_TRANSFORMATIONS = {
     "M+DMSO+H": [79.02121199569076,1.0,0.0],
     "M+2ACN+H": [83.06037465819077,1.0,0.0],
 }
+# TODO: add some more of these
+NEGATIVE_TRANSFORMATIONS = {
+    "M-H": [-1.00727645199076,1.0,0.0],
+    "M-2H": [-1.00727645199076,0.5,0.0],
+}
 
 @celery.task
 def precursor_mass_filter(annotation_query_id):
+    # Runs a filter on the annotations 
     import math
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
@@ -303,11 +314,9 @@ def precursor_mass_filter(annotation_query_id):
 
     parameters = jsonpickle.decode(annotation_query.annotation_tool_params)
     parent_annotation_queries = AnnotationQuery.objects.filter(slug__in=parameters['parents'])
-    print parent_annotation_queries
-    transforms_to_use = parameters['positive_transforms']
+    positive_transforms_to_use = parameters['positive_transforms']
+    negative_transforms_to_use = parameters['negative_transforms']
     mass_tol = parameters['mass_tol']
-
-    print "Running precursor mass filter with adducts: ",transforms_to_use
 
     fragmentation_set = annotation_query.fragmentation_set
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
@@ -315,8 +324,24 @@ def precursor_mass_filter(annotation_query_id):
     for peak in peaks:
         peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query__in=parent_annotation_queries)
         for a in peak_annotations:
-            for t in transforms_to_use:
+            for t in positive_transforms_to_use:
                 transformed_mass = (float(peak.mass) - POSITIVE_TRANSFORMATIONS[t][0])/POSITIVE_TRANSFORMATIONS[t][1] + POSITIVE_TRANSFORMATIONS[t][2]
+                mass_error = 1e6*math.fabs(transformed_mass - float(a.compound.exact_mass))/transformed_mass
+                if mass_error < mass_tol:
+                    new_annotation = CandidateAnnotation(peak = peak,
+                        annotation_query = annotation_query,compound = a.compound,
+                        mass_match = True, confidence = a.confidence, 
+                        difference_from_peak_mass = peak.mass - a.compound.exact_mass , adduct = t,
+                        instrument_type = a.instrument_type, collision_energy = a.collision_energy)
+                    new_annotation.save()
+
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
+        msn_level = 1, source_file__polarity='Negative')
+    for peak in peaks:
+        peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query__in=parent_annotation_queries)
+        for a in peak_annotations:
+            for t in negative_transforms_to_use:
+                transformed_mass = (float(peak.mass) - NEGATIVE_TRANSFORMATIONS[t][0])/NEGATIVE_TRANSFORMATIONS[t][1] + NEGATIVE_TRANSFORMATIONS[t][2]
                 mass_error = 1e6*math.fabs(transformed_mass - float(a.compound.exact_mass))/transformed_mass
                 if mass_error < mass_tol:
                     new_annotation = CandidateAnnotation(peak = peak,
@@ -332,6 +357,64 @@ def precursor_mass_filter(annotation_query_id):
 """
 End of additions by Simon Rogers
 """
+
+
+@celery.task
+def clean_filter(annotation_query_id,user):
+    # This cleans a set of annotations by only keeping one annotation for each compound for each peak
+    # and only keeping annotations above a threshold
+    # the highest confidence annotation (abover the threshold) is set as the preferred annotation)
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    annotation_query.status = 'Processing'
+    annotation_query.save()
+    parameters = jsonpickle.decode(annotation_query.annotation_tool_params)
+    parent_annotation_queries = AnnotationQuery.objects.filter(slug__in=parameters['parents'])
+    preferred_threshold = parameters['preferred_threshold']
+
+    # Following does nothing yet
+    delete_original = parameters['delete_original']
+
+    fragmentation_set = annotation_query.fragmentation_set
+    peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
+        msn_level = 1)
+
+    for peak in peaks:
+        peak_annotations = CandidateAnnotation.objects.filter(peak=peak,annotation_query__in=parent_annotation_queries)
+        found_compounds = {}
+        best_annotation = None
+        for annotation in peak_annotations:
+            if annotation.compound in found_compounds:
+                this_annotation = found_compounds[annotation.compound]
+                if annotation.confidence > this_annotation.confidence:
+                    this_annotation.confidence = annotation.confidence
+                    this_annotation.instrument_type = annotation.instrument_type
+                    this_annotation.collision_energy = annotation.collision_energy
+                    this_annotation.save()
+                    if this_annotation.confidence > best_annotation.confidence:
+                        best_annotation = this_annotation
+
+            else:
+                if annotation.confidence > preferred_threshold:
+                    new_annotation = CandidateAnnotation(peak = peak,
+                        annotation_query = annotation_query,compound = annotation.compound,
+                        mass_match = annotation.mass_match , confidence = annotation.confidence, 
+                        difference_from_peak_mass = peak.mass - annotation.compound.exact_mass , adduct = annotation.adduct,
+                        instrument_type = annotation.instrument_type, collision_energy = annotation.collision_energy)
+                    new_annotation.save()
+                    found_compounds[annotation.compound] = new_annotation
+                    if best_annotation == None:
+                        best_annotation = new_annotation
+                    else:
+                        if new_annotation.confidence > best_annotation.confidence:
+                            best_annotation = new_annotation
+        peak.preferred_candidate_annotation = best_annotation
+        peak.preferred_candidate_description = "Added automatically with annotation query {} with threshold of {}".format(annotation_query.name,preferred_threshold)
+        peak.preferred_candidate_user_selector = user
+        peak.preferred_candidate_updated_date = datetime.datetime.now()
+        peak.save()
+
+        annotation_query.status = 'Completed Successfully'
+        annotation_query.save()
 
 
 
