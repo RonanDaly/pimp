@@ -324,6 +324,11 @@ class CleanFilterForm(AnnotationQueryForm):
         help_text = "Please choose threshold for preferred annotations"
     )
 
+    do_preferred = forms.BooleanField(
+        help_text = "Automatically assign highest confidence annotation (if above threshold) to preferred annotation?",
+        required = False,
+    )
+
     delete_original = forms.BooleanField(
         help_text = "Delete parent annotation query object and annotations?",
         required = False,

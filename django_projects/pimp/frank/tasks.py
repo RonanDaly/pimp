@@ -374,6 +374,9 @@ def clean_filter(annotation_query_id,user):
     # Following does nothing yet
     delete_original = parameters['delete_original']
 
+    # Following is true if the user wants the preferred annotations set
+    do_preferred = parameters['do_preferred']
+
     fragmentation_set = annotation_query.fragmentation_set
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
         msn_level = 1)
@@ -407,11 +410,12 @@ def clean_filter(annotation_query_id,user):
                     else:
                         if new_annotation.confidence > best_annotation.confidence:
                             best_annotation = new_annotation
-        peak.preferred_candidate_annotation = best_annotation
-        peak.preferred_candidate_description = "Added automatically with annotation query {} with threshold of {}".format(annotation_query.name,preferred_threshold)
-        peak.preferred_candidate_user_selector = user
-        peak.preferred_candidate_updated_date = datetime.datetime.now()
-        peak.save()
+        if do_preferred:
+            peak.preferred_candidate_annotation = best_annotation
+            peak.preferred_candidate_description = "Added automatically with annotation query {} with threshold of {}".format(annotation_query.name,preferred_threshold)
+            peak.preferred_candidate_user_selector = user
+            peak.preferred_candidate_updated_date = datetime.datetime.now()
+            peak.save()
 
         annotation_query.status = 'Completed Successfully'
         annotation_query.save()

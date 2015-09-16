@@ -976,11 +976,30 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         parameters['parents'] = annotation_query_form.cleaned_data['parent_annotation_queries']
         parameters['preferred_threshold'] = annotation_query_form.cleaned_data['preferred_threshold']
         parameters['delete_original'] = annotation_query_form.cleaned_data['delete_original']
+        parameters['do_preferred'] = annotation_query_form.cleaned_data['do_preferred']
         annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Clean Annotations')
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     # End of Simon contribution
 
+
+def remove_preferred_annotations(request,fragmentation_set_name_slug):
+    # Removes all of the preferred annotations for a particular fragmentation set
+    # Then returns to the fragmentation_set view
+    # This should perhaps be a celery task?
+    this_fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+    peaks = Peak.objects.filter(fragmentation_set = this_fragmentation_set,
+                                preferred_candidate_annotation__isnull = False)
+    for peak in peaks:
+        remove_preferred_annotation(peak)
+        peak.save()
+    return fragmentation_set(request,fragmentation_set_name_slug)
+
+def remove_preferred_annotation(peak):
+    peak.preferred_candidate_annotation = None
+    peak.preferred_candidate_description = ""
+    peak.preferred_candidate_user_selector = None
+    peak.preferred_candidate_updated_date = None
 
 def run_network_sampler(request):
 
