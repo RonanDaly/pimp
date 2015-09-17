@@ -33,6 +33,7 @@
 				<th>Current Status</th>
 				<th>Parent(s)</th>
 				<th>Children</th>
+				<th></th>
 			</tr>
 			{% for annotation in annotations %}
 				<tr>
@@ -49,6 +50,9 @@
 							{{ a.name }}
 						{% endfor %}
 					</td>
+					<td>
+					<a href="{% url 'delete_annotation_query' fragment_set.slug annotation.slug %}">delete</a>
+					 </td>
 				</tr>
 			{% endfor %}	
 		</table>
