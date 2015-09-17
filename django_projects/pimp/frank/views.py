@@ -19,6 +19,7 @@ import PIL.Image
 import StringIO
 from django.http import HttpResponse
 from django.db import transaction
+import json
 
 """
 To reduce code repetition, add a method for the context_dict
@@ -246,8 +247,13 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
     relative_intensities = [100.0*i/max_intensity for i in intensities]
 
     fragments = []
-    for i,peak in enumerate(fragmentation_spectra):
-        fragments.append((peak,relative_intensities[i]))
+    plot_fragments = []
+    for i,fragment_peak in enumerate(fragmentation_spectra):
+        fragments.append((fragment_peak,relative_intensities[i]))
+        plot_fragments.append((float(fragment_peak.mass),relative_intensities[i]))
+
+    parent_peak = []
+    parent_peak.append((float(peak.mass),100))
 
     # Get the annotation queries which have been performed on the Fragmentation Set
     associated_annotation_queries = AnnotationQuery.objects.filter(
@@ -273,6 +279,8 @@ def get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug):
         'annotation_queries': associated_annotation_queries,
         'preferred_annotation': preferred_annotation,
         'fragments': fragments,
+        'plot_fragments': json.dumps(plot_fragments),
+        'plot_parent': json.dumps(parent_peak),
     }
     return context_dict
 
