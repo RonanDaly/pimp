@@ -435,7 +435,7 @@ def get_peak_table(request, project_id, analysis_id):
 		s = Sample.objects.filter(attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by('attribute__id','id')
 		p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset).distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
 		pp = map(list, zip(*[iter(p)]*s.count()))
-		data = [[str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 2), round(peakgroup[0].peak.rt, 2)] + [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in peakgroup] + [str(peakgroup[0].peak.polarity)] for peakgroup in pp]
+		data = [[str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in peakgroup] + [str(peakgroup[0].peak.polarity)] for peakgroup in pp]
 
 		response = simplejson.dumps({"aaData":data})
 
