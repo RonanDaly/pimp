@@ -110,6 +110,7 @@ urlpatterns = patterns('',
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', 'projects.views.groupcreation', name='create_goupe'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('groups.urls')),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('multiuploader.urls')),
+    url(r'^frank/', include('frank.urls')),
 )
 
 urlpatterns += staticfiles_urlpatterns()

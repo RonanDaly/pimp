@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+        <h4>{{experiment.title}}: {{condition.name}}</h4>
+
+        <form id="sample_form" method="post" action="{% url 'add_sample' experiment.slug condition.slug %}">
+
+            {% csrf_token %}
+            {% for hidden in sample_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in sample_form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+	<button class="btn btn-large btn-primary" type="submit">Add Sample</button>
+	<a href="{% url 'condition_summary' experiment.slug condition.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+	</form>
+
+{% endblock %}

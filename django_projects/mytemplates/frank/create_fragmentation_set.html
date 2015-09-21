@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+        <h4>Generate A New Fragmentation Set</h4>
+
+        <form id="fragmentation_set_form" method="post" action="{% url 'create_fragmentation_set' experiment.slug %}">
+
+            {% csrf_token %}
+            {% for hidden in frag_set_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in frag_set_form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+	<button class="btn btn-large btn-primary" type="submit">Extract Peaks</button>
+	<a href="{% url 'experiment_summary' experiment.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+	</form>
+
+{% endblock %}

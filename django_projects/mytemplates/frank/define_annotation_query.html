@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+        <h4>Define Annotation Query Parameters for {{annotation_tool.name}}</h4>
+
+        <form id="annotation_query_form" method="post" action="{% url 'define_annotation_query' fragmentation_set.slug annotation_tool.slug %}">
+
+            {% csrf_token %}
+            {% for hidden in annotation_query_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in annotation_query_form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+		<br>
+                {{field.label}} {{ field }}
+		<br>
+            {% endfor %}
+	<button class="btn btn-large btn-primary" type="submit">Retrieve Annotations</button>
+	<a href="{% url 'fragmentation_set' fragmentation_set.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+	</form>
+
+{% endblock %}

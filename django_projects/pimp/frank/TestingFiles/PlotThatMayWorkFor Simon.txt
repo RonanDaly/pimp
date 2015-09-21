@@ -1,0 +1,99 @@
+# import matplotlib
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+def make_frag_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug):
+    """
+
+    :param request: The request a Get from the 'peak_summary'page
+    :param fragmentation_set_name_slug: A string corresponding to the unique slug of the fragmentation set
+    :param peak_name_slug: A string corresponding to the unique slug of a peak
+    :return: HttpResponse: An image of the graph is returned to the page for rendering
+    """
+
+    # Get the peak and derive all the peaks which correspond to the fragmentation spectra
+    parent_object = Peak.objects.get(slug=peak_name_slug)
+    fragmentation_spectra = Peak.objects.filter(parent_peak=parent_object)
+
+    # Derive the mass and intensity of the parent, and the fragments of the spectra
+    parent_mass = parent_object.mass
+    parent_intensity = parent_object.intensity
+    fragment_masses = []
+    fragment_intensities = []
+    for peak in fragmentation_spectra:
+        fragment_masses.append(peak.mass)
+        fragment_intensities.append(peak.intensity)
+
+    # define some colours
+    parent_fontspec = {
+        'size': '10',
+        'color': 'blue',
+        'weight': 'bold'
+    }
+
+    # # make blank figure
+    figsize = (10, 6)
+    fig = plt.figure(figsize=figsize, facecolor='white')
+    ax = fig.add_subplot(1, 1, 1)
+
+    # plot the parent peak first, scaling the
+    plt.plot((parent_mass, parent_mass), (0, 1), linewidth=2.0, color='b')
+    x = parent_mass
+    y = parent_intensity
+    label = "%.5f" % parent_mass
+    plt.text(x, y, label, **parent_fontspec)
+
+    if len(fragmentation_spectra) > 0:
+        highest_intensity = fragmentation_spectra.aggregate(Max('intensity'))['intensity__max']
+        # scale the highest intensity value to the value of the parent intensity
+        scale = parent_intensity/highest_intensity
+    else:
+        scale = 1
+    """
+    Due to the relatively low intensities of the product ions, the fragments
+    must be scaled (in intensity) relative to the parent ion to allow for
+    visual comparison. Otherwise the graph would be redundant to the users.
+    """
+
+    # plot all the fragment peaks of this parent peak
+    num_peaks = len(fragment_masses)
+    for j in range(num_peaks):
+        mass = fragment_masses[j]
+        intensity = (fragment_intensities[j]*scale)
+        plt.plot((mass, mass), (0, intensity), linewidth=1.0, color='#FF9933')
+
+    # set range of x- and y-axes
+    xlim_upper = int(parent_mass + 50)
+    ylim_upper = int(round(parent_intensity*Decimal(1.25)))
+    plt.xlim([0, xlim_upper])
+    plt.ylim([0, ylim_upper])
+
+    # show the axes info
+    plt.xlabel('m/z')
+    plt.ylabel('relative intensity')
+    mz_value = ("%.5f" % parent_mass)
+    rt_value = ("%.3f" % parent_object.retention_time)
+    title = 'MS1 m/z=' + mz_value + ' RT=' + rt_value
+    plt.title(title)
+
+    # add legend
+    blue_patch = mpatches.Patch(color='blue', label='Parent peak')
+    yellow_patch = mpatches.Patch(color='#FF9933', label='Fragment peaks')
+    plt.legend(handles=[blue_patch, yellow_patch])
+
+    # change plot tick paramaters
+    plt.tick_params(
+        axis='both',
+        which='both',
+        bottom='off',
+        top='off',
+        left='off',
+        right='off',
+    )
+
+    # Render the graph on a canvas
+    canvas = FigureCanvas(fig)
+    response = HttpResponse(content_type="image/png")
+    canvas.print_png(response)
+    # Return the graph to the page, allowing for display
+    return response

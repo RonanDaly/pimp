@@ -352,7 +352,7 @@ def createAttribute(request, project_id):
                     # return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
                 message = "success"
                 response = simplejson.dumps(message)
-                return HttpResponse(response, mimetype='application/json')
+                return HttpResponse(response, content_type='application/json')
 
             #for form in sample_attribute_formset.forms:
             #    print "line 1"

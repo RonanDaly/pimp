@@ -174,7 +174,8 @@ INSTALLED_APPS = (
     'data',
     'compound',
     'djcelery',
-    'gp_registration'
+    'gp_registration',
+    'frank',
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',

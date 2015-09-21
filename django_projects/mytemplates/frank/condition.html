@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+
+{% block content %}
+
+	<h2>{{experiment.title}}: {{condition.name}}</h2>
+		<table>
+			<tr><td>Description: {{condition.description}}</td></tr>
+		</table>
+		</br></br>
+		<a href="{% url 'add_sample' experiment.slug condition.slug %}">Add Sample</a>
+		</br></br>		
+		{% for sample in samples %}
+			<div class="container">
+				<p>Name: {{sample.name}}</p>
+				<p>Description: {{sample.description}}</p>
+				<p>Organism: {{sample.organism}}</p>
+					<table class="table">
+						<tr>
+							<th>File Name</th>
+							<th>Polarity</th>
+						</tr>
+						{% for file in sample_files %}
+							{% if file.sample == sample %}
+							<tr>
+								<td>{{file.name}}</td>
+								<td>{{file.polarity}}</td>
+							</tr>
+							{% endif %}
+						{% endfor %}
+					</table>
+				<a href="{% url 'add_sample_file' experiment.slug condition.slug sample.slug %}">Add Sample File</a>
+			</div>
+			</br></br>
+		{% endfor %}
+	</br>
+	<table>
+	<tr><td><a href="{% url 'experiment_summary' experiment.slug %}">{{experiment.title}}</a></td></tr>
+	<tr><td><a href="{% url 'my_experiments' %}">My Experiments</a></td></tr>
+	<tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
+	</table>	
+
+{% endblock %}

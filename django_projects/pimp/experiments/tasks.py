@@ -17,6 +17,8 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+##### JUST FOR SCOTT ALTERNATIVE CODE
+import rpy2.robjects as robjects
 
 @celery.task
 def start_pimp_pipeline(analysis, project, user):
@@ -63,19 +65,24 @@ def start_pimp_pipeline(analysis, project, user):
 	analysis.save(update_fields=['status'])
 	# print "Email sent to the user"
 	# user.email_user('Subject here', 'Your analysis has started processing, thank you for using PiMP', settings.DEFAULT_FROM_EMAIL)
-	r_command_list = ["/usr/local/bin/R-3.0.3/lib64/R/bin/Rscript","/opt/django/scripts/pimp/runPiMP.R",str(analysis.id)] 
+	############## This wouldn't work for me! - Scott
+	#r_command_list = ["/usr/local/bin/R-3.0.3/lib64/R/bin/Rscript","/opt/django/scripts/pimp/runPiMP.R",str(analysis.id)]
+	############## Scott Alternative
+	r_command_list = ["/usr/bin/Rscript","/home/scottiedog27/Git/MScProjectRepo/pimp/runPiMP.R",str(analysis.id)]
 	r_command = " ".join(r_command_list)
 	print r_command
 	subprocess.call(r_command,shell=True)
 	xml_file_name = ".".join(["_".join(["analysis",str(analysis.id)]),"xml"])
-	xml_file_path = os.path.join('/opt/django/data/pimp_data/projects/',str(project.id), xml_file_name)
+	#xml_file_path = os.path.join('/opt/django/data/pimp_data/projects/',str(project.id), xml_file_name)
+	############## Again Hard coded path incorrect for me
+	xml_file_path = os.path.join('/home/scottiedog27/Git/MScProjectRepo/pimp/django_projects/pimp_data/projects/',str(project.id), xml_file_name)
 
 	if os.path.exists(xml_file_path):
 		compound_id_map = {}
 		print "Database population started!"
 		xmltree = Xmltree(xml_file_path)
 		anaysis_id = xmltree.getAnalysisId()
-		# print anaysis_id 
+		# print anaysis_id
 		analysis = Analysis.objects.get(id=anaysis_id)
 		# print "analysis ",analysis.submited
 		# print analysis.peak_set.all()
@@ -258,3 +265,4 @@ def start_pimp_pipeline(analysis, project, user):
 	# subprocess.call("/usr/local/bin/R-3.0.3/lib64/R/bin/Rscript /opt/django/scripts/pimp/runPiMP.R", shell=True)
 	# runPipeline(files=files, groups=groups, contrasts=contrasts, standards=standards, databases=databases)
 	return "Pipeline run with success! Yeah, celebration time!!!!!"
+

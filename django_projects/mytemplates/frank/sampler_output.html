@@ -1,0 +1,22 @@
+<html>
+	<body>
+		<h3>Sampler finished</h3>
+		{% if edge_dict %}
+		<h2>Summary of transformations found at final sample</h2>
+		<table>
+		<tr>
+			<th>Name</th>
+			<th>Formula</th>
+			<th>Count</th>
+		</tr>
+		{% for edge,count in edge_dict.items %}
+		<tr>
+		<td>{{edge.name}}</td>
+		<td>{{edge.formula}}</td>
+		<td>{{count}}</td>
+		</tr>
+		{% endfor %}
+		</table>
+		{% endif %}
+	</body>
+</html>

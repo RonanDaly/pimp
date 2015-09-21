@@ -52,5 +52,5 @@ class ProjfileAttribute(models.Model):
 	date_joined = models.DateTimeField(auto_now_add=True)
 
 	def __unicode__(self):
-		return str(self.attribute) + " (" + str(self.sample) + ")"
+		return str(self.attribute) + " (" + str(self.calibrationsample) + ")"
 

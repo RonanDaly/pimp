@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block content %}
+
+        <h2>{{fragmentation_set.name}}</h2>
+	<p>Peak: {{peak.id}}</p>
+	<p>Suggested Annotation: {{annotation.compound.name}}</p>
+
+        <form id="preferred_annotation_form" method="post" action="{% url 'specify_preferred_annotation' fragmentation_set.slug peak.slug annotation.id %}">
+
+            {% csrf_token %}
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in form.visible_fields %}
+                {{ field.errors }}
+		<br>
+                {{ field.help_text }}
+		<br>
+                {{ field }}
+		<br>
+            {% endfor %}
+	<button class="btn btn-large btn-primary" type="submit">Submit Annotation</button>
+	<a href="{% url 'peak_summary' fragmentation_set.slug peak.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+	</form>
+
+{% endblock %}
