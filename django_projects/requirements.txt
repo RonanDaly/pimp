@@ -1,10 +1,16 @@
+amqp==1.4.6
+anyjson==0.3.3
+billiard==3.3.0.20
+celery==3.1.18
 Django==1.7
-django-registration
-django-extensions
-numpy
-# -e git://github.com/mdp-toolkit/mdp-toolkit#egg=MDP
-lxml
-mysql-python
+django-celery==3.1.16
+django-extensions==1.5.6
+django-registration==1.0
+kombu==3.0.26
+lxml==3.4.4
+MySQL-python==1.2.5
+numpy==1.9.2
+pytz==2015.4
 rpy2==2.3.10
-celery
-django-celery
+six==1.9.0
+wheel==0.24.0
