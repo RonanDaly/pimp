@@ -40,12 +40,11 @@ This is a setup guide for the PiMP pipeline. It contains instructions for Linux 
         $ source ~/.bashrc
         $ mkdir -p $WORKON_HOME
 
-5. Then create a virtual environment (here called `venv`), change directory to `$pimp_directory` and install the required Python packages for PiMP and FrAnK.
+5. Then create a virtual environment (here called `venv`), change directory to `$PROJECT_HOME` and install the required Python packages for PiMP and FrAnK.
 
         $ mkvirtualenv venv
-        (venv)$ export pimp_directory=/home/joewandy/git/pimp/ # or wherever appropriate
-        (venv)$ pip install -r $pimp_directory/django_projects/requirements.txt
-        (venv)$ pip install -r $pimp_directory/django_projects/requirements_frank.txt
+        (venv)$ pip install -r $PROJECT_HOME/django_projects/requirements.txt
+        (venv)$ pip install -r $PROJECT_HOME/django_projects/requirements_frank.txt
 
 ## 2b. Anaconda Python setup
 
@@ -94,7 +93,7 @@ TODO
         > quit()
 
 5. Install the PiMP and PiMPDB packages locally. Needs root permission to place mzmatch_2.0.jar in /usr/local.
-        (venv)$ cd $pimp_directory 
+        (venv)$ cd $PROJECT_HOME
         (venv)$ sudo R CMD INSTALL PiMP 
         (venv)$ R CMD INSTALL PiMPDB 
 
@@ -104,7 +103,7 @@ We need to set up a message queuing server to handle batch jobs.
 
 1. Install RabbitMQ following the instruction from https://www.rabbitmq.com
 
-2. Run RabbitMQ server in the background:
+2. If the RabbitMQ server is not run automatically, you can start it manually in the background:
 
         (venv)$ sudo rabbitmq-server start -detached
         
@@ -118,7 +117,7 @@ Run the following commands with the virtualenv still active
 
 1. Synchronise the database:
 
-        (venv)$ cd $pimp_directory/django_projects/pimp
+        (venv)$ cd $PROJECT_HOME/django_projects/pimp
         (venv)$ python manage.py migrate --settings=pimp.settings_dev
 
 2. Create a superuser manually then start the server again:
@@ -129,11 +128,27 @@ Run the following commands with the virtualenv still active
 	and go to `localhost:8000/admin` to add the first and last name of the superuser.
 
 3. Setup the default configuration parameters by using the Django shell:
+
         (venv)$ python populate_pimp.py
 
 4. Create the temporary directory for django:
+
         (venv)$ sudo mkdir -p /opt/django/django-cache
 	
-4. Finally, restart PiMP and also Celery at the same time:
+4. Finally, restart django for the PiMP/Frank app.
+
         (venv)$ python manage.py runserver --settings=pimp.settings_dev
+        
+5. Open another terminal window, switch to the virtual environment we've created before and start the celery worker. You need this to have submitted jobs run.
+
+        $ cd $PROJECT_HOME/django_projects/pimp
+        $ workon venv
         (venv)$ python manage.py celery worker --settings=pimp.settings_dev
+
+## 6. Quick Start Database for FrAnK developers
+
+A sample SQLite database is provided at $PROJECT_HOME/django_projects/test_data/testdb.db. This file contains several fragmentation sets which can be readily annotated by any new annotation tool you've developed. To use this, copy testdb.db to replace the sqlite db you'd created during migrate (in step 5), e.g. 
+
+        (venv)$ cp $PROJECT_HOME/django_projects/test_data/testdb.db $PROJECT_HOME/django_projects/pimp/sqlite3.db
+        
+Use the user id "testuser" and password "testuser" for login later.
