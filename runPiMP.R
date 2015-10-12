@@ -10,17 +10,17 @@ if(is.na(analysis.id)) {
 
 library(PiMPDB)
 library(PiMP)
-library(yaml)
+#library(yaml)
 
-db.settings <- yaml.load_file("/opt/django/yaml/pimp_database.yml")[['database']]
+#db.settings <- yaml.load_file("/opt/django/yaml/pimp_database.yml")[['database']]
 
-#db <- new("PiMPDB", dbname="~/Downloads/sqlite3.db", dbtype="sqlite")
-db <- new("PiMPDB", dbuser=db.settings$user, dbpassword=db.settings$password, dbname="pimp_prod", dbhost=db.settings$host, dbtype=db.settings$type)
+db <- new("PiMPDB", dbname="/Users/rossgurden/git/pimp/django_projects/pimp/sqlite3.db", dbtype="sqlite")
+#db <- new("PiMPDB", dbuser=db.settings$user, dbpassword=db.settings$password, dbname="pimp_prod", dbhost=db.settings$host, dbtype=db.settings$type)
 
 experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
 
-DATA_DIR = "/opt/django/data/pimp_data/projects"
+DATA_DIR = "/Users/rossgurden/git/pimp/django_projects/pimp_data/projects"
 PROJECT_DIR = file.path(DATA_DIR, project.id)
 setwd(PROJECT_DIR)
 
