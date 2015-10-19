@@ -406,6 +406,25 @@ def start_analysis(request, project_id):
 				response = simplejson.dumps(message)
 				return HttpResponse(response, content_type='application/json')
 
+def get_metabolites_table(request, project_id, analysis_id):
+	if request.is_ajax():
+		print "metabolites table requested"
+		start = timeit.default_timer()
+		analysis = Analysis.objects.get(pk=analysis_id)
+		project = Project.objects.get(pk=project_id)
+		dataset = analysis.dataset_set.all()[0]
+		compounds = Compound.objects.filter(peak__dataset=dataset)
+		data = [[str(compound.secondaryId),str(compound.id)] for compound in compounds]
+
+		# print data
+
+		response = simplejson.dumps({"aaData":data})
+
+		stop = timeit.default_timer()
+		print "Metabolites table processing time: ",str(stop-start)
+		return HttpResponse(response, content_type='application/json')
+
+
 def get_identification_table(request, project_id, analysis_id):
 	if request.is_ajax():
 		print "id table requested"
