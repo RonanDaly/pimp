@@ -87,10 +87,7 @@ TODO
 
 4. In R, install [mzMatch](http://mzmatch.sourceforge.net/installation.php) and initialises it to download its database files.
 
-        > source ("http://puma.ibls.gla.ac.uk/mzmatch.R/install_mzmatch.R")
-        > require (mzmatch.R)
-        > mzmatch.init ()
-        > quit()
+        > install.packages('mzmatch.R', repos='http://puma.ibls.gla.ac.uk/R', type="source")
 
 5. Install the PiMP and PiMPDB packages locally. Needs root permission to place mzmatch_2.0.jar in /usr/local.
         (venv)$ cd $PROJECT_HOME
