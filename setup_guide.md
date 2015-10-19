@@ -54,45 +54,9 @@ TODO
 
 ## 3. R setup
 
-1. Install the R packages required for PiMP and PiMPDB
-        $ R
-        > install.packages('rJava')
-        > install.packages('XML')
-        > install.packages('snow')
-        > install.packages('caTools')
-        > install.packages('bitops')
-        > install.packages('ptw')
-        > install.packages('gplots')
-        > install.packages('tcltk2')
-        > install.packages('doParallel')
-        > install.packages('gptk')
-        > install.packages('outliers')
-        > install.packages('XLConnect')
-        > install.packages('RJSONIO')
-        > install.packages('RCurl')
-        > install.packages('R.utils')
-        > install.packages('digest')
-        > install.packages('RColorBrewer')
-        > install.packages('RUnit')
-        > install.packages('DBI')
+Run the following command
 
-2. In R, install [Bioconductor](https://www.bioconductor.org/install/) and use it to install more Bioconductor packages.
-
-        > source('http://bioconductor.org/biocLite.R')
-        > biocLite('xcms')
-        > biocLite('multtest')
-        > biocLite('mzR')
-        > biocLite('impute')
-        > biocLite('limma')
-
-4. In R, install [mzMatch](http://mzmatch.sourceforge.net/installation.php) and initialises it to download its database files.
-
-        > install.packages('mzmatch.R', repos='http://puma.ibls.gla.ac.uk/R', type="source")
-
-5. Install the PiMP and PiMPDB packages locally. Needs root permission to place mzmatch_2.0.jar in /usr/local.
-        (venv)$ cd $PROJECT_HOME
-        (venv)$ sudo R CMD INSTALL PiMP 
-        (venv)$ R CMD INSTALL PiMPDB 
+	$ gradlew installPiMPRDependencies
 
 ## 4. Message Queuing Setup
 
