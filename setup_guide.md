@@ -11,7 +11,7 @@ This is a setup guide for the PiMP pipeline. It contains instructions for Linux 
 3. **(OSX)** Install the `XCode` command line tools and various libraries
 
         $ xcode-select --install
-	$ brew install mysql
+        $ brew install mysql
 
 4. **(Ubuntu)** Install various libraries.
 
