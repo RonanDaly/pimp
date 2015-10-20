@@ -8,8 +8,10 @@ This is a setup guide for the PiMP pipeline. It contains instructions for Linux 
 
 2. Install [R](https://www.r-project.org/).
 
-3. **(OSX)** Install the `XCode` command line tools.
+3. **(OSX)** Install the `XCode` command line tools and various libraries
+
         $ xcode-select --install
+        $ brew install mysql
 
 4. **(Ubuntu)** Install various libraries.
 
@@ -54,48 +56,9 @@ TODO
 
 ## 3. R setup
 
-1. Install the R packages required for PiMP and PiMPDB
-        $ R
-        > install.packages('rJava')
-        > install.packages('XML')
-        > install.packages('snow')
-        > install.packages('caTools')
-        > install.packages('bitops')
-        > install.packages('ptw')
-        > install.packages('gplots')
-        > install.packages('tcltk2')
-        > install.packages('doParallel')
-        > install.packages('gptk')
-        > install.packages('outliers')
-        > install.packages('XLConnect')
-        > install.packages('RJSONIO')
-        > install.packages('RCurl')
-        > install.packages('R.utils')
-        > install.packages('digest')
-        > install.packages('RColorBrewer')
-        > install.packages('RUnit')
-        > install.packages('DBI')
+Run the following command in $PROJECT_HOME
 
-2. In R, install [Bioconductor](https://www.bioconductor.org/install/) and use it to install more Bioconductor packages.
-
-        > source('http://bioconductor.org/biocLite.R')
-        > biocLite('xcms')
-        > biocLite('multtest')
-        > biocLite('mzR')
-        > biocLite('impute')
-        > biocLite('limma')
-
-4. In R, install [mzMatch](http://mzmatch.sourceforge.net/installation.php) and initialises it to download its database files.
-
-        > source ("http://puma.ibls.gla.ac.uk/mzmatch.R/install_mzmatch.R")
-        > require (mzmatch.R)
-        > mzmatch.init ()
-        > quit()
-
-5. Install the PiMP and PiMPDB packages locally. Needs root permission to place mzmatch_2.0.jar in /usr/local.
-        (venv)$ cd $PROJECT_HOME
-        (venv)$ sudo R CMD INSTALL PiMP 
-        (venv)$ R CMD INSTALL PiMPDB 
+	$ ./gradlew installPiMPRDependencies
 
 ## 4. Message Queuing Setup
 

@@ -1,0 +1,102 @@
+class PrintExec extends Exec {
+	PrintExec() {
+		ignoreExitValue true
+		workingDir '.'
+		setStandardOutput(new ByteArrayOutputStream())
+		setErrorOutput(new ByteArrayOutputStream())
+		doLast {
+			println commandLine.join(" ")
+			try {
+				execResult.assertNormalExitValue()
+			} catch (Exception e) {
+				println e.getMessage()
+				println standardOutput.toString()
+				println errorOutput.toString()
+				throw e
+			}
+		}
+	}
+
+	protected void exec() {
+		try {
+			super.exec()
+		} catch (Exception e) {
+			println 'Problem running program, error messages follow'
+			println '---'
+			Throwable t = e
+			while (t != null) {
+				println t.getMessage()
+				t = t.getCause();
+			}
+			println '---'
+			throw e
+		}
+	}
+}
+
+def checkProperties() {
+	for ( prop in ['Python', 'Rscript', 'Java'] ) {
+		if ( project.ext.props[prop] == null ) {
+			throw new Exception('Property ' + prop + ' is not set in the configuration file')
+		}
+	}
+}
+
+task setupProjectProperties {
+	Properties props = new Properties()
+	props.load(new FileInputStream("configuration.ini"))
+	project.ext.props = props
+	checkProperties()
+}
+
+task setPythonVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.Python, 'getPythonVersion.py'
+	doLast {
+		project.ext.PythonVersion = standardOutput.toString()
+	}
+}
+
+task setJavaVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.Java, '-cp', '.', 'GetJavaVersion'
+	doLast {
+		project.ext.JavaVersion = standardOutput.toString()
+	}
+}
+
+task setRVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.Rscript, 'getRVersion.R'
+	doLast {
+		project.ext.RVersion = standardOutput.toString()
+	}
+}
+
+task checkVersions(dependsOn: [setPythonVersion, setRVersion, setJavaVersion]) << {
+	println 'R Version: ' + project.ext.RVersion
+	println 'Python Version: ' + project.ext.PythonVersion
+	println 'Java Version: ' + project.ext.JavaVersion
+}
+
+task copyRpkg (type: Copy) {
+        from('PiMP') {
+		into 'PiMP'
+	}
+        from('PiMPDB') {
+		into 'PiMPDB'
+	}
+	into 'build'
+}
+
+task createPiMP(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
+        workingDir 'build'
+        commandLine project.ext.props.R, 'CMD', 'build',  'PiMP'	
+}
+
+task createPiMPDB(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
+        workingDir 'build'
+        commandLine project.ext.props.R, 'CMD', 'build',  'PiMPDB'	
+}
+
+task installPiMPRDependencies(type: PrintExec, dependsOn: [createPiMP, createPiMPDB, setupProjectProperties]) {
+	commandLine project.ext.props.Rscript, 'setupR.R'
+}
+
