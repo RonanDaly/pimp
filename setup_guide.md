@@ -54,9 +54,9 @@ TODO
 
 ## 3. R setup
 
-Run the following command
+Run the following command in $PROJECT_HOME
 
-	$ gradlew installPiMPRDependencies
+	$ ./gradlew installPiMPRDependencies
 
 ## 4. Message Queuing Setup
 
