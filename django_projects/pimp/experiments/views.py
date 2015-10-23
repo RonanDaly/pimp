@@ -93,7 +93,7 @@ def experiment(request, project_id):
 
 	default_parameters = DefaultParameter.objects.all()
 	ParametersFormSet = formset_factory(ParameterForm, extra=len(default_parameters), max_num=20, formset=RequiredParameterFormSet)
-	
+
 	# i = 0
 	# for form in ParametersFormSet.forms:
 	# 	form.fields['value'].initial = default_parameters[i].value
@@ -126,7 +126,7 @@ def experiment(request, project_id):
 	else:
 		truc = mark_safe(simplejson.dumps(ref))
 
-	# calcul of max number of combination 
+	# calcul of max number of combination
 	combination = 0
 	for group in ref:
 		# print len(list(itertools.combinations(group, 2)))
@@ -182,7 +182,7 @@ def experiment(request, project_id):
 		# print
 
 			params = Params()
-			params.save()		
+			params.save()
 			for form in parameter_formset.forms:
 				project.modified = datetime.datetime.now()
 				project.save()
@@ -203,7 +203,7 @@ def experiment(request, project_id):
 				state = form.cleaned_data['state']
 				name = form.cleaned_data['name']
 				# parameter = form.save()
-				if value == None: 
+				if value == None:
 					print "I'm in value = None"
 					defaultValue = default_parameters.get(name=name).value
 					parameter = Parameter(state=state,name=name,value=defaultValue)
@@ -234,7 +234,7 @@ def experiment(request, project_id):
 			# else:
 			# 	print "parameter form is NOT valid!"
 			# 	print "errors : ",form.errors
-				# print 
+				# print
 		# print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
 		# print "parameter formset : ",parameter_formset
 		# print
@@ -374,8 +374,8 @@ def start_analysis(request, project_id):
 				if not sample.samplefile.negdata:
 					neg_missing_samples.append(sample.name.split(".")[0])
 			if not neg_missing_samples and not pos_missing_samples:
-				pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples] 
-				neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples] 
+				pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples]
+				neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples]
 				# pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples] + [str(sample.standardFile.posdata.file.path) for sample in qc] + [str(sample.standardFile.posdata.file.path) for sample in blank]
 				# neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples] + [str(sample.standardFile.negdata.file.path) for sample in qc] + [str(sample.standardFile.negdata.file.path) for sample in blank]
 				file_list = {"positive": pos_list, "negative": neg_list }
@@ -388,7 +388,7 @@ def start_analysis(request, project_id):
 				databases = ["hmdb", "kegg", "lipidmaps"]
 				analysis.status = 'Submitted'
 				analysis.save(update_fields=['status'])
-				
+
 				analysis.submited = datetime.datetime.now()
 				analysis.save(update_fields=['submited'])
 
@@ -507,9 +507,9 @@ def analysis_result(request, project_id, analysis_id):
 		# 	pca_table.append([item.intensity for sublist in intensity_list for item in sublist])
 			# if peak.secondaryId == 100:
 			# 	break
-			
 
-		databases = RepositoryCompound.objects.filter(compound__peak__dataset=dataset).values_list('db_name',flat=True).distinct()	
+
+		databases = RepositoryCompound.objects.filter(compound__peak__dataset=dataset).values_list('db_name',flat=True).distinct()
 
 		print ("hah avant pca")
 
@@ -547,7 +547,7 @@ def analysis_result(request, project_id, analysis_id):
 		nr, nc = log_pca_matrix.shape
 		xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
 		xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
-		stats = importr('stats')
+		stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
 		pca = stats.prcomp(xr)
 
 		first_dim = list(pca.rx2['x'].rx(True, 1))
@@ -566,7 +566,7 @@ def analysis_result(request, project_id, analysis_id):
 				# dic.append(pcar[i][0])
 				dic.append(first_dim[i])
 				dic.append(second_dim[i])
-				# dic.append(pcar[i][1]) 
+				# dic.append(pcar[i][1])
 				pca_serie.append(dic)
 				i += 1
 			pca_data_point.append(pca_serie)
@@ -914,7 +914,7 @@ def peak_info(request, project_id, analysis_id):
 def peak_info_peak_id(request, project_id, analysis_id):
 	if request.is_ajax():
 		peak_id = int(request.GET['id'])
-		
+
 		try:
 			requested_comparison_id = int(request.GET['comparison'])
 			requested_comparison = Comparison.objects.get(pk=requested_comparison_id)
@@ -1009,7 +1009,7 @@ def get_peaks_from_compound(request, project_id, analysis_id):
 
 		compound = Compound.objects.get(pk=compound_id)
 		peak = compound.peak
-		
+
 		polarity = peak.polarity
 		rt = float(peak.rt)
 		mass = float(peak.mass)
@@ -1215,4 +1215,3 @@ def get_compounds_from_peak_id(request, project_id, analysis_id):
 		message = "Blaaaaaaa got somthing on the server!!!"
 		response = simplejson.dumps(compoundsList)
 		return HttpResponse(response, content_type='application/json')
-
