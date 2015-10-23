@@ -382,6 +382,22 @@ function set_navbar(){
 	});
 }
 
+// Sort function for retention times, since they have a custom format of
+// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return a - b;
+};
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return b - a;
+};
+
+
 function set_idtable(url, callback){
 
 	var idTable = $('#identification-table').dataTable( {
@@ -430,6 +446,14 @@ function set_idtable(url, callback){
 					/* Name */	null,
 					/* Formula */	null,
 					/* PPM */	null,
+					/* RT */ {
+					"aTargets": [2],
+					"sType": "formatted-rt",
+					"mRender": function(rt, type, full) {
+						var minutes = Math.floor(rt / 60);
+						var seconds = Math.round(rt % 60); // Rounded to nearest second
+						return rt + " ("+ minutes + " min "+ seconds + " s)";
+					}},
 					/* Identification */	null,
 					/* Polarity */	null,
 					],
