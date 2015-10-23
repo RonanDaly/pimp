@@ -1,6 +1,6 @@
 
 
-// Register every of the result page component for click actions 
+// Register every of the result page component for click actions
 
 
 function set_click_actions(staticUrl, metexploreInfoUrl){
@@ -106,7 +106,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		var modalFooter = $modal.find('.modal-footer');
 
 		// Empty modal window
-		
+
 		$(modalBody).empty();
 		$(modalFooter).empty();
 		$(modalHeader).empty();
@@ -156,7 +156,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 
 		$(rightPanelPreferencesContent).appendTo($(modalBody));
 
-		// Set values 
+		// Set values
 
 		if (rightPanelPreference == "summary"){
 			$('#rightPanelSummaryCheck').prop('checked', true);
@@ -282,7 +282,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		var modalBody = $modal.find('.modal-body');
 		var modalHeader = $modal.find('.modal-header');
 		var modalFooter = $modal.find('.modal-footer');
-		
+
 		$(modalBody).empty();
 		$(modalFooter).empty();
 		$(modalHeader).empty();
@@ -335,7 +335,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 					iframe.postMessage({metexplore_idBioSource:idBioSource,
 						 metexplore_nbActions:1,
 						 metexplore_actions:[
-						 	{name:'map', 
+						 	{name:'map',
 								params:['Metabolite','name'],
 	   							datas:[mydatastring]
 							}
@@ -399,7 +399,7 @@ function set_idtable(url, callback){
 			                {
 			                    "sExtends":    "collection",
 			                    "sButtonText": "Export",
-			                    "aButtons":    [ 
+			                    "aButtons":    [
 			                    	{
 					                    "sExtends": "csv",
 					                    "sButtonText": "csv",
@@ -422,7 +422,7 @@ function set_idtable(url, callback){
 					"sPaginationType": "full_numbers",
 					"iDisplayLength": 100,
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumns": [ 
+					"aoColumns": [
 					/* Secondary id */   null,
 					/* Primary id */  { "bSearchable": false,
 										"bVisible":    false },
@@ -460,7 +460,7 @@ function set_pathwaytable(){
 			                {
 			                    "sExtends":    "collection",
 			                    "sButtonText": "Export",
-			                    "aButtons":    [ 
+			                    "aButtons":    [
 			                    	{
 					                    "sExtends": "csv",
 					                    "sButtonText": "csv",
@@ -483,7 +483,7 @@ function set_pathwaytable(){
 					"sPaginationType": "full_numbers",
 					"iDisplayLength": 100,
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumns": [ 
+					"aoColumns": [
 			/* Name */   null,
 			/* ID */  { "bSearchable": false,
 						"bVisible":    false },
@@ -497,11 +497,35 @@ function set_pathwaytable(){
 	return pathwayTable;
 }
 
+// Sort function for retention times, since they have a custom format of
+// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return a - b;
+};
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return b - a;
+};
+
 function set_peaktable(url, callback){
 	var peakTable = $('#peak-table').dataTable( {
 					// "sDom": '<"toolbar">frtip',
 					// "sDom": 't',
 					"sAjaxSource": url,
+					"aoColumnDefs": [{
+							"aTargets": [2],
+							"sType": "formatted-rt",
+							"mRender": function(rt, type, full) {
+								var minutes = Math.floor(rt / 60);
+								var seconds = Math.round(rt % 60); // Rounded to nearest second
+								return rt + " ("+ minutes + " min "+ seconds + " s)";
+							}
+						}],
 					"sDom": '<"peak-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
@@ -515,7 +539,7 @@ function set_peaktable(url, callback){
 			                {
 			                    "sExtends":    "collection",
 			                    "sButtonText": "Export",
-			                    "aButtons":    [ 
+			                    "aButtons":    [
 			                    	{
 					                    "sExtends": "csv",
 					                    "sButtonText": "csv",
@@ -563,7 +587,7 @@ function set_comparisontable(){
 			                {
 			                    "sExtends":    "collection",
 			                    "sButtonText": "Export",
-			                    "aButtons":    [ 
+			                    "aButtons":    [
 			                    	{
 					                    "sExtends": "csv",
 					                    "sButtonText": "csv",
@@ -588,7 +612,7 @@ function set_comparisontable(){
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
 	});
 
-	return comparisonTable; 
+	return comparisonTable;
 }
 
 function set_potentialstable(){
@@ -606,7 +630,7 @@ function set_potentialstable(){
 			                {
 			                    "sExtends":    "collection",
 			                    "sButtonText": "Export",
-			                    "aButtons":    [ 
+			                    "aButtons":    [
 			                    	{
 					                    "sExtends": "csv",
 					                    "sButtonText": "csv",
@@ -631,5 +655,5 @@ function set_potentialstable(){
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
 	});
 
-	return potentialsTable; 
+	return potentialsTable;
 }
