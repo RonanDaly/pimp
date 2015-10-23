@@ -414,7 +414,7 @@ def get_identification_table(request, project_id, analysis_id):
 		project = Project.objects.get(pk=project_id)
 		dataset = analysis.dataset_set.all()[0]
 		compounds = Compound.objects.filter(peak__dataset=dataset)
-		data = [[str(compound.secondaryId),str(compound.id),str(compound.peak.secondaryId)," ".join(list(set([x.lower() for x in compound.repositorycompound_set.values_list('compound_name', flat=True).distinct()]))),str(compound.formula),str(compound.ppm),"Identified" if compound.identified == "True" else "Annotated",str(compound.peak.polarity)] for compound in compounds]
+		data = [[str(compound.secondaryId),str(compound.id),str(compound.peak.secondaryId)," ".join(list(set([x.lower() for x in compound.repositorycompound_set.values_list('compound_name', flat=True).distinct()]))),str(compound.formula),str(compound.ppm),str(round(compound.peak.rt, 2)),"Identified" if compound.identified == "True" else "Annotated",str(compound.peak.polarity)] for compound in compounds]
 
 		# print data
 

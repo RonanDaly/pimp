@@ -93,10 +93,6 @@ Run the following commands with the virtualenv still active
 3. Setup the default configuration parameters by using the Django shell:
 
         (venv)$ python populate_pimp.py
-
-4. Create the temporary directory for django:
-
-        (venv)$ sudo mkdir -p /opt/django/django-cache
 	
 4. Finally, restart django for the PiMP/Frank app.
 
