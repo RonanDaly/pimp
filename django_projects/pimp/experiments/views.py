@@ -46,6 +46,9 @@ from experiments import tasks
 # debug libraries
 import timeit
 
+
+import pickle
+
 from django.views.decorators.cache import cache_page
 
 def experiment(request, project_id):
@@ -688,6 +691,13 @@ def analysis_result(request, project_id, analysis_id):
 		print "pathway time",str(pathway_stop-pathway_start)
 		# print intensity_list
 		# print intensity_list[0]
+
+		# Get the TICs
+		tics = {}
+		for attribute in member_list:
+			tics[attribute] = create_member_tic(attribute.id)
+
+
 		c = {'member_list': member_list,
 			'sample_list': sample_list,
 			'pathway_list': pathway_list,
@@ -701,7 +711,8 @@ def analysis_result(request, project_id, analysis_id):
 			'comparisons': comparisons,
 			'pca_data_point': pca_info,
 			'comparison_hits_list': comparison_hits_list,
-			'potential_hits': potential_hits
+			'potential_hits': potential_hits,
+			'tics':tics,
 		}
 		# print len(peak_set)
 		return render(request, 'base_result3.html', c)
@@ -1215,3 +1226,126 @@ def get_compounds_from_peak_id(request, project_id, analysis_id):
 		message = "Blaaaaaaa got somthing on the server!!!"
 		response = simplejson.dumps(compoundsList)
 		return HttpResponse(response, content_type='application/json')
+
+
+
+def create_member_tic(attribute_id):
+	attribute = Attribute.objects.get(id=attribute_id)
+	attribute_name = attribute.name
+	sampleList = attribute.sample.all()
+
+	sampleCurveList = {}
+
+	for sample in sampleList :
+		sample_name = sample.name
+		if not sample.samplefile.posdata :
+			posdata = "None"
+		else:
+			posmzxmlfile = sample.samplefile.posdata
+			if not posmzxmlfile.tic:
+				print "over here"
+				posdata = getIntensity(posmzxmlfile)
+				# print "posdata ",[i[0] for i in posdata]
+				x_axis = [i[0] for i in posdata]
+				y_axis = [i[1] for i in posdata]
+				x = pickle.dumps(x_axis)
+				y = pickle.dumps(y_axis)
+				mean = np.mean(y_axis)
+				median = np.median(y_axis)
+				print "pos median : ",median
+				print "pos mean : ",mean
+				posBarTic = [mean,median]
+
+				# print x
+
+				print "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+
+				curve = Curve.objects.create(x_axis=x,y_axis=y,mean=mean,median=median)
+				curve.save()
+				posmzxmlfile.tic = curve
+				posmzxmlfile.save()
+
+				print posmzxmlfile.tic.x_axis
+				# posintensity = posdata[0]
+				# postime = posdata[1]
+			else:
+				print "tic exist"
+				# print str(posmzxmlfile.tic.x_axis)
+				x_axis = pickle.loads(str(posmzxmlfile.tic.x_axis))
+				y_axis = pickle.loads(str(posmzxmlfile.tic.y_axis))
+				print "pos median : ",posmzxmlfile.tic.median
+				print "pos mean : ",posmzxmlfile.tic.mean
+				posBarTic = [posmzxmlfile.tic.mean,posmzxmlfile.tic.median]
+				posdata = []
+				print "after loads"
+				for i in range(len(x_axis)):
+					posdata.append([float(x_axis[i]),float(y_axis[i])])
+				print "after for"
+					# print posdata
+		if not sample.samplefile.negdata :
+			negdata = "None"
+		else:
+			negmzxmlfile = sample.samplefile.negdata
+			if not negmzxmlfile.tic:
+				print "over there :)"
+				negdata = getIntensity(negmzxmlfile)
+				x_axis = [i[0] for i in negdata]
+				y_axis = [i[1] for i in negdata]
+				x = pickle.dumps(x_axis)
+				y = pickle.dumps(y_axis)
+				mean = np.mean(y_axis)
+				median = np.median(y_axis)
+				print "neg median : ",median
+				print "neg mean : ",mean
+				negBarTic = [mean,median]
+
+				curve = Curve.objects.create(x_axis=x,y_axis=y,mean=mean,median=median)
+				curve.save()
+				negmzxmlfile.tic = curve
+				negmzxmlfile.save()
+			else:
+				print "tic exist"
+				x_axis = pickle.loads(str(negmzxmlfile.tic.x_axis))
+				y_axis = pickle.loads(str(negmzxmlfile.tic.y_axis))
+				print "neg median : ",negmzxmlfile.tic.median
+				print "neg mean : ",negmzxmlfile.tic.mean
+				negBarTic = [negmzxmlfile.tic.mean,negmzxmlfile.tic.median]
+				negdata = []
+				for i in range(len(x_axis)):
+					negdata.append([float(x_axis[i]),float(y_axis[i])])
+		# fileList = [sample_name,posdata,negdata,posBarTic,negBarTic]
+		fileList = {'pos': posdata,'neg': negdata}
+		sampleCurveList[sample_name] = fileList
+
+	# print attributeResponse
+	# ++++++++++++++++++++++++++++++++++++++ Previous version of group tic creation ++++++++++++++++++++++++++++++++++++++
+	# if not Attribute.objects.get(id=attribute_id).ticgroup.postic :
+	# 	posticfile = "None"
+	# else:
+	# 	posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
+	# 	# print posticfile
+	# if not Attribute.objects.get(id=attribute_id).ticgroup.negtic :
+	# 	negticfile = "None"
+	# else:
+	# 	negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
+	# fileList = [attribute_name,posticfile,negticfile]
+	# attributeResponse = [attribute_name, sampleCurveList]
+	return sampleCurveList
+
+def getIntensity(mzxmlFile):
+	xcms = importr("xcms")
+	intensity = []
+	file = xcms.xcmsRaw(mzxmlFile.file.path)
+	print "file opened"
+	intensity = [int(i) for i in list(file.do_slot("tic"))]
+	time = [str(i) for i in list(file.do_slot("scantime"))]
+	print "intensity list created"
+	# scan = xcms.getScan(file, 1)
+	# print "scan : ",scan
+	# print intensity
+	# print time
+	lineList = []
+	for i in range(len(intensity)):
+		lineList.append([float(time[i]),intensity[i]])
+	# print lineList 
+	return lineList

@@ -347,6 +347,110 @@
 		                ]
         	});
 
+
+			{% for group, sample_dict in tics.items %}
+			$('#tic_pos{{group.id}}').highcharts({
+				credits: {
+					enabled: false,
+				},
+				title: {
+					text: "{{group.name| capfirst}} (POS)"
+				},
+				chart: {
+					backgroundColor: "#ffffff",
+					zoomType: 'x',
+				},
+				exporting: {
+	            	enabled: true,
+	            	filename: "{{group.name | capfirst}}" + "_positive_TIC",
+			    },
+				xAxis: {
+					title: {
+						text: "Retention time (s)",
+					}, 
+				},
+				yAxis: {
+					title: {
+						text: "Abundance",
+					},
+					min: 0,
+				},
+				plotOptions: {
+					area : {
+						marker: {
+							enabled: false,
+						},
+					},
+					series: {
+        				fillOpacity: 0.1,
+        			},
+				},
+				series: [
+					{% for sample,pos_neg in sample_dict.items %}
+					{	
+						type: 'area',
+						name: '{{sample}}',
+						data: {{pos_neg.pos}},
+					},
+					{% endfor %}
+					]
+			});
+			{% endfor %}
+
+
+
+			{% for group, sample_dict in tics.items %}
+			$('#tic_neg{{group.id}}').highcharts({
+				credits: {
+					enabled: false,
+				},
+				title: {
+					text: "{{group.name | capfirst}} (NEG)"
+				},
+				chart: {
+					backgroundColor: "#ffffff",
+					zoomType: 'x',
+				},
+				exporting: {
+			            	enabled: true,
+			            	filename: "{{group.name | capfirst}}" + "_negative_TIC",
+			    },
+				xAxis: {
+					title: 
+					{
+						text: "Retention time (s)",
+					},
+				},
+				yAxis: {
+					title:
+					{
+						text: "Abundance",
+					},
+					min: 0,
+				},
+				plotOptions: {
+					area : {
+						marker: {
+							enabled: false,
+						},
+					},
+					series: {
+        				fillOpacity: 0.1,
+        			},
+				},
+				series: [
+					{% for sample,pos_neg in sample_dict.items %}
+					{	
+						type: 'area',
+						name: '{{sample}}',
+						data: {{pos_neg.neg}},
+					},
+					{% endfor %}
+					]
+			});
+			{% endfor %}
+
+
 			{% for comparison in comparisons %}
 			$('#comparison{{ comparison.id }}-volcano-plot').highcharts({
 				credits : {
@@ -1932,6 +2036,14 @@
 									<h3>Quality Control</h3>
 									<p>Principal Component Analysis</p>
 									<div class="" id="pca_test"></div>
+
+									<p>Total Ion Chromatograms</p>
+									{% for member in member_list %}
+									<div class="" id="tic_pos{{member.id}}"></div>
+									{% endfor %}
+									{% for member in member_list %}
+									<div class="" id="tic_neg{{member.id}}"></div>
+									{% endfor %}
 
 									<h3>Results</h3>
 									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
