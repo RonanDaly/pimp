@@ -2,6 +2,7 @@ import random
 import re
 import jsonpickle
 import sys
+import numpy as np
 
 
 class NetworkSampler(object):
@@ -48,7 +49,7 @@ class NetworkSampler(object):
 		for m in self.peakset.measurements:
 			print "Measurement: " + str(m.id)
 			for k in m.annotations:
-				print "  " + str(k.formula) + "(" + str(m.annotations[k]) + "): " + str(1.0*self.peakset.posterior_counts[m][k]/self.n_samples)
+				print "  " + str(k.formula) + "(" + str(m.annotations[k]) + "): " + str(1.0*self.peakset.posterior_probability[m][k])
 
 
 	def prob_only_sample(self,record = True,verbose = False):
@@ -102,17 +103,17 @@ class NetworkSampler(object):
 				for k in m.annotations:
 					tempprobs[k] = m.annotations[k] * (self.delta + self.in_degree[k])
 					totalprob+=tempprobs[k]
-
+				
 				u = random.random()*totalprob
 				cumprob = 0.0
-				choosepos = -1
 				for k in m.annotations:
-					cumprob += m.annotations[k] * (self.delta + self.in_degree[k])
+					cumprob += tempprobs[k]
 					choose = k
 					if u <= cumprob:
 						break
 
 				self.assignment[m] = choose
+
 				for a in self.adjacency[choose]:
 					self.in_degree[a] += 1
 
