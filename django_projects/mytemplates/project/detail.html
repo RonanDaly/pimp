@@ -1361,7 +1361,7 @@ $(document).ready(function() {
 			                // categories: response[1][1],
 			                // maxZoom: 14 * response[1][0].length, // fourteen days
 			                title: {
-			                    text: 'Retention time'
+			                    text: 'Retention time (s)'
 			                },
 			                // startOnTick: true,
 	                		// endOnTick: true,
@@ -1371,7 +1371,7 @@ $(document).ready(function() {
 			                title: {
 			                    text: 'Intensity'
 			                },
-			                // min: 0,
+			                min: 0,
 			            },
 			            tooltip: {
 			                shared: true,
@@ -1544,7 +1544,7 @@ $(document).ready(function() {
 			                // categories: response[1][1],
 			                // maxZoom: 14 * response[1][0].length, // fourteen days
 			                title: {
-			                    text: 'Retention time'
+			                    text: 'Retention time (s)'
 			                },
 			                // startOnTick: true,
 	                		// endOnTick: true,
@@ -1554,7 +1554,7 @@ $(document).ready(function() {
 			                title: {
 			                    text: 'Intensity'
 			                },
-			                // min: 0,
+			                min: 0,
 			            },
 			            tooltip: {
 			                shared: true,
@@ -1981,7 +1981,7 @@ $(document).ready(function() {
 	<div id="project-administration" class="tab-pane active" style="background-color: rgb(253, 253, 253);">
 		<div class="span8 paddingleft"><h3>Project administration</h3></div>
 		{% ifnotequal permission 'read' %}
-		<div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit title</a></div>
+		<div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="{% url 'edit_title' project.id %}"><i class="icon-edit icon-white"></i> Edit title</a></div>
 		{% endifnotequal %}
 		<div class="container-fluid">
 			<div class="row-fluid">

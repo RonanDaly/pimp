@@ -9,14 +9,22 @@ class ProjectForm(forms.Form):
                         	widget=forms.TextInput(attrs={'placeholder': 'Title'}),
                             label=_("Title"),
                             error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-	description = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'Descrition'}),
-							label=_("Descrition"),
+	description = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'Description'}),
+							label=_("Description"),
 							required=False)
 
 class EditDescriptionForm(forms.Form):
 	description = forms.CharField(widget=forms.Textarea(attrs=attrs_dict),
 							label=_("Description"),
 							required=False)
+
+class EditTitleForm(forms.Form):
+	title = forms.RegexField(regex=r'^[\w.@+-]+$',
+	                        max_length=30,
+                        	widget=forms.TextInput(attrs=attrs_dict),
+                            label=_('Title'),
+                            error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+
 
 class AddUserForm(forms.Form):
 	name = forms.RegexField(regex=r'^[\w.@+-]+$',

@@ -21,7 +21,7 @@
     	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/dataTables.tableTools.css" media="screen" />
     	<link rel="stylesheet" href="{{ STATIC_URL }}css/result.css">
     	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/bootstrap-modal.css" media="screen" />
-    	
+
 		<script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap-modalmanager.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables1.10.4.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables.columnFilter.js"></script>
@@ -35,7 +35,7 @@
 		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-slider.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/pimp_analysis_results_components.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/gp_chart.js"></script>
-    	
+
 		<audio id="marseillaise" src="{{ STATIC_URL }}other/marseillaise.wav" preload="auto"></audio>
     	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
     	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -84,8 +84,8 @@
 		var ppm = 3;
 		var rtwindow = 120;
 		var rightPanelPreference = "summary";
-		var fullScreen = false; 
-		var right_panel = true; 
+		var fullScreen = false;
+		var right_panel = true;
 		var staticUrl = "{{ STATIC_URL }}";
 		var metexploreInfoUrl = "{% url 'get_metexplore_info' project.id analysis.id %}";
 		var id_table_url = "{% url 'get_identification_table' project.id analysis.id %}";
@@ -112,7 +112,7 @@
 
 				var modalLabel = $modal.find('#myModalLabel');
 				var modalBody = $modal.find('.modal-body');
-				
+
 				$(modalLabel).empty();
 				$(modalBody).empty();
 
@@ -120,7 +120,7 @@
 
 				var frame = $('<iframe id="frame" src="http://www.kegg.jp/kegg-bin/show_pathway?map00473/C00022%09pink,pink/C00133%09pink,pink/C00041%09pink,pink/C00993%09pink,pink" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
 				$(frame).appendTo($modal.find('.modal-body'));
-				
+
 				$modal.modal();
 
 			}
@@ -334,7 +334,7 @@
 	                name: '{{ serie.0 }}',
 	                data: [{% for point in serie %}
 		                		{% if not forloop.first %}
-		                			{ 
+		                			{
 		                				name: '{{ point.0 }}',
 		                				x: {{ point.1 }},
 		                				y: {{ point.2 }}
@@ -346,6 +346,110 @@
 		                {% endfor %}
 		                ]
         	});
+
+
+			{% for group, sample_dict in tics.items %}
+			$('#tic_pos{{group.id}}').highcharts({
+				credits: {
+					enabled: false,
+				},
+				title: {
+					text: "{{group.name| capfirst}} (POS)"
+				},
+				chart: {
+					backgroundColor: "#ffffff",
+					zoomType: 'x',
+				},
+				exporting: {
+	            	enabled: true,
+	            	filename: "{{group.name | capfirst}}" + "_positive_TIC",
+			    },
+				xAxis: {
+					title: {
+						text: "Retention time (s)",
+					}, 
+				},
+				yAxis: {
+					title: {
+						text: "Abundance",
+					},
+					min: 0,
+				},
+				plotOptions: {
+					area : {
+						marker: {
+							enabled: false,
+						},
+					},
+					series: {
+        				fillOpacity: 0.1,
+        			},
+				},
+				series: [
+					{% for sample,pos_neg in sample_dict.items %}
+					{	
+						type: 'area',
+						name: '{{sample}}',
+						data: {{pos_neg.pos}},
+					},
+					{% endfor %}
+					]
+			});
+			{% endfor %}
+
+
+
+			{% for group, sample_dict in tics.items %}
+			$('#tic_neg{{group.id}}').highcharts({
+				credits: {
+					enabled: false,
+				},
+				title: {
+					text: "{{group.name | capfirst}} (NEG)"
+				},
+				chart: {
+					backgroundColor: "#ffffff",
+					zoomType: 'x',
+				},
+				exporting: {
+			            	enabled: true,
+			            	filename: "{{group.name | capfirst}}" + "_negative_TIC",
+			    },
+				xAxis: {
+					title: 
+					{
+						text: "Retention time (s)",
+					},
+				},
+				yAxis: {
+					title:
+					{
+						text: "Abundance",
+					},
+					min: 0,
+				},
+				plotOptions: {
+					area : {
+						marker: {
+							enabled: false,
+						},
+					},
+					series: {
+        				fillOpacity: 0.1,
+        			},
+				},
+				series: [
+					{% for sample,pos_neg in sample_dict.items %}
+					{	
+						type: 'area',
+						name: '{{sample}}',
+						data: {{pos_neg.neg}},
+					},
+					{% endfor %}
+					]
+			});
+			{% endfor %}
+
 
 			{% for comparison in comparisons %}
 			$('#comparison{{ comparison.id }}-volcano-plot').highcharts({
@@ -422,7 +526,7 @@
 	            },
 	            series: [{
 	                name: 'Adj. P-value > 0.05',
-	                data: [{% for peak in peak_comparison_list %} 
+	                data: [{% for peak in peak_comparison_list %}
 		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
 		                			{% if compinfo.adjPvalue > 0.05 %}
 		                			{
@@ -437,7 +541,7 @@
 		            },
 		            {
 	                name: 'Adj. P-value &lt; 0.05',
-	                data: [{% for peak in peak_comparison_list %} 
+	                data: [{% for peak in peak_comparison_list %}
 		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
 		                			{% if compinfo.adjPvalue < 0.05 %}
 		                			{
@@ -453,7 +557,7 @@
             	]
         	});
 			{% endfor %}
-			
+
 
 			// idTable.$('tr').click( function () {
 
@@ -524,7 +628,7 @@
 
 					var modalLabel = $modal.find('#myModalLabel');
 					var modalBody = $modal.find('.modal-body');
-				
+
 					$(modalLabel).empty();
 					$(modalBody).empty();
 
@@ -552,11 +656,11 @@
 
 							$(pathwaySelection).appendTo($modal.find('.modal-body'));
 							$(frame).appendTo($modal.find('.modal-body'));
-						
+
 							$modal.modal();
 
 							$('#drapeau_francais').click( function(){
-								if (marseillaise) { 
+								if (marseillaise) {
 									marseillaise = false;
 									document.getElementById('marseillaise').pause();
 								}
@@ -703,7 +807,7 @@
 				var modalFooter = $modal.find('.modal-footer');
 
 				// Empty modal window
-				
+
 				$(modalBody).empty();
 				// $(modalFooter).empty();
 				$(modalHeader).empty();
@@ -717,7 +821,7 @@
 		            	console.log(response);
 		            	if (response.length > 1){
 		            		var pluralize_compound = "compounds";
-		            	} 
+		            	}
 		            	else {
 		            		var pluralize_compound = "compound";
 		            	}
@@ -770,7 +874,7 @@
 		            	});
 
 		            	$modal.modal();
-		            	
+
 		            },
 		            error: function(){
 		        		alert("Error");
@@ -866,7 +970,7 @@
 		            	$(compoundTitle).appendTo($(innerSidePanel));
 		            	$(newDom).appendTo($(scrollBox));
 		            	$(scrollBox).appendTo($(innerSidePanel));
-		            	
+
 		            },
 		            error: function(){
 		        		alert("Error");
@@ -889,7 +993,7 @@
 			                {
 			                    "sExtends":    "collection",
 			                    "sButtonText": "Export",
-			                    "aButtons":    [ 
+			                    "aButtons":    [
 			                    	{
 					                    "sExtends": "csv",
 					                    "sButtonText": "csv",
@@ -1012,7 +1116,7 @@
 		            	$(compoundTitle).appendTo($(innerSidePanel));
 		            	$(newDom).appendTo($(scrollBox));
 		            	$(scrollBox).appendTo($(innerSidePanel));
-		            	
+
 		            },
 		            error: function(){
 		        		alert("Error");
@@ -1271,7 +1375,7 @@
 			        });
 				}
 				else {
-					peaksChart = true;	
+					peaksChart = true;
 				}
 			// debug uncomment to here
 			}
@@ -1321,8 +1425,9 @@
 		            },
 		            yAxis: {
 		                title: {
-		                    text: 'Relative abundance'
+		                    text: 'Measured abundance'
 		                },
+		                min: 0,
 		            },
 		            tooltip: {
 		                shared: true,
@@ -1369,7 +1474,7 @@
         				type: 'area',
 	                	name: response[i][0],
 	                	data : response[i][1]
-        			});	
+        			});
         		}
     			for (var i=0;i<$(div).highcharts().series.length;i++){
     				if ($(div).highcharts().series[i].data.length == 0) {
@@ -1515,7 +1620,7 @@
 						// tooltip: {
 						// 	pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
 						// }
-					}, { 
+					}, {
 						name: 'Standard deviation',
 						type: 'errorbar',
 						data: errorBar,
@@ -1549,7 +1654,7 @@
 
 			function averagePopUp(categories, average, errorBar){
 				var $modal = $("#full-width");
-				
+
 				var modalBody = $modal.find('.modal-body');
 				var modalFooter = $modal.find('.modal-footer');
 				var modalHeader = $modal.find('.modal-header');
@@ -1566,7 +1671,7 @@
 				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
 				var modalLabel = $modal.find('#myModalLabel');
 				$(modalLabel).text("Intensity comparison");
-				var chartWidth = $modal.width(); 
+				var chartWidth = $modal.width();
 				$(modalBody).highcharts({
 					credits : {
 						enabled : false
@@ -1614,7 +1719,7 @@
 						tooltip: {
 							pointFormat: '<span style="font-weight: bold; color: {series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>'
 						}
-					}, { 
+					}, {
 						name: 'Standard deviation',
 						type: 'errorbar',
 						data: errorBar,
@@ -1640,7 +1745,7 @@
 				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
 				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
 				var modalLabel = $modal.find('#myModalLabel');
-				$(modalLabel).text("Peaks chromatogram - RT: "+parseFloat(retentionTime).toFixed(1)+" (s) - RT window: "+rtwindow+" (s)");
+				$(modalLabel).text("All peak chromatograms RT: "+parseFloat(retentionTime).toFixed(1)+"s (+/- "+rtwindow+"s) Mass: " + parseFloat(mass).toFixed(4) + " (+/- " + parseFloat(ppm) + " ppm)");
 				var chartWidth = $modal.width()/4;
 				var j = 0;
 				for (var i=1;i<response.length;i++){
@@ -1649,10 +1754,10 @@
 					}
 					var div = $('<div class="span3" style="margin:0px;width:'+chartWidth+'px"></div>');
 					$(div).highcharts({
-	            		credits : {
+						credits : {
     						enabled : false
     					},
-			        	chart: {
+						chart: {
 			                zoomType: 'x',
 			                width: chartWidth,
 			                height: 300,
@@ -1660,16 +1765,13 @@
 			                plotBackgroundColor: null,
 			                plotBorderWidth: null,
 			                plotShadow: false,
+			            },
 			            title: {
-			                text: 'Peak chromatogram'
+			                text: response[i][0]
 			            },
-			            subtitle: {
-			                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: 'Peak_' + response[i][0] + "_chromatogram_rt_" + parseFloat(retentionTime).toFixed(3),
-			            },
+			            // subtitle: {
+			            //     text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+			            // },
 			            xAxis: {
 			                title: {
 			                    text: 'Retention time (s)'
@@ -1678,18 +1780,18 @@
 			            },
 			            yAxis: {
 			                title: {
-			                    text: 'Relative abundance'
+			                    text: 'Measured abundance'
 			                },
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '',
-			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
-
+			                min: 0,
 			            },
 			            legend: {
-			                enabled: true
+			                enabled: false
 			            },
+			            series: [{
+			                type: 'area',
+			                name: response[i][0],
+			                data : response[i][1]
+			            }],
 			    		plotOptions: {
 			                area: {
 			                    marker: {
@@ -1715,12 +1817,9 @@
                 				fillOpacity: 0.1
 	            			}
 			            },
-			            series: [{
-			                type: 'area',
-			                name: response[i][0],
-			                data : response[i][1]
-			            }]
-			        	}
+
+
+
 		    		});
 					$(div).appendTo($(row));
 					j += 1;
@@ -1888,7 +1987,7 @@
 										</table>
 									{% endwith %}
 
-									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed: 
+									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed:
 											{% for comparison in comparisons %}
 											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} relative to {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
 											{% endfor %}
@@ -1913,7 +2012,7 @@
 											<li>B: acetonitrile.</li>
 										</ul>
 									</p>
-									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p> 
+									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p>
 									<p>The chromatography system was coupled to an orbitrap <b>Exactive/Q-Exactive</b> running at <b>50,000/70,000</b> resolution in positive/negative switching mode.</p>-->
 
 									<h3>Data processing</h3>
@@ -1933,10 +2032,18 @@
 
 									<!--<h3>Normalization/transformation</h3>
 									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
-									
+
 									<h3>Quality Control</h3>
 									<p>Principal Component Analysis</p>
 									<div class="" id="pca_test"></div>
+
+									<p>Total Ion Chromatograms</p>
+									{% for member in member_list %}
+									<div class="" id="tic_pos{{member.id}}"></div>
+									{% endfor %}
+									{% for member in member_list %}
+									<div class="" id="tic_neg{{member.id}}"></div>
+									{% endfor %}
 
 									<h3>Results</h3>
 									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
@@ -2103,7 +2210,7 @@
 
 									<h4>Metabolic Maps</h4>
 									<p>The identified and annotated metabolites mapped to {{pathway_list|length}} KEGG metabolic maps. {{pathway_list|significant_pathway_coverage}} metabolic maps had greater than 75% coverage.</p>
-								
+
 									<!--<h3>Disclaimer</h3>
 									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
 								</div>
@@ -2126,6 +2233,7 @@
 						                  <th>Name</th>
 						                  <th>Formula</th>
 						                  <th>ppm</th>
+															<th>RT (s)</th>
 						                  <th>Identification</th>
 						                  <th>Polarity</th>
 						                </tr>
@@ -2202,7 +2310,7 @@
 						              		 <td{% autoescape off %}{% if comp.is_significant %}{{ comp|fold_change_colour }}{% endif %}{% endautoescape %}>{% if comp.logFC != 0 %}{{ comp.logFC|floatformat:"-2" }}{% else %}NA{% endif %}</td>
 						              		 {% endfor %}
 						              	</tr>
-						                {% endfor %}	
+						                {% endfor %}
 						              </tbody>
 						            </table>
 								</div>
@@ -2227,7 +2335,7 @@
 
 						               	  <th rowspan="2">Peak id</th>
 						                  <th rowspan="2">Mass</th>
-						                  <th rowspan="2">RT</th>
+						                  <th rowspan="2">RT (s)</th>
 						                  {% for member in member_list %}
 						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 						                  {% endfor %}
@@ -2323,7 +2431,7 @@
 						              		<td>{{ compinfo.logOdds|floatformat:"-2" }}</td>
 						              		{% endwith %}
 						              	</tr>
-						                {% endfor %}	
+						                {% endfor %}
 						              </tbody>
 						            </table>
 								</div>
@@ -2336,7 +2444,7 @@
 							</div>
 						</div>
 					</div>
-				</div>			
+				</div>
 				{% endfor %}
 			</div>
 		</div>

@@ -10,5 +10,5 @@ class FileForm(forms.Form):
     #                    	widget=forms.TextInput(attrs={'placeholder': 'Title'}),
     #                        label=_("Title"),
     #                        error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-	#description = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'Descrition'}),
-	#						label=_("Descrition"))
+	#description = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'Description'}),
+	#						label=_("Description"))
