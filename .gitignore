@@ -107,3 +107,9 @@ django_projects/pimp_data/
 *.msp
 
 .idea
+
+# Virtual Environment Directories
+venv
+
+# Local environment files
+.env
