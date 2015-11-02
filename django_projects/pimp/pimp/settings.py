@@ -1,18 +1,40 @@
 # Django settings for pimp project.
 import os
-
 import djcelery
+import distutils.util as du
+
+def getNeededString(name):
+    if not os.environ.has_key(name):
+        raise Exception('Environment variable ' + name + ' is needed but is not defined')
+
+def getString(name, default):
+    if not os.environ.has_key(name):
+        return default
+    return os.environ[name]
+
+def getBool(name, default):
+    if not os.environ.has_key(name):
+        return default
+    return bool(du.strtobool(os.environ[name]))
+
+def getList(name, default):
+    if not os.environ.has_key(name):
+        return default
+    return os.environ[name].split(',')
+
 djcelery.setup_loader()
 
 CELERYD_LOG_COLOR = False
 
-DEBUG = False
+DEBUG = getBool('PIMP_DEBUG', False)
 TEMPLATE_DEBUG = DEBUG
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Set to True to enable registration
 REGISTRATION_OPEN = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '130.209.227.67']
+ALLOWED_HOSTS = getList('PIMP_ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -29,16 +51,22 @@ DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
 
 MANAGERS = ADMINS
 
+DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', None)
+if DATABASE_FILENAME is None:
+    DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
+else:
+    DATABASE_NAME = os.path.join(BASE_DIR, DATABASE_FILENAME)
+
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pimp_prod',
+        'ENGINE': getNeededString('PIMP_DATABASE_ENGINE'),
+        'NAME': DATABASE_NAME,
         # 'NAME': '/Users/yoanngloaguen/Documents/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
+        'USER': getString('PIMP_DATABASE_USER', ''),                      # Not used with sqlite3.
+        'PASSWORD': getString('PIMP_DATABASE_PASSWORD', ''),                  # Not used with sqlite3.
+        'HOST': getString('PIMP_DATABASE_HOST', ''),                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': getString('PIMP_DATABASE_PORT', ''),                      # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -70,7 +98,10 @@ USE_TZ = False
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
-MEDIA_ROOT = '/opt/django/data/pimp_data/'
+MEDIA_ROOT = getString('PIMP_MEDIA_ROOT',os.path.join(os.path.dirname(BASE_DIR), 'pimp_data'))
+
+
+#MEDIA_ROOT = '/opt/django/data/pimp_data/'
 #MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -94,7 +125,7 @@ STATICFILES_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     # '/Users/yoanngloaguen/Documents/django_projects/pimp/static/',
-    '/opt/django/projects/django_projects/static/',
+    os.path.join(os.path.dirname(BASE_DIR), 'static'),
 )
 
 # List of finder classes that know how to find static files in
@@ -131,7 +162,7 @@ ROOT_URLCONF = 'pimp.urls'
 WSGI_APPLICATION = 'pimp.wsgi.application'
 
 TEMPLATE_DIRS = (
-    '/opt/django/projects/django_projects/mytemplates',
+    os.path.join(os.path.dirname(BASE_DIR), 'mytemplates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

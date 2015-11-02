@@ -211,7 +211,7 @@ def peak_discovery(request, project_id):
 
 		message = "got somthing on the server!!!"
 		response = simplejson.dumps(data)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 
 
@@ -304,7 +304,7 @@ def get_mzxml_tic(request, project_id, sample_id):
 		# response = simplejson.dumps(message)
 		fileList = [sample_name,posdata,negdata]
 		response = simplejson.dumps(fileList)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 def get_scan_data(mzxmlFile, rt):
 	xcms = importr("xcms")
@@ -342,7 +342,7 @@ def get_scan(request, project_id, sample_id):
 		print "my retention time : ",rt
 		message = "my sample id on the server side is : " + str(sample_id)
 		response = simplejson.dumps(data)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 def get_group_tic(request, project_id, group_id):
 	if request.is_ajax():
@@ -362,7 +362,7 @@ def get_group_tic(request, project_id, group_id):
 		response = simplejson.dumps(groupResponse)
 		
 		# response = simplejson.dumps(fileList)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 def create_member_tic(attribute_id):
 	attribute = Attribute.objects.get(id=attribute_id)
@@ -475,7 +475,7 @@ def get_tic(request, project_id, attribute_id):
 		print attribute_id
 		attributeResponse = create_member_tic(attribute_id)
 		response = simplejson.dumps(attributeResponse)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 	else:
 		print "request is not ajax, project: ",project_id," attribute: ",attribute_id
 
