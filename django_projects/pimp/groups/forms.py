@@ -8,7 +8,7 @@ class GroupForm(ModelForm):
         model = Group
         fields = ['name', ]
         widgets = {
-            'name': TextInput(attrs={'placeholder': 'Experiment name', 'class': 'form-control', 'id': 'group_input'}),  # 'class': 'groupInput'
+            'name': TextInput(attrs={'placeholder': 'Experiment name', 'class': 'form-control'}),
         }
         labels = {
             'name': 'Experiment name'

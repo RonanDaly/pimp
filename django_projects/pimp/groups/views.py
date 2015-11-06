@@ -151,11 +151,11 @@ def index(request, project_id):
 
     AttributeFormSet = formset_factory(AttributeForm, max_num=20, formset=RequiredFormSet)
 
-    SampleAttributeFormSet = formset_factory(SampleAttributeForm, extra=1, formset=RequiredFormSet)
+    SampleAttributeFormSet = formset_factory(SampleAttributeForm, formset=RequiredFormSet)
 
     try:
         project = Project.objects.get(pk=project_id)
-        user = request.user
+        user = request.user;
         permission = project.userproject_set.get(user=user).permission
     except Project.DoesNotExist:
         raise Http404  # Http404 not imported, so this except does nothing...
