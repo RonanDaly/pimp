@@ -5,6 +5,7 @@
 
 		{% block head %} {% endblock %}
 
+
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="shortcut icon" href="{{ STATIC_URL }}/img/logo_blue_white_icon_large.png">
@@ -22,6 +23,8 @@
 		{% endblock %}
 
 		{% block DataTables %} {% endblock %}
+
+        {% block custom_scripts_and_styles %}{% endblock %}
 
 		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/base.css" media="screen"/>
 
@@ -92,18 +95,22 @@
 			</div>
 		</div>
 
-		<div class="wrapper">
+        <div class="container">
 			<header class="greenlantern subhead">
 				<div class="container">
 					<h1 class="unimg"></h1>
 					<!div class="gpimg"><!/div>
 				</div>
 			</header>
-			<div class="container">
-					{% block content %} {% endblock %}
-			</div>
-			<div class="push"></div>
-		</div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-offset-1 col-md-10">
+                        {% block content %} {% endblock %}
+                </div>
+            </div>
+        </div>
+        <div class="push"></div>
 		<footer class="footer">
 			<div class="container">
 				<p>
