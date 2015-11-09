@@ -1732,7 +1732,7 @@ $(document).ready(function() {
 	<div id="project-administration" class="tab-pane active" style="background-color: rgb(253, 253, 253);">
 		<div class="span8 paddingleft"><h3>Project administration</h3></div>
 		{% ifnotequal permission 'read' %}
-		<div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit title</a></div>
+		<div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="{% url 'edit_title' project.id %}"><i class="icon-edit icon-white"></i> Edit title</a></div>
 		{% endifnotequal %}
 		<div class="container-fluid">
 			<div class="row-fluid">

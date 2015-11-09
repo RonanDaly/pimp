@@ -57,17 +57,6 @@ DATABASES = {
 #     }
 # }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/opt/django/django_cache',
-        'TIMEOUT': 60,
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000
-        }
-    }
-}
-
 AUTHENTICATION_BACKENDS = ('backends.EmailOrUsernameModelBackend','django.contrib.auth.backends.ModelBackend')
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
