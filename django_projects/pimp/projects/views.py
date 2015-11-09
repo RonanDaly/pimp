@@ -636,6 +636,9 @@ def adduser(request, project_id):
 				new_user_project = UserProject(user=user, project=project, date_joined=date_joined, permission=permission)
 				new_user_project.save()
 				return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+		else:
+			project = Project.objects.get(pk=project_id)
+			return render(request, 'project/adduser.html', {'form': form, 'project': project})
 	else:
 		form = AddUserForm()
 		p = Project.objects.get(pk=project_id)
