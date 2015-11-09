@@ -7,7 +7,8 @@ import datetime
 class Project(models.Model):
 
 	title = models.CharField(max_length=100)
-	owner = models.CharField(max_length=100)
+	# owner = models.CharField(max_length=100)
+	user_owner = models.ForeignKey(User,related_name='user_owner')
 	users = models.ManyToManyField(User, through='UserProject')
 	description = models.CharField(max_length=300, blank=True, null=True)
 	created = models.DateTimeField(editable=False)

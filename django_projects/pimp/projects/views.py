@@ -9,6 +9,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from data.models import Analysis
 
+
 from groups.models import Attribute, Group
 
 from fileupload.models import Sample, CalibrationSample, Curve
@@ -75,7 +76,7 @@ def newproject(request):
 			created = datetime.datetime.now()
 			user = request.user
 			name = user.username
-			new_project = Project.objects.create(title=title, description=description, owner=name, created=created, modified=created)
+			new_project = Project.objects.create(title=title, description=description, owner=user, created=created, modified=created)
 			new_user_project = UserProject.objects.create(user=user, project=new_project, date_joined=created, permission="admin")
 			request.session['new_project'] = True
 			print request.session['new_project']
@@ -664,8 +665,17 @@ def userpermission(request, project_id):
 def createdataset(request, file_path):
 	pimpXmlFile = file_path
 	
-
-
+def removeUserProject(request,project_id,user_id):
+	project = Project.objects.get(id = project_id)
+	user_to_remove = User.objects.get(id = user_id)
+	current_user = request.user
+	current_user_project = UserProject.objects.get(project=project,user=current_user)
+	remove_user_project = UserProject.objects.get(project = project, user = user_to_remove)
+	# We can only delete if the current user has admin rights and they are not trying to delete the owner!
+	if current_user_project.permission == 'admin':
+		if not user_to_remove is project.user_owner:
+			remove_user_project.delete()
+	return HttpResponseRedirect(reverse('project_detail', args=(project_id,)))
 
 
 
