@@ -402,17 +402,6 @@ $(document).ready(function() {
 			                            }
 			                        }
 			                    }
-			                    // states: {
-			                    //     hover: {
-			                    //         marker: {
-			                    //             enabled: false
-			                    //         }
-			                    //     }
-			                    // },
-			                    // tooltip: {
-			                    //     headerFormat: '<b>{series.name}</b><br>',
-			                    //     pointFormat: '{point.x} cm, {point.y} kg'
-			                    // }
 			                },
 			                series: {
 				                cursor: 'pointer',
@@ -421,25 +410,9 @@ $(document).ready(function() {
 			                            click: function() {
 			                            	console.log("retention time :" + this.x);
 			                            	massSpectra(sampleId, "POS", this.x);
-			                            	// alert('You just clicked the graph');
-			                                // hs.htmlExpand(null, {
-			                                //     pageOrigin: {
-			                                //         x: this.pageX,
-			                                //         y: this.pageY
-			                                //     },
-			                                //     headingText: this.series.name,
-			                                //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
-			                                //         this.y +' visits',
-			                                //     width: 200
-			                                // });
 			                            }
 			                        }
 			                    },
-				                // events: {
-				                //     click: function() {
-				                //         alert('You just clicked the graph');
-				                //     }
-				                // }
 				            }
 
 			            },
@@ -472,21 +445,15 @@ $(document).ready(function() {
 			            	filename: response[0].split(".")[0] + "_negative_TIC" 
 			            },
 			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
 			                title: {
 			                    text: 'Retention time'
 			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
 	                		showLastLabel: true
 			            },
 			            yAxis: {
 			                title: {
 			                    text: 'Intensity'
 			                },
-			                // min: 0,
 			            },
 			            tooltip: {
 			                shared: true,
@@ -526,17 +493,6 @@ $(document).ready(function() {
 			                            }
 			                        }
 			                    }
-			                    // states: {
-			                    //     hover: {
-			                    //         marker: {
-			                    //             enabled: false
-			                    //         }
-			                    //     }
-			                    // },
-			                    // tooltip: {
-			                    //     headerFormat: '<b>{series.name}</b><br>',
-			                    //     pointFormat: '{point.x} cm, {point.y} kg'
-			                    // }
 			                },
 			                series: {
 				                cursor: 'pointer',
@@ -545,25 +501,9 @@ $(document).ready(function() {
 			                            click: function() {
 			                            	console.log("retention time :" + this.x);
 			                            	massSpectra(sampleId, "NEG", this.x);
-			                            	// alert('You just clicked the graph');
-			                                // hs.htmlExpand(null, {
-			                                //     pageOrigin: {
-			                                //         x: this.pageX,
-			                                //         y: this.pageY
-			                                //     },
-			                                //     headingText: this.series.name,
-			                                //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
-			                                //         this.y +' visits',
-			                                //     width: 200
-			                                // });
 			                            }
 			                        }
 			                    },
-				                // events: {
-				                //     click: function() {
-				                //         alert('You just clicked the graph');
-				                //     }
-				                // }
 				            }
 			            },
 			    
@@ -595,21 +535,12 @@ $(document).ready(function() {
 					$modal.css('max-height', 'none');
 					$(modalBody).css('max-height', 'none');
 				}
-				// console.log('TIC height: '+$(negTIC).height());
 				$modal.modal();
-				// console.log('TIC height: '+$(posTIC).height());
             },
      		error: function(){
         		alert("Error");
         	}
     	});
-		
-		// calculate and set width to display chart
-		// console.log($('#main-container').width());
-		// $("#full-width").find('.modal-body').width($('#main-container').width());
-		// console.log($("#full-width").find('.modal-body').width());
-
-		// chart creation and render
 		
 	})
 
@@ -626,7 +557,6 @@ $(document).ready(function() {
 		            chart: {
 		                type: 'column',
 		                width: chartWidth
-		                // margin: [ 50, 50, 100, 80]
 		            },
 		            title: {
 		                text: memberName + ' ' + polarity + ' ' + type + ' TIC plot'
@@ -663,18 +593,6 @@ $(document).ready(function() {
 		            series: [{
 		                name: 'to_set',
 		                data: dataPoints,
-		                // dataLabels: {
-		                //     enabled: true,
-		                //     rotation: -90,
-		                //     color: '#FFFFFF',
-		                //     align: 'right',
-		                //     x: 4,
-		                //     y: 10,
-		                //     style: {
-		                //         fontSize: '13px',
-		                //         fontFamily: 'Verdana, sans-serif'
-		                //     }
-		                // }
 		            }]
 		        });
 	}
@@ -711,9 +629,7 @@ $(document).ready(function() {
             	var pos = false;
             	var posIndex;
             	var negIndex;
-            	console.log("ICICICICICICICICICI nombre de membre "+response[1].length);
             	for (var i=0;i<response[1].length;i++){
-            		console.log("ICICICICICICICICICI nombre de sample "+response[1][i][1].length);
             		for (var j=0;j<response[1][i][1].length;j++){
 	            		if (pos == false && response[1][i][1][j][1] != "None"){
 	            			pos = true;
@@ -724,7 +640,6 @@ $(document).ready(function() {
 	            			neg = true;
 	            			negIndex = i;
 	            		}
-	            		// console.log(i);
 	            		if (pos && neg){
 	            			console.log("ca marche bulle de savon!");
 	            			break;
@@ -830,24 +745,15 @@ $(document).ready(function() {
 			            },
 			            series: [{
 			                type: 'area',
-			                // name: response[1][pos_memberIndex][0],
 			                name: response[1][pos_memberIndex][1][pos_sampleIndex][0].split(".")[0],
 			                data : response[1][pos_memberIndex][1][pos_sampleIndex][1]
 			            }]
 		    		});
-					// console.log($(posTIC).highcharts().series);
-					console.log("response here ");
-					console.log(response);
 					for (var i=0;i<response[1].length;i++){
-						console.log("nombre de sample "+response[1][i].length);
 						for (var j=0;j<response[1][i][1].length;j++){
 		            		if ((response[1][i][1][j][1] != "None") && (i != pos_memberIndex || j != pos_sampleIndex)){
-		            			console.log("i "+i+" j "+j);
-		            			// console.log("sample name "+response[1][i][j][0]);
-		            			console.log("on ajoute une serie!!!");
 		            			$(posTIC).highcharts().addSeries({
 		            				type: 'area',
-				                	// name: response[1][i][0],
 				                	name: response[1][i][1][j][0].split(".")[0],
 				                	data : response[1][i][1][j][1]
 		            			});
@@ -884,9 +790,9 @@ $(document).ready(function() {
 					$modal.css('max-height', 'none');
 					$(modalBody).css('max-height', 'none');
 				}
-				// console.log('TIC height: '+$(negTIC).height());
+
 				$modal.modal();
-				// console.log('TIC height: '+$(posTIC).height());
+
             },
      		error: function(){
         		alert("Error");
@@ -913,14 +819,8 @@ $(document).ready(function() {
 			url: url,
 			data: data,
 			success: function(response){
-				console.log(response);
-				// response structure single polarity : [[sample1_name,[[time1,intensity1],[time2,intensity2],[...]]],[sample2_name,[[time1,intensity1],[time2,intensity2],[...]]]]
-				// response structure dual polarity : [[sample1_name,[[time1_neg,intensity1_neg],[time2_neg,intensity2_neg],[...]],[[time1_pos,intensity1_pos],[time2_pos,intensity2_pos],[...]]],[sample2_name,[[time1_neg,intensity1_neg],[time2_neg,intensity2_neg],[...]],[[time1_pos,intensity1_pos],[time2_pos,intensity2_pos],[...]]]]
-				// length of the response list represent the number of samples screened
-				// the lenght of the list containing the "time" and "intensity" points can vary between samples according to the peak found (from 1 to hundreds of points), if no peak have been found in the sample, the list is replaced by "None" statement. A sample can then contain "None" for one polarity and values for the other polarity (can also have values/None for both)
 				var chartWidth = $modal.width()/4;
 				var innerWidth = chartWidth-5;
-				// chartWidth = chartWidth-5;
 				console.log("polarity :"+polarity);
 				console.log("length response0 :"+response[0].length);
 				if (polarity == "dual"){
@@ -960,7 +860,6 @@ $(document).ready(function() {
 					var j = 0;
 					for (var i=0;i<response.length;i++){
 						if (j==0){
-							// var span = $('<div class="span12" style="margin:auto;float:none;"></div>');
 							var row = $('<div class="row" style="margin-left:0px;margin-bottom:0px"></div>');
 						}
 						var div = $('<div class="span4" style="margin:0px;width:'+innerWidth+'px"></div>');
@@ -970,16 +869,12 @@ $(document).ready(function() {
 	    					},
 				        	chart: {
 				                zoomType: 'x',
-				                // spacingRight: 5,
 				                width: innerWidth,
 				                height: 300,
 				                backgroundColor: '#ffffff',
 				                plotBackgroundColor: null,
 				                plotBorderWidth: null,
 				                plotShadow: false,
-				    //             events: {
-								// 	click: function() {peaksChromatogramPopUp(mass, retentionTime, response);}
-								// }
 				            },
 				            title: {
 				                text: 'Peak chromatogram'
@@ -991,9 +886,6 @@ $(document).ready(function() {
 				            	enabled: true,
 				            	filename: 'Peak_' + response[i][0] + "_chromatogram_rt_" + parseFloat(rt).toFixed(3) + "_" + polarity_display,
 				            },
-				         //    exporting: {
-					        //    	enabled: false,
-					        // },
 				            xAxis: {
 				                title: {
 				                    text: 'Retention time (s)'
@@ -1049,15 +941,11 @@ $(document).ready(function() {
 						j += 1;
 						console.log("usual j = "+j+" i = "+i);
 						if (i == response.length-1 && j != 3){
-							// $(span).appendTo($(row));
 							$(row).appendTo($(innerRightPanel));
-							console.log("j = "+j+" i  = "+i);
 						}
 						if (j == 3){
-							// $(span).appendTo($(row));
 							$(row).appendTo($(innerRightPanel));
 							j = 0;
-							console.log("j = 3");
 						}
 					}
 					if (polarity == "dual"){
@@ -1071,59 +959,34 @@ $(document).ready(function() {
 						$(innerRightPanel).appendTo($(rightPanel));
 						$(rightPanel).appendTo($(tab));
 						$(tab).appendTo($(tabContent));
-						// var windowHeight = $(window).height() - (25 * $(window).height() / 100);
-						// console.log("windowHeight "+windowHeight);
-						// $(modalBody).css('max-height', windowHeight);
-						// // $(modalBody).height(windowHeight);
-						// console.log("modal height "+$(modalBody).height());
-						// $(rightPanel).css('background-color','white');
-						// $(rightPanel).height($(modalBody).height()-38);
-						// $(tab).height($(modalBody).height()-38);
-						// $(tab).css("background-color",'rgb(245, 245, 245)');
 					}
 				}
 
-				// $(wrapper).appendTo($(modalBody));
 				$(modalBody).css('overflow', 'hidden');
 				$(loadingPan).remove();
 				if (polarity == "dual"){
             		$(tabContent).appendTo($(modalBody));
             		$(modalBody).css('background-color','white');
             		var windowHeight = $(window).height() - (25 * $(window).height() / 100);
-					console.log("windowHeight "+windowHeight);
 					$(modalBody).css('max-height', windowHeight);
-					// $(modalBody).height(windowHeight);
-					console.log("modal height "+$(modalBody).height());
 					$('.rightPanel').css('background-color','white');
 					$(tabContent).height($(modalBody).height()-38);
 					$('.peak-discovery-tab-pane').height($(modalBody).height()-38);
 					$('.rightPanel').height($(modalBody).height()-38);
 					$('.peak-discovery-tab-pane').css("background-color",'rgb(245, 245, 245)');
 					$(tabContent).css('overflow', 'hidden');
-					// $('.tab-pane').css('overflow', 'auto');
 					$('#tab1').width($(modalBody).width());
 					$('#tab2').width($(modalBody).width());
-					// $('#tab1').css('overflow', 'auto');
-					// $('#tab2').css('overflow', 'auto');
 				}
 				else{
 					$(leftPanel).appendTo($(modalBody));
 					$(innerRightPanel).appendTo($(rightPanel));
 					$(rightPanel).appendTo($(modalBody));
 					var windowHeight = $(window).height() - (25 * $(window).height() / 100);
-					console.log("windowHeight "+windowHeight)
 					$(modalBody).css('max-height', windowHeight);
-					console.log("modal height "+$(modalBody).height());
 					$(rightPanel).css('background-color','white');
 					$(rightPanel).height($(modalBody).height());
 				}
-				
-				// var windowHeight = $(window).height() - (25 * $(window).height() / 100);
-				// console.log("windowHeight "+windowHeight)
-				// $(modalBody).css('max-height', windowHeight);
-				// console.log("modal height "+$(modalBody).height());
-				// $(rightPanel).css('background-color','white');
-				// $(rightPanel).height($(modalBody).height());
 				$('.new-screening').click(function (e){
 					e.preventDefault();
 					createPeakDiscoveryWindow(mass, ppm, rt, rt_window);
@@ -1156,8 +1019,6 @@ $(document).ready(function() {
 		$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
 
 		$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="{{ STATIC_URL }}/img/peak_icon.png" alt="tools" style="margin-bottom: 3px;"> Peak discovery</h3>').appendTo($(modalHeader));
-		// var modalLabel = $modal.find('#myModalLabel');
-		// $(modalLabel).text("Preferences");
 
 		var content = $('<h3 style="margin-left:10px;">Exactive screening</h3><div class="row" style="margin-left:0px;"><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Neutral mass</span><input value="'+mass+'" id="exact_mass" class="span2" type="text" name="exact-mass"><br><h4 style="margin-bottom: 20px;">Mass window (ppm): <span id="ppm_span">'+ppm+'</span></h4><span style="font-weight: bold;margin-right: 12px;">1</span><input id="ppm_slider" type="text" class="span4" value="" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="'+ppm+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">5</span><br><h4 style="margin-bottom: 20px;">Samples</h4><label for="all_samples_checkbox" style="font-weight: bold;margin-left:12px;margin-bottom:0px;">All samples <input id="all_samples_checkbox" type="checkbox" name="all_samples" value="all_samples" style="margin-top:0px"></label><br><select id="multiple_select_sample" multiple="multiple" style="margin-top:0px;margin-left:10px;">{% for sample in project.sample_set.all %}<option class="sample_option" value="{{ sample.id }}">{{ sample.name|truncatechars:20 }}</option>{% endfor %}</select></div><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Retention time</span><input value="'+rt+'" id="exact-rt" class="span2" type="text" name="exact-rt"><br><h4 style="margin-bottom: 20px;">Retention time window (s): <span id="rtwindow_span">'+rt_window+'</span></h4><span style="font-weight:bold;margin-right:12px;">15</span><input id="rt_window_slider" type="text" class="span4" value="" data-slider-min="15" data-slider-max="300" data-slider-step="5" data-slider-value="'+rt_window+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">300</span><br><h4 style="margin-bottom: 20px;">Polarity</h4><input type="radio" name="polarity" value="dual" style="margin:0px 0px 2px;" checked><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Dual</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup> & [M-H]<sup>-</sup></span><br><input type="radio" name="polarity" value="positive" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Positive</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup></span><br><input type="radio" name="polarity" value="negative" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Negative</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M-H]<sup>-</sup></span><br><button class="btn btn-primary" style="margin-right: 5px;margin-top:8px;float:right;" data-toggle="tooltip" title="Process" id="exactive-screening-process"><i class="icon-play icon-white"></i> Process</button></div>');
 
@@ -1174,13 +1035,11 @@ $(document).ready(function() {
 		$('#ppm_slider').css('display','none');
 		$('#all_samples_checkbox').change(function() {
 			if ($(this).is(':checked')){
-				console.log("all samples checked");
 				$("#multiple_select_sample option" ).each(function (){
 					$(this).prop('selected', true);
 				});
 			}
 			else{
-				console.log("unchecked");
 				$("#multiple_select_sample option" ).each(function (){
 					$(this).prop('selected', false);
 				});
@@ -1188,31 +1047,27 @@ $(document).ready(function() {
 		});
 		$('.sample_option').click(function (){
 			var allChecked = true;
-			console.log("clicked");
 			$('.sample_option').each(function (){
 				if ($(this).is(':selected') == false){
 					allChecked = false;
-					console.log("one option false");
 				}
 			});
 			if (allChecked){
 				$('#all_samples_checkbox').prop('checked',true);
-				console.log("checkbox to be checked, allChecked true");
 			}
 			else if (allChecked == false && $('#all_samples_checkbox').is(':checked')){
 				$('#all_samples_checkbox').prop('checked',false);
-				console.log("checkbox to be unchecked");
 			}
 		});
 		$('#exactive-screening-process').click(function (){
 			if (!$('#exact_mass').val()){
-				alert("come on! how do you want me to do that without mass!");
+				alert("Please, enter a mass value.");
 			}
 			else if (!$('#exact-rt').val()){
-				alert("come on! how do you want me to do that without rt!");
+				alert("Please, enter a retention time value.");
 			}
 			else if ($('.sample_option:selected').length == 0){
-				alert("come on! how do you want me to do that without sample!");
+				alert("Please select samples.");
 			}
 			else{
 				var mass = $('#exact_mass').val();
@@ -1221,11 +1076,9 @@ $(document).ready(function() {
 				var rt_window = $('#rt_window_slider').data('slider').getValue();
 				var polarity = $('input:radio[name=polarity]:checked').val();
 				var sample_list = [];
-				console.log("mass "+mass+" rt "+rt+" ppm "+ppm+" rt_window "+rt_window+"polarity "+polarity);
 				$('.sample_option:selected').each(function (){
 					sample_list.push($(this).val());
 				});
-				console.log(sample_list);
 				peakDiscovery($modal,mass,rt,ppm,rt_window,polarity,sample_list);
 
 			}
@@ -1257,15 +1110,11 @@ $(document).ready(function() {
 
 		$('body').modalmanager('loading');
 		$('body').css('cursor', 'wait');
-		// console.log('window height: ' + $(window).height());
 		$.ajax({
             type: "GET",
             url: url,
             data: attribute_id,
             success: function(response){
-            	console.log(response);
-            	console.log("samples : "+response[1].length);
-            	// console.log(response[1][1].length);
             	var neg = false;
             	var pos = false;
             	var posIndex;
@@ -1279,23 +1128,15 @@ $(document).ready(function() {
             			neg = true;
             			negIndex = i;
             		}
-            		// console.log(i);
             		if (pos && neg){
-            			console.log("ca marche bulle de savon!");
             			break;
             		}
             	}
             		
-            	// response = response[1][0]
-            	// console.log(response);
-            	// $(modalLabel).text("TIC : " + response[0])
-            	// if (response[1] == "None" || response[2] == "None"){
-            	// 	console.log("1 polarity missing");
             	if (pos == false || neg == false){
             		console.log("1 polarity missing");
             	}
             	else{
-            		console.log("both polarity present, all good!!");
             		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
 
             		$(ul).appendTo($(modalBody));
@@ -1317,8 +1158,6 @@ $(document).ready(function() {
 
 
             		var chartWidth = $('#main-container').width(); 
-    				// $("#full-width").find('.modal-body').prepend(content);
-    				// $("#full-width").find('.modal-body').highcharts({
 	            	$(posTIC).highcharts({
 	            		credits : {
     						enabled : false
@@ -1339,32 +1178,11 @@ $(document).ready(function() {
 			            exporting: {
 			            	enabled: true,
 			            	filename: response[0] + "_positive_TIC",
-			       //      	buttons: {
-						    //     'myButton': {
-						    //         _id: 'myButton',
-						    //         symbol: 'diamond',
-						    //         x: -62,
-						    //         symbolFill: '#B5C9DF',
-						    //         hoverSymbolFill: '#779ABF',
-						    //         onclick: function() {
-						    //             console.log("click!");
-						    //             console.log(this.options.plotOptions.series.fillOpacity);
-						    //             this.options.plotOptions.series.fillOpacity = 0;
-						    //             console.log(this.options);
-						    //             this.options.chart.redraw();
-						    //         }
-						    //     }
-						    // }
 			            },
 			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
 			                title: {
 			                    text: 'Retention time (s)'
 			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
 	                		showLastLabel: true
 			            },
 			            yAxis: {
@@ -1382,81 +1200,8 @@ $(document).ready(function() {
 			            legend: {
 			                enabled: true
 			            },
-			            // plotOptions: {
-			            //     area: {
-			            //         fillColor: {
-			            //             linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			            //             stops: [
-			            //                 [0, Highcharts.getOptions().colors[0]],
-			            //                 [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			            //             ]
-			            //         },
-			            //         lineWidth: 1,
-			            //         marker: {
-			            //             enabled: false
-			            //         },
-			            //         shadow: false,
-			            //         states: {
-			            //             hover: {
-			            //                 lineWidth: 1
-			            //             }
-			            //         },
-			            //         threshold: null
-			            //     },
-			            //     scatter: {
-			            //         marker: {
-			            //             radius: 5,
-			            //             states: {
-			            //                 hover: {
-			            //                     enabled: true,
-			            //                     lineColor: 'rgb(100,100,100)'
-			            //                 }
-			            //             }
-			            //         }
-			            //         // states: {
-			            //         //     hover: {
-			            //         //         marker: {
-			            //         //             enabled: false
-			            //         //         }
-			            //         //     }
-			            //         // },
-			            //         // tooltip: {
-			            //         //     headerFormat: '<b>{series.name}</b><br>',
-			            //         //     pointFormat: '{point.x} cm, {point.y} kg'
-			            //         // }
-			            //     },
-			            //     series: {
-				           //      cursor: 'pointer',
-				           //      point: {
-			            //             events: {
-			            //                 click: function() {
-			            //                 	console.log("retention time :" + this.x);
-			            //                 	// massSpectra(sampleId, "POS", this.x);
-			            //                 	// alert('You just clicked the graph');
-			            //                     // hs.htmlExpand(null, {
-			            //                     //     pageOrigin: {
-			            //                     //         x: this.pageX,
-			            //                     //         y: this.pageY
-			            //                     //     },
-			            //                     //     headingText: this.series.name,
-			            //                     //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
-			            //                     //         this.y +' visits',
-			            //                     //     width: 200
-			            //                     // });
-			            //                 }
-			            //             }
-			            //         },
-				           //      // events: {
-				           //      //     click: function() {
-				           //      //         alert('You just clicked the graph');
-				           //      //     }
-				           //      // }
-				           //  }
-
-			            // },
 			    		plotOptions: {
 			                area: {
-			                    // pointStart: 1940,
 			                    marker: {
 			                        enabled: false,
 			                        symbol: 'circle',
@@ -1467,19 +1212,7 @@ $(document).ready(function() {
 			                            }
 			                        }
 			                    },
-			                    // fillColor: {
-			                    //     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			                    //     stops: [
-			                    //         // [0, Highcharts.getOptions().colors[0]],
-			                    //         [0, this.lineColor],
-			                    //     //     [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			                    //     	[1, Highcharts.Color(this.LineColor).setOpacity(0).get('rgba')]
-			                    //     ]
-			                    // },
 			                    lineWidth: 1,
-			                    // marker: {
-			                    //     enabled: false
-			                    // },
 			                    shadow: false,
 			                    states: {
 			                        hover: {
@@ -1490,14 +1223,6 @@ $(document).ready(function() {
 			                },
 			                series: {
                 				fillOpacity: 0.1
-	               //  			fillColor: {
-				            //         linearGradient: [0, 0, 0, 300],
-				            //         stops: [
-				            //             // [0, 'rgb(69, 114, 167)'],
-				            //             [0, this.color],
-				            //             [1, 'rgba(2,0,0,0)']
-				            //         ]
-	            			// 	}
 	            			}
 			            },
 			            series: [{
@@ -1506,7 +1231,6 @@ $(document).ready(function() {
 			                data : response[1][posIndex][1]
 			            }]
 		    		});
-					console.log($(posTIC).highcharts().series);
 					for (var i=0;i<response[1].length;i++){
 	            		if (response[1][i][1] != "None" && i != posIndex){
 	            			console.log("on ajoute une serie!!!");
@@ -1517,7 +1241,6 @@ $(document).ready(function() {
 	            			});
 	            		}
 	            	}
-	            	console.log($(posTIC).highcharts().series);
 					$(negTIC).highcharts({
 						credits : {
     						enabled : false
@@ -1540,21 +1263,19 @@ $(document).ready(function() {
 			            	filename: response[0] + "_negative_TIC" 
 			            },
 			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
 			                title: {
 			                    text: 'Retention time (s)'
 			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
 	                		showLastLabel: true
 			            },
 			            yAxis: {
 			                title: {
 			                    text: 'Intensity'
 			                },
+<<<<<<< HEAD
 			                min: 0,
+=======
+>>>>>>> iss8
 			            },
 			            tooltip: {
 			                shared: true,
@@ -1567,7 +1288,6 @@ $(document).ready(function() {
 			            },
 			            plotOptions: {
 			                area: {
-			                    // pointStart: 1940,
 			                    marker: {
 			                        enabled: false,
 			                        symbol: 'circle',
@@ -1600,7 +1320,6 @@ $(document).ready(function() {
 		    		});
 					for (var i=0;i<response[1].length;i++){
 	            		if (response[1][i][2] != "None" && i != negIndex){
-	            			console.log("on ajoute une serie!!!");
 	            			$(negTIC).highcharts().addSeries({
 	            				type: 'area',
 			                	name: response[1][i][0],
@@ -1619,7 +1338,6 @@ $(document).ready(function() {
 	            		// start over from here
 	            		if (response[1][i][1] != "None"){
 	            			posCategories.push(response[1][i][0].split(".")[0]);
-	            			// console.log(response[1][i][0].split(".")[0])
 	            			posMeans.push(response[1][i][3][0]);
 	            			posMedians.push(response[1][i][3][1]);
 	            		}
@@ -1629,8 +1347,6 @@ $(document).ready(function() {
 	            			negMedians.push(response[1][i][4][1]);
 	            		}
 	            	}
-	            	console.log("means is here: "+negMeans);
-	            	console.log("categories is here: "+negCategories);
 				}
 
 				// TIC TEST ----------------------------------------------------------------
@@ -1671,9 +1387,7 @@ $(document).ready(function() {
 					$modal.css('max-height', 'none');
 					$(modalBody).css('max-height', 'none');
 				}
-				// console.log('TIC height: '+$(negTIC).height());
 				$modal.modal();
-				// console.log('TIC height: '+$(posTIC).height());
             },
      		error: function(){
         		alert("Error");
@@ -1691,16 +1405,58 @@ $(document).ready(function() {
   		analysis = $(this).attr('id').split("_")[1];
   		console.log("analysis_id: "+analysis);
   		var analysis_id = {"id": analysis};
+
+  		var $modal = $("#analysis-submission-popup");
+		var modalLabel = $modal.find('#analysis-submission-popup-Label');
+		var modalBody = $modal.find('.modal-body');
+		
+		$(modalLabel).empty();
+		$(modalBody).empty();
 		
 		$.ajax({
             type: "GET",
             url: url,
             data: analysis_id,
             success: function(response){
-            	alert(response);
+            	console.log(response);
+            	if (response["status"] == "fail"){
+            		if (response["error"] == "missing file"){
+            			$(modalLabel).text("Error");
+            			var text = "<p>" + response["message"] + "</p>" 
+            			if (response["missing_neg"].length > 0 ) {
+            				text += "<p>Negative files:</p><ul>"
+            				for (var i=0;i<response["missing_neg"].length;i++){
+            					text += "<li>" + response["missing_neg"][i] + "</li>"
+            				}
+            				text += "</ul>"
+            			}
+            			console.log(response["missing_pos"]);
+            			console.log(response["missing_pos"].length);
+            			if (response["missing_pos"].length > 0 ) {
+            				console.log("Hey ho");
+            				text += "<p>Positive files:</p><ul>"
+            				for (var i=0;i<response["missing_pos"].length;i++){
+            					text += "<li>" + response["missing_pos"][i] + "</li>"
+            				}
+            				text += "</ul>"
+            			}
+            			$(text).appendTo($(modalBody));
+	            	}
+	            	else{
+	            		$(modalLabel).text("Error");
+	            		$(modalBody).text("An unknown error happened, please contact an administrator.");
+	            	}
+            	}
+            	else {
+            		$(modalLabel).text("Analysis submitted");
+            		$(modalBody).text(response["message"]);
+            	}
+            	$modal.modal();
             },
             error: function(e){
-        		alert(e);
+        		$(modalLabel).text("Error");
+	            $(modalBody).text("An unknown error happened, please contact an administrator.");
+	            $modal.modal();
         	}
 		});
 	})
@@ -2548,6 +2304,17 @@ $(document).ready(function() {
     <!svg id="circle" height="260" width="260" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
   		<!image x="0" y="0" height="560" width="560"  xlink:href="{{ STATIC_URL }}chart.svg" />
 	<!/svg>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+<div id="analysis-submission-popup" class="modal container hide fade" tabindex="-1">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="analysis-submission-popup-Label"></h3>
+  </div>
+  <div class="modal-body" style="padding: 20px;">
   </div>
   <div class="modal-footer">
     <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
