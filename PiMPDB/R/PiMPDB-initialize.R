@@ -15,9 +15,9 @@
 #' \dontrun{mydb2 <- new("PiMPDB", dbname="pimpdb", dbuser="pimp", dbpassword="mypassword", dbhost="localhost", dbtype="mysql")}
 #' @export
 
-setMethod("initialize", "PiMPDB", function(.Object, dbname="character", dbuser="character", dbpassword="character", dbhost="character", dbtype="character", ...) {
+setMethod("initialize", "PiMPDB", function(.Object, dbname="character", dbuser="character", dbpassword="character", dbhost="character", dbport="character", dbtype="character", ...) {
 	if(dbtype=="mysql") {
-		con <- dbConnect(RMySQL::MySQL(), user=dbuser, password=dbpassword, dbname=dbname, host=dbhost)
+		con <- dbConnect(RMySQL::MySQL(), user=dbuser, password=dbpassword, dbname=dbname, host=dbhost, port=dbport)
 	}
 	else if(dbtype=="sqlite") {
 		con <- dbConnect(RSQLite::SQLite(), dbname=dbname)
