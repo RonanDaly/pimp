@@ -396,14 +396,14 @@ def start_analysis(request, project_id):
 				# r = tasks.start_pimp_pipeline.delay(comparison_name, file_list, group_list, standards, databases)
 				# print r.get()
 				# message = "The function has been disabled for maintanance"
-				message = "Your analysis has been correctly submitted"#+str(r.task_id)
+				message = "Your analysis has been correctly submitted. The status update will be emailed to you."#+str(r.task_id)
 				data = {"status": "success", "message": message}
-				response = simplejson.dumps(message)
+				response = simplejson.dumps(data)
 				return HttpResponse(response, content_type='application/json')
 			else:
-				message = "missing files for some samples"
-				data = {"status": "fail", "message": message}
-				response = simplejson.dumps(message)
+				message = "Some samples are only present in one polarity, please add the following missing files: "
+				data = {"status": "fail", "error": "missing file", "message": message, "missing_neg":neg_missing_samples, "missing_pos": pos_missing_samples}
+				response = simplejson.dumps(data)
 				return HttpResponse(response, content_type='application/json')
 
 def get_identification_table(request, project_id, analysis_id):
