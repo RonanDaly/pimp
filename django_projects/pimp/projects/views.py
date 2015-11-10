@@ -375,6 +375,7 @@ def create_member_tic(attribute_id):
 		sample_name = sample.name
 		if not sample.samplefile.posdata :
 			posdata = "None"
+			posBarTic = "None"
 		else:
 			posmzxmlfile = sample.samplefile.posdata
 			if not posmzxmlfile.tic:
@@ -419,6 +420,7 @@ def create_member_tic(attribute_id):
 					# print posdata
 		if not sample.samplefile.negdata :
 			negdata = "None"
+			negBarTic = "None"
 		else:
 			negmzxmlfile = sample.samplefile.negdata
 			if not negmzxmlfile.tic:

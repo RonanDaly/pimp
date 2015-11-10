@@ -126,7 +126,7 @@ $(document).ready(function() {
 	function massSpectra(sample_id, polarity, retentionTime){
 		console.log(sample_id + " " + polarity + " " + retentionTime);
 		var data = {"id": sample_id, "polarity": polarity, "rt":retentionTime};
-		var chartWidth = $('#main-container').width();
+		var chartWidth = $('#main-container').width()-10;
 		var url = "{% url 'project_detail' project.id %}" + "sample/" + sample_id + "/scan/";
 		if (polarity == "NEG"){
 			var scan = $("#full-width").find('#tab2').find('#scan');
@@ -181,7 +181,7 @@ $(document).ready(function() {
 			                title: {
 			                    text: 'Intensity'
 			                },
-			                // min: 0,
+			                min: 0,
 			            },
 			            tooltip: {
 			                shared: true,
@@ -279,7 +279,7 @@ $(document).ready(function() {
 		$(modalLabel).empty();
 		$(modalBody).empty();
 
-		$(modalLabel).text("mzxml viewer")
+		$(modalLabel).text("TIC viewer")
 		
 		var sampleId = $(this).attr('id').split("-")[1];
 		var sampleType = $(this).attr('id').split("-")[2];
@@ -304,17 +304,238 @@ $(document).ready(function() {
             	// 	console.log("1 polarity missing");
             	if (response[1] == "None" || response[2] == "None"){
             		console.log("1 polarity missing");
+            		if (response[1] == "None"){
+            			console.log("Positive is missing");
+            			var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+
+            			$(ul).appendTo($(modalBody));
+	            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+	            		
+	            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+
+	            		var negTIC = $('<div id="tic"></div>');
+	            		var negScan = $('<div id="scan"></div>');
+
+
+	            		var chartWidth = $('#main-container').width()-10; 
+
+            			$(negTIC).highcharts({
+						credits : {
+    						enabled : false
+    					},
+			        	chart: {
+			                zoomType: 'x',
+			                spacingRight: 20,
+			                width: chartWidth
+			            },
+			            title: {
+			                text: response[0] +' negative Total Ion Current'
+			            },
+			            subtitle: {
+			                text: document.ontouchstart === undefined ?
+			                    'Click and drag in the plot area to zoom in' :
+			                    'Drag your finger over the plot to zoom in'
+			            },
+			            exporting: {
+			            	enabled: true,
+			            	filename: response[0].split(".")[0] + "_negative_TIC" 
+			            },
+			            xAxis: {
+			                title: {
+			                    text: 'Retention time'
+			                },
+	                		showLastLabel: true
+			            },
+			            yAxis: {
+			                title: {
+			                    text: 'Intensity'
+			                },
+			                min: 0,
+			            },
+			            tooltip: {
+			                shared: true,
+			                headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
+			            },
+			            legend: {
+			                enabled: false
+			            },
+			            plotOptions: {
+			                area: {
+			                    fillColor: {
+			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+			                        stops: [
+			                            [0, Highcharts.getOptions().colors[0]],
+			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+			                        ]
+			                    },
+			                    lineWidth: 1,
+			                    marker: {
+			                        enabled: false
+			                    },
+			                    shadow: false,
+			                    states: {
+			                        hover: {
+			                            lineWidth: 1
+			                        }
+			                    },
+			                    threshold: null
+			                },
+			                scatter: {
+			                    marker: {
+			                        radius: 5,
+			                        states: {
+			                            hover: {
+			                                enabled: true,
+			                                lineColor: 'rgb(100,100,100)'
+			                            }
+			                        }
+			                    }
+			                },
+			                series: {
+				                cursor: 'pointer',
+				                point: {
+			                        events: {
+			                            click: function() {
+			                            	console.log("retention time :" + this.x);
+			                            	massSpectra(sampleId, "NEG", this.x);
+			                            }
+			                        }
+			                    },
+				            }
+			            },
+			    
+			            series: [{
+			                type: 'area',
+			                name: 'Intensity',
+			                data : response[2]
+			            }]
+		    		});
+            		}
+            		if (response[2] == "None"){
+            			console.log("Negative is missing");
+            			var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li></ul>');
+
+	            		$(ul).appendTo($(modalBody));
+	            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+	            		
+
+	            		var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
+
+	            		var posTIC = $('<div id="tic"></div>');
+	            		var posScan = $('<div id="scan"></div>');
+
+	            		var chartWidth = $('#main-container').width()-10; 
+	    				// $("#full-width").find('.modal-body').prepend(content);
+	    				// $("#full-width").find('.modal-body').highcharts({
+		            	$(posTIC).highcharts({
+		            		credits : {
+	    						enabled : false
+	    					},
+				        	chart: {
+				                zoomType: 'x',
+				                spacingRight: 20,
+				                width: chartWidth
+				            },
+				            title: {
+				                text: response[0] +' positive Total Ion Current'
+				            },
+				            subtitle: {
+				                text: document.ontouchstart === undefined ?
+				                    'Click and drag in the plot area to zoom in' :
+				                    'Drag your finger over the plot to zoom in'
+				            },
+				            exporting: {
+				            	enabled: true,
+				            	filename: response[0].split(".")[0] + "_positive_TIC"
+				            },
+				            xAxis: {
+				                // type: 'linear',
+				                // categories: response[1][1],
+				                // maxZoom: 14 * response[1][0].length, // fourteen days
+				                title: {
+				                    text: 'Retention time'
+				                },
+				                // startOnTick: true,
+		                		// endOnTick: true,
+		                		showLastLabel: true
+				            },
+				            yAxis: {
+				                title: {
+				                    text: 'Intensity'
+				                },
+				                min: 0,
+				            },
+				            tooltip: {
+				                shared: true,
+				                headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
+				            },
+				            legend: {
+				                enabled: false
+				            },
+				            plotOptions: {
+				                area: {
+				                    fillColor: {
+				                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+				                        stops: [
+				                            [0, Highcharts.getOptions().colors[0]],
+				                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+				                        ]
+				                    },
+				                    lineWidth: 1,
+				                    marker: {
+				                        enabled: false
+				                    },
+				                    shadow: false,
+				                    states: {
+				                        hover: {
+				                            lineWidth: 1
+				                        }
+				                    },
+				                    threshold: null
+				                },
+				                scatter: {
+				                    marker: {
+				                        radius: 5,
+				                        states: {
+				                            hover: {
+				                                enabled: true,
+				                                lineColor: 'rgb(100,100,100)'
+				                            }
+				                        }
+				                    }
+				                },
+				                series: {
+					                cursor: 'pointer',
+					                point: {
+				                        events: {
+				                            click: function() {
+				                            	console.log("retention time :" + this.x);
+				                            	massSpectra(sampleId, "POS", this.x);
+				                            }
+				                        }
+				                    },
+					            }
+
+				            },
+				    
+				            series: [{
+				                type: 'area',
+				                name: 'Intensity',
+				                data : response[1]
+				            }]
+			    		});
+					}
             	}
             	else{
             		console.log("both polarity present, all good!!");
-            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li  style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
 
             		$(ul).appendTo($(modalBody));
             		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
             		
 
-            		var tab1 = $('<div class="tab-pane" id="tab1"></div>');
-            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+            		var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
+            		var tab2 = $('<div class="tab-pane" id="tab2"></div>');
 
             		var posTIC = $('<div id="tic"></div>');
             		var posScan = $('<div id="scan"></div>');
@@ -323,7 +544,7 @@ $(document).ready(function() {
             		var negScan = $('<div id="scan"></div>');
 
 
-            		var chartWidth = $('#main-container').width(); 
+            		var chartWidth = $('#main-container').width()-10; 
     				// $("#full-width").find('.modal-body').prepend(content);
     				// $("#full-width").find('.modal-body').highcharts({
 	            	$(posTIC).highcharts({
@@ -362,7 +583,7 @@ $(document).ready(function() {
 			                title: {
 			                    text: 'Intensity'
 			                },
-			                // min: 0,
+			                min: 0,
 			            },
 			            tooltip: {
 			                shared: true,
@@ -454,6 +675,7 @@ $(document).ready(function() {
 			                title: {
 			                    text: 'Intensity'
 			                },
+			                min: 0,
 			            },
 			            tooltip: {
 			                shared: true,
@@ -524,9 +746,9 @@ $(document).ready(function() {
             	$(tabContent).appendTo($(modalBody));
 				$('body').modalmanager('loading','false');
 				$(modalBody).width($('#main-container').width());
-				$(tabContent).width($('#main-container').width());
-				$(tab1).width($('#main-container').width());
-				$(tab2).width($('#main-container').width());
+				$(tabContent).width($('#main-container').width()-10);
+				$(tab1).width($('#main-container').width()-10);
+				$(tab2).width($('#main-container').width()-10);
 				console.log('modal height: '+$modal.height())
 				var maxModalHeight = $modal.height() + 401;
 				console.log("max modal height: "+maxModalHeight);
@@ -1135,16 +1357,293 @@ $(document).ready(function() {
             		
             	if (pos == false || neg == false){
             		console.log("1 polarity missing");
+            		if (pos == false){
+            			console.log("positive polarity is missing");
+
+            			var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+
+	            		$(ul).appendTo($(modalBody));
+	            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+	            		
+	            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+
+	            		var negTIC = $('<div id="tic"></div>');
+	            		var negScan = $('<div id="scan"></div>');
+	            		var negMean = $('<div id="mean"></div>');
+	            		var negMedian = $('<div id="meidan"></div>');
+
+
+	            		var chartWidth = $('#main-container').width()-10; 
+
+            			$(negTIC).highcharts({
+							credits : {
+	    						enabled : false
+	    					},
+				        	chart: {
+				                zoomType: 'x',
+				                spacingRight: 20,
+				                width: chartWidth
+				            },
+				            title: {
+				                text: response[0] +' negative Total Ion Current'
+				            },
+				            subtitle: {
+				                text: document.ontouchstart === undefined ?
+				                    'Click and drag in the plot area to zoom in' :
+				                    'Drag your finger over the plot to zoom in'
+				            },
+				            exporting: {
+				            	enabled: true,
+				            	filename: response[0] + "_negative_TIC" 
+				            },
+				            xAxis: {
+				                title: {
+				                    text: 'Retention time (s)'
+				                },
+		                		showLastLabel: true
+				            },
+				            yAxis: {
+				                title: {
+				                    text: 'Intensity'
+				                },
+				                min: 0,
+				            },
+				            tooltip: {
+				                shared: true,
+				                headerFormat: '',
+				                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+				            },
+				            legend: {
+				                enabled: true
+				            },
+				            plotOptions: {
+				                area: {
+				                    marker: {
+				                        enabled: false,
+				                        symbol: 'circle',
+				                        radius: 2,
+				                        states: {
+				                            hover: {
+				                                enabled: true
+				                            }
+				                        }
+				                    },
+				                    lineWidth: 1,
+				                    shadow: false,
+				                    states: {
+				                        hover: {
+				                            lineWidth: 1
+				                        }
+				                    },
+				                    threshold: null
+				                },
+				                series: {
+	                			fillOpacity: 0.1
+		            			}
+				            },
+				    
+				            series: [{
+				                type: 'area',
+				                name: response[1][negIndex][0],
+				                data : response[1][negIndex][2]
+				            }]
+			    		});
+						for (var i=0;i<response[1].length;i++){
+		            		if (response[1][i][2] != "None" && i != negIndex){
+		            			$(negTIC).highcharts().addSeries({
+		            				type: 'area',
+				                	name: response[1][i][0],
+				                	data : response[1][i][2]
+		            			});
+		            		}
+		            	}
+		            	// creation of list for mean and median bar tic
+		            	posCategories = new Array();
+		            	posMeans = new Array();
+		            	posMedians = new Array();
+		            	negCategories = new Array();
+		            	negMeans = new Array();
+		            	negMedians = new Array();
+		            	for (var i=0;i<response[1].length;i++){
+		            		// start over from here
+		            		if (response[1][i][1] != "None"){
+		            			posCategories.push(response[1][i][0].split(".")[0]);
+		            			posMeans.push(response[1][i][3][0]);
+		            			posMedians.push(response[1][i][3][1]);
+		            		}
+		            		if (response[1][i][2] != "None"){
+		            			negCategories.push(response[1][i][0].split(".")[0]);
+		            			negMeans.push(response[1][i][4][0]);
+		            			negMedians.push(response[1][i][4][1]);
+		            		}
+		            	}
+
+		            	// TIC TEST ----------------------------------------------------------------
+						barTicPlot(chartWidth,negMean,'negative',response[0],'mean',negCategories,negMeans);
+						barTicPlot(chartWidth,negMedian,'negative',response[0],'median',negCategories,negMedians);
+						// END TIC TEST ------------------------------------------------------------
+
+		            	$(negTIC).appendTo($(tab2));
+		            	$(negMean).appendTo($(tab2));
+		            	$(negMedian).appendTo($(tab2));
+		            	$(tab2).appendTo($(tabContent));
+		            	$(tabContent).appendTo($(modalBody));
+						$('body').modalmanager('loading','false');
+						$('body').css('cursor', 'auto');
+						$(modalBody).width($('#main-container').width());
+						$(tabContent).width($('#main-container').width()-10);
+						$(tab2).width($('#main-container').width()-10);
+	            	}
+            		if (neg == false){
+            			console.log("negative polarity is missing");
+
+            			var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li></ul>');
+
+	            		$(ul).appendTo($(modalBody));
+	            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
+	            		
+
+	            		var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
+
+	            		var posTIC = $('<div id="tic"></div>');
+	            		var posScan = $('<div id="scan"></div>');
+	            		var posMean = $('<div id="mean"></div>');
+	            		var posMedian = $('<div id="meidan"></div>');
+
+	            		var chartWidth = $('#main-container').width()-10;
+
+	            		$(posTIC).highcharts({
+		            		credits : {
+	    						enabled : false
+	    					},
+				        	chart: {
+				                zoomType: 'x',
+				                spacingRight: 20,
+				                width: chartWidth
+				            },
+				            title: {
+				                text: response[0] +' positive Total Ion Current'
+				            },
+				            subtitle: {
+				                text: document.ontouchstart === undefined ?
+				                    'Click and drag in the plot area to zoom in' :
+				                    'Drag your finger over the plot to zoom in'
+				            },
+				            exporting: {
+				            	enabled: true,
+				            	filename: response[0] + "_positive_TIC",
+				            },
+				            xAxis: {
+				                title: {
+				                    text: 'Retention time (s)'
+				                },
+		                		showLastLabel: true
+				            },
+				            yAxis: {
+				                title: {
+				                    text: 'Intensity'
+				                },
+				                min: 0,
+				            },
+				            tooltip: {
+				                shared: true,
+				                headerFormat: '',
+				                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+				            },
+				            legend: {
+				                enabled: true
+				            },
+				    		plotOptions: {
+				                area: {
+				                    marker: {
+				                        enabled: false,
+				                        symbol: 'circle',
+				                        radius: 2,
+				                        states: {
+				                            hover: {
+				                                enabled: true
+				                            }
+				                        }
+				                    },
+				                    lineWidth: 1,
+				                    shadow: false,
+				                    states: {
+				                        hover: {
+				                            lineWidth: 1
+				                        }
+				                    },
+				                    threshold: null
+				                },
+				                series: {
+	                				fillOpacity: 0.1
+		            			}
+				            },
+				            series: [{
+				                type: 'area',
+				                name: response[1][posIndex][0],
+				                data : response[1][posIndex][1]
+				            }]
+			    		});
+						for (var i=0;i<response[1].length;i++){
+		            		if (response[1][i][1] != "None" && i != posIndex){
+		            			console.log("on ajoute une serie!!!");
+		            			$(posTIC).highcharts().addSeries({
+		            				type: 'area',
+				                	name: response[1][i][0],
+				                	data : response[1][i][1]
+		            			});
+		            		}
+		            	}
+
+		            	posCategories = new Array();
+		            	posMeans = new Array();
+		            	posMedians = new Array();
+		            	negCategories = new Array();
+		            	negMeans = new Array();
+		            	negMedians = new Array();
+		            	for (var i=0;i<response[1].length;i++){
+		            		// start over from here
+		            		if (response[1][i][1] != "None"){
+		            			posCategories.push(response[1][i][0].split(".")[0]);
+		            			posMeans.push(response[1][i][3][0]);
+		            			posMedians.push(response[1][i][3][1]);
+		            		}
+		            		if (response[1][i][2] != "None"){
+		            			negCategories.push(response[1][i][0].split(".")[0]);
+		            			negMeans.push(response[1][i][4][0]);
+		            			negMedians.push(response[1][i][4][1]);
+		            		}
+		            	}
+
+		            	// TIC TEST ----------------------------------------------------------------
+
+						barTicPlot(chartWidth,posMean,'positive',response[0],'mean',posCategories,posMeans);
+						barTicPlot(chartWidth,posMedian,'positive',response[0],'median',posCategories,posMedians);
+						// END TIC TEST ------------------------------------------------------------
+
+						$(posTIC).appendTo($(tab1));
+		            	$(posMean).appendTo($(tab1));
+		            	$(posMedian).appendTo($(tab1));
+		            	$(tab1).appendTo($(tabContent));
+		            	$(tabContent).appendTo($(modalBody));
+						$('body').modalmanager('loading','false');
+						$('body').css('cursor', 'auto');
+						$(modalBody).width($('#main-container').width());
+						$(tabContent).width($('#main-container').width()-10);
+						$(tab1).width($('#main-container').width()-10);
+            		}
             	}
             	else{
-            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
 
             		$(ul).appendTo($(modalBody));
             		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
             		
 
-            		var tab1 = $('<div class="tab-pane" id="tab1"></div>');
-            		var tab2 = $('<div class="tab-pane active" id="tab2"></div>');
+            		var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
+            		var tab2 = $('<div class="tab-pane" id="tab2"></div>');
 
             		var posTIC = $('<div id="tic"></div>');
             		var posScan = $('<div id="scan"></div>');
@@ -1157,7 +1656,7 @@ $(document).ready(function() {
             		var negMedian = $('<div id="meidan"></div>');
 
 
-            		var chartWidth = $('#main-container').width(); 
+            		var chartWidth = $('#main-container').width()-10; 
 	            	$(posTIC).highcharts({
 	            		credits : {
     						enabled : false
@@ -1272,10 +1771,7 @@ $(document).ready(function() {
 			                title: {
 			                    text: 'Intensity'
 			                },
-<<<<<<< HEAD
 			                min: 0,
-=======
->>>>>>> iss8
 			            },
 			            tooltip: {
 			                shared: true,
@@ -1347,38 +1843,37 @@ $(document).ready(function() {
 	            			negMedians.push(response[1][i][4][1]);
 	            		}
 	            	}
+
+	            	// TIC TEST ----------------------------------------------------------------
+
+					barTicPlot(chartWidth,posMean,'positive',response[0],'mean',posCategories,posMeans);
+					barTicPlot(chartWidth,posMedian,'positive',response[0],'median',posCategories,posMedians);
+					barTicPlot(chartWidth,negMean,'negative',response[0],'mean',negCategories,negMeans);
+					barTicPlot(chartWidth,negMedian,'negative',response[0],'median',negCategories,negMedians);
+					// END TIC TEST ------------------------------------------------------------
+
+					$(posTIC).appendTo($(tab1));
+	            	$(posMean).appendTo($(tab1));
+	            	$(posMedian).appendTo($(tab1));
+	            	$(negTIC).appendTo($(tab2));
+	            	$(negMean).appendTo($(tab2));
+	            	$(negMedian).appendTo($(tab2));
+	            	$(tab1).appendTo($(tabContent));
+	            	$(tab2).appendTo($(tabContent));
+	            	$(tabContent).appendTo($(modalBody));
+					$('body').modalmanager('loading','false');
+					$('body').css('cursor', 'auto');
+					$(modalBody).width($('#main-container').width());
+					$(tabContent).width($('#main-container').width()-10);
+					$(tab1).width($('#main-container').width()-10);
+					$(tab2).width($('#main-container').width()-10);
 				}
 
-				// TIC TEST ----------------------------------------------------------------
+				
 
-				barTicPlot(chartWidth,posMean,'positive',response[0],'mean',posCategories,posMeans);
-				barTicPlot(chartWidth,posMedian,'positive',response[0],'median',posCategories,posMedians);
-				barTicPlot(chartWidth,negMean,'negative',response[0],'mean',negCategories,negMeans);
-				barTicPlot(chartWidth,negMedian,'negative',response[0],'median',negCategories,negMedians);
-				// END TIC TEST ------------------------------------------------------------
-
-            	$(posTIC).appendTo($(tab1));
-            	$(posMean).appendTo($(tab1));
-            	$(posMedian).appendTo($(tab1));
-            	$(negTIC).appendTo($(tab2));
-            	$(negMean).appendTo($(tab2));
-            	$(negMedian).appendTo($(tab2));
-            	$(tab1).appendTo($(tabContent));
-            	$(tab2).appendTo($(tabContent));
-            	$(tabContent).appendTo($(modalBody));
-				$('body').modalmanager('loading','false');
-				$('body').css('cursor', 'auto');
-				$(modalBody).width($('#main-container').width());
-				$(tabContent).width($('#main-container').width());
-				$(tab1).width($('#main-container').width());
-				$(tab2).width($('#main-container').width());
-				console.log('modal height: '+$modal.height())
+            	
 				var maxModalHeight = $modal.height() + 401 + 401;
-				console.log("max modal height: "+maxModalHeight);
-				console.log("modal top: "+$modal.css('top'));
-				console.log("window-height: "+$(window).height());
 				var windowHeight = $(window).height() - (25 * $(window).height() / 100)
-				console.log("window-height: "+windowHeight);
 				$(modalBody).css('max-height', 871);
 				if (maxModalHeight-401 > windowHeight){
 					$(modalBody).css('max-height', 470);
@@ -2012,7 +2507,7 @@ $(document).ready(function() {
 													<p class="text-in-table introduction_text">{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.posdata and sample.samplefile.negdata%} {% endif %}{% if sample.samplefile.negdata %}-{% endif %}</p>
 												</div>
 												<div class="span4 center-text" style="min-height:10px;">
-													<p class="text-in-table introduction_text"><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-sample" href="#" title="mzxml viewer" data-placement="left" role="button" data-toggle="modal"></a></p>
+													<p class="text-in-table introduction_text"><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-sample" href="#" title="TIC viewer" data-placement="left" role="button" data-toggle="modal"></a></p>
 												</div>
 											</div>
 		  									{% endfor %}
