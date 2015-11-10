@@ -27,7 +27,7 @@ $(document).ready(function() {
     // group name validation
     $('#samples_attribute_form').validate({
         rules: {
-            name: {
+            name: { // experiment title / group name
                 required: true,
                 pattern: /^[^0-9\s][\Sa-zA-Z_-]+$/
             }
@@ -37,6 +37,13 @@ $(document).ready(function() {
                 required: "Please enter an experiment name",
                 pattern: "Must start with a letter, contain more than 1 letter, and contain no whitespace"
             }
+        },
+        submitHandler: function(form) {
+            // Remove the template and non-required form fields before submitting
+            $('#sampleattribute_form_template').remove();
+            $('#attribute_form_template').remove();
+            $('#attribute_name_field').remove();
+            form.submit();
         }
     });
 
@@ -66,46 +73,6 @@ $(document).ready(function() {
         }
     }
 
-    // Buttons for attributes in the samples_attributes column
-    // Add the selected samples to the selected condition
-    $('#samples_attributes').on('click', '.add_samples', function(e) {
-        e.preventDefault();
-
-        var attributeDiv = $(this).parents('.panel');
-        var attributeName = $(attributeDiv).prop('id');
-
-        attributeDiv.find('.sample_placeholder').remove();
-
-        // Add the samples in the selected table rows
-        // to the attributeDiv
-        var samplesToAssign = sampleList.rows({
-            selected: true
-        });
-
-        var sampleData = sampleList.rows({
-            selected: true
-        }).data();
-
-        $.each(sampleData, function (_, sample) {
-             // Increment the TOTAL_FORMS variable for django's formset
-            numberSampleAttributes++;
-            $('[name=samplesattributes-TOTAL_FORMS]').val(numberSampleAttributes);
-            console.log("Added! Number of Sample Attribute Pairings = " + numberSampleAttributes);
-
-            // Clone the template field
-            var newSample = $($('#sampleattribute_form_template').clone().html().replace(/__prefix__/g, numberSampleAttributes));
-            newSample.css('display', 'none');
-            newSample.appendTo(attributeDiv.children('.panel-body'));
-            $('[name="samplesattributes-' + numberSampleAttributes + '-sample"]').val(sample[0]);
-            $('[name="samplesattributes-' + numberSampleAttributes + '-attribute"]').val(attributeName);
-
-            attributeDiv.find('ol').append('<li data-form_id=' + numberSampleAttributes + ' data-sample_id=' + sample[0] + ' data-polarity="' + sample[2] + '"><div class="sample_name" style="display:inline;">' + sample[1] + ' </div><a href="#" class="remove_sample">(Remove)</a></li>');
-
-        });
-
-        samplesToAssign.remove().draw();
-    });
-
     function removeSample(sampleAsLi) {
         // Takes a sample of the form <li data-form_id=FORM_ID data-sample_id=SAMPLE_ID data-polarity=POLARITY><div class="sample_name">SAMPLE_NAME</div></li>
         // Adds this information to the sampleList table
@@ -115,65 +82,107 @@ $(document).ready(function() {
         var liElId = parseInt($(sampleAsLi).attr('data-sample_id'));
         var polarity = $(sampleAsLi).attr('data-polarity');
         $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-sample"]').remove();
-        $('[name="samplesattributes-' + $(sampleAsLi).text()[0] + '-attribute"]').remove();
+        $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-attribute"]').remove();
         sampleList.row.add([liElId, $(sampleAsLi).children('.sample_name').text(), polarity]).draw();
         sampleAsLi.remove();
         numberSampleAttributes--;
         $('[name=samplesattributes-TOTAL_FORMS]').val(numberSampleAttributes);
-        console.log("Subtracted! Number of Sample Attribute Pairings = " + numberSampleAttributes);
     }
 
-    // Erase one sample button
-    $('#samples_attributes').on('click', '.remove_sample', function(e) {
-        // Remove the selected sample from the attribute div and replace it into the sampleList table
-        e.preventDefault();
+    // Buttons for attributes in the samples_attributes column
+    $('#samples_attributes')
+        .on('click', '.add_samples', function(e) { // Add the selected samples to the selected condition
+            e.preventDefault();
 
-        var attributeDiv = $(this).parents('.panel');
-
-        removeSample($(this).parents('li'));
-
-        if (attributeDiv.has('li').length == 0) {
-            attributeDiv.children('.panel-body').append('<p class="sample_placeholder">No samples</p>');
-        }
+            // Add the samples in the selected table rows
+            // to the attributeDiv
+            var samplesToAssign = sampleList.rows({
+                selected: true
+            });
 
 
-    });
+            // Check if the user selected any samples - if not, don't try and add any to the attribute
+            if (samplesToAssign[0].length > 0) {
 
-    // Erase all samples button
-    $('#samples_attributes').on('click', '.remove_samples', function(e) {
-        // Remove all samples from the attribute div and replace them into the sampleList table
+                var attributeDiv = $(this).parents('.panel');
+                var attributeName = $(attributeDiv).prop('id');
 
-        e.preventDefault();
+                attributeDiv.find('.sample_placeholder').remove();
 
-        var attributeDiv = $(this).parents('.panel');
-        var liEls = attributeDiv.find('li');
+                var sampleData = sampleList.rows({
+                    selected: true
+                }).data();
 
-       	$(liEls).each(function(_, sampleAsLi) {
-            removeSample(sampleAsLi);
+                $.each(sampleData, function (_, sample) {
+                    // Increment the TOTAL_FORMS variable for django's formset
+                    numberSampleAttributes++;
+                    $('[name=samplesattributes-TOTAL_FORMS]').val(numberSampleAttributes);
+
+                    // Clone the template field
+                    var newSample = $($('#sampleattribute_form_template').clone().html().replace(/__prefix__/g, (numberSampleAttributes - 1)));
+                    newSample.css('display', 'none');
+                    newSample.appendTo(attributeDiv.children('.panel-body'));
+                    $('[name="samplesattributes-' + (numberSampleAttributes - 1) + '-sample"]').val(sample[0]);
+                    $('[name="samplesattributes-' + (numberSampleAttributes - 1) + '-attribute"]').val(attributeName);
+
+                    attributeDiv.find('ol').append('<li data-form_id=' + (numberSampleAttributes - 1) + ' data-sample_id=' + sample[0] + ' data-polarity="' + sample[2] + '"><div class="sample_name" style="display:inline;">' + sample[1] + ' </div><a href="#" class="remove_sample">(Remove)</a></li>');
+                });
+
+                samplesToAssign.remove().draw();
+            } else { // no samples were selected when the add sample button was pushed
+                console.warn("The user tried to add samples to the attribute, but no samples were selected!");
+            }
+        })
+        .on('click', '.remove_sample', function(e) { // Erase one sample button
+            // Remove the selected sample from the attribute div and replace it into the sampleList table
+            e.preventDefault();
+
+            var attributeDiv = $(this).parents('.panel');
+
+            removeSample($(this).parents('li'));
+
+            if (attributeDiv.has('li').length == 0) {
+                attributeDiv.children('.panel-body').append('<p class="sample_placeholder">No samples</p>');
+            }
+        })
+        .on('click', '.remove_samples', function(e) { // Erase all samples button
+            // Remove all samples from the attribute div and replace them into the sampleList table
+
+            e.preventDefault();
+
+            var attributeDiv = $(this).parents('.panel');
+            var liEls = attributeDiv.find('li');
+
+            // Check if there are any samples (liEls) in the attribute to remove
+            if (liEls.length > 0) {
+                $(liEls).each(function(_, sampleAsLi) {
+                removeSample(sampleAsLi);
+                });
+
+                attributeDiv.find('ol')
+                    .empty()
+                    .before('<p class="sample_placeholder">No samples</p>');
+            } else { // There are no samples to remove from the attribute.
+                console.warn("The user tried to remove all samples from the attribute, but the attribute contained no samples!");
+            }
+
+        })
+        .on('click', '.delete_condition', function(e) {
+            e.preventDefault();
+
+            var attributeDiv = $(this).parents('.panel');
+
+            // First, remove all the samples assigned to this condition and return them to the sampleList table
+            var liEls = attributeDiv.find('li');
+
+            $(liEls).each(function(_, sampleAsLi) {
+                removeSample(sampleAsLi);
+            });
+
+            // Then delete the attribute div
+            attributeDiv.remove();
+
         });
-
-        attributeDiv.find('ol')
-            .empty()
-            .before('<p class="sample_placeholder">No samples</p>');
-
-    });
-
-    $('#samples_attributes').on('click', '.delete_condition', function(e) {
-        e.preventDefault();
-
-        var attributeDiv = $(this).parents('.panel');
-
-        // First, remove all the samples assigned to this condition and return them to the sampleList table
-        var liEls = attributeDiv.find('li');
-
-       	$(liEls).each(function(_, sampleAsLi) {
-            removeSample(sampleAsLi);
-        });
-
-        // Then delete the attribute div
-        attributeDiv.remove();
-
-    })
 
     // Create a div in the samples_attributes column for the new attribute.
     // Provides controls to add samples to the attribute, delete the attribute, and empty it of its samples.
@@ -186,7 +195,8 @@ $(document).ready(function() {
         $('[name=attributes-TOTAL_FORMS]').val(numberAttributes);
 
         // Build up a div to go into the sample attributes column, which contains a hidden django sample attribute form. Present a nicely formatted div containing the details of the attribute and assigned samples.
-        var attributeName = $('#attribute_name_field').val();
+        var attributeNameField = $('#attribute_name_field');
+        var attributeName = attributeNameField.val();
         var addButton = '<button class="btn btn-sm btn-default add_samples"><span class="glyphicon glyphicon-plus"></span></button>';
         var emptyButton = '<button class="btn btn-sm btn-default remove_samples"><span class="glyphicon glyphicon-eject"></span></button>';
         var deleteButton = '<button class="btn btn-sm btn-danger delete_condition"><span class="glyphicon glyphicon-trash"></button>';
@@ -195,7 +205,7 @@ $(document).ready(function() {
 
         // Clone the template field and update its index accordingly for the management_form.
         // Hide it, and add it to the new attributeDiv
-        var newField = $($('#attribute_form_template').clone().html().replace(/__prefix__/g, numberAttributes));
+        var newField = $($('#attribute_form_template').clone().html().replace(/__prefix__/g, (numberAttributes - 1)));
         newField.val(attributeName);
         newField.css('display', 'none');
         attributeDiv.append(newField);
@@ -209,7 +219,7 @@ $(document).ready(function() {
                 .append(attributeDiv);
         }
 
-        $('#attribute_name_field').val(''); // Clear the input for the next attribute
+        attributeNameField.val(''); // Clear the input for the next attribute
         $('#create_attribute').prop('disabled', true); // Return the button to disabled state
 
     });

@@ -20,7 +20,7 @@ class AttributeForm(ModelForm):
         model = Attribute
         fields = ['name', ]
         widgets = {
-            'name': TextInput(attrs={'placeholder': 'Condition name', 'class': 'form-control'}),  # 'class': 'attributeInput'
+            'name': TextInput(attrs={'placeholder': 'Condition name', 'class': 'form-control'}),  # Before removal or drag and drop, this class was used: 'class': 'attributeInput'
         }
         labels = {
             'name': 'Condition name'

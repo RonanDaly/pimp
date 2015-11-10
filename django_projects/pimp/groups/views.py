@@ -143,15 +143,17 @@ def createTic(fileList, attribute, polarity, project):
 
 
 def index(request, project_id):
+    # warning: this view let's you create groups, and attributes, without adding samples to the attributes,
+    # or attributes to the group
     class RequiredFormSet(BaseFormSet):
         def __init__(self, *args, **kwargs):
             super(RequiredFormSet, self).__init__(*args, **kwargs)
             for form in self.forms:
                 form.empty_permitted = False
 
-    AttributeFormSet = formset_factory(AttributeForm, max_num=20, formset=RequiredFormSet)
+    AttributeFormSet = formset_factory(AttributeForm, extra=0, max_num=20, formset=RequiredFormSet)
 
-    SampleAttributeFormSet = formset_factory(SampleAttributeForm, formset=RequiredFormSet)
+    SampleAttributeFormSet = formset_factory(SampleAttributeForm, extra=0, formset=RequiredFormSet)
 
     try:
         project = Project.objects.get(pk=project_id)
@@ -160,107 +162,71 @@ def index(request, project_id):
     except Project.DoesNotExist:
         raise Http404  # Http404 not imported, so this except does nothing...
 
+    error_message = False
+
     if request.method == 'POST':
         group_form = GroupForm(request.POST)
         attribute_formset = AttributeFormSet(request.POST, prefix='attributes')
         sample_attribute_formset = SampleAttributeFormSet(request.POST, prefix='samplesattributes')
-        print group_form
-        print attribute_formset
-        print sample_attribute_formset
-        # Does the condition already exist within the group?
-        # Does the group already exist?
-        # Is each conditions name unique?
-        # Do the names of the groups comply with the field rules?
-        # Do the forms have content (i.e. has the user submitted a blank form e.g. empty condition?
 
-        return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+        if attribute_formset.is_valid() and sample_attribute_formset.is_valid() and group_form.is_valid():
 
-    else: # if the request method is GET
+            for form in attribute_formset.forms:
+                if not form.has_changed():
+                    error_message = True
+                    group_form = GroupForm()
+                    attribute_formset = AttributeFormSet(prefix='attributes')
+                    sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
+
+            # Update the project modified time
+            project.modified = datetime.datetime.now()
+            project.save()
+
+            # Create a save a new group
+            group = group_form.save()
+
+            # For each new attribute, create and save it
+            for form in attribute_formset.forms:
+                attribute = form.save(commit=False)
+                attribute.group = group  # relate the new attribute with the new group
+                attribute.save()
+
+            # For each new sample-attribute relationship
+            for form in sample_attribute_formset.forms:
+                # get the sample
+                sample_id = form.cleaned_data['sample']
+                sample = project.sample_set.get(id=sample_id)
+
+                # get the attribute
+                attribute_name = form.cleaned_data['attribute']
+                attribute = group.attribute_set.get(name=attribute_name)
+
+                # Create and save a new SampleAttribute object relating the sample and attribute
+                SampleAttribute.objects.create(sample=sample, attribute=attribute)
+
+            return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+
+        else:  # at least one of the forms was not valid, so give the user an error message and return them to the page
+            error_message = True
+            group_form = GroupForm()
+            attribute_formset = AttributeFormSet(prefix='attributes')
+            sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
+
+    else:  # if the request method is GET
         group_form = GroupForm()
         attribute_formset = AttributeFormSet(prefix='attributes')
         sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
 
-    c = {'group_form': group_form,
-     'attribute_formset': attribute_formset,
-     'sample_attribute_formset': sample_attribute_formset,
-     'project': project,
-     'permission':permission,
+    c = {
+        'group_form': group_form,
+        'attribute_formset': attribute_formset,
+        'sample_attribute_formset': sample_attribute_formset,
+        'project': project,
+        'permission': permission,
+        'error_message': error_message
     }
 
     return render(request, 'project/groupcreation_bs3.html', c)
-
-# # This view create a new group and his attributes, allow to assign files to attributes
-# def index(request, project_id):
-#     # This class is used to make empty formset forms required
-#     # See http://stackoverflow.com/questions/2406537/django-formsets-make-first-required/4951032#4951032
-#     class RequiredFormSet(BaseFormSet):
-#         def __init__(self, *args, **kwargs):
-#             super(RequiredFormSet, self).__init__(*args, **kwargs)
-#             for form in self.forms:
-#                 form.empty_permitted = False
-#
-#     AttributeFormSet = formset_factory(AttributeForm, extra=2, max_num=20, formset=RequiredFormSet)
-#
-#     SampleAttributeFormSet = formset_factory(SampleAttributeForm, extra=1, formset=RequiredFormSet)
-#
-#     try:
-#         project = Project.objects.get(pk=project_id)
-#         user = request.user
-#         permission = project.userproject_set.get(user=user).permission
-#     except Project.DoesNotExist:
-#         raise Http404
-#
-#     if request.method == 'POST': # If the form has been submitted...
-#         group_form = GroupForm(request.POST) # A form bound to the POST data
-#         # Create a formset from the submitted data
-#         attribute_formset = AttributeFormSet(request.POST, request.FILES, prefix='attributes')
-#         sample_attribute_formset = SampleAttributeFormSet(request.POST, request.FILES, prefix='samplesattributes')
-#
-#         if group_form.is_valid() and attribute_formset.is_valid() and sample_attribute_formset.is_valid():
-#             project.modified = datetime.datetime.now()
-#             project.save()
-#             group = group_form.save()
-#             attributeList = []
-#             groupList = []
-
-#             for form in attribute_formset.forms:
-#                 attribute = form.save(commit=False)
-#                 attribute.group = group
-#                 attribute.save()
-
-#             for form in sample_attribute_formset.forms:
-#                 sampleId = form.cleaned_data['sample']
-#                 attributeName = form.cleaned_data['attribute']
-#                 sample = project.sample_set.get(id=sampleId)
-#                 attribute = group.attribute_set.get(name=attributeName)
-
-#                 if attribute not in attributeList:
-#                     attributeList.append(attribute)
-
-#                 new_sample_attribute = SampleAttribute.objects.create(sample=sample, attribute=attribute)
-
-#             if request.is_ajax():
-#                 return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
-
-#     else:
-#         group_form = GroupForm()
-#         attribute_formset = AttributeFormSet(prefix='attributes')
-#         sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
-#
-#     # For CSRF protection
-#     # See http://docs.djangoproject.com/en/dev/ref/contrib/csrf/
-#
-#     c = {'group_form': group_form,
-#          'attribute_formset': attribute_formset,
-#          'sample_attribute_formset': sample_attribute_formset,
-#          'project': project,
-#          'permission':permission,
-#         }
-
-#     c.update(csrf(request))
-
-#     return render(request, 'project/groupcreation_bs3.html', c)
-#     #return render_to_response('project/groupcreation.html', c)
 
 
 # Create categories for project files (QC, Blank, standatds.csv)
