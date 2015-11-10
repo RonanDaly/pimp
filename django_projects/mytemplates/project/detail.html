@@ -1676,7 +1676,7 @@ $(document).ready(function() {
 <div class="row" style="margin-bottom: 0px;">
 	<div class="span6 list-span">
 		<ul style="margin-left: 0px;">
-			<li>Created by : {{ project.owner }}</li>
+			<li>Created by : {{ project.user_owner.first_name}} {{project.user_owner.last_name}} ({{project.user_owner.username}})</li>
 			<!-- <li><a class="" id="change-display" data-toggle="tooltip" title="Tab display" data-placement="right"></a></li> -->
 		</ul>
 	</div>
@@ -1745,13 +1745,13 @@ $(document).ready(function() {
 					<div class="row-fluid">
 						<div class="span12">
 			  				<div class="row-fluid">
-								<div class="span4 description-span"><h4>Share :</h4></div>
+								<div class="span4 description-span"><h4>Current Users</h4></div>
 								{% ifequal permission 'admin' %}
 								<div class="span8 span-btn">
 									<a class="btn btn-primary btn-create-project" href="{% url 'add_user' project.id %}"><i class="icon-share icon-white"></i> Add user</a>
-									{% if project.users.all|length > 1 %}
-									<a class="btn btn-success btn-create-project" href="{% url 'add_user' project.id %}" style="margin-right: 5px;"><i class="icon-lock icon-white"></i> Permissions</a>
-									{% endif %}
+									<!-- {% if project.users.all|length > 1 %} -->
+									<!-- <a class="btn btn-success btn-create-project" href="{% url 'add_user' project.id %}" style="margin-right: 5px;"><i class="icon-lock icon-white"></i>Permissions</a> -->
+									<!-- {% endif %} -->
 								</div>
 								{% endifequal %}
 							</div>
@@ -1759,32 +1759,42 @@ $(document).ready(function() {
 							<div class="row-fluid">
 								<div class="span12">
 									<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
-										<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+										<div class="span3 center-text" style="margin-left: 0px;min-height:10px;">
 											<p class="text-in-table">User</p>
 										</div>
-										<div class="span4 center-text"style="min-height:10px;">
+										<div class="span3 center-text"style="min-height:10px;">
 											<p class="text-in-table">Permission</p>
 										</div>
-										<div class="span4 center-text" style="min-height:10px;">
+										<div class="span3 center-text" style="min-height:10px;">
 											<p class="text-in-table">Date joined</p>
 										</div>
+										<div class="span3 center-text"></div>
 									</div>
 									{% for user in project.users.all %}
-									<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
-										<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
-											<p class="text-in-table introduction_text">{{ user }}</p>
-										</div>
-										{% for userpro in user.userproject_set.all %}
-										{% if userpro.project == project %}
-										<div class="span4 center-text"style="min-height:10px;">
-											<p class="text-in-table introduction_text" {% ifequal userpro.permission 'admin' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal userpro.permission 'edit' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal userpro.permission 'read' %}style="color: rgb(213, 170, 60);"{% endifequal %}>{{ userpro.permission }}</p>
-										</div>
-										<div class="span4 center-text" style="min-height:10px;">
-											<p class="text-in-table introduction_text">{{ userpro.date_joined|truncatewords:"1"|slice:":-3" }}</p>
-										</div>
-										{% endif %}
-										{% endfor %}
-									</div>
+										{% ifnotequal user project.user_owner %}
+											<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+												<div class="span3 center-text" style="margin-left: 0px;min-height:10px;">
+													<p class="text-in-table introduction_text">{{ user }}</p>
+												</div>
+												{% for userpro in user.userproject_set.all %}
+												{% if userpro.project == project %}
+												<div class="span3 center-text"style="min-height:10px;">
+													<p class="text-in-table introduction_text" {% ifequal userpro.permission 'admin' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal userpro.permission 'edit' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal userpro.permission 'read' %}style="color: rgb(213, 170, 60);"{% endifequal %}>{{ userpro.permission }}</p>
+												</div>
+												<div class="span3 center-text" style="min-height:10px;">
+													<p class="text-in-table introduction_text">{{ userpro.date_joined|truncatewords:"1"|slice:":-3" }}</p>
+												</div>
+												<div class="span3 center-text" style="min-height:10px;">
+												{% ifnotequal userpro.user project.user_owner %}
+													<p class="text-in-table introduction_text">
+														<a href="{% url 'remove_user_project' project.id userpro.user.id %}">Remove</a>
+													</p>
+												{% endifnotequal %}
+												</div>
+												{% endif %}
+												{% endfor %}
+											</div>
+										{% endifnotequal %}
 									{% endfor %}
 								</div>
 							</div>
