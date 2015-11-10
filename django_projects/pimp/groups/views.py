@@ -155,14 +155,27 @@ def index(request, project_id):
 
     try:
         project = Project.objects.get(pk=project_id)
-        user = request.user;
+        user = request.user
         permission = project.userproject_set.get(user=user).permission
     except Project.DoesNotExist:
         raise Http404  # Http404 not imported, so this except does nothing...
 
     if request.method == 'POST':
-        pass
-    else:
+        group_form = GroupForm(request.POST)
+        attribute_formset = AttributeFormSet(request.POST, prefix='attributes')
+        sample_attribute_formset = SampleAttributeFormSet(request.POST, prefix='samplesattributes')
+        print group_form
+        print attribute_formset
+        print sample_attribute_formset
+        # Does the condition already exist within the group?
+        # Does the group already exist?
+        # Is each conditions name unique?
+        # Do the names of the groups comply with the field rules?
+        # Do the forms have content (i.e. has the user submitted a blank form e.g. empty condition?
+
+        return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+
+    else: # if the request method is GET
         group_form = GroupForm()
         attribute_formset = AttributeFormSet(prefix='attributes')
         sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
