@@ -12,6 +12,8 @@ MySQL-python==1.2.5
 numpy==1.9.2
 pytz==2015.4
 rpy2==2.3.10
+scikit-learn==0.16.1
+scipy==0.14.1
 six==1.9.0
 wheel==0.24.0
-honcho=0.6.6
+honcho==0.6.6

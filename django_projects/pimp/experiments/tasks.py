@@ -67,7 +67,7 @@ def start_pimp_pipeline(analysis, project, user):
 	# user.email_user('Subject here', 'Your analysis has started processing, thank you for using PiMP', settings.DEFAULT_FROM_EMAIL)
 	############## This wouldn't work for me! - Scott
 	#r_command_list = ["/usr/local/bin/R-3.0.3/lib64/R/bin/Rscript","/opt/django/scripts/pimp/runPiMP.R",str(analysis.id)]
-	r_command_list = ["/usr/bin/Rscript", os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'), str(analysis.id)]
+	r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'), str(analysis.id)]
 	r_command = " ".join(r_command_list)
 	print r_command
 	subprocess.call(r_command,shell=True)

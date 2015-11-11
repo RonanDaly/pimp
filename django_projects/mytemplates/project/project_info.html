@@ -10,11 +10,11 @@
 		</div>
 		<div class="row-fluid">
 			<div class="span6">
-				{% if user.is_staff %}
-					<a class="project-title-link" href="{% url 'project_detail' project.0.id %}">{{ project.0.title }}</a>
-				{% else %}
-					<p class="project-title-link-no-link" >{{ project.0.title }}</p>
-				{% endif %}
+				<!-- {% if user.is_staff %} -->
+				{{ project.0.title }}
+				<!-- {% else %} -->
+					<!-- <p class="project-title-link-no-link" >{{ project.0.title }}</p> -->
+				<!-- {% endif %} -->
 			</div>
 			<div  class="span6 list-span date-span">
 				<ul>
@@ -23,6 +23,13 @@
 				</ul>
 			</div>
 		</div>
+
+		<div class="row-fluid">
+			<div class="span12">
+				<a class="project-title-link" href="{% url 'project_detail' project.0.id %}">Modify Project</a>
+			</div>
+		</div>
+
 		<div class="row-fluid">
 			<div class="span12 description-span">
 				<p class="introduction_text">{% if  project.0.description %}{{ project.0.description|truncatewords:"20" }}{% else %}No description available{% endif %}</p>

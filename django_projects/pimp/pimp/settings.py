@@ -6,6 +6,7 @@ import distutils.util as du
 def getNeededString(name):
     if not os.environ.has_key(name):
         raise Exception('Environment variable ' + name + ' is needed but is not defined')
+    return os.environ[name]
 
 def getString(name, default):
     if not os.environ.has_key(name):
@@ -30,6 +31,7 @@ DEBUG = getBool('PIMP_DEBUG', False)
 TEMPLATE_DEBUG = DEBUG
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+os.environ['PIMP_BASE_DIR'] = BASE_DIR
 
 # Set to True to enable registration
 REGISTRATION_OPEN = False
@@ -233,3 +235,5 @@ LOGGING = {
         },
     }
 }
+
+RSCRIPT_PATH = getNeededString('PIMP_RSCRIPT_PATH')
