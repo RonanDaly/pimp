@@ -1,2 +1,5 @@
-options('repos'=append(c(PuMP='http://puma.ibls.gla.ac.uk/R'), BiocInstaller::biocinstallRepos()))
+print('Setting repositories')
+options('repos'=list(CRAN='http://cran.rstudio.com/', Bioconductor='http://www.bioconductor.org/packages/release/bioc', PuMP='http://puma.ibls.gla.ac.uk/R'))
+print('Running Packrat init script')
 source('packrat/init.R')
+packrat::restore()
