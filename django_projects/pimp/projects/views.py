@@ -76,7 +76,7 @@ def newproject(request):
 			created = datetime.datetime.now()
 			user = request.user
 			name = user.username
-			new_project = Project.objects.create(title=title, description=description, owner=user, created=created, modified=created)
+			new_project = Project.objects.create(title=title, description=description, user_owner=user, created=created, modified=created)
 			new_user_project = UserProject.objects.create(user=user, project=new_project, date_joined=created, permission="admin")
 			request.session['new_project'] = True
 			print request.session['new_project']

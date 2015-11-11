@@ -2140,6 +2140,14 @@ $(document).ready(function() {
     	return expendExperiment($(this));
   	});
 
+  	$('.btnNext').click(function(){
+	  $('#breadcrumbs-one > .active').next('li').find('a').trigger('click');
+	});
+
+	  $('.btnPrevious').click(function(){
+	  $('#breadcrumbs-one > .active').prev('li').find('a').trigger('click');
+	});
+
   	function expendExperiment(a){
   		var experimentContent = $(a).parent().parent().parent().find(".experiment-content")[0];
   		console.log($(a).parent())
@@ -2323,6 +2331,9 @@ $(document).ready(function() {
 			  	</div>
 			</div>
 		</div>
+		<div style="float:right;">
+			<a class="btn btn-primary btnNext" >Next</a>
+		</div>
 	</div>
 	<div id="calibration-samples" class="tab-pane" style="background-color: rgb(253, 253, 253);">	
 		<div class="container-fluid">
@@ -2477,6 +2488,10 @@ $(document).ready(function() {
 					</div>
 			  	</div>
 			</div>
+		</div>
+		<div style="float:right;">
+			<a class="btn btn-primary btnPrevious" >Previous</a>
+			<a class="btn btn-primary btnNext" >Next</a>
 		</div>
 	</div>
 	<div class="tab-pane" id="sample-management" style="background-color: rgb(253, 253, 253);">
@@ -2651,6 +2666,10 @@ $(document).ready(function() {
 			  	</div>
 			</div>
 		</div>
+		<div style="float:right;">
+			<a class="btn btn-primary btnPrevious" >Previous</a>
+			<a class="btn btn-primary btnNext" >Next</a>
+		</div>
 	</div>
 	<div class="tab-pane" id="experiment" style="background-color: rgb(253, 253, 253);">
 		<div class="row-fluid">
@@ -2796,6 +2815,9 @@ $(document).ready(function() {
 			{% endfor %}
 			{% endif %}
 		</div>
+		<div style="float:right;">
+        	<a class="btn btn-primary btnPrevious" >Previous</a>
+        </div>
 	</div>
 </div>
  </div>
