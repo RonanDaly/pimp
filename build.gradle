@@ -35,7 +35,7 @@ class PrintExec extends Exec {
 }
 
 def checkProperties() {
-	for ( prop in ['Python', 'Rscript', 'Java'] ) {
+	for ( prop in ['Rscript'] ) {
 		if ( project.ext.props[prop] == null ) {
 			throw new Exception('Property ' + prop + ' is not set in the configuration file')
 		}
@@ -44,59 +44,71 @@ def checkProperties() {
 
 task setupProjectProperties {
 	Properties props = new Properties()
-	props.load(new FileInputStream("configuration.ini"))
+	props.load(new FileInputStream('django_projects/pimp/.env'))
 	project.ext.props = props
 	checkProperties()
 }
 
-task setPythonVersion(type: PrintExec, dependsOn: setupProjectProperties) {
-	commandLine project.ext.props.Python, 'getPythonVersion.py'
-	doLast {
-		project.ext.PythonVersion = standardOutput.toString()
+#task setPythonVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+#	commandLine project.ext.props.Python, 'getPythonVersion.py'
+#	doLast {
+#		project.ext.PythonVersion = standardOutput.toString()
+#	}
+#}
+
+#task setJavaVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+#	commandLine project.ext.props.Java, '-cp', '.', 'GetJavaVersion'
+#	doLast {
+#		project.ext.JavaVersion = standardOutput.toString()
+#	}
+#}
+
+#task setRVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+#	commandLine project.ext.props.Rscript, 'getRVersion.R'
+#	doLast {
+#		project.ext.RVersion = standardOutput.toString()
+#	}
+#}
+
+#task checkVersions(dependsOn: [setPythonVersion, setRVersion, setJavaVersion]) << {
+#	println 'R Version: ' + project.ext.RVersion
+#	println 'Python Version: ' + project.ext.PythonVersion
+#	println 'Java Version: ' + project.ext.JavaVersion
+#}
+
+#task copyRpkg (type: Copy) {
+#        from('PiMP') {
+#		into 'PiMP'
+#	}
+#        from('PiMPDB') {
+#		into 'PiMPDB'
+#	}
+#	into 'build'
+#}
+
+#task createPiMP(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
+#        workingDir 'build'
+#        commandLine project.ext.props.R, 'CMD', 'build',  'PiMP'	
+#}
+
+#task createPiMPDB(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
+#        workingDir 'build'
+#        commandLine project.ext.props.R, 'CMD', 'build',  'PiMPDB'	
+#}
+
+task createVirtualEnvironment(type: PrintExec) {
+	if ( ! file('venv').exists() ) {
+		commandLine 'python', 'virtualenv/virtualenv.py', '--python=python2.7', 'venv'
 	}
 }
 
-task setJavaVersion(type: PrintExec, dependsOn: setupProjectProperties) {
-	commandLine project.ext.props.Java, '-cp', '.', 'GetJavaVersion'
-	doLast {
-		project.ext.JavaVersion = standardOutput.toString()
-	}
+task installPiMPPythonDependencies(type: PrintExec, dependsOn: createVirtualEnvironment) {
+	commandLine 'venv/bin/pip', 'install', '-r', 'django_projects/requirements.txt'
+	commandLine 'venv/bin/pip', 'install', '-r', 'django_projects/requirements_frank.txt'
 }
 
-task setRVersion(type: PrintExec, dependsOn: setupProjectProperties) {
-	commandLine project.ext.props.Rscript, 'getRVersion.R'
-	doLast {
-		project.ext.RVersion = standardOutput.toString()
-	}
-}
-
-task checkVersions(dependsOn: [setPythonVersion, setRVersion, setJavaVersion]) << {
-	println 'R Version: ' + project.ext.RVersion
-	println 'Python Version: ' + project.ext.PythonVersion
-	println 'Java Version: ' + project.ext.JavaVersion
-}
-
-task copyRpkg (type: Copy) {
-        from('PiMP') {
-		into 'PiMP'
-	}
-        from('PiMPDB') {
-		into 'PiMPDB'
-	}
-	into 'build'
-}
-
-task createPiMP(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
-        workingDir 'build'
-        commandLine project.ext.props.R, 'CMD', 'build',  'PiMP'	
-}
-
-task createPiMPDB(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
-        workingDir 'build'
-        commandLine project.ext.props.R, 'CMD', 'build',  'PiMPDB'	
-}
-
-task installPiMPRDependencies(type: PrintExec, dependsOn: [createPiMP, createPiMPDB, setupProjectProperties]) {
+task installPiMPRDependencies(type: PrintExec, dependsOn: setupProjectProperties) {
 	commandLine project.ext.props.Rscript, 'setupR.R'
 }
 
+task installPiMPDependencies(dependsOn: [installPiMPPythonDependences, installPiMPRDependencies])
