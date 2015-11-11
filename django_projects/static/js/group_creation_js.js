@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
     // Create the sampleList DataTable
     var sampleList = $('#sample_list').DataTable({
         dom: '<"tablewrapper"fti>',
@@ -16,25 +17,33 @@ $(document).ready(function() {
         ]
     });
 
-    // JS for group name --------------------------------------------------------------------------------------------
-
     // Stop the user from using the Return key to submit the form prematurely.
     // We want the user to use the submit button.
     $('.noSubmitOnEnter').keypress(function(e) {
         if (e.which == 13) e.preventDefault();
     });
 
-    // group name validation
+    // group name validation (experiment title)
     $('#samples_attribute_form').validate({
         rules: {
-            name: { // experiment title / group name
+            name: { // experiment title (group name)
                 required: true,
+                minlength: 2,
+                pattern: /^[^0-9\s][\Sa-zA-Z_-]+$/ // no whitespace, must not start with number
+            },
+            attribute_name_field: {
+                minlength: 2,
                 pattern: /^[^0-9\s][\Sa-zA-Z_-]+$/
             }
         },
         messages: {
             name: {
                 required: "Please enter an experiment name",
+                minlength: "Must have 2 or more characters",
+                pattern: "Must start with a letter. No whitespace. Letters, numbers, hyphens, and underscores only"
+            },
+            attribute_name_field: {
+                minlength: "Must have 2 or more characters",
                 pattern: "Must start with a letter, contain more than 1 letter, and contain no whitespace"
             }
         },
@@ -47,9 +56,7 @@ $(document).ready(function() {
         }
     });
 
-    //---------------------------------------------------------------------------------------------------------------
-
-    // JS for adding a new attribute field --------------------------------------------------------------------------
+    $('[data-toggle=tooltip]').tooltip(); // Set the tooltips
 
     var numberAttributes = 0; // The number of attributes (experimental conditions) created by the user
 
@@ -74,6 +81,8 @@ $(document).ready(function() {
     }
 
     function removeSample(sampleAsLi) {
+        // Remove a sample from the attribute div and return it to the sampleList table.
+
         // Takes a sample of the form <li data-form_id=FORM_ID data-sample_id=SAMPLE_ID data-polarity=POLARITY><div class="sample_name">SAMPLE_NAME</div></li>
         // Adds this information to the sampleList table
         // Remves the sampleAsLi from the attribute div
@@ -132,6 +141,7 @@ $(document).ready(function() {
             } else { // no samples were selected when the add sample button was pushed
                 console.warn("The user tried to add samples to the attribute, but no samples were selected!");
             }
+
         })
         .on('click', '.remove_sample', function(e) { // Erase one sample button
             // Remove the selected sample from the attribute div and replace it into the sampleList table
@@ -179,6 +189,9 @@ $(document).ready(function() {
                 removeSample(sampleAsLi);
             });
 
+            // Delete the tooltips that may still be active
+            $('[data-toggle=tooltip]').tooltip("destroy");
+
             // Then delete the attribute div
             attributeDiv.remove();
 
@@ -197,9 +210,9 @@ $(document).ready(function() {
         // Build up a div to go into the sample attributes column, which contains a hidden django sample attribute form. Present a nicely formatted div containing the details of the attribute and assigned samples.
         var attributeNameField = $('#attribute_name_field');
         var attributeName = attributeNameField.val();
-        var addButton = '<button class="btn btn-sm btn-default add_samples"><span class="glyphicon glyphicon-plus"></span></button>';
-        var emptyButton = '<button class="btn btn-sm btn-default remove_samples"><span class="glyphicon glyphicon-eject"></span></button>';
-        var deleteButton = '<button class="btn btn-sm btn-danger delete_condition"><span class="glyphicon glyphicon-trash"></button>';
+        var addButton = '<button data-toggle="tooltip" data-container="body" title="Add selected samples" class="btn btn-sm btn-default add_samples"><span class="glyphicon glyphicon-plus"></span></button>';
+        var emptyButton = '<button data-toggle="tooltip" data-container="body" title="Remove all samples" class="btn btn-sm btn-default remove_samples"><span class="glyphicon glyphicon-eject"></span></button>';
+        var deleteButton = '<button data-toggle="tooltip" data-container="body" title="Delete condition" class="btn btn-sm btn-danger delete_condition"><span class="glyphicon glyphicon-trash"></button>';
         var attributeControls = '<div class="btn-group pull-right">' + addButton + emptyButton +  deleteButton + '</div>';
         var attributeDiv = $('<div class="panel panel-info attribute" id="' + attributeName + '"><div class="panel-heading clearfix">' + attributeControls + '<h2 class="panel-title">' + attributeName+ '</h2>' + '</div><div class="panel-body"><ol></ol><p class="sample_placeholder">No samples</p></div></div>');
 
@@ -219,6 +232,8 @@ $(document).ready(function() {
                 .append(attributeDiv);
         }
 
+        $('[data-toggle=tooltip]').tooltip("destroy"); // Delete the tooltips that may still be active
+        $('[data-toggle="tooltip"]').tooltip(); // Set the tooltips
         attributeNameField.val(''); // Clear the input for the next attribute
         $('#create_attribute').prop('disabled', true); // Return the button to disabled state
 

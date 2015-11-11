@@ -143,6 +143,11 @@ def createTic(fileList, attribute, polarity, project):
 
 
 def index(request, project_id):
+    """
+    Create empty forms for group creation and return to a GET request.
+    Validate form data for group creation, save the data into the database, return user to project detail.
+
+    """
     class RequiredFormSet(BaseFormSet):
         def __init__(self, *args, **kwargs):
             super(RequiredFormSet, self).__init__(*args, **kwargs)
@@ -170,29 +175,35 @@ def index(request, project_id):
 
         if attribute_formset.is_valid() and sample_attribute_formset.is_valid() and group_form.is_valid():
 
+            # This series of if statements is used to check if the user tried to create
+            # attributes without assigning samples to them, or tried to create a group
+            # without adding any attributes.
+            # Any attribute without samples is not saved to the database.
+            # A group without attributes is not saved to the database.
+
             project.modified = datetime.datetime.now()
 
             group = group_form.save(commit=False)
             group_saved = False
 
-            for attribute_form in attribute_formset.forms:
+            for attribute_form in attribute_formset.forms: # for each attribute
                 attribute_object = attribute_form.save(commit=False)
                 attribute_saved = False
                 attribute_name = attribute_form.cleaned_data['name']
                 print '\tChecking if attribute ' + attribute_name + ' has been assigned any samples...'
 
-                for sample_attribute_form in sample_attribute_formset.forms:
+                for sample_attribute_form in sample_attribute_formset.forms: # for each sample
                     sample_attribute = sample_attribute_form.cleaned_data['attribute']
 
-                    if sample_attribute == attribute_name:
+                    if sample_attribute == attribute_name: # if there is a sample assigned to the attribute, save it
                         print '\tA sample has been assigned to attribute ' + attribute_name
 
-                        if not group_saved:
+                        if not group_saved:  # ensure the group is only saved once
                             print '\tSaving group ' + group_form.cleaned_data['name']
                             group.save()
                             group_saved = True
 
-                        if not attribute_saved:
+                        if not attribute_saved:  # ensure the attribute is only saved once
                             print '\tSaving attribute ' + attribute_name
                             attribute_object.group = group
                             attribute_object.save()
@@ -207,9 +218,11 @@ def index(request, project_id):
             project.save()
             print "Group creation processing finished."
 
+            return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+
         else:  # at least one form isn't valid
             print "At least one form in the group creation view wasn't valid."
-            error_message = True
+            error_message = True # Used on the template to display a general error message.
             group_form = GroupForm()
             attribute_formset = AttributeFormSet(prefix='attributes')
             sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
