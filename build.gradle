@@ -124,19 +124,57 @@ task installPiMPDependencies(dependsOn: [installPiMPPythonDependencies, installP
 task synchroniseDatabase(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties]) {
 	//println project.ext.props.PATH
 	environment 'PATH', project.ext.props['PATH']
-	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'django_projects/pimp/manage.py', 'migrate'
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/manage.py', 'migrate'
 }
 
-task createSuperUser(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties]) {
+task populatePiMP (type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties, synchroniseDatabase]) {
 	environment 'PATH', project.ext.props['PATH']
-	if ( project.ext.props['PIMP_INITIAL_USERNAME'] == null || project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS'] == null ) {
-		commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'django_projects/pimp/manage.py', 'createsuperuser'
-	} else {
-		commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'django_projects/pimp/manage.py', 'createsuperuser', '--username', project.ext.props['PIMP_INITIAL_USERNAME'], '--email', project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS']
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/populate_pimp.py'
+}
+
+task setupSuperUser(dependsOn: [setupProjectProperties]) << {
+	if ( project.ext.props['PIMP_INITIAL_USERNAME'] == null ||
+			project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS'] == null ||
+			project.ext.props['PIMP_INITIAL_PASSWORD'] == null ||
+			project.ext.props['PIMP_INITIAL_FIRST_NAME'] == null || 
+			project.ext.props['PIMP_INITIAL_LAST_NAME'] == null ) {
+		logger.info "Not all properties for initial user set, going to interactive mode"
+		def console = System.console()
+		if (console) {
+			console.printf('\n')
+			project.ext.props['PIMP_INITIAL_USERNAME'] = console.readLine('Username: ')
+			project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS'] = console.readLine('Email: ')
+			def password = console.readPassword('Password: ')
+			def passwordAgain = console.readPassword('Password (again): ')
+			while ( ! Arrays.equals(password, passwordAgain) ) {
+				console.printf('Error: Your passwords did not match.\n')
+				password = console.readPassword('Password: ')
+				passwordAgain = console.readPassword('Password (again): ')
+			}
+			project.ext.props['PIMP_INITIAL_PASSWORD'] = password
+			project.ext.props['PIMP_INITIAL_FIRST_NAME'] = console.readLine('First name: ')
+			project.ext.props['PIMP_INITIAL_LAST_NAME'] = console.readLine('Last name: ')
+		} else {
+			logger.error "Cannot get console."
+		}
 	}
 }
 
-task populatePiMP (type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties]) {
+task createSuperUser(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties, setupSuperUser]) {
 	environment 'PATH', project.ext.props['PATH']
-	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'django_projects/pimp/populate_pimp.py'
+	environment 'PIMP_INITIAL_USERNAME', project.ext.props['PIMP_INITIAL_USERNAME']
+	environment 'PIMP_INITIAL_EMAIL_ADDRESS', project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS']
+	environment 'PIMP_INITIAL_PASSWORD', project.ext.props['PIMP_INITIAL_PASSWORD']
+	environment 'PIMP_INITIAL_FIRST_NAME', project.ext.props['PIMP_INITIAL_FIRST_NAME']
+	environment 'PIMP_INITIAL_LAST_NAME', project.ext.props['PIMP_INITIAL_LAST_NAME']
+
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/setupInitialUser.py'
+}
+
+task setupPiMP(dependsOn: [synchroniseDatabase, populatePiMP, createSuperUser])
+
+task runPiMP(type: Exec) {
+	environment 'PATH', project.ext.props['PATH']
+	workingDir 'django_projects/pimp'
+	commandLine '../../venv/bin/honcho', 'start'
 }
