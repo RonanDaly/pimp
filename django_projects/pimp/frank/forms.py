@@ -257,7 +257,7 @@ class AnnotationToolSelectionForm(forms.Form):
     tool_selection = forms.ModelChoiceField(
         queryset=AnnotationTool.objects.all(),
         empty_label=None,
-        help_text='Select one of the following to generate candidate annotations.'
+        help_text='Select a tool to generate candidate annotations.'
     )
 
     def __init__(self, *args, **kwargs):
@@ -278,7 +278,7 @@ class AnnotationToolSelectionForm(forms.Form):
                     suitable_experimental_protocols=self.experiment.detection_method
                 ),
                 empty_label=None,
-                help_text='Select one of the following to generate candidate annotations.',
+                help_text='Select a tool to generate candidate annotations.',
             )
 
 
@@ -311,7 +311,7 @@ class CleanFilterForm(AnnotationQueryForm):
         self.fields['parent_annotation_queries'] = forms.MultipleChoiceField(
             choices = possible_parents,
             required = True,
-            help_text = "Please choose a parent Annotation Query to filter") 
+            help_text = "Please choose a parent Annotation Query to filter")
 
     parent_annotation_queries = forms.MultipleChoiceField(
         choices = possible_parents,
@@ -364,7 +364,7 @@ class PrecursorMassFilterForm(AnnotationQueryForm):
         self.fields['parent_annotation_queries'] = forms.MultipleChoiceField(
             choices = possible_parents,
             required = True,
-            help_text = "Please choose a parent Annotation Query to filter") 
+            help_text = "Please choose a parent Annotation Query to filter")
 
     parent_annotation_queries = forms.MultipleChoiceField(
         choices = possible_parents,
