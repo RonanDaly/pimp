@@ -118,3 +118,24 @@ padding: 0 2px;
 	float: none;
 	margin: 0 auto;
 }
+
+#pimp_icon:hover {
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.28);
+}
+
+#base_container::before{
+	content: '';
+	display: block;
+	position: absolute;
+	top: 51px;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: url(../img/pattern.png) no-repeat right top;
+	background-size: 218px;
+	opacity: .6;
+}
+
+.panel-title {
+    color: #00355E;
+}

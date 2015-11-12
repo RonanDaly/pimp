@@ -67,7 +67,7 @@
 	    			<span class="icon-bar"></span>
 	    			<span class="icon-bar"></span>
 					</button>
-					<a class="navbar-brand" href="{% url 'index' %}">PiMP</a>
+					<a class="navbar-brand" href="{% url 'index' %}" style="padding-top: 8px;"><img src="{{ STATIC_URL }}/img/PiMP_logo_no_background.png" style="height:37px;height: 37px;border-radius: 50px;border: 1px solid #ddd;" id="pimp_icon"></a>
 				</div>
 
 				<div class="collapse navbar-collapse">
@@ -95,17 +95,10 @@
 			</div>
 		</div>
 
-        <div class="container">
-			<header class="greenlantern subhead">
-				<div class="container">
-					<h1 class="unimg"></h1>
-					<!div class="gpimg"><!/div>
-				</div>
-			</header>
-        </div>
-        <div class="container">
-            <div class="row">
-                <div class="col-md-offset-1 col-md-10">
+
+        <div class="container" id="base_container">
+            <div class="row" style="padding-top:20px;">
+                <div class="col-md-12">
                         {% block content %} {% endblock %}
                 </div>
             </div>

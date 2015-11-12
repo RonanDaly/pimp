@@ -55,7 +55,7 @@ def experiment(request, project_id):
 			super(RequiredComparisonFormSet, self).__init__(*args, **kwargs)
 			for form in self.forms:
 				form.fields['attribute1'].choices =[(c.id, c) for c in attributes]
-				form.fields['attribute1'].choices.append(["select","select member"])
+				form.fields['attribute1'].choices.append(["select","select condition"])
 				form.fields['attribute1'].initial = "select"
 				form.fields['attribute2'].choices =[(c.id, c) for c in attributes]
 				form.fields['name'].widget.attrs['readonly'] = True
