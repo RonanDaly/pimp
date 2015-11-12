@@ -4,6 +4,8 @@ $(document).ready(function() {
     var sampleList = $('#sample_list').DataTable({
         dom: '<"tablewrapper"fti>',
         paging: false,
+        scrollY: '350px',
+        scrollCollapse: true,
         select: {
             style: 'os', // Allow user to shift- and ctrl/cmd- click for multiselection
             blurable: true // All selections are deselected on loss of focus
