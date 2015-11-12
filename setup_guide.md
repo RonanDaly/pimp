@@ -1,6 +1,6 @@
 # Setup guide
 
-This is a setup guide for the PiMP pipeline. It contains instructions for Linux (tested on Ubuntu 15.04 & Fedora 21) and Mac OS X Yosemite.
+This is a setup guide for the qPiMP pipeline. It contains instructions for Linux (tested on Ubuntu 15.04 & Fedora 21) and Mac OS X Yosemite.
 
 ## 1. System Setup
 
@@ -55,21 +55,29 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 ## 2. Setting up PiMP
 
-Run the following command in the project root directory
+1. Go to the `django_projects\pimp` directory and copy one of the example environment files to the `.env` file. The `example-dev.env` file contains an environment you might want to set during development, whilst the `example-prod.env` file contains an environment more suitable for production. E.g.
 
-	$ ./gradlew setupPiMP
+        $ cp example-dev.env .env
+
+2. Edit the `.env` file for your environment
+
+3. Run the following command in the project root directory
+
+        $ ./gradlew setupPiMP
 
 ## 3. Running PiMP
 
 The initial PiMP setup created a virtual environment in `venv` in the project root directory. To enter the virtual environment there is a script you can run.
 
 1. From the project root directory run
-       $ . venv/bin/activate
+
+        $ . venv/bin/activate
 
    You will know you are in the virtual environment, because your prompt will change. You can exit the virtual environment by running `deactivate`.
 
 2. Whilst in the virtual environment change to the `django_projects/pimp` directory and run
-       $ honcho start
+
+        $ honcho start
 
 ## 4. Setting up Python for development work
 

@@ -34,7 +34,7 @@ DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
 if ( DATABASE_FILENAME == '' )  {
     DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
 } else {
-	DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR', DATABASE_FILENAME)
+	DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
 }
 
 dbtype = getNeededString('PIMP_DATABASE_TYPE')
@@ -48,7 +48,7 @@ if ( dbtype == 'django.db.backends.mysql' ) {
 
 db <- new("PiMPDB",
 	dbuser=getString('PIMP_DATABASE_USER', ''),
-	dbpassword=getString('PIMP_DATABASE_PASSWORD, ''),
+	dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
 	dbname=DATABASE_NAME,
 	dbhost=getString('PIMP_DATABASE_HOST', ''),
 	dbport=getString('PIMP_DATABASE_PORT', ''),
@@ -61,7 +61,7 @@ db <- new("PiMPDB",
 experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
 
-DATA_DIR = "/opt/django/data/pimp_data/projects"
+DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), 'pimp_data')), 'projects')
 PROJECT_DIR = file.path(DATA_DIR, project.id)
 setwd(PROJECT_DIR)
 
