@@ -11,7 +11,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',40);
 			$('#serch-banner').show();
 			$('#main-container').css('top',175);
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').css('top',175);
 			$('.pathway-table_wrapper_toolbar').css('top',175);
 			$('.comparison-table_wrapper_toolbar').css('top',175);
@@ -28,7 +27,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',0);
 			$('#serch-banner').hide();
 			$('#main-container').css('top',41);
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').css('top',41);
 			$('.pathway-table_wrapper_toolbar').css('top',41);
 			$('.comparison-table_wrapper_toolbar').css('top',41);
@@ -68,7 +66,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		if (right_panel) {
 			$('.myspan3').width('0%');
 			$('.myspan9').width('100%');
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').width('100%');
 			$('.peak-table_wrapper_toolbar').width('100%');
 			$('.comparison-table_wrapper_toolbar').width('100%');
@@ -80,7 +77,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		else {
 			$('.myspan3').width('20%');
 			$('.myspan9').width('80%');
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').width('80%');
 			$('.peak-table_wrapper_toolbar').width('80%');
 			$('.comparison-table_wrapper_toolbar').width('80%');
@@ -386,6 +382,7 @@ function set_navbar(){
 	});
 }
 
+<<<<<<< HEAD
 // Sort function for retention times, since they have a custom format of
 // "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
 
@@ -400,57 +397,6 @@ jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
 	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
 	return b - a;
 };
-
-function setMetabolitesTable(url, callback){
-
-	var metabolitesTable = $('#metabolites-table').dataTable( {
-					"sAjaxSource": url,
-					"sDom": '<"metabolites-table_wrapper_toolbar"liT>rtp',
-					"tableTools": {
-			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
-			            "aButtons": [
-			                {
-                    			"sExtends": "copy",
-                    			"sButtonText": "Copy",
-                    			"mColumns": "visible",
-                    			"sToolTip": "Copy to clipboard"
-                			},
-			                {
-			                    "sExtends":    "collection",
-			                    "sButtonText": "Export",
-			                    "aButtons":    [
-			                    	{
-					                    "sExtends": "csv",
-					                    "sButtonText": "csv",
-					                    "mColumns": "visible",
-					                    "sFileName": "compounds.csv",
-					                    "sToolTip": "Save as CSV"
-                					},
-                					{
-                    					"sExtends": "xls",
-                    					"sButtonText": "xls",
-                    					"mColumns": "visible",
-                    					"sFileName": "compounds.xls",
-                    					"sToolTip": "Save as XLS"
-                					}
-                				]
-			                }
-			            ]
-			        },
-					"bPaginate": true,
-					"sPaginationType": "full_numbers",
-					"iDisplayLength": 100,
-					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumnDefs": [],
-					"fnDrawCallback":function (oSettings) {
-						console.log("data finished loaded");
-						table_received = this;
-						callback && callback.call(this, table_received);
-					},
-				});
-
-	return metabolitesTable;
-}
 
 function set_idtable(url, callback){
 
