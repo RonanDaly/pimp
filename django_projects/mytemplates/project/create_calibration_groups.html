@@ -1,0 +1,139 @@
+{%  extends 'base_bs3.html' %}
+
+{% load staticfiles %}
+
+{% block DataTables %}
+    <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/dataTables.bootstrap.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'DataTables-1.10.9/DataTables-1.10.9/css/dataTables.bootstrap.min.css' %}" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'DataTables-1.10.9/Select-1.0.1/css/select.bootstrap.min.css' %}"/>
+    <script type="text/javascript" src="{% static 'DataTables-1.10.9/Select-1.0.1/js/dataTables.select.min.js' %}"></script>
+{% endblock %}
+
+{% block custom_scripts_and_styles %}
+    <script src="{% static 'jquery-validation-1.14.0/jquery.validate.min.js' %}"></script>
+    <script src="{% static 'jquery-validation-1.14.0/additional-methods.min.js' %}"></script>
+    <script src="{% static 'js/calibration_group_creation.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div id="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>{{ project }}</h1>
+                <p class="lead">Assign calibration samples to control groups.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- A blank forms to use as a template for JavaScript-provided django forms -->
+    <div style="display:none" id="sampleattribute_form_template">
+        {{ sample_attribute_formset.empty_form }}
+
+    </div>
+    <!-- end blank forms -->
+
+
+    <form id="samples_attribute_form" method="post" action="{% url 'projfile_attribute' project.id %}">
+
+        {% if error_message %}
+            <div id="row">
+                <div class="col-sm-12">
+                    <div class="panel panel-danger">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Error</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p class="text-danger">At least one of your entries (sample assignments, experimental condition names, experiment title) was incorrect. Please check that each condition has at least one sample assigned to it, and that your experimental title and condition names are formatted correctly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+
+            {% csrf_token %}
+            {{ attribute_formset.management_form }}
+            {{ sample_attribute_formset.management_form }}
+
+
+            <!-- Start columns for steps -->
+                <div class="col-sm-6">
+
+                    <!-- Sample table -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">1. Add samples to calibration groups</h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>Select samples from the table below and click the <span class="glyphicon glyphicon-plus"></span> button in the calibration group box to add them.</p>
+                            <div id="samples">
+
+                                <table id="sample_list" class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <td>Sample ID</td>
+                                            <th>File Name</th>
+                                            <th>Polarity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sample in project.calibrationsample_set.all %}
+                                            <tr>
+                                                <td>{{ sample.id }}</td>
+                                                <td>{{ sample.name }}</td>
+                                                <td>{% if sample.standardFile.posdata and sample.standardFile.negdata %}+-{% elif sample.standardFile.posdata%}+{% elif sample.standardFile.negdata %}-{% else %}NA{% endif %}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End sample table -->
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">2. Save </h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>When you are done, click the "Save" button below to store your changes.</p>
+                            <button type="submit" class="btn btn-default">Save</button>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- End column for steps -->
+
+                <!-- Column for sample attributes -->
+                <div class="col-sm-6" id="samples_attributes">
+                    {% for form in attribute_formset %}
+                        <div class="panel panel-info" id="{{ form.name.value }}">
+                            <div class="panel-heading clearfix">
+                                <div class="btn-group pull-right">
+                                    <button data-toggle="tooltip" data-container="body" title="Add select samples" class="btn btn-sm btn-default add_samples" data-original-title="Add selected samples">
+                                        <span class="glyphicon glyphicon-plus"></span>
+                                    </button>
+                                    <button data-toggle="tooltip" data-container="body" title="Remove all samples" class="btn btn-sm btn-default remove_samples" data-original-title="Remove all samples">
+                                        <span class="glyphicon glyphicon-eject"></span>
+                                    </button>
+                                </div>
+                                <h2 class="panel-title" style="padding-top: 5px;">{% if form.name.value == "qc" %}{{ form.name.value|upper }}{% else %}{{ form.name.value|title }}{% endif %}</h2>
+                            </div>
+                            <div class="panel-body">
+                                <ol></ol>
+                                <p class="sample_placeholder">No samples</p>
+                                <div style="display: none;">{{ form.name }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <!-- End column -->
+
+            </div><!-- /.row -->
+        </form>
+
+{% endblock %}
+
