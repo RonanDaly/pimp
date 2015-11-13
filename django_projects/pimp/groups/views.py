@@ -285,12 +285,13 @@ def create_calibration_groups(request, project_id):
                         if attribute.group:
                             group = attribute.group
                             group_exists = True
-                            print "\tA calibration group already exists, so a new one wasn't created"
                             break
 
                 if not group_exists:
                     print "\tCreating new calibration group"
                     group = Group.objects.create(name="calibration_group")
+                else:
+                    print "\tA calibration group already exists, so a new one wasn't created"
 
                 print "\tProcessing attributes"
                 for attribute_form in attribute_formset:
@@ -326,7 +327,6 @@ def create_calibration_groups(request, project_id):
                 print "Finished adding calibration groups."
 
                 return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
-
 
             else:
                 error_message = True
