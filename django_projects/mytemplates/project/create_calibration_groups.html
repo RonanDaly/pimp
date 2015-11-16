@@ -100,7 +100,10 @@
                         </div>
                         <div class="panel-body">
                             <p>When you are done, click the "Save" button below to store your changes.</p>
-                            <button type="submit" class="btn btn-default">Save</button>
+                            <a class="btn btn-default" href="{% url 'project_detail' project.id %}">Return without saving</a>
+                            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#submit_warning">
+                                Save
+                            </button>
                         </div>
                     </div>
 
@@ -133,6 +136,24 @@
                 <!-- End column -->
 
             </div><!-- /.row -->
+                <!-- modal -->
+            <div class="modal" id="submit_warning" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Assign calibration samples to control groups.</h4>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure? Once you've assigned calibration samples to control groups they can't be changed.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">No, go back</button>
+                            <button type="submit" class="btn btn-primary">Yes, I'm sure. Save!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--/modal -->
         </form>
 
 {% endblock %}
