@@ -318,7 +318,8 @@ def create_calibration_groups(request, project_id):
                             if created:
                                 print "\t\t\tNew projfile attribute created for sample " + sample_id
                             else:
-                                print "\t\t\tThe projfile attribute already existed for sample " + sample_id
+                                print "\t\t\tThe projfile attribute already existed for sample " + sample_id + \
+                                      " and attribute " + attribute
                     print "\t\tFinished processing sample attributes."
                 print "\tFinished processing attributes"
 
