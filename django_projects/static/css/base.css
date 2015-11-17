@@ -139,3 +139,7 @@ padding: 0 2px;
 .panel-title {
     color: #00355E;
 }
+
+label.error {
+	color: #F44336;
+}

@@ -55,8 +55,8 @@ def experiment(request, project_id):
 			super(RequiredComparisonFormSet, self).__init__(*args, **kwargs)
 			for form in self.forms:
 				form.fields['attribute1'].choices =[(c.id, c) for c in attributes]
-				form.fields['attribute1'].choices.append(["select","select condition"])
-				form.fields['attribute1'].initial = "select"
+				form.fields['attribute1'].choices.append(["Select condition","Select condition"])
+				form.fields['attribute1'].initial = "Select condition"
 				form.fields['attribute2'].choices =[(c.id, c) for c in attributes]
 				form.fields['name'].widget.attrs['readonly'] = True
 				form.empty_permitted = False
@@ -66,22 +66,10 @@ def experiment(request, project_id):
 			super(RequiredParameterFormSet, self).__init__(*args, **kwargs)
 			i = 0
 			for form in self.forms:
-				#if default_parameters[i].value is None:
-				#	form.exclude = ('value',)
-				#	print "PROUUUUUUUUUUUUUUUUUUUUUUUT"
-				#else:
-				print "ici les values :",default_parameters[i].state
 				form.fields['value'].initial = default_parameters[i].value
 				form.fields['value'].label = default_parameters[i].name
 				form.fields['name'].initial = default_parameters[i].name
-				print form.fields['value'].initial
-				# form.fields['state'].choices = [(True,True),(False,False)]
-				# form.fields['state'].initial = default_parameters[i].state
 				form.fields['state'].required = True
-				# print form.fields['state'].initial
-				# print "state : ",form.fields['state']
-				# print "Value : ",form.fields['value'].label
-				# print form
 				i += 1
 
 	try:
@@ -93,11 +81,6 @@ def experiment(request, project_id):
 
 	default_parameters = DefaultParameter.objects.all()
 	ParametersFormSet = formset_factory(ParameterForm, extra=len(default_parameters), max_num=20, formset=RequiredParameterFormSet)
-
-	# i = 0
-	# for form in ParametersFormSet.forms:
-	# 	form.fields['value'].initial = default_parameters[i].value
-	# 	i += 1
 
 	groups = []
 	attributes = []
@@ -118,8 +101,6 @@ def experiment(request, project_id):
 	for group in groups:
 		ref.append([att.id for att in group.attribute_set.all()])
 
-	# print "ref: ",ref
-	# print "combination : ",len(list(itertools.combinations([4,5,6,7,8], 2)))
 	# Create json object of ref to load in template javascript
 	if isinstance(ref, QuerySet):
 		truc = mark_safe(serialize('json', ref))
@@ -129,10 +110,8 @@ def experiment(request, project_id):
 	# calcul of max number of combination
 	combination = 0
 	for group in ref:
-		# print len(list(itertools.combinations(group, 2)))
 		combination += len(list(itertools.combinations(group, 2)))
 
-	# print "combination : ",combination
 	ComparisonFormSet = formset_factory(ComparisonForm, extra=1, max_num=combination, formset=RequiredComparisonFormSet)
 
 	"""
@@ -172,54 +151,33 @@ def experiment(request, project_id):
 		print database_form.is_valid()
 
 		if experiment_form.is_valid() and parameter_formset.is_valid() and comparison_formset.is_valid() and database_form.is_valid():
-			print "experiment form is valid"
-			print experiment_form.cleaned_data['title']
 			experiment = experiment_form.save()
-			# experiment = experiment_form.save()
-		# else:
-		# 	print "experiment form is NOT valid!"
-		# 	print "errors : ",experiment_form.errors
-		# print
-
 			params = Params()
 			params.save()
 			for form in parameter_formset.forms:
 				project.modified = datetime.datetime.now()
 				project.save()
-				print "parameter form is valid"
-				# print "has name : ",hasattr(form.instance, 'name')
-				# print "has state : ",hasattr(form.instance, 'state')
-				# print "has value : ",hasattr(form.instance, 'value')
 				dictio = form.cleaned_data
-				print form.cleaned_data
-				if len(dictio.keys()) == 0 :
-					print "HHHHHHHHHHHHHHHH"
-					# print form.cleaned_data['value']
-				else :
-					print "value = ",form.cleaned_data['value']
-					print "state = ",form.cleaned_data['state']
-					print "name = ",form.cleaned_data['name']
+				################ DEBUG ##################
+				# if len(dictio.keys()) == 0 :
+				# 	print "HHHHHHHHHHHHHHHH"
+				# 	# print form.cleaned_data['value']
+				# else :
+				# 	print "value = ",form.cleaned_data['value']
+				# 	print "state = ",form.cleaned_data['state']
+				# 	print "name = ",form.cleaned_data['name']
+				############### END DEBUG ################ 
 				value = form.cleaned_data['value']
 				state = form.cleaned_data['state']
 				name = form.cleaned_data['name']
-				# parameter = form.save()
 				if value == None:
-					print "I'm in value = None"
 					defaultValue = default_parameters.get(name=name).value
 					parameter = Parameter(state=state,name=name,value=defaultValue)
-					print "parameter created"
-					print parameter.value
 					parameter.save()
-					print "parameter saved"
 				else:
-					print "I'm in value ok"
 					parameter = Parameter(value=value,state=state,name=name)
 					parameter.save()
-				print "parameter sauvegarde passed"
 				params.param.add(parameter)
-				print "parameter added to params :)"
-				# print form.cleaned_data['value']
-				# print form.cleaned_data['state']
 
 
 
@@ -245,19 +203,11 @@ def experiment(request, project_id):
 			print "after databases added"
 
 			params.save()
-			print "params saved"
 			user = request.user
 			name = user.username
-			print name
 			analysis = Analysis(params=params, experiment=experiment, status="Ready", owner=name)
-			print "analysis created"
-			print analysis
 			analysis.save()
-			print "analysis saved"
 			for form in comparison_formset.forms:
-			# if form.is_valid():
-				# print "comparison form is valid"
-
 				name = form.cleaned_data['name']
 				comparison = Comparison(name=name,experiment=experiment)
 				comparison.save()
@@ -270,46 +220,21 @@ def experiment(request, project_id):
 				print "attribute found : ",attribute_1
 				attribute_comp = AttributeComparison(control=True,attribute=attribute_1,comparison=comparison)
 				attribute_comp.save()
-				print "attribute_comp1 saved!"
 
-				# print attribute1
 				id_attribute_2 = form.cleaned_data['attribute2']
 				attribute_2 = Attribute.objects.get(id=id_attribute_2)
 				attribute_comp = AttributeComparison(control=False,attribute=attribute_2,comparison=comparison)
 				attribute_comp.save()
-				print "attribute_comp2 saved"
-				# print attribute2
-			if request.is_ajax():
-				#return render(request, 'project/detail.html', {'project': project, 'permission':permission})
-				print "here ajax experiment creation return"
-				message = "everything is fine"
-				# response = simplejson.dumps(message)
-				# return HttpResponse(response, content_type='application/json')
-				# put that back on
-				return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
-
-			# else:
-			# 	print "comparison form is NOT valid"
-			# 	print "errors : ",form.errors
-				# print
-		# print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
-		# print "comparison formset : ",comparison_formset
-		# print
-
-
-		print "POST REQUEST"
-		# return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+			return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
 	else:
-		print "we are in the get request view"
+		# This is the GET request
 		experiment_form = ExperimentForm()
 		database_form = DatabaseForm(no_standards=no_standard)
-		# parameter_form = ParameterForm()
 		comparison_formset = ComparisonFormSet(prefix='attributes')
 		parameter_formset = ParametersFormSet(prefix='parameters')
-		# sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
+
 
 	c = {'experiment_form': experiment_form,
-		# 'parameter_form' : parameter_form,
 		'default_parameters' : default_parameters,
 		'comparison_formset': comparison_formset,
 		'parameter_formset': parameter_formset,
