@@ -27,7 +27,7 @@
 				<p class="introduction_text">{% if  project.0.description %}{{ project.0.description|truncatewords:"20" }}{% else %}No description available{% endif %}</p>
 			</div>
 		</div>
-		<div class="row sample-info" style="margin-bottom:15px;">
+		<div class="row sample-info" style="margin-bottom:15px;padding-bottom:7px;">
 			<div class="col-md-4 center-text" style="margin-left: 0px;border-right: solid 2px rgb(223, 223, 223);min-height: 10px;">
 				<p style="margin-bottom:0px;">Sample : {{ project.0.sample_set.all|length }}</p>
 			</div>
