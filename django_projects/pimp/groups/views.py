@@ -272,7 +272,7 @@ def create_calibration_groups(request, project_id):
 
     if request.method == "POST":
 
-            print user.username + ' submitted a calibration group creation form. Processing...'
+            # print user.username + ' submitted a calibration group creation form. Processing...'
 
             attribute_formset = AttributeFormSet(request.POST, prefix='attributes')
             sample_attribute_formset = SampleAttributeFormSet(request.POST, prefix='samplesattributes')
@@ -288,24 +288,24 @@ def create_calibration_groups(request, project_id):
                             break
 
                 if not group_exists:
-                    print "\tCreating new calibration group"
+                    # print "\tCreating new calibration group"
                     group = Group.objects.create(name="calibration_group")
-                else:
-                    print "\tA calibration group already exists, so a new one wasn't created"
+                # else:
+                    # print "\tA calibration group already exists, so a new one wasn't created"
 
-                print "\tProcessing attributes"
+                # print "\tProcessing attributes"
                 for attribute_form in attribute_formset:
 
                     # Save the attribute if it doesn't exist
                     attribute_object, created = Attribute.objects.get_or_create(name=attribute_form.cleaned_data['name'], group=group)
                     if created:
-                        print "\t\tA new attribute " + attribute_form.cleaned_data['name'] + " was created."
+                        # print "\t\tA new attribute " + attribute_form.cleaned_data['name'] + " was created."
                         attribute_object.save()
-                    else:
-                        print "\t\tThe attribute " + attribute_form.cleaned_data['name'] + \
-                              " in this group already existed, so a new one wasn't created."
+                    # else:
+                        # print "\t\tThe attribute " + attribute_form.cleaned_data['name'] + \
+                        #       " in this group already existed, so a new one wasn't created."
 
-                    print "\t\tProcessing sample attributes"
+                    # print "\t\tProcessing sample attributes"
                     for sample_attribute_form in sample_attribute_formset:
 
                         attribute = sample_attribute_form.cleaned_data['attribute']
@@ -315,24 +315,24 @@ def create_calibration_groups(request, project_id):
                             sample_id = sample_attribute_form.cleaned_data['projfile']
                             sample_object = project.calibrationsample_set.get(id=sample_id)
                             _, created = ProjfileAttribute.objects.get_or_create(attribute=attribute_object, calibrationsample=sample_object)
-                            if created:
-                                print "\t\t\tNew projfile attribute created for sample " + sample_id
-                            else:
-                                print "\t\t\tThe projfile attribute already existed for sample " + sample_id + \
-                                      " and attribute " + attribute
-                    print "\t\tFinished processing sample attributes."
-                print "\tFinished processing attributes"
+                            # if created:
+                            #     print "\t\t\tNew projfile attribute created for sample " + sample_id
+                            # else:
+                            #     print "\t\t\tThe projfile attribute already existed for sample " + sample_id + \
+                            #           " and attribute " + attribute
+                    # print "\t\tFinished processing sample attributes."
+                # print "\tFinished processing attributes"
 
                 project.modified = datetime.datetime.now()
                 project.save()
-                print "Finished adding calibration groups."
+                # print "Finished adding calibration groups."
 
                 return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
 
             else:
                 error_message = True
-                print "A form from the calibration group creation and sample assigment was invalid - user redirected" \
-                      "to project detail page."
+                # print "A form from the calibration group creation and sample assigment was invalid - user redirected" \
+                #       "to project detail page."
 
                 attribute_formset = AttributeFormSet(prefix='attributes', initial=[
                     {'name': 'qc'},
@@ -355,7 +355,7 @@ def create_calibration_groups(request, project_id):
                 return render(request, 'project/create_calibration_groups.html', c)
 
     else:  # if the request method is GET
-        print "GET request create calibration groups"
+        # print "GET request create calibration groups"
 
         attribute_formset = AttributeFormSet(prefix='attributes', initial=[
             {'name': 'qc'},

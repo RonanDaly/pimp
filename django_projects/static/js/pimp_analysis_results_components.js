@@ -382,7 +382,6 @@ function set_navbar(){
 	});
 }
 
-<<<<<<< HEAD
 // Sort function for retention times, since they have a custom format of
 // "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
 
