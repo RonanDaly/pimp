@@ -11,7 +11,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',40);
 			$('#serch-banner').show();
 			$('#main-container').css('top',175);
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').css('top',175);
 			$('.pathway-table_wrapper_toolbar').css('top',175);
 			$('.comparison-table_wrapper_toolbar').css('top',175);
@@ -28,7 +27,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',0);
 			$('#serch-banner').hide();
 			$('#main-container').css('top',41);
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').css('top',41);
 			$('.pathway-table_wrapper_toolbar').css('top',41);
 			$('.comparison-table_wrapper_toolbar').css('top',41);
@@ -68,7 +66,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		if (right_panel) {
 			$('.myspan3').width('0%');
 			$('.myspan9').width('100%');
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').width('100%');
 			$('.peak-table_wrapper_toolbar').width('100%');
 			$('.comparison-table_wrapper_toolbar').width('100%');
@@ -80,7 +77,6 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		else {
 			$('.myspan3').width('20%');
 			$('.myspan9').width('80%');
-			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').width('80%');
 			$('.peak-table_wrapper_toolbar').width('80%');
 			$('.comparison-table_wrapper_toolbar').width('80%');
@@ -386,7 +382,6 @@ function set_navbar(){
 	});
 }
 
-
 // Sort function for retention times, since they have a custom format of
 // "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
 
@@ -401,7 +396,6 @@ jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
 	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
 	return b - a;
 };
-
 
 function set_idtable(url, callback){
 
@@ -525,21 +519,6 @@ function set_pathwaytable(){
 
 	return pathwayTable;
 }
-
-// Sort function for retention times, since they have a custom format of
-// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
-
-jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return a - b;
-};
-
-jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return b - a;
-};
 
 function set_peaktable(url, callback){
 	var peakTable = $('#peak-table').dataTable( {
