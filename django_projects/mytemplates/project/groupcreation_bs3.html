@@ -1,0 +1,160 @@
+{%  extends 'base_bs3.html' %}
+
+{% load staticfiles %}
+
+{% block DataTables %}
+    <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/dataTables.bootstrap.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'DataTables-1.10.9/DataTables-1.10.9/css/dataTables.bootstrap.min.css' %}" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'DataTables-1.10.9/Select-1.0.1/css/select.bootstrap.min.css' %}"/>
+    <script type="text/javascript" src="{% static 'DataTables-1.10.9/Select-1.0.1/js/dataTables.select.min.js' %}"></script>
+{% endblock %}
+
+{% block custom_scripts_and_styles %}
+    <script src="{% static 'jquery-validation-1.14.0/jquery.validate.min.js' %}"></script>
+    <script src="{% static 'jquery-validation-1.14.0/additional-methods.min.js' %}"></script>
+    <script src="{% static 'js/group_creation_js.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div id="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>{{ project }}</h1>
+                <p class="lead">Create experimental conditions and assign samples to them.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- A blank forms to use as a template for JavaScript-provided django forms -->
+    <!-- These can be included here without causing any changes to the database, as the formset will ignore forms that were not changed. -->
+    <div style="display:none" id="attribute_form_template">
+            {{ attribute_formset.empty_form.name }}
+    </div>
+
+    <div style="display:none" id="sampleattribute_form_template">
+        {{ sample_attribute_formset.empty_form.sample }}
+        {{ sample_attribute_formset.empty_form.attribute }}
+
+    </div>
+    <!-- end blank forms -->
+
+
+    <form id="samples_attribute_form" method="post" action="{% url 'add_group' project.id %}">
+
+        {% if error_message %}
+            <div id="row">
+                <div class="col-sm-12">
+                    <div class="panel panel-danger">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Error</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p class="text-danger">At least one of your entries (sample assignments, experimental condition names, experiment title) was incorrect. Please check that each condition has at least one sample assigned to it, and that your experimental title and condition names are formatted correctly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+
+            {% csrf_token %}
+            {{ attribute_formset.management_form }}
+            {{ sample_attribute_formset.management_form }}
+
+            <!-- Start columns for steps -->
+                <div class="col-sm-6">
+
+                    <!-- Create experiment (group) title -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">1. Enter experiment title</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <label for="id_name" style="display: none;" generated="true" class="error"></label>
+                                {{ group_form.name }}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End create experiment (group) title -->
+
+                    <!-- Create experimental conditions (attributes) -->
+                    <div class="panel panel-default" id="create_attributes_step">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">2. Create experimental conditions</h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>Enter your condition name below and click the <span class="glyphicon glyphicon-plus"></span> button.</p>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input type="text" name="attribute_name_field" id="attribute_name_field" class="form-control noSubmitOnEnter" placeholder="Condition name">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default" id="create_attribute" type="button" data-toggle="tooltip" title="Create condition">
+                                            <span class="glyphicon glyphicon-plus"></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label for="attribute_name_field" generated="true" style="display: none"; class="error"></label>
+                        </div>
+                    </div>
+                    <!-- End create experimental conditions (attributes) -->
+
+                    <!-- Sample table -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">3. Add samples to experimental condtions</h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>Select samples from the table below and click the <span class="glyphicon glyphicon-plus"></span> button in the adjacent condition to add them.</p>
+                            <div id="samples">
+
+                                <table id="sample_list" class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Sample ID</th>
+                                            <th>File Name</th>
+                                            <th>Polarity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sample in project.sample_set.all %}
+                                            <tr>
+                                                <td>{{ sample.id }}</td>
+                                                <td>{{ sample.name }}</td>
+                                                <td>{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.negdata %}-{% endif %}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End sample table -->
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">4. Save </h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>When you are done, click the "Save" button below to store your changes.</p>
+                            <button type="submit" class="btn btn-default">Save</button>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- End column for steps -->
+
+                <!-- Column for sample attributes -->
+                <div class="col-sm-6 pull-right" id="samples_attributes">
+
+                </div>
+                <!-- End column -->
+
+            </div><!-- /.row -->
+        </form>
+
+{% endblock %}

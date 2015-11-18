@@ -35,10 +35,10 @@ urlpatterns = patterns('',
     # End temporary !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     url(r'^about/', 'home.views.about', name='about'),
     url(r'^register/$',
-        RegistrationView.as_view(form_class = MyExtendedForm), 
+        RegistrationView.as_view(form_class = MyExtendedForm),
         name = 'registration_register'),
     url(r'^accounts/register/$',
-        RegistrationView.as_view(form_class = MyExtendedForm), 
+        RegistrationView.as_view(form_class = MyExtendedForm),
         name = 'registration_register'),
     url(r'^accounts/', include('registration.backends.default.urls')),
     # url(r'^register/$',
@@ -97,7 +97,7 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/adduser/$', 'projects.views.adduser', name='add_user'),
     # upload and delete file
     url(r'^accounts/project/(?P<project_id>\d+)/upload/', include('fileupload.urls')),
-    # create group 
+    # create group
     url(r'^accounts/project/(?P<project_id>\d+)/group/', 'groups.views.index', name='add_group'),
     # assign file to group
     url(r'^accounts/project/(?P<project_id>\d+)/attribute/', 'groups.views.createAttribute', name='projfile_attribute'),

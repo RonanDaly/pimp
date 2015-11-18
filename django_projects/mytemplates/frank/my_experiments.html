@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_bs3.html" %}
 
 {% load project_tags %}
 
@@ -119,37 +119,37 @@ $(function() {
 {% block content %}
 {% if user.is_authenticated %}
 <div class="row" style="margin-bottom: 10px;">
-    <div class="span4"><h3>My FrAnK Experiments</h3></div>
-    <div class="span8 span-create-project">{% if user.is_staff %}<a class="btn btn-primary btn-create-project" href="{% url 'add_experiment' %}">Create Experiment</a>{% endif %}</div>
+    <div class="col-md-4"><h3>My FrAnK Experiments</h3></div>
+    <div class="col-md-8 span-create-project">{% if user.is_staff %}<a class="btn btn-primary btn-create-project" href="{% url 'add_experiment' %}">Create Experiment</a>{% endif %}</div>
 </div>
     {% if experiment_list %}
     <!div class="bs-docs-grid">
     <div class="row">
-            <div class="span6">
-                {% for experiment in experiment_list %}
-                {% if not forloop.counter|divisibleby:2 %}
-                <div class="row-fluid">
-                    <div class="span12">
-                        {% include "frank/experiment_info.html" with experiment=experiment user=user %}
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
+      <div class="col-md-6">
+        {% for experiment in experiment_list %}
+          {% if not forloop.counter|divisibleby:2 %}
+            <div class="row" style="margin-bottom:0px;">
+              <div class="col-md-12">
+                {% include "frank/experiment_info.html" with experiment=experiment user=user %}
+              </div>
             </div>
-            {% if experiment_list|length > 1 %}
-            <div class="span6">
-                {% for experiment in experiment_list %}
-                {% if forloop.counter|divisibleby:2 %}
-                <div class="row-fluid">
-                    <div class="span12">
-                        {% include "frank/experiment_info.html" with experiment=experiment user=user %}
-                    </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if experiment_list|length > 1 %}
+      <div class="col-md-6">
+          {% for experiment in experiment_list %}
+            {% if forloop.counter|divisibleby:2 %}
+              <div class="row" style="margin-bottom:0px;">
+                <div class="col-md-12">
+                  {% include "frank/experiment_info.html" with experiment=experiment user=user %}
                 </div>
-                {% endif %}
-                {% endfor %}
-            </div>
+              </div>
             {% endif %}
+          {% endfor %}
         </div>
+      {% endif %}
+    </div>
     <!/div>
     {% else %}
     <p>Please create a new experiment.</p>
