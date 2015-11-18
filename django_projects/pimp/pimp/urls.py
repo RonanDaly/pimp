@@ -100,7 +100,7 @@ urlpatterns = patterns('',
     # create group
     url(r'^accounts/project/(?P<project_id>\d+)/group/', 'groups.views.index', name='add_group'),
     # assign file to group
-    url(r'^accounts/project/(?P<project_id>\d+)/attribute/', 'groups.views.createAttribute', name='projfile_attribute'),
+    url(r'^accounts/project/(?P<project_id>\d+)/attribute/', 'groups.views.create_calibration_groups', name='projfile_attribute'),
     # submit an experiment to create the dataset attached
     # url(r'^accounts/project/(?P<project_id>\d+)/experiment/(?P<experiment_id>\d+)/$', 'experiments.views.create_dataset', name='create_dataset'),
     # create an experiment
