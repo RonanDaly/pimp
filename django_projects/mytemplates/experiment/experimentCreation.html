@@ -1,27 +1,31 @@
-{% extends "base.html" %}
+{%  extends 'base_bs3.html' %}
 
-{% block head %}
+{% load staticfiles %}
+
+{% block custom_scripts_and_styles %}
+<script src="{% static 'jquery-validation-1.14.0/jquery.validate.min.js' %}"></script>
+<script src="{% static 'jquery-validation-1.14.0/additional-methods.min.js' %}"></script>
+
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/project_summary.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/defaultTheme.css" media="screen" />
-<script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
-<!script type="text/javascript" src="{{ STATIC_URL }}js/jquery.fixedheadertable.min.js"><!/script>
-<!script type="text/javascript" src="{{ STATIC_URL }}js/table.js"><!/script>
-<!script type="text/javascript" src="{{ STATIC_URL }}js/dragndrop.js"><!/script>
-<!script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.10.0.custom.min.js"><!/script>
+
 <script type="text/javascript">
+var data;
+
 $(document).ready(function() {
 
   var previous;
   var combination = {};
   var i = 0;
   var data = jQuery.parseJSON('{{ ref|safe }}');
+  // This calculate the possible combination for the comparisons, there is a maximum number of comparison which correspond to all condition compared to each other in all the experiments. Comparisons can only be created between conditions of the same experiment.
   for (dataCount = data.length; i < dataCount; i++) {
     data[i].forEach(function(j , el){
       combination[j] = [];
     });
   }
-  console.log(combination);
 
+  // Empty the first control field display by default at the beginning, the content will be dynamically handeled by the javascript functions
   $('#id_attributes-0-attribute2').empty();
 
   function removeByValue(arr, val) {
@@ -31,26 +35,100 @@ $(document).ready(function() {
             break;
         }
     }
-}
+  }
+
+  // -------------------------------------------------------------
+  // --------------- FORM VALIDATION SECTION ---------------------
+  // -------------------------------------------------------------
+
+  // Add custom validation method when the selected option is the default option (e.g. "Select condition" for condition select field)
+  // When field doesn't pass validation, it is marked as required.
+  $.validator.addMethod("valueNotEquals", function(value, element, arg){
+    return arg != value;
+  }, "This field is required");
+
+  // Change the default behavior of validation to force validate hidden inputs (used for the advanced parameters)
+  $.validator.setDefaults({ 
+    ignore: [],
+  });
+
+  $('#experiment_creat').validate({
+        rules: {
+            title: { // analysis title
+                required: true,
+                minlength: 2,
+                pattern: /^[^0-9\s][\Sa-zA-Z_-]+$/ // no whitespace, must not start with number
+            },
+            // Set validation for all parameters as required and numerical only, if a parameters is disabled (set off), it is checked for validation anymore
+            {% for form in parameter_formset.forms %}
+            "{{ form.value.html_name }}": {
+              required: true,
+              number: true
+            },
+            {% endfor %}
+            // Set validation for the first comparison which is already displayed, validation for other comparisons are dynamically added as there are created.
+            // Validation for the condition field
+            "attributes-0-attribute1": {
+              required: true,
+              valueNotEquals: "Select condition"
+            },
+            // Validation for the control field
+            "attributes-0-attribute2": {
+              required: true,
+              valueNotEquals: "Select control"
+            },
+        },
+        // Custom messages to display on errors
+        messages: {
+            // Message for title errors
+            title: {
+                required: "Please enter an analysis title",
+                minlength: "Must have 2 or more characters",
+                pattern: "Must start with a letter. No whitespace. Letters, numbers, hyphens, and underscores only",
+            },
+            // Message for paramter errors
+            {% for form in parameter_formset.forms %}
+            "{{ form.value.html_name }}": {
+              required: "Please enter a value",
+              number: "Please enter a valid number"
+            },
+            {% endfor %}
+        },
+        invalidHandler: function(event, validator) {
+          //validator.errorMap is an object mapping input names -> error messages
+          //if there are any error in the parameters and the section is collapsed, then automatically expand it
+          for (var i in validator.errorMap) {
+            console.log(i, ":", validator.errorMap[i]);
+            if (i.indexOf("parameters") > -1){
+              $('#collapseOne').collapse('show');
+            }
+          }
+        },
+        submitHandler: function(form) {
+            // When no error is detected then simply submit the form to the django view 
+            form.submit();
+        }
+  });
+  // -----------------------------------------------------------
+  // --------------- END FORM VALIDATION SECTION ---------------
+  // -----------------------------------------------------------
+
+  // init the first comparison title
+  $('#id_attributes-0-name').val('comparison_1');
 
   function changeOptionSelected(element) {	
 	  var str = "";
 
-    // console.log("select change");
-    console.log("previous: "+previous)
     var selectId = $(element).attr('id');
     var selectedOption = $('#' + selectId + ' option:selected')[0];
     var value = $(selectedOption).val();
-    var selectFirst = $(element).parent().parent().find('select')[0];
-    var selectToFill = $(element).parent().parent().find('select')[1];
-    var titleField = $(element).parent().parent().find('input')[0];
-    console.log("value: "+value);
+    var selectFirst = $(element).parent().parent().parent().find('select')[0];
+    var selectToFill = $(element).parent().parent().parent().find('select')[1];
 
     // if the "select" element is not the 2nd element "select" of the comparison div
-    if (selectId != $(selectToFill).attr('id') && value != "select"){
+    if (selectId != $(selectToFill).attr('id') && value != "Select condition"){
       var i = 0;
       var list = new Array();
-      var data = jQuery.parseJSON('{{ ref|safe }}');
       for (dataCount = data.length; i < dataCount; i++) {
         data[i].forEach(function(j , el){
           if (j == value){
@@ -58,9 +136,9 @@ $(document).ready(function() {
           }
         });
       }
-      if (previous != "select"){
+      if (previous != "Select condition"){
         var valueSecond = selectToFill.value;
-        if (valueSecond != "select"){
+        if (valueSecond != "Select control"){
           removeByValue(combination[valueSecond],previous);
           removeByValue(combination[previous],valueSecond);
           $('.item').each(function(){
@@ -75,8 +153,6 @@ $(document).ready(function() {
               $(selectListSecond).find('option[value="' + previous + '"]').attr('disabled',false);
             }
           });
-          console.log("value: "+valueSecond+" List: " + combination[valueSecond]);
-          console.log("value: "+previous+" List: " + combination[previous]);
         }
       }
       // delete every option in the 2nd select
@@ -89,34 +165,30 @@ $(document).ready(function() {
           opt.appendTo(selectToFill);
         }
       });
-      var opt = $('<option value="select" selected="selected">select member</option>');
+      var opt = $('<option value="Select control" selected="selected">Select control</option>');
       opt.appendTo(selectToFill);
 
       combination[value].forEach(function(j, el){
-        console.log("JE SUIS LA!!!! "+j);
         $(selectToFill).find('option[value="' + j + '"]').attr('disabled','disabled');
       });
       // end of fill
       // create comparison title
-      $(titleField).val($(selectedOption).html().split(" ")[0] + ' - ');
+
       // if default select option exist in the first "select element", remove it so the user cannot choose it anymore
-      if ($('#' + selectId + ' option[value="select"]').length){
-        $('#' + selectId + ' option[value="select"]').remove();
+      if ($('#' + selectId + ' option[value="Select condition"]').length){
+        $('#' + selectId + ' option[value="Select condition"]').remove();
       }
     }
     // if the "select" element is the seconde of the comparison div
     else {
       var valueFirst = selectFirst.value;
       // if default select option exist, remove it so the user cannot choose it anymore
-      if ($('#' + selectId + ' option[value="select"]').length){
-        $('#' + selectId + ' option[value="select"]').remove();
+      if ($('#' + selectId + ' option[value="Select control"]').length){
+        $('#' + selectId + ' option[value="Select control"]').remove();
       }
-      if (previous == "select"){
-        console.log("select First: "+valueFirst);
+      if (previous == "Select condition" || previous == "Select control"){
         combination[valueFirst].push(value);
         combination[value].push(valueFirst);
-        console.log("value: "+valueFirst+" List: " + combination[valueFirst]);
-        console.log("value: "+value+" List: " + combination[value]);
         $('.item').each(function(){
           var selectListFirst = $(this).find('select')[0];
           var selectListSecond = $(this).find('select')[1];
@@ -130,6 +202,7 @@ $(document).ready(function() {
           }
         });
       }
+      // Disable the option from the other comparison so user cannot duplucate a comparison
       else {
         removeByValue(combination[valueFirst],previous);
         removeByValue(combination[previous],valueFirst);
@@ -151,17 +224,10 @@ $(document).ready(function() {
             $(selectListSecond).find('option[value="' + valueFirst + '"]').attr('disabled','disabled');
           }
         });
-        console.log("value: "+valueFirst+" List: " + combination[valueFirst]);
-        console.log("value: "+value+" List: " + combination[value]);
       }
-      // create comparison title
-      text = $(titleField).val().split(" ");
-      // TODO : replace by this $(selectedOption).text().split(' ').join('_')
-      // $(titleField).val(text[0] + "_" + text[1] + "_" + $(selectedOption).text().split(' ')[0]);
-      $(titleField).val(text[0] + text[1] + $(selectedOption).text().split(' ')[0]);
     }
     // if option selected is default select option empty second select (normally never happend, just in case)
-    if (value == "select"){
+    if (value ==  "Select condition" || value == "Select control"){
       $(selectToFill).empty();
     }
     // remove the focus on the element selected (used to create "previous" on the next focus) !Important
@@ -169,26 +235,52 @@ $(document).ready(function() {
     return false
   }
 
+  // This function update the index of the elements when we add/remove comparisons, if not updated, the django formset will not be parsed properly in the view when the html form is submited !Important
+  // It is also used for validating the form with jquery validate
   function updateElementIndex(el, prefix, ndx) {
     var id_regex = new RegExp('(' + prefix + '-\\d+-)');
     var replacement = prefix + '-' + ndx + '-';
+    // If the element has an html attribute "for", then update it
     if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex,replacement));
+    // If the element has an html attribute "id", then update it
     if (el.id) el.id = el.id.replace(id_regex, replacement);
+    // If the element has an html attribute "name", then update it
     if (el.name) el.name = el.name.replace(id_regex, replacement);
   }
 
+  // This function is called when the "-" button is clicked by the user to remove a comparison
   function deleteForm(btn, prefix) {
+    // Get the number of comparisons created
     var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
 
+    // If number of comparison created is > 1, then delete the form, else display warning message
     if (formCount > 1) {
       // Delete the item/form
+      var item = $(btn).parents('.item');
+
+      var item_last = $(".item:last");
+
+      // If the comparison to remove is the last one, then we need to move the "+" button (add comparison) to the comparison panel above
+      if ($(item).find(".panel-title").text() == $(item_last).find(".panel-title").text()){
+        var plusButton = $(".item:last").find(".add_comparison").clone(false).get(0);
+      }
+
+      var new_last_item = $(".item").eq(-2);
+      $(plusButton).insertAfter($(new_last_item).find(".delete_comparison:first"));
+
+      $(plusButton).click(function(e) {
+        e.preventDefault();
+        return addForm(this, prefix);
+      });
+
+      // Remove the comparison panel and update (re-enable) the possibilities in the other comparison panel
       $(btn).parents('.item').slideUp("normal", function() {
         // dropdown list management
         var selectFirst = $(this).find('select')[0];
         var selectSecond = $(this).find('select')[1];
         var valueFirst = selectFirst.value;
         var valueSecond = selectSecond.value;
-        if (valueFirst != 'select' && valueSecond != 'select'){
+        if (valueFirst != 'Select condition' && valueSecond != 'Select control'){
           removeByValue(combination[valueFirst],valueSecond);
           removeByValue(combination[valueSecond],valueFirst);
           $('.item').each(function(){
@@ -202,16 +294,40 @@ $(document).ready(function() {
             }
           });
         }
+
         // end of dropdown list management
         $(this).remove();
+
         var forms = $('.item'); // Get all the forms
         // Update the total number of forms (1 less than before)
         $('#id_' + prefix + '-TOTAL_FORMS').val(forms.length);
-        // $(btn).parents('.item').remove();
+
         var i = 0;
         // Go through the forms and set their indices, names and IDs
         for (formCount = forms.length; i < formCount; i++) {
-          $(forms.get(i)).children().children().each(function() {
+
+          // update the id of the input with the right index
+          $(forms.get(i)).find("input").each(function() {
+            updateElementIndex(this, prefix, i);
+          });
+
+          // update the title of the comparison with the right index
+          $(forms.get(i)).find("input").each(function() {
+            $(this).val("comparison_" + String(i+1) );
+          });
+
+          // update the displayed title of the comparison with the right index
+          $(forms.get(i)).find(".panel-title").each(function() {
+            $(this).text("Comparison " + String(i+1) );
+          });
+
+          // update the id of the selects element with the right index
+          $(forms.get(i)).find("select").each(function() {
+            updateElementIndex(this, prefix, i);
+          });
+
+          // update the "id" and "for" attribute of the label error tags to keep field validation coherent with display
+          $(forms.get(i)).find("label.error").each(function() {
             updateElementIndex(this, prefix, i);
           });
         }
@@ -220,34 +336,71 @@ $(document).ready(function() {
 
 
     } // End if
+    // When there is only one comparison left, display message in modal window
     else {
-        $('#myModal').modal();
+
+        var $modal = $('#myModal_nofooter');
+
+        var modalBody = $modal.find('.modal-body');
+        var modalTitle = $modal.find('.modal-title');
+
+
+        $(modalTitle).empty();
+        $(modalBody).empty();
+
+        $(modalBody).css('text-align', 'center');
+
+        $(modalTitle).text('Warning');
+        $(modalBody).text('At least one comparison is required.');
+
+        $modal.modal();
     }
     return false;
   }
 
+  // Add comparison panel function and connect events to the right functions
   function addForm(btn, prefix) {
+
+    // Get the current number of comparison and the maximum calculated number of comparison
     var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
     var maxFormCount = parseInt($('#id_' + prefix + '-MAX_NUM_FORMS').val());
-    // You can only submit a maximum of 10 todo items 
+
+    // If the maximum number of comparison is not yet reached, then create the new comparison panel
     if (formCount < maxFormCount) {
       // Clone a form (without event handlers) from the first form
-      var row = $(".item:first").clone(false).get(0);
+      var row = $(".item:last").clone(false).get(0);
+
+      // remove the plus button from the last item
+      var lastitem = $(".item:last");
+      $(lastitem).find(".add_comparison").each(function() {
+        $(this).remove();
+      });
       // Insert it after the last form
       $(row).removeAttr('id').hide().insertAfter(".item:last").slideDown(400);
       // Remove the bits we don't want in the new row/form
       // e.g. error messages
-      $(".errorlist", row).remove();
+      $("label.error", row).remove();
       $(row).children().removeClass('error');
       
-      // Relabel/rename all the relevant bits
+      // Relabel/rename all the relevant bits and updates the ids for django formset to work
       var first = true; 
-      $(row).children().children().each(function() {
-        // alert($(this).is("select"));
-        
+      $(row).find("input").each(function() {
+        updateElementIndex(this, prefix, formCount);
+        $(this).val("comparison_" + String(parseInt(formCount)+1));
+      });
+
+      $(row).find(".panel-title").each(function() {
+        $(this).text("Comparison " + String(parseInt(formCount)+1) );
+      });
+
+      // Iterate through the select elements of the new panel and connect them to the event handlers (e.g. change option, validation, focus...)
+      $(row).find("select").each(function() {
+
         updateElementIndex(this, prefix, formCount);
         if ( $(this).attr('type') == 'text' )
           $(this).val('');
+
+        // If the current select element is not the first then do the following (It is then the control)  
         if ( $(this).is("select") && !first){
           $(this).empty();
           // Connect the new select to change function
@@ -258,11 +411,17 @@ $(document).ready(function() {
           $(this).focus(function(){
             previous = this.value;
           });
+
+          // Add the custom validation rule to select (control) element
+          $(this).rules( "add",  {required: true, valueNotEquals: "Select control"});
+
         }
+        // If the current select element is the first then do the following (It is the condition)
         if ( $(this).is("select") && first){
           first = false;
-          if (!$('#' + $(this).attr('id') + ' option[value="select"]').length){
-            var opt = $('<option value="select" selected="selected">select member</option>');
+          // If the default option "Select condition" does not exist, create it and add it to the select element
+          if (!$('#' + $(this).attr('id') + ' option[value="Select condition"]').length){
+            var opt = $('<option value="Select condition" selected="selected">Select condition</option>');
             opt.appendTo(this);
           }
           // Connect the new select to change function
@@ -273,62 +432,60 @@ $(document).ready(function() {
           $(this).focus(function(){
             previous = this.value;
           });
+
+          // Add the custom validation rule to select (condition) element
+          $(this).rules( "add",  {required: true, valueNotEquals: "Select condition"});
         }
       });
       
       // Add an event handler for the delete item/form link 
-      $(row).find('.delete').click(function() {
+      $(row).find('.delete_comparison').click(function(e) {
+        e.preventDefault();
         return deleteForm(this, prefix);
+      });
+
+      $(row).find('.add_comparison').click(function(e) {
+        e.preventDefault();
+        return addForm(this, prefix);
       });
 
       // Update the total form count
       $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1); 
 
     } // End if
+    // If the maximum number of comparison is already reached, then do not create a new comparison panel and display the following message in a modal window
     else {
-      modalBody = $('#myModalEmpty').find('.modal-body')[0];
+
+      var $modal = $('#myModal_nofooter');
+
+      var modalBody = $modal.find('.modal-body');
+      var modalTitle = $modal.find('.modal-title');
+
+
+      $(modalTitle).empty();
       $(modalBody).empty();
-      var text = $('<p>Every possible comparison is already there, the calculated max number of comparison is ' + maxFormCount + ', no duplication allowed!');
-      text.appendTo(modalBody);
-      $('#myModalEmpty').modal();
+
+      $(modalBody).css('text-align', 'center');
+
+      $(modalTitle).text('Warning');
+      $(modalBody).text('You have reached the maximum number of comparison for this analysis (' + maxFormCount + '), duplication of comparisons within an anlysis is not allowed.');
+
+      $modal.modal();
+
     }
     return false;
   }
 
-  function settingsPanel() {
-    // if setting panel not show
-    if (!Panel) {
-      // slide comparison panel to the left
-      $('#comparisonPanel').css("float","left");
-
-      // display setting panel (animate dosen't work, look at "isotope.metafizzy.co")
-      $('#comparisonPanel').animate({
-        "float": "left",
-      }, 100, function(){
-        $('#settinsPanel').fadeIn();
-      });
-      Panel = true;
-    }
-    else {
-      // if setting display, hide and center comparison panel
-      $('#settinsPanel').fadeOut(300, function(){
-        $('#comparisonPanel').css("float","none");
-      });
-      Panel = false;
-    }
-  }
-
-  // Register the click event handlers
-  $("#add").click(function() {
+  // Register the click event handlers for adding comparison
+  $(".add_comparison").click(function(e) {
+    e.preventDefault();
     return addForm(this, 'attributes');
   });
   
-  $(".delete").click(function() {
+  // Register the click event handlers for removing comparison
+  $(".delete_comparison").click(function(e) {
+    e.preventDefault();
     return deleteForm(this, 'attributes');
-  });
-
-  $("#advancedSettings").click(function() {
-    return settingsPanel();
   });
 
   // Register the focus event handlers
@@ -336,76 +493,48 @@ $(document).ready(function() {
     previous = this.value;
   });
 
-  // Register the change event handlers
+  // Register the change event handlers on select elements
   $("select").change(function () {
     return changeOptionSelected(this);
   });
 
-  // set up connection between switch buttons and text field in setting panel
+  // set the iqr paramter to false by default
   $('input[type="checkbox"]').each(function(){
-    console.log($(this).parent().parent().parent().find('label')[0]);
     if ($($(this).parent().parent().parent().find('label')[0]).text() != "iqr") {
       $(this).prop('checked', true);
     }
   });
 
+  // set up connection between switch buttons and text field in parameters panel
   $(".parameter-unit").each(function(){
     var checkbox = $(this).find('input[type="checkbox"]');
-    // console.log(checkbox)
     if ($(checkbox).length) {
       var valueField = $(this).find('input[type="text"]');
       if ($(checkbox).is(':checked')){
-        // $(checkbox).attr("value",true)
         $(valueField).css("display","inline-block");
+        $(valueField).parent().find("label.error").show();
       }
       else{
         $(valueField).css("display","inline-block");
         $(valueField).prop('disabled', true);
+        $(valueField).parent().find("label.error").hide();
       }
       $(checkbox).change(function (){
         if ($(checkbox).is(':checked')){
-          // $(valueField).fadeIn();
-
           $(valueField).prop('disabled', false);
+          $(valueField).parent().find("label.error").show();
         }
         else{
           $(valueField).prop('disabled', true);
-          // $(valueField).fadeOut();
+          $(valueField).parent().find("label.error").hide();
         }
       });
     }
   });
 
-
-  $(".parameter-unit:first").css("margin-left",$(".parameter-unit:last").css("margin-left"));
-
-  var Panel = false;
-
-  $('#experiment_creat').submit(function() { // catch the form's submit event
-    //delete one form 'attribute sample' (first one to initialize)
-    // deleteFormAttributeSample('samplesattributes');
-    //fill attribute sample form with good values
-    // fillAttributeSampleForms();
-    $.ajax({ // create an AJAX call...
-        data: $(this).serialize(), // get the form data
-        type: $(this).attr('method'), // GET or POST
-        url: $(this).attr('action'), // the file to call
-        success: function(response) { // on success..
-            // console.log("response");
-            location.href = "{% url 'project_detail' project.id %}"
-            // alert("ici");
-       }
-        //    $('#DIV_CONTAINING_FORM').html(response); // update the DIV
-        //}
-    });
-    return false;
-      //});
-      //alert($(this).serialize());
-      //alert($(this).attr('method'));
-      //alert($(this).attr('action'));
-  });
-
 });
+
+// Wouffff that was a lot of javascript, but if you are reading this, you have been through all, if not, good luck ;-)
 </script>
 {% endblock %}
 
@@ -413,157 +542,215 @@ $(document).ready(function() {
 {% if user.is_authenticated %}
 {% ifnotequal permission 'read' %}
 <div class="row">
-	<div class="span8"><h1>{{ project }}</h1></div>
-	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
+  <div class="col-md-12">
+    <div class="page-header">
+      <div class="row">
+        <div class="col-md-8">
+          <h1>{{ project }}</h1>
+        </div>
+        <div class="col-md-4">
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-default btn-sm pull-right" data-toggle="modal" data-target="#myModalCancel">
+            <span class="glyphicon glyphicon-step-backward"></span>
+            Back to project page
+          </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p class="lead">Create a new analysis defining the comparions of your experimental conditions and changing the parameters </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="row-fluid">
+<div class="row">
 	<div class="container-fluid">
 		<form id="experiment_creat" method="POST" action="{% url 'create_experiment' project.id %}" enctype="multipart/form-data">{% csrf_token %}	
     {{ comparison_formset.management_form }}
     {{ parameter_formset.management_form }}
-  		<div id="first-step" class="row-fluid">
-  			<div class="span12">
-  				<div class="row-fluid">
-  					<div class="span12 white-span">
-  						<div class="row-fluid">
-                <div class="span6 description-span">
-    							<div class="span12 description-span"><h3>Experiment title :</h3></div>
-    							<div class="row-fluid">
-    								<div class="span12 description-span date-span">
-    									{{ experiment_form.title.errors }}
-    									{{ experiment_form.title }}
-    								</div>
-    							</div>
+  		<div id="first-step" class="row">
+  			<div class="col-md-12">
+  				<div class="row">
+
+            <!-- Left column where analysis title form and comparison form are displayed -->
+            <div class="col-md-6 description-span">
+
+              <!-- Enter analysis section -->
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">1. Enter analysis title</h4>
                 </div>
-                <div id="advanced" class="span6 right-span">
-                  <p>
-                    <a id="advancedSettings">Advanced Settings</a>
-                  </p>
-                </div>
-  						</div>
-            		<div class="row-fluid">
-                	<div id="comparisonPanel" class="span6 center-span" style="float:none;margin: 0 auto;">
-                    <div class="row-fluid">
-                      <div class="span12">
-                        <div class="span12 description-span"><h3>Comparisons :</h3></div>
-                        {% for form in comparison_formset.forms %}
-                        <div class="row-fluid item project-span">
-                          {{ form.as_p }}
-                          <p><a class="delete btn btn-danger btn-create-project">Delete</a></p>
-                        </div>
-                        {% endfor %}
-                      </div>
-                    </div>
-                    <div class="row-fluid">
-                      <div class="span12"><a id="add" class="btn btn-primary btn-create-project">Add comparison</a></div>
-                    </div>
-                	</div>
-                  <div id="settinsPanel" class="span6" style="display:none;">
-                    <div class="row-fluid">
-                      <div class="span12">
-                        <div class="span12 description-span"><h3>Analysis :</h3></div>
-                        <div class="row-fluid project-span">
-                          {% for form in parameter_formset.forms %}
-                          <div class="span12 parameter-unit">
-                            <div class="span6 description-span"><p>{{ form.value.label_tag }} </p></div>
-                            {% if form.value.label != "mindetection" and form.value.label != "rtwindow" and form.value.label != "ppm" %}
-                            <div class="span6 description-span">
-                              <!div class="onoffswitch">
-                                <!input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="{{ forloop.counter }}" checked>
-                                  <!label class="onoffswitch-label" for="{{ forloop.counter }}">
-                                      <!div class="onoffswitch-inner"><!/div>
-                                      <!div class="onoffswitch-switch"><!/div>
-                                  <!/label>
-                              <!/div>
-                              <div class="onoffswitch">
-                                {{ form.state }}
-                                <label class="onoffswitch-label" for="{{ form.state.auto_id }}">
-                                  <div class="onoffswitch-inner"></div>
-                                  <div class="onoffswitch-switch"></div>
-                                </label>
-                              </div>
-                            </div>
-                            {% else %}
-                            <div class="span6 description-span" style="display:none;">
-                              <!div class="onoffswitch">
-                                <!input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="{{ forloop.counter }}" checked>
-                                  <!label class="onoffswitch-label" for="{{ forloop.counter }}">
-                                      <!div class="onoffswitch-inner"><!/div>
-                                      <!div class="onoffswitch-switch"><!/div>
-                                  <!/label>
-                              <!/div>
-                              <div class="onoffswitch">
-                                {{ form.state }}
-                                <label class="onoffswitch-label" for="{{ form.state.auto_id }}">
-                                  <div class="onoffswitch-inner"></div>
-                                  <div class="onoffswitch-switch"></div>
-                                </label>
-                              </div>
-                            </div>
-                            {% endif %}
-                            {% if form.value.label != "rt.alignment" %}
-                            <div class="span12">
-                              {{ form.value.errors }}
-                              {{ form.value }}
-                            </div>
-                            {% endif %}
-                          </div>
-                          <div class="parameterName">
-                            {{ form.name }}
-                          </div>
-                          {% endfor %}
-                          <div class="span12 parameter-unit">
-                            {{ database_form }}
-                          </div>
-                        </div>
-                      </div>
-                    </div> 
+                <div class="panel-body">
+                  <div class="form-group">
+                    <label for="id_title" style="display: none;" generated="true" class="error"></label>
+                    {{ experiment_form.title.errors }}
+                    {{ experiment_form.title }}
                   </div>
-            		</div>
-  				  	</div>
-          		<div class="row-fluid">
-            		<div class="span12"><input class="btn btn-success btn-create-project" type="submit" value="Create experiment"/><!a id="next" class="btn btn-success btn-create-project"><!/a></div>
-          		</div>
-  				</div>
+                </div>
+              </div>
+              <!-- End enter analysis section -->
+
+              <!-- Create new comparisons section -->
+              <div class="panel panel-default" id="create_attributes_step">
+                <div class="panel-heading">
+                  <h4 class="panel-title">2. Add new comparisons</h4>
+                </div>
+                <div class="panel-body">
+                  <p>Select your experimental conditions on the panel below to create your first comparison and click the <span class="glyphicon glyphicon-plus"></span> button to add new comparisons to your analysis.</p>
+                </div>
+              </div>
+              <!-- End create new comparisons section -->
+
+              <!-- New comparison form section-->
+              {% for form in comparison_formset.forms %}
+              <div class="panel panel-info attribute item" id="comparison_{{ forloop.counter }}">
+                <div class="panel-heading clearfix">
+                  <div class="btn-group pull-right">
+                    <button data-toggle="tooltip" data-container="body" title="" class="btn btn-sm btn-default delete_comparison" data-original-title="Remove comparison">
+                      <span class="glyphicon glyphicon-minus"></span>
+                    </button>
+                    <button data-toggle="tooltip" data-container="body" title="" class="btn btn-sm btn-default add_comparison" data-original-title="Add comparison">
+                      <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                  </div>
+                  <h2 class="panel-title" style="padding-top:5px;">Comparison {{ forloop.counter }}</h2>
+                </div>
+                <div class="panel-body form-horizontal">
+                  <ol></ol>
+                    {{ form.name }}
+                  <div class="form-group">
+                    <label class="col-md-2 control-label">Condition</label>
+                    <div class="col-md-10">
+                      {{ form.attribute1 }}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-md-2 control-label">Control</label>
+                    <div class="col-md-10">
+                      {{ form.attribute2 }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              <!-- End new comparison form section-->
+            </div>
+
+            <!-- Right column where analysis paramteres form and save button are displayed -->
+            <div class="col-md-6">
+              <!-- Advanced parameter section -->
+              <div class="panel panel-default" id="create_attributes_step">
+                <div class="panel-heading" role="tab" id="headingOne">
+                  <h4 class="panel-title"><a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">3. Change Parameters</a><span class="pull-right" style="font-size:14px;">Advanced user only</span></h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse" aria-expanded="false" role="tabpanel" aria-labelledby="headingOne">
+                  <div class="panel-body">
+                    <p>This form has been populated with default parameters, you can change them manually</p>
+                    {% for form in parameter_formset.forms %}
+                    <div class="col-md-12 parameter-unit form-horizontal">
+                      <div class="form-group">
+                        <label class="col-md-4">{{ form.value.label }}</label>
+                        {% if form.value.label != "mindetection" and form.value.label != "rtwindow" and form.value.label != "ppm" %}
+                        <div class="col-md-8 description-span">
+                          <div class="onoffswitch">
+                            {{ form.state }}
+                            <label class="onoffswitch-label" for="{{ form.state.auto_id }}">
+                              <div class="onoffswitch-inner"></div>
+                              <div class="onoffswitch-switch"></div>
+                            </label>
+                          </div>
+                        </div>
+                        {% else %}
+                        <div class="col-md-8 description-span" style="display:none;">
+                          <div class="onoffswitch">
+                            {{ form.state }}
+                            <label class="onoffswitch-label" for="{{ form.state.auto_id }}">
+                              <div class="onoffswitch-inner"></div>
+                              <div class="onoffswitch-switch"></div>
+                            </label>
+                          </div>
+                        </div>
+                        {% endif %}
+                        {% if form.value.label != "rt.alignment" %}
+                        <div class="col-md-6">
+                          {{ form.value.errors }}
+                          {{ form.value }}
+                        </div>
+                        {% endif %}
+                      </div>
+                      <hr>
+                    </div>
+                    <div class="parameterName">
+                      {{ form.name }}
+                    </div>
+                    {% endfor %}
+                    <div class="col-md-12 parameter-unit">
+                      {{ database_form }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Advanced parameter section -->
+
+              <!-- Save form section -->
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">4. Save </h4>
+                </div>
+                <div class="panel-body">
+                  <p>When you are done, click the "Save" button below to store your changes.</p>
+                  <button type="submit" class="btn btn-default">Save</button>
+                </div>
+              </div>
+              <!-- End save form section -->
+
+            </div>
+              
+          </div>
   			</div>
-  		</div>
+		  </div>
+
+    </form>
 	</div>
 </div>
-<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="myModalLabel">Warning!</h3>
-  </div>
-  <div class="modal-body">
-    <p>You have to enter at least one comparison! </p>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-  </div>
-</div>
-<div id="myModalEmpty" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="myModalLabel">Warning!</h3>
-  </div>
-  <div class="modal-body">
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-  </div>
-</div>
-<div id="myModalCancel" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="myModalLabel">Warning!</h3>
-  </div>
-  <div class="modal-body">
-    <p>Every change you may have made be will lost.</p>
-    <p>Are you sure you want to continue?</p>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-    <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Ok</a>
+<div class="modal fade" id="myModal_nofooter" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title">Warning</h4>
+      </div>
+      <div class="modal-body">
+        <p>You have to enter at least one comparison! </p>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<div id="myModalCancel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title">Warning</h4>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <p>Every change you may have made be will be lost.</p>
+        <p>Do you want to continue?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <a type="button" class="btn btn-sm btn-primary" href="{% url 'project_detail' project.id %}">Continue to project page</a>
+      </div>
+    </div>
   </div>
 </div>
 {% endifnotequal %}	

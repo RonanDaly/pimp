@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_bs3.html" %}
 
 {% load project_tags %}
 
@@ -119,41 +119,44 @@ $(function() {
 {% block content %}
 {% if user.is_authenticated %}
 <div class="row" style="margin-bottom: 10px;">
-    <div class="span4"><h3>My Projects</h3></div>
-    <div class="span8 span-create-project">{% if user.is_staff %}<a class="btn btn-primary btn-create-project" href="{% url 'newproject' %}">Create project</a>{% endif %}</div>
+    <div class="col-md-4"><h2>My Projects</h2></div>
+    <div class="col-md-8 span-create-project">{% if user.is_staff %}<a class="btn btn-primary btn-create-project" href="{% url 'newproject' %}">Create project</a>{% endif %}</div>
 </div>
-    {% if user.project_set.all %}
-    <!div class="bs-docs-grid">
-    <div class="row">
-            <div class="span6">
-                {% for project in projects %}
-                {% if not forloop.counter|divisibleby:2 %}
-                <div class="row-fluid">
-                    <div class="span12">
-                        {% include "project/project_info.html" with project=project user=user permission=project.0|project_permission:user %}
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
+
+{% if user.project_set.all %}
+<div class="row">
+    <div class="col-md-6">
+    {% for project in projects %}
+    {% if not forloop.counter|divisibleby:2 %}
+        <div class="row">
+            <div class="col-md-12">
+            {% include "project/project_info.html" with project=project user=user permission=project.0|project_permission:user %}
             </div>
-            {% if projects|length > 1 %}
-            <div class="span6">
-                {% for project in projects %}
-                {% if forloop.counter|divisibleby:2 %}
-                <div class="row-fluid">
-                    <div class="span12">
-                        {% include "project/project_info.html" with project=project user=user permission=project.0|project_permission:user %}
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
-    <!/div>
+    {% endif %}
+    {% endfor %}
+    </div>
+    {% if projects|length > 1 %}
+    <div class="col-md-6">
+    {% for project in projects %}
+    {% if forloop.counter|divisibleby:2 %}
+        <div class="row">
+            <div class="col-md-12">
+            {% include "project/project_info.html" with project=project user=user permission=project.0|project_permission:user %}
+            </div>
+        </div>
     {% else %}
     <p>You don't have any projects.</p>
     {% endif %}
+    {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{% else %}
+<p>You d'on't have any project.</p>
+{% endif %}
+
 {% else %}
 <p>No projects are available.</p>
 {% endif %}

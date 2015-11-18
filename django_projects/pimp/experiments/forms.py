@@ -4,25 +4,26 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 attrs_dict = {'class': 'required'}
+attrs_condition_dict = {'class': 'required pull-right form-control'}
 
 class ExperimentForm(ModelForm):
 	class Meta:
 		model = Experiment
 		fields = ('title',)
 		widgets = {
-		'title' : TextInput(attrs={'placeholder': 'Experiment title', 'class':'experimentInput'}),
+		'title' : TextInput(attrs={'placeholder': 'Analysis title', 'class':'experimentInput form-control'}),
 		}
 
 class ComparisonForm(forms.Form):
 	name = forms.RegexField(regex=r'^[\w.@+-]+$',
 	                        max_length=200,
-                        	widget=forms.TextInput(attrs={'placeholder': 'Title'}),
+                        	widget=forms.TextInput(attrs={'placeholder': 'Title', 'style': 'display: none;'}),
                             label=_("Title"),
                             error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-	attribute1 = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
-							label=_("Member"))
-	attribute2 = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
-							label=_("Member"))
+	attribute1 = forms.ChoiceField(widget=forms.Select(attrs=attrs_condition_dict),
+							label=_("Condition"))
+	attribute2 = forms.ChoiceField(widget=forms.Select(attrs=attrs_condition_dict),
+							label=_("Control"))
 
 class ParameterForm(ModelForm):
 	class Meta:
@@ -30,7 +31,7 @@ class ParameterForm(ModelForm):
 		fields = ('name','value','state',)
 		widgets = {
 		'name' : TextInput(attrs={'class':'parameterName'}),
-		'value' : TextInput(attrs={'placeholder': 'Enter value', 'class':'parameterInput'}),
+		'value' : TextInput(attrs={'placeholder': 'Enter value', 'class':'parameterInput form-control'}),
 		'state' : CheckboxInput(attrs={'name': 'onoffswitch', 'class': 'onoffswitch-checkbox', 'value':True}),#BooleanField()required=False,
 								#initial=False,),
 								# widget=forms.RadioSelect(attrs={'name': 'onoffswitch', 'class': 'onoffswitch-checkbox'})),

@@ -11,6 +11,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',40);
 			$('#serch-banner').show();
 			$('#main-container').css('top',175);
+			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').css('top',175);
 			$('.pathway-table_wrapper_toolbar').css('top',175);
 			$('.comparison-table_wrapper_toolbar').css('top',175);
@@ -27,6 +28,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',0);
 			$('#serch-banner').hide();
 			$('#main-container').css('top',41);
+			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').css('top',41);
 			$('.pathway-table_wrapper_toolbar').css('top',41);
 			$('.comparison-table_wrapper_toolbar').css('top',41);
@@ -66,6 +68,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		if (right_panel) {
 			$('.myspan3').width('0%');
 			$('.myspan9').width('100%');
+			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').width('100%');
 			$('.peak-table_wrapper_toolbar').width('100%');
 			$('.comparison-table_wrapper_toolbar').width('100%');
@@ -77,6 +80,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		else {
 			$('.myspan3').width('20%');
 			$('.myspan9').width('80%');
+			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.identification-table_wrapper_toolbar').width('80%');
 			$('.peak-table_wrapper_toolbar').width('80%');
 			$('.comparison-table_wrapper_toolbar').width('80%');
@@ -381,6 +385,7 @@ function set_navbar(){
 		$('#tool_menu_bar').css('box-shadow','');
 	});
 }
+
 
 // Sort function for retention times, since they have a custom format of
 // "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"

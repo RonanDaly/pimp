@@ -35,10 +35,10 @@ urlpatterns = patterns('',
     # End temporary !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     url(r'^about/', 'home.views.about', name='about'),
     url(r'^register/$',
-        RegistrationView.as_view(form_class = MyExtendedForm), 
+        RegistrationView.as_view(form_class = MyExtendedForm),
         name = 'registration_register'),
     url(r'^accounts/register/$',
-        RegistrationView.as_view(form_class = MyExtendedForm), 
+        RegistrationView.as_view(form_class = MyExtendedForm),
         name = 'registration_register'),
     url(r'^accounts/', include('registration.backends.default.urls')),
     # url(r'^register/$',
@@ -71,6 +71,8 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_compounds_from_peak_id/$', 'experiments.views.get_compounds_from_peak_id', name='get_compounds_from_peak_id'),
     # ajax request to get info for MetExplpore
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_info/$', 'experiments.views.get_metexplore_info', name='get_metexplore_info'),
+    # ajax request to get metabolites table
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metabolites_table/$', 'experiments.views.get_metabolites_table', name='get_metabolites_table'),
     # ajax request to get identification table
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_identification_table/$', 'experiments.views.get_identification_table', name='get_identification_table'),
     # ajax request to get peak table
@@ -97,7 +99,7 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/adduser/$', 'projects.views.adduser', name='add_user'),
     # upload and delete file
     url(r'^accounts/project/(?P<project_id>\d+)/upload/', include('fileupload.urls')),
-    # create group 
+    # create group
     url(r'^accounts/project/(?P<project_id>\d+)/group/', 'groups.views.index', name='add_group'),
     # assign file to group
     url(r'^accounts/project/(?P<project_id>\d+)/attribute/', 'groups.views.createAttribute', name='projfile_attribute'),

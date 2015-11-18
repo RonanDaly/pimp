@@ -1,39 +1,51 @@
-{% extends "base.html" %}
+{% extends "base_bs3.html" %}
 
 {% load staticfiles %}
 
+{% block DataTables %}
+<script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/dataTables.bootstrap.min.js' %}"></script>
+<link rel="stylesheet" href="{% static 'DataTables-1.10.9/DataTables-1.10.9/css/dataTables.bootstrap.min.css' %}" type="text/css" />
+
+<!-- Custom JS for FrAnK -->
+<script src="{% static 'js/FrAnK_js.js'%}"></script>
+{% endblock %}
+
 {% block content %}
 
-        <h2>My Fragmentation Sets</h2>
-
-        {% if fragmentation_sets %}
-		<table class="table">
-			<tr>
-				<th>Name</th>
-				<th>Experiment</th>
-				<th>Created</th>
-				<th>Current Status</th>
-			</tr>
-			{% for fragment_set in fragmentation_sets %}
-				<tr>
-					{% if fragment_set.status == 'Completed Successfully' %}
-						<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>	
-					{% else %}
-						<td>{{fragment_set.name}}</a></td>
-					{% endif %}	
-						<td>{{fragment_set.experiment}}</td>
-						<td>{{fragment_set.status}}</td>
-						<td>{{fragment_set.time_created}}</td>
-			{% endfor %}
+    <h2>My Fragmentation Sets</h2>
+    {% if fragmentation_sets %}
+		<table class="table" id="fragmentation-set">
+      <thead>
+  			<tr>
+  				<th>Name</th>
+  				<th>Experiment</th>
+  				<th>Created</th>
+  				<th>Current Status</th>
+  			</tr>
+      </thead>
+      <tbody>
+  			{% for fragment_set in fragmentation_sets %}
+  				<tr>
+  					{% if fragment_set.status == 'Completed Successfully' %}
+  						<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>
+  					{% else %}
+  						<td>{{fragment_set.name}}</a></td>
+  					{% endif %}
+  						<td>{{fragment_set.experiment}}</td>
+  						<td>{{fragment_set.status}}</td>
+  						<td>{{fragment_set.time_created}}</td>
+  			{% endfor %}
+      </tbody>
 		</table>
 	{% else %}
 		<p>No existing fragmentation sets</p>
 	{% endif %}
 	</br>
-	<table>	
+	<table>
 		<tr>
 			<td><a href="{% url 'frank_index' %}">Home</a></td>
 		</tr>
-	</table>	
+	</table>
 
 {% endblock %}
