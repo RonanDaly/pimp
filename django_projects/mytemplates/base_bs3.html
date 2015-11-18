@@ -3,9 +3,6 @@
 	<head>
 		<title>PiMP</title>
 
-		{% block head %} {% endblock %}
-
-
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="shortcut icon" href="{{ STATIC_URL }}/img/logo_blue_white_icon_large.png">
@@ -25,6 +22,8 @@
 		{% block DataTables %} {% endblock %}
 
         {% block custom_scripts_and_styles %}{% endblock %}
+
+        {% block head %} {% endblock %}
 
 		<link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" media="screen"/>
 
