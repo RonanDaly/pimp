@@ -93,6 +93,8 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/sample/(?P<sample_id>\d+)/scan/$', 'projects.views.get_scan', name='get_scan'),
     # project description page : form to edit description in a project
     url(r'^accounts/project/(?P<project_id>\d+)/edit_description/$', 'projects.views.editdescription', name='edit_description'),
+	# project description page: form to edit title of a project
+    url(r'^accounts/project/(?P<project_id>\d+)/edit_title/$', 'projects.views.edit_title', name='edit_title'),
     # add user on project page : form to add a user to a project
     url(r'^accounts/project/(?P<project_id>\d+)/adduser/$', 'projects.views.adduser', name='add_user'),
     # upload and delete file
@@ -109,6 +111,7 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/samples/delete', 'projects.views.sampleDelete', name='delete-sample'),
     # delete project file
     url(r'^accounts/project/(?P<project_id>\d+)/projectfiles/delete', 'projects.views.projectFileDelete', name='delete-projectfile'),
+    url(r'^accounts/project/(?P<project_id>\d+)/remove_user_project/(?P<user_id>\d+)/','projects.views.removeUserProject',name='remove_user_project'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', 'projects.views.groupcreation', name='create_goupe'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('groups.urls')),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('multiuploader.urls')),

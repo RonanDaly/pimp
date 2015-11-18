@@ -769,6 +769,64 @@ textarea
 }
 
 
+.tab-content::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+height: 16px;
+overflow: visible;
+width: 10px;
+}
+
+/*.tab-content::-webkit-scrollbar-track {
+border-width: 0 1px 0 6px;
+}*/
+
+.tab-content::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+background-clip: padding-box;
+border: solid transparent;
+border-width: 0 1px 0 1px;
+/*background-color: red;*/
+/*border-width: 0 0 0 4px;*/
+}
+
+.tab-content::-webkit-scrollbar-track:hover,
+.modal-body::-webkit-scrollbar-track:hover {
+background-clip: padding-box;
+border: solid transparent;
+border-width: 0 1px 0 1px;
+background-color: #f5f5f5;
+border-left-color: rgba(0,0,0,.2);
+/*border-top-color: rgba(0,0,0,.2);*/
+/*border-width: 0 0 0 4px;*/
+}
+
+.tab-content::-webkit-scrollbar-button,
+.modal-body::-webkit-scrollbar-button {
+height: 0;
+width: 0;
+}
+
+.tab-content::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+background-color: rgba(0,0,0,.2);
+background-clip: padding-box;
+border: solid transparent;
+border-width: 1px 1px 1px 1px;
+min-height: 28px;
+padding: 100px 0 0;
+box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(0,0,0,.4);
+}
+
+.tab-content::-webkit-scrollbar-corner,
+.modal-body::-webkit-scrollbar-corner {
+background: transparent;
+}
+
 /*.logo_gif{
 	background-image: url(Poly-logo_speed3.gif);
 	display:block;

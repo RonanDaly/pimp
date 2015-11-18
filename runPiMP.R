@@ -1,4 +1,20 @@
-options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
+getNeededString = function(ev, name) {
+	variable = ev[name]
+
+}
+
+getString = function(name, default) {
+	return Sys.getenv(name, unset=default)
+}
+
+envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
+	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
+	'PIMP_DATABASE_PORT')
+
+
+envVariables = Sys.getenv(envVariables)
+
+options(java.parameters=getString('PIMP_JAVA_PARAMETERS', paste("-Xmx",1024*8,"m",sep="")))
 
 ##need to setwd
 args <- commandArgs(trailingOnly=TRUE)
@@ -14,13 +30,39 @@ library(PiMP)
 
 #db.settings <- yaml.load_file("/opt/django/yaml/pimp_database.yml")[['database']]
 
-db <- new("PiMPDB", dbname="/Users/rossgurden/git/pimp/django_projects/pimp/sqlite3.db", dbtype="sqlite")
+DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
+if ( DATABASE_FILENAME == '' )  {
+    DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
+} else {
+	DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
+}
+
+dbtype = getNeededString('PIMP_DATABASE_TYPE')
+if ( dbtype == 'django.db.backends.mysql' ) {
+	DATABASE_TYPE = 'mysql'
+} elseif ( dbtype == 'django.db.backends.sqlite3' ) {
+	DATABASE_TYPE = 'sqlite'
+} else {
+	stop(paste('The database type', dbtype, 'is not recognised'))
+}
+
+db <- new("PiMPDB",
+	dbuser=getString('PIMP_DATABASE_USER', ''),
+	dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
+	dbname=DATABASE_NAME,
+	dbhost=getString('PIMP_DATABASE_HOST', ''),
+	dbport=getString('PIMP_DATABASE_PORT', ''),
+	dbtype=DATABASE_TYPE
+	)
+
+#db <- new("PiMPDB", dbname="~/Downloads/sqlite3.db", dbtype="sqlite")
 #db <- new("PiMPDB", dbuser=db.settings$user, dbpassword=db.settings$password, dbname="pimp_prod", dbhost=db.settings$host, dbtype=db.settings$type)
 
 experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
 
-DATA_DIR = "/Users/rossgurden/git/pimp/django_projects/pimp_data/projects"
+
+DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), 'pimp_data')), 'projects')
 PROJECT_DIR = file.path(DATA_DIR, project.id)
 setwd(PROJECT_DIR)
 

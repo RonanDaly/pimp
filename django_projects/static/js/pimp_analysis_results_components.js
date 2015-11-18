@@ -386,56 +386,22 @@ function set_navbar(){
 	});
 }
 
-function setMetabolitesTable(url, callback){
 
-	var metabolitesTable = $('#metabolites-table').dataTable( {
-					"sAjaxSource": url,
-					"sDom": '<"metabolites-table_wrapper_toolbar"liT>rtp',
-					"tableTools": {
-			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
-			            "aButtons": [
-			                {
-                    			"sExtends": "copy",
-                    			"sButtonText": "Copy",
-                    			"mColumns": "visible",
-                    			"sToolTip": "Copy to clipboard"
-                			},
-			                {
-			                    "sExtends":    "collection",
-			                    "sButtonText": "Export",
-			                    "aButtons":    [
-			                    	{
-					                    "sExtends": "csv",
-					                    "sButtonText": "csv",
-					                    "mColumns": "visible",
-					                    "sFileName": "compounds.csv",
-					                    "sToolTip": "Save as CSV"
-                					},
-                					{
-                    					"sExtends": "xls",
-                    					"sButtonText": "xls",
-                    					"mColumns": "visible",
-                    					"sFileName": "compounds.xls",
-                    					"sToolTip": "Save as XLS"
-                					}
-                				]
-			                }
-			            ]
-			        },
-					"bPaginate": true,
-					"sPaginationType": "full_numbers",
-					"iDisplayLength": 100,
-					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumnDefs": [],
-					"fnDrawCallback":function (oSettings) {
-						console.log("data finished loaded");
-						table_received = this;
-						callback && callback.call(this, table_received);
-					},
-				});
+// Sort function for retention times, since they have a custom format of
+// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
 
-	return metabolitesTable;
-}
+jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return a - b;
+};
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return b - a;
+};
+
 
 function set_idtable(url, callback){
 
@@ -485,6 +451,14 @@ function set_idtable(url, callback){
 					/* Name */	null,
 					/* Formula */	null,
 					/* PPM */	null,
+					/* RT */ {
+					"aTargets": [2],
+					"sType": "formatted-rt",
+					"mRender": function(rt, type, full) {
+						var minutes = Math.floor(rt / 60);
+						var seconds = Math.round(rt % 60); // Rounded to nearest second
+						return rt + " ("+ minutes + " min "+ seconds + " s)";
+					}},
 					/* Identification */	null,
 					/* Polarity */	null,
 					],
@@ -552,11 +526,35 @@ function set_pathwaytable(){
 	return pathwayTable;
 }
 
+// Sort function for retention times, since they have a custom format of
+// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return a - b;
+};
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return b - a;
+};
+
 function set_peaktable(url, callback){
 	var peakTable = $('#peak-table').dataTable( {
 					// "sDom": '<"toolbar">frtip',
 					// "sDom": 't',
 					"sAjaxSource": url,
+					"aoColumnDefs": [{
+							"aTargets": [2],
+							"sType": "formatted-rt",
+							"mRender": function(rt, type, full) {
+								var minutes = Math.floor(rt / 60);
+								var seconds = Math.round(rt % 60); // Rounded to nearest second
+								return rt + " ("+ minutes + " min "+ seconds + " s)";
+							}
+						}],
 					"sDom": '<"peak-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",

@@ -1,0 +1,180 @@
+class PrintExec extends Exec {
+	PrintExec() {
+		ignoreExitValue true
+		workingDir '.'
+		setStandardOutput(new ByteArrayOutputStream())
+		setErrorOutput(new ByteArrayOutputStream())
+		doLast {
+			println commandLine.join(" ")
+			try {
+				execResult.assertNormalExitValue()
+			} catch (Exception e) {
+				println e.getMessage()
+				println standardOutput.toString()
+				println errorOutput.toString()
+				throw e
+			}
+		}
+	}
+
+	protected void exec() {
+		try {
+			super.exec()
+		} catch (Exception e) {
+			println 'Problem running program, error messages follow'
+			println '---'
+			Throwable t = e
+			while (t != null) {
+				println t.getMessage()
+				t = t.getCause();
+			}
+			println '---'
+			throw e
+		}
+	}
+}
+
+def checkProperties() {
+	for ( prop in ['PIMP_RSCRIPT_PATH'] ) {
+		if ( project.ext.props[prop] == null ) {
+			throw new Exception('Property ' + prop + ' is not set in the configuration file')
+		}
+	}
+}
+
+task setupProjectProperties {
+	Properties props = new Properties()
+	props.load(new FileInputStream('django_projects/pimp/.env'))
+	project.ext.props = props
+	checkProperties()
+	project.ext.props['PATH'] = 'venv/bin' + ':' + "$System.env.PATH"
+}
+
+/*
+task setPythonVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.Python, 'getPythonVersion.py'
+	doLast {
+		project.ext.PythonVersion = standardOutput.toString()
+	}
+}
+
+task setJavaVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.Java, '-cp', '.', 'GetJavaVersion'
+	doLast {
+		project.ext.JavaVersion = standardOutput.toString()
+	}
+}
+
+task setRVersion(type: PrintExec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.Rscript, 'getRVersion.R'
+	doLast {
+		project.ext.RVersion = standardOutput.toString()
+	}
+}
+
+task checkVersions(dependsOn: [setPythonVersion, setRVersion, setJavaVersion]) << {
+	println 'R Version: ' + project.ext.RVersion
+	println 'Python Version: ' + project.ext.PythonVersion
+	println 'Java Version: ' + project.ext.JavaVersion
+}
+
+task copyRpkg (type: Copy) {
+        from('PiMP') {
+		into 'PiMP'
+	}
+        from('PiMPDB') {
+		into 'PiMPDB'
+	}
+	into 'build'
+}
+
+task createPiMP(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
+        workingDir 'build'
+        commandLine project.ext.props.R, 'CMD', 'build',  'PiMP'
+}
+
+task createPiMPDB(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
+        workingDir 'build'
+        commandLine project.ext.props.R, 'CMD', 'build',  'PiMPDB'	
+}
+*/
+task createVirtualEnvironment(type: PrintExec) {
+	onlyIf {
+		! file('venv').exists() 
+	}
+	commandLine 'python', 'virtualenv/virtualenv.py', '--python=python2.7', 'venv'
+}
+
+task installPiMPRequirements(type: Exec, dependsOn: createVirtualEnvironment) {
+	commandLine 'venv/bin/pip', 'install', '-r', 'django_projects/requirements.txt'
+}
+
+task installFrankRequirements(type: Exec, dependsOn: createVirtualEnvironment) {
+	commandLine 'venv/bin/pip', 'install', '-r', 'django_projects/requirements_frank.txt'
+}
+
+task installPiMPPythonDependencies(dependsOn: [installPiMPRequirements, installFrankRequirements])
+
+task installPiMPRDependencies(type: Exec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.PIMP_RSCRIPT_PATH, 'setupR.R'
+}
+
+task installPiMPDependencies(dependsOn: [installPiMPPythonDependencies, installPiMPRDependencies])
+
+task synchroniseDatabase(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties]) {
+	//println project.ext.props.PATH
+	environment 'PATH', project.ext.props['PATH']
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/manage.py', 'migrate'
+}
+
+task populatePiMP (type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties, synchroniseDatabase]) {
+	environment 'PATH', project.ext.props['PATH']
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/populate_pimp.py'
+}
+
+task setupSuperUser(dependsOn: [setupProjectProperties]) << {
+	if ( project.ext.props['PIMP_INITIAL_USERNAME'] == null ||
+			project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS'] == null ||
+			project.ext.props['PIMP_INITIAL_PASSWORD'] == null ||
+			project.ext.props['PIMP_INITIAL_FIRST_NAME'] == null || 
+			project.ext.props['PIMP_INITIAL_LAST_NAME'] == null ) {
+		logger.info "Not all properties for initial user set, going to interactive mode"
+		def console = System.console()
+		if (console) {
+			console.printf('\n')
+			project.ext.props['PIMP_INITIAL_USERNAME'] = console.readLine('Username: ')
+			project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS'] = console.readLine('Email: ')
+			def password = console.readPassword('Password: ')
+			def passwordAgain = console.readPassword('Password (again): ')
+			while ( ! Arrays.equals(password, passwordAgain) ) {
+				console.printf('Error: Your passwords did not match.\n')
+				password = console.readPassword('Password: ')
+				passwordAgain = console.readPassword('Password (again): ')
+			}
+			project.ext.props['PIMP_INITIAL_PASSWORD'] = password
+			project.ext.props['PIMP_INITIAL_FIRST_NAME'] = console.readLine('First name: ')
+			project.ext.props['PIMP_INITIAL_LAST_NAME'] = console.readLine('Last name: ')
+		} else {
+			logger.error "Cannot get console."
+		}
+	}
+}
+
+task createSuperUser(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties, setupSuperUser]) {
+	environment 'PATH', project.ext.props['PATH']
+	environment 'PIMP_INITIAL_USERNAME', project.ext.props['PIMP_INITIAL_USERNAME']
+	environment 'PIMP_INITIAL_EMAIL_ADDRESS', project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS']
+	environment 'PIMP_INITIAL_PASSWORD', project.ext.props['PIMP_INITIAL_PASSWORD']
+	environment 'PIMP_INITIAL_FIRST_NAME', project.ext.props['PIMP_INITIAL_FIRST_NAME']
+	environment 'PIMP_INITIAL_LAST_NAME', project.ext.props['PIMP_INITIAL_LAST_NAME']
+
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/setupInitialUser.py'
+}
+
+task setupPiMP(dependsOn: [synchroniseDatabase, populatePiMP, createSuperUser])
+
+task runPiMP(type: Exec) {
+	environment 'PATH', project.ext.props['PATH']
+	workingDir 'django_projects/pimp'
+	commandLine '../../venv/bin/honcho', 'start'
+}

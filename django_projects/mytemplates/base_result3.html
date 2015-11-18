@@ -380,6 +380,110 @@
 		                ]
         	});
 
+
+			{% for group, sample_dict in tics.items %}
+			$('#tic_pos{{group.id}}').highcharts({
+				credits: {
+					enabled: false,
+				},
+				title: {
+					text: "{{group.name| capfirst}} (POS)"
+				},
+				chart: {
+					backgroundColor: "#ffffff",
+					zoomType: 'x',
+				},
+				exporting: {
+	            	enabled: true,
+	            	filename: "{{group.name | capfirst}}" + "_positive_TIC",
+			    },
+				xAxis: {
+					title: {
+						text: "Retention time (s)",
+					}, 
+				},
+				yAxis: {
+					title: {
+						text: "Abundance",
+					},
+					min: 0,
+				},
+				plotOptions: {
+					area : {
+						marker: {
+							enabled: false,
+						},
+					},
+					series: {
+        				fillOpacity: 0.1,
+        			},
+				},
+				series: [
+					{% for sample,pos_neg in sample_dict.items %}
+					{	
+						type: 'area',
+						name: '{{sample}}',
+						data: {{pos_neg.pos}},
+					},
+					{% endfor %}
+					]
+			});
+			{% endfor %}
+
+
+
+			{% for group, sample_dict in tics.items %}
+			$('#tic_neg{{group.id}}').highcharts({
+				credits: {
+					enabled: false,
+				},
+				title: {
+					text: "{{group.name | capfirst}} (NEG)"
+				},
+				chart: {
+					backgroundColor: "#ffffff",
+					zoomType: 'x',
+				},
+				exporting: {
+			            	enabled: true,
+			            	filename: "{{group.name | capfirst}}" + "_negative_TIC",
+			    },
+				xAxis: {
+					title: 
+					{
+						text: "Retention time (s)",
+					},
+				},
+				yAxis: {
+					title:
+					{
+						text: "Abundance",
+					},
+					min: 0,
+				},
+				plotOptions: {
+					area : {
+						marker: {
+							enabled: false,
+						},
+					},
+					series: {
+        				fillOpacity: 0.1,
+        			},
+				},
+				series: [
+					{% for sample,pos_neg in sample_dict.items %}
+					{	
+						type: 'area',
+						name: '{{sample}}',
+						data: {{pos_neg.neg}},
+					},
+					{% endfor %}
+					]
+			});
+			{% endfor %}
+
+
 			{% for comparison in comparisons %}
 			$('#comparison{{ comparison.id }}-volcano-plot').highcharts({
 				credits : {
@@ -1536,8 +1640,9 @@
 		            },
 		            yAxis: {
 		                title: {
-		                    text: 'Relative abundance'
+		                    text: 'Measured abundance'
 		                },
+		                min: 0,
 		            },
 		            tooltip: {
 		                shared: true,
@@ -1855,7 +1960,7 @@
 				$('<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>').appendTo($(modalFooter));
 				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"></h3>').appendTo($(modalHeader));
 				var modalLabel = $modal.find('#myModalLabel');
-				$(modalLabel).text("Peaks chromatogram - RT: "+parseFloat(retentionTime).toFixed(1)+" (s) - RT window: "+rtwindow+" (s)");
+				$(modalLabel).text("All peak chromatograms RT: "+parseFloat(retentionTime).toFixed(1)+"s (+/- "+rtwindow+"s) Mass: " + parseFloat(mass).toFixed(4) + " (+/- " + parseFloat(ppm) + " ppm)");
 				var chartWidth = $modal.width()/4;
 				var j = 0;
 				for (var i=1;i<response.length;i++){
@@ -1864,10 +1969,10 @@
 					}
 					var div = $('<div class="span3" style="margin:0px;width:'+chartWidth+'px"></div>');
 					$(div).highcharts({
-	            		credits : {
+						credits : {
     						enabled : false
     					},
-			        	chart: {
+						chart: {
 			                zoomType: 'x',
 			                width: chartWidth,
 			                height: 300,
@@ -1875,16 +1980,13 @@
 			                plotBackgroundColor: null,
 			                plotBorderWidth: null,
 			                plotShadow: false,
+			            },
 			            title: {
-			                text: 'Peak chromatogram'
+			                text: response[i][0]
 			            },
-			            subtitle: {
-			                text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: 'Peak_' + response[i][0] + "_chromatogram_rt_" + parseFloat(retentionTime).toFixed(3),
-			            },
+			            // subtitle: {
+			            //     text: 'Mass: '+parseFloat(mass).toFixed(4)+' ppm: '+ppm
+			            // },
 			            xAxis: {
 			                title: {
 			                    text: 'Retention time (s)'
@@ -1893,18 +1995,18 @@
 			            },
 			            yAxis: {
 			                title: {
-			                    text: 'Relative abundance'
+			                    text: 'Measured abundance'
 			                },
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '',
-			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
-
+			                min: 0,
 			            },
 			            legend: {
-			                enabled: true
+			                enabled: false
 			            },
+			            series: [{
+			                type: 'area',
+			                name: response[i][0],
+			                data : response[i][1]
+			            }],
 			    		plotOptions: {
 			                area: {
 			                    marker: {
@@ -1930,12 +2032,9 @@
                 				fillOpacity: 0.1
 	            			}
 			            },
-			            series: [{
-			                type: 'area',
-			                name: response[i][0],
-			                data : response[i][1]
-			            }]
-			        	}
+
+
+
 		    		});
 					$(div).appendTo($(row));
 					j += 1;
@@ -2154,6 +2253,14 @@
 									<p>Principal Component Analysis</p>
 									<div class="" id="pca_test"></div>
 
+									<p>Total Ion Chromatograms</p>
+									{% for member in member_list %}
+									<div class="" id="tic_pos{{member.id}}"></div>
+									{% endfor %}
+									{% for member in member_list %}
+									<div class="" id="tic_neg{{member.id}}"></div>
+									{% endfor %}
+
 									<h3>Results</h3>
 									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
 
@@ -2366,6 +2473,7 @@
 						                  <th>Name</th>
 						                  <th>Formula</th>
 						                  <th>ppm</th>
+															<th>RT (s)</th>
 						                  <th>Identification</th>
 						                  <th>Polarity</th>
 						                </tr>
@@ -2467,7 +2575,7 @@
 
 						               	  <th rowspan="2">Peak id</th>
 						                  <th rowspan="2">Mass</th>
-						                  <th rowspan="2">RT</th>
+						                  <th rowspan="2">RT (s)</th>
 						                  {% for member in member_list %}
 						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 						                  {% endfor %}

@@ -2,12 +2,13 @@
 from django.shortcuts import render
 from projects.models import Project
 from projects.models import UserProject
-from projects.forms import ProjectForm, EditDescriptionForm, AddUserForm, GroupCreationForm
+from projects.forms import ProjectForm, EditDescriptionForm, AddUserForm, GroupCreationForm, EditTitleForm
 from django.shortcuts import redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from data.models import Analysis
+
 
 from groups.models import Attribute, Group
 
@@ -75,7 +76,7 @@ def newproject(request):
 			created = datetime.datetime.now()
 			user = request.user
 			name = user.username
-			new_project = Project.objects.create(title=title, description=description, owner=name, created=created, modified=created)
+			new_project = Project.objects.create(title=title, description=description, user_owner=user, created=created, modified=created)
 			new_user_project = UserProject.objects.create(user=user, project=new_project, date_joined=created, permission="admin")
 			request.session['new_project'] = True
 			print request.session['new_project']
@@ -211,7 +212,7 @@ def peak_discovery(request, project_id):
 
 		message = "got somthing on the server!!!"
 		response = simplejson.dumps(data)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 
 
@@ -304,7 +305,7 @@ def get_mzxml_tic(request, project_id, sample_id):
 		# response = simplejson.dumps(message)
 		fileList = [sample_name,posdata,negdata]
 		response = simplejson.dumps(fileList)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 def get_scan_data(mzxmlFile, rt):
 	xcms = importr("xcms")
@@ -342,7 +343,7 @@ def get_scan(request, project_id, sample_id):
 		print "my retention time : ",rt
 		message = "my sample id on the server side is : " + str(sample_id)
 		response = simplejson.dumps(data)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 def get_group_tic(request, project_id, group_id):
 	if request.is_ajax():
@@ -362,7 +363,7 @@ def get_group_tic(request, project_id, group_id):
 		response = simplejson.dumps(groupResponse)
 		
 		# response = simplejson.dumps(fileList)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 
 def create_member_tic(attribute_id):
 	attribute = Attribute.objects.get(id=attribute_id)
@@ -375,6 +376,7 @@ def create_member_tic(attribute_id):
 		sample_name = sample.name
 		if not sample.samplefile.posdata :
 			posdata = "None"
+			posBarTic = "None"
 		else:
 			posmzxmlfile = sample.samplefile.posdata
 			if not posmzxmlfile.tic:
@@ -419,6 +421,7 @@ def create_member_tic(attribute_id):
 					# print posdata
 		if not sample.samplefile.negdata :
 			negdata = "None"
+			negBarTic = "None"
 		else:
 			negmzxmlfile = sample.samplefile.negdata
 			if not negmzxmlfile.tic:
@@ -475,7 +478,7 @@ def get_tic(request, project_id, attribute_id):
 		print attribute_id
 		attributeResponse = create_member_tic(attribute_id)
 		response = simplejson.dumps(attributeResponse)
-		return HttpResponse(response, mimetype='application/json')
+		return HttpResponse(response, content_type='application/json')
 	else:
 		print "request is not ajax, project: ",project_id," attribute: ",attribute_id
 
@@ -556,6 +559,32 @@ def projectFileDelete(request, project_id):
 		return render(request, 'project/delete_projectfile.html', {'project': project, 'permission':permission})
 
 
+def edit_title(request, project_id):
+	p = Project.objects.get(pk=project_id)
+
+	if request.method =='POST':
+		form = EditTitleForm(request.POST)
+		
+		if form.is_valid():
+			title = form.cleaned_data['title']
+			p.title = title
+			p.modified = datetime.datetime.now()
+			p.save()
+			return HttpResponseRedirect(reverse('project_detail', args=(p.id,)))
+		else: # form.is_valid() == False
+			return render(request, 'project/edit_title_form.html', {'form': form, 'project': p})
+	else:
+		title = p.title
+		form = EditTitleForm()
+		form.fields['title'].initial = title
+		user = request.user
+		
+		if user.userproject_set.get(project=p).permission == "read":
+			raise Http404
+		else:
+			return render(request, 'project/edit_title_form.html', {'form': form, 'project': p})
+
+
 def editdescription(request, project_id):
 	if request.method == 'POST':
 		form = EditDescriptionForm(request.POST)
@@ -609,6 +638,9 @@ def adduser(request, project_id):
 				new_user_project = UserProject(user=user, project=project, date_joined=date_joined, permission=permission)
 				new_user_project.save()
 				return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+		else:
+			project = Project.objects.get(pk=project_id)
+			return render(request, 'project/adduser.html', {'form': form, 'project': project})
 	else:
 		form = AddUserForm()
 		p = Project.objects.get(pk=project_id)
@@ -638,8 +670,17 @@ def userpermission(request, project_id):
 def createdataset(request, file_path):
 	pimpXmlFile = file_path
 	
-
-
+def removeUserProject(request,project_id,user_id):
+	project = Project.objects.get(id = project_id)
+	user_to_remove = User.objects.get(id = user_id)
+	current_user = request.user
+	current_user_project = UserProject.objects.get(project=project,user=current_user)
+	remove_user_project = UserProject.objects.get(project = project, user = user_to_remove)
+	# We can only delete if the current user has admin rights and they are not trying to delete the owner!
+	if current_user_project.permission == 'admin':
+		if not user_to_remove is project.user_owner:
+			remove_user_project.delete()
+	return HttpResponseRedirect(reverse('project_detail', args=(project_id,)))
 
 
 

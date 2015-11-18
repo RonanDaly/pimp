@@ -145,6 +145,8 @@ $(function() {
             {% include "project/project_info.html" with project=project user=user permission=project.0|project_permission:user %}
             </div>
         </div>
+    {% else %}
+    <p>You don't have any projects.</p>
     {% endif %}
     {% endfor %}
     </div>
