@@ -10,7 +10,7 @@ $(document).ready(function() {
     "searching": false,
   });
 
-  $('#MS1-peaks').DataTable({
+  $('.MS1-peaks').DataTable({
     "columnDefs": [{"targets": 0, "type": "html-num"}],
     "order": [[0, "asc"]], // order by Identifier
     "paging": true,

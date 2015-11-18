@@ -521,21 +521,6 @@ function set_pathwaytable(){
 	return pathwayTable;
 }
 
-// Sort function for retention times, since they have a custom format of
-// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
-
-jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return a - b;
-};
-
-jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return b - a;
-};
-
 function set_peaktable(url, callback){
 	var peakTable = $('#peak-table').dataTable( {
 					// "sDom": '<"toolbar">frtip',
