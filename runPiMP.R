@@ -1,18 +1,17 @@
-getNeededString = function(ev, name) {
-	variable = ev[name]
-
+getNeededString = function(name) {
+	Sys.getenv(name, unset=NA)
 }
 
 getString = function(name, default) {
 	Sys.getenv(name, unset=default)
 }
 
-envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
-	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
-	'PIMP_DATABASE_PORT')
+#envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
+#	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
+#	'PIMP_DATABASE_PORT')
 
 
-envVariables = Sys.getenv(envVariablesNames)
+#envVariables = Sys.getenv(envVariablesNames)
 
 options(java.parameters=getString('PIMP_JAVA_PARAMETERS', paste("-Xmx",1024*8,"m",sep="")))
 
