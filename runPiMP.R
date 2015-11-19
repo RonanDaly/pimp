@@ -61,7 +61,7 @@ experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
 
 
-DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), 'pimp_data')), 'projects')
+DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', ''pimp_data')), 'projects')
 PROJECT_DIR = file.path(DATA_DIR, project.id)
 setwd(PROJECT_DIR)
 
