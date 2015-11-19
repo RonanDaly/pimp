@@ -36,7 +36,7 @@ if ( DATABASE_FILENAME == '' )  {
 	DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
 }
 
-dbtype = getNeededString('PIMP_DATABASE_TYPE')
+dbtype = getNeededString('PIMP_DATABASE_ENGINE')
 if ( dbtype == 'django.db.backends.mysql' ) {
 	DATABASE_TYPE = 'mysql'
 } else if ( dbtype == 'django.db.backends.sqlite3' ) {
