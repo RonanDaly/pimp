@@ -40,7 +40,7 @@ if ( DATABASE_FILENAME == '' )  {
 dbtype = getNeededString('PIMP_DATABASE_TYPE')
 if ( dbtype == 'django.db.backends.mysql' ) {
 	DATABASE_TYPE = 'mysql'
-} elseif ( dbtype == 'django.db.backends.sqlite3' ) {
+} else if ( dbtype == 'django.db.backends.sqlite3' ) {
 	DATABASE_TYPE = 'sqlite'
 } else {
 	stop(paste('The database type', dbtype, 'is not recognised'))
