@@ -135,7 +135,7 @@ setMethod("getControlMemberSamples", "PiMPDB", function(object, member.id) {
 
 setMethod("getExperimentComparisons", "PiMPDB", function(object, experiment.id) {
     comparisons <- querydb(object,
-                    paste("select experiments_comparison.id, experiments_comparison.name, group_concat(groups_attribute.name, '-') AS contrast",
+                    paste("select experiments_comparison.id, experiments_comparison.name, group_concat(groups_attribute.name, '-') AS contrast, group_concat(experiments_attributecomparison.control, '-') AS control",
                     	  "from experiments_comparison, experiments_attributecomparison, groups_attribute",
                     	  "where experiments_comparison.id = experiments_attributecomparison.comparison_id",
                     	  "and experiments_attributecomparison.attribute_id = groups_attribute.id",
