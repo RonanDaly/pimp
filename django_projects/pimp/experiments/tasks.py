@@ -112,43 +112,46 @@ def start_pimp_pipeline(analysis, project, user):
 			# compoundIds = xmltree.getCompoundIds(i)
 			compounds = xmltree.getCompoundsFromElement(peak_element)
 			if compounds:
+				compound_secondary_id_list = set()
 				for compound_element in compounds:
 					################# Create compound instance here using compoundInfo, attach it to the peak created above #################
 					compoundInfo = xmltree.getCompoundInfoFromElement(compound_element)
-					compound = Compound(secondaryId=compoundInfo["id"], peak=peak, formula=compoundInfo["formula"], inchikey=compoundInfo["inchikey"], ppm=compoundInfo["ppm"], adduct=compoundInfo["adduct"], identified=compoundInfo["identified"])
-					compound.save()
-					try:
-						compound_id_map[compoundInfo["id"]].append(compound.id)
-					except:
-						compound_id_map[compoundInfo["id"]] = [compound.id]
-					######### Debug ########
-					# if compoundInfo["id"] == 2:
-					# 	print "####################### COMPOUND #######################"
-					# 	print "peak id attached: ",peakSecondaryId
-					# 	print "compound id: ",compoundInfo["id"]
-					# 	# print "name: ",compoundInfo["name"]
-					# 	print "formula: ",compoundInfo["formula"]
-					# 	print "inchikey: ",compoundInfo["inchikey"]
-					# 	print "ppm: ",compoundInfo["ppm"]
-					# 	# print "db: ",compoundInfo["db"]
-					# 	# print "dbId: ",compoundInfo["dbId"]
-					# 	print "adduct: ",compoundInfo["adduct"]
-					# 	print "identified: ",compoundInfo["identified"]
-					######## End debug #######
-					dbs = xmltree.getCompoundDbsFromElement(compound_element)
-					if dbs:
-						for db_element in dbs:
-							################# Create repository_compound (db) instance here using dbInfo, attach it to the compound created above #################
-							dbInfo = xmltree.getDbInfoFromElement(db_element)
-							repository_compound = RepositoryCompound(db_name=dbInfo["db_name"], identifier=dbInfo["identifier"], compound_name=dbInfo["compound_name"].encode('utf-8'), compound=compound)
-							repository_compound.save()
-							######### Debug ########
-							# if compoundInfo["id"] == 2:
-							# 	print "####################### DB #######################"
-							# 	print "db name: ",dbInfo["db_name"]
-							# 	print "db identifier: ",dbInfo["identifier"]
-							# 	print "compound name: ",dbInfo["compound_name"]
-							######## End debug #######
+					if compoundInfo["id"] not in compound_secondary_id_list:
+						compound_secondary_id_list.add(compoundInfo["id"])
+						compound = Compound(secondaryId=compoundInfo["id"], peak=peak, formula=compoundInfo["formula"], inchikey=compoundInfo["inchikey"], ppm=compoundInfo["ppm"], adduct=compoundInfo["adduct"], identified=compoundInfo["identified"])
+						compound.save()
+						try:
+							compound_id_map[compoundInfo["id"]].append(compound.id)
+						except:
+							compound_id_map[compoundInfo["id"]] = [compound.id]
+						######### Debug ########
+						# if compoundInfo["id"] == 2:
+						# 	print "####################### COMPOUND #######################"
+						# 	print "peak id attached: ",peakSecondaryId
+						# 	print "compound id: ",compoundInfo["id"]
+						# 	# print "name: ",compoundInfo["name"]
+						# 	print "formula: ",compoundInfo["formula"]
+						# 	print "inchikey: ",compoundInfo["inchikey"]
+						# 	print "ppm: ",compoundInfo["ppm"]
+						# 	# print "db: ",compoundInfo["db"]
+						# 	# print "dbId: ",compoundInfo["dbId"]
+						# 	print "adduct: ",compoundInfo["adduct"]
+						# 	print "identified: ",compoundInfo["identified"]
+						######## End debug #######
+						dbs = xmltree.getCompoundDbsFromElement(compound_element)
+						if dbs:
+							for db_element in dbs:
+								################# Create repository_compound (db) instance here using dbInfo, attach it to the compound created above #################
+								dbInfo = xmltree.getDbInfoFromElement(db_element)
+								repository_compound = RepositoryCompound(db_name=dbInfo["db_name"], identifier=dbInfo["identifier"], compound_name=dbInfo["compound_name"].encode('utf-8'), compound=compound)
+								repository_compound.save()
+								######### Debug ########
+								# if compoundInfo["id"] == 2:
+								# 	print "####################### DB #######################"
+								# 	print "db name: ",dbInfo["db_name"]
+								# 	print "db identifier: ",dbInfo["identifier"]
+								# 	print "compound name: ",dbInfo["compound_name"]
+								######## End debug #######
 
 			comparisons = xmltree.getComparisonsFromElement(peak_element)
 			# print "######",comparisons
