@@ -106,7 +106,16 @@ if(length(blank.idx) > 0) {
 }
 
 #comparisons
-contrasts <- experiment.contrasts$name
+#contrasts <- experiment.contrasts$name
+contrasts <- experiment.contrasts$contrasts
+# This has been changed to
+#contrasts = c()
+#group1 = experiment.contrasts$
+#group2 = experiment.contrasts$
+
+#for ( i in 1:length(group1) ) {
+#	contrasts = append(contrasts, paste0(group1[i], '-', group2[i]))
+#}
 
 #databases
 databases <- c("kegg", "hmdb", "lipidmaps")
