@@ -27,9 +27,6 @@ class AttributeComparison(models.Model):
 	attribute = models.ForeignKey(Attribute)
 	comparison = models.ForeignKey(Comparison)
 
-	class Meta:
-		ordering = ['control']
-
 class Parameter(models.Model):
 	name = models.CharField(max_length=100)
 	value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
