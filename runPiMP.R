@@ -1,18 +1,17 @@
-getNeededString = function(ev, name) {
-	variable = ev[name]
-
+getNeededString = function(name) {
+	Sys.getenv(name, unset=NA)
 }
 
 getString = function(name, default) {
-	return Sys.getenv(name, unset=default)
+	Sys.getenv(name, unset=default)
 }
 
-envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
-	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
-	'PIMP_DATABASE_PORT')
+#envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
+#	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
+#	'PIMP_DATABASE_PORT')
 
 
-envVariables = Sys.getenv(envVariables)
+#envVariables = Sys.getenv(envVariablesNames)
 
 options(java.parameters=getString('PIMP_JAVA_PARAMETERS', paste("-Xmx",1024*8,"m",sep="")))
 
@@ -37,10 +36,10 @@ if ( DATABASE_FILENAME == '' )  {
 	DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
 }
 
-dbtype = getNeededString('PIMP_DATABASE_TYPE')
+dbtype = getNeededString('PIMP_DATABASE_ENGINE')
 if ( dbtype == 'django.db.backends.mysql' ) {
 	DATABASE_TYPE = 'mysql'
-} elseif ( dbtype == 'django.db.backends.sqlite3' ) {
+} else if ( dbtype == 'django.db.backends.sqlite3' ) {
 	DATABASE_TYPE = 'sqlite'
 } else {
 	stop(paste('The database type', dbtype, 'is not recognised'))
@@ -62,7 +61,7 @@ experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
 
 
-DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), 'pimp_data')), 'projects')
+DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', 'pimp_data')), 'projects')
 PROJECT_DIR = file.path(DATA_DIR, project.id)
 setwd(PROJECT_DIR)
 
@@ -107,7 +106,13 @@ if(length(blank.idx) > 0) {
 }
 
 #comparisons
-contrasts <- experiment.contrasts$name
+contrasts <- experiment.contrasts$contrast
+controls <- experiment.contrasts$control
+con = unlist(strsplit(controls, '-'))
+if ( con[1] == '0' ) {
+    cont = unlist(strsplit(contrasts))
+    contrasts = paste0(cont[2], '-', cont[1])
+}
 
 #databases
 databases <- c("kegg", "hmdb", "lipidmaps")
