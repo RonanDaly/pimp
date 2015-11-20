@@ -222,12 +222,12 @@ def experiment(request, project_id):
 				print "attribute id : ",id_attribute_1
 				attribute_1 = Attribute.objects.get(id=id_attribute_1)
 				print "attribute found : ",attribute_1
-				attribute_comp = AttributeComparison(control=True,attribute=attribute_1,comparison=comparison)
+				attribute_comp = AttributeComparison(control=False,attribute=attribute_1,comparison=comparison)
 				attribute_comp.save()
 
 				id_attribute_2 = form.cleaned_data['attribute2']
 				attribute_2 = Attribute.objects.get(id=id_attribute_2)
-				attribute_comp = AttributeComparison(control=False,attribute=attribute_2,comparison=comparison)
+				attribute_comp = AttributeComparison(control=True,attribute=attribute_2,comparison=comparison)
 				attribute_comp.save()
 			return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
 	else:
