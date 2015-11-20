@@ -2756,12 +2756,11 @@ $(document).ready(function() {
 											<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
 												<p class="text-in-table">Comparison</p>
 											</div>
+											{% for attribute in comparison.attribute.all %}
 											<div class="span4 center-text"style="min-height:10px;">
-												<p class="text-in-table">Control</p>
+												<p class="text-in-table">{% if attribute.control %}Control{% else %}Condition{% endif %}</p>
 											</div>
-											<div class="span4 center-text" style="min-height:10px;">
-												<p class="text-in-table">Condition</p>
-											</div>
+											{% endfor %}
 										</div>
 										{% for comparison in experiment.comparison_set.all %}
 										<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
