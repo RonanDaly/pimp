@@ -89,6 +89,5 @@ venv
 # Local environment files
 .env
 packrat/lib*/
-packrat/packrat.opts
 packrat/src
 *.Rout
