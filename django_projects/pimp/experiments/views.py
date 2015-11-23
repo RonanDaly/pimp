@@ -15,7 +15,8 @@ from projects.models import Project
 from data.models import *
 from compound.models import *
 from groups.models import Attribute
-from fileupload.models import Sample, CalibrationSample
+from fileupload.models import Sample, CalibrationSample, Curve
+
 
 # Add on
 from django.core.serializers import serialize
