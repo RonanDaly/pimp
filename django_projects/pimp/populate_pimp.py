@@ -159,11 +159,11 @@ def populate():
                 header_row = False
             else:
                 pathway = add_pathway(
-                    name = row[2],
+                    name = row[1],
                 )
-                if row[4] != "NA":
+                if row[3] != "NA":
                     superpathway = add_superpathway(
-                        name = row[4],
+                        name = row[3],
                     )
                 else:
                     superpathway = None
@@ -171,8 +171,8 @@ def populate():
                     superpathway = superpathway,
                     pathway = pathway,
                     datasource = kegg_datasource,
-                    compound_number = int(row[3]),
-                    identifier = row[1],
+                    compound_number = int(row[2]),
+                    identifier = row[0],
                 )
 
 def add_datasource(name):
