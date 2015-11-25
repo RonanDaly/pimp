@@ -136,7 +136,7 @@ class DataSource(models.Model):
 	name = models.CharField(max_length=100)
 
 class DataSourceSuperPathway(models.Model):
-	super_pathway = models.ForeignKey(SuperPathway)
+	super_pathway = models.ForeignKey(SuperPathway, null=True, blank=True)
 	pathway = models.ForeignKey(Pathway)
 	data_source = models.ForeignKey(DataSource)
 	compound_number = models.IntegerField(max_length=10, null=True, blank=True)
