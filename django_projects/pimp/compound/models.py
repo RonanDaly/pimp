@@ -39,16 +39,19 @@ class RepositoryCompound(models.Model):
 class Pathway(models.Model):
 	name = models.CharField(max_length=200)
 
-	def get_pathway_url(self, dataset_id, comparison_id=None):
+	# def get_pathway_url(self, dataset_id, comparison_id=None):
+	# 	dsrcsp = DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self).first()
+	# 	# dsrcsp = self.datasourcesuperpathway_set.all().filter(data_source__name="kegg").first()
+	# 	map_id = dsrcsp.identifier
+
+	# 	if DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self, compoundpathway__compound__peak__dataset_id=dataset_id):
+	# 		compounds = Compound.objects
+
+		
 # 		map_id = self.secondaryId
 # 		compounds = self.compound.all()
 		# dsrcsp: shortcut for "datasource_super_pathway"
-		dsrcsp = DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self).first()
-		# dsrcsp = self.datasourcesuperpathway_set.all().filter(data_source__name="kegg").first()
-		map_id = dsrcsp.identifier
-
-		if DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self, compoundpathway__compound__peak__dataset_id=dataset_id):
-			compounds = Compound.objects
+		
 
 
 # 		kegg_identified_compounds = self.get_pathway_compounds(id_type="identified")
