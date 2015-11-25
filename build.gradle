@@ -132,7 +132,7 @@ task populatePiMP (type: Exec, dependsOn: [installPiMPDependencies, setupProject
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/populate_pimp.py'
 }
 
-task setupSuperUser(dependsOn: [setupProjectProperties]) << {
+task setupSuperUser(dependsOn: [setupProjectProperties, populatePiMP]) << {
 	if ( project.ext.props['PIMP_INITIAL_USERNAME'] == null ||
 			project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS'] == null ||
 			project.ext.props['PIMP_INITIAL_PASSWORD'] == null ||
