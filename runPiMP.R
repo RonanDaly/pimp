@@ -18,6 +18,7 @@ options(java.parameters=getString('PIMP_JAVA_PARAMETERS', paste("-Xmx",1024*8,"m
 ##need to setwd
 args <- commandArgs(trailingOnly=TRUE)
 analysis.id <- as.integer(args[1])
+print(analysis.id)
 
 if(is.na(analysis.id)) {
 	stop("Analysis ID must be an integer.")
@@ -108,6 +109,7 @@ if(length(blank.idx) > 0) {
 #comparisons
 contrasts <- experiment.contrasts$contrast
 controls <- experiment.contrasts$control
+names <- experiment.contrasts$name
 con = unlist(strsplit(controls, '-'))
 if ( con[1] == '0' ) {
     cont = unlist(strsplit(contrasts))
@@ -146,4 +148,4 @@ if(length(param.idx) > 0) {
 
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
 
-Pimp.runPipeline(files=files, groups=groups, standards=stds, contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml", analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)
+Pimp.runPipeline(files=files, groups=groups, standards=stds, comparisonNames=names, contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml", analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)

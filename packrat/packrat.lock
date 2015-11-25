@@ -55,8 +55,8 @@ Package: Hmisc
 Source: CRAN
 Version: 3.17-0
 Hash: ee70795cccf7e407a94be4e0a96535c6
-Requires: Formula, acepack, ggplot2, gridExtra, gtable, latticeExtra,
-    proto, scales
+Requires: Formula, acepack, cluster, foreign, ggplot2, gridExtra,
+    gtable, lattice, latticeExtra, nnet, proto, rpart, scales, survival
 
 Package: IRanges
 Source: Bioconductor
@@ -70,10 +70,26 @@ Version: 1.10.0
 Hash: 5fe4a745476b798e25195fa62a69594f
 Requires: Biostrings, httr, png
 
+Package: KernSmooth
+Source: CRAN
+Version: 2.23-15
+Hash: aa5fd163456721a62d34a98fddc510bf
+
+Package: MASS
+Source: CRAN
+Version: 7.3-45
+Hash: 0650d5701aa7e369e77c9e2c8e1dc913
+
+Package: Matrix
+Source: CRAN
+Version: 1.2-2
+Hash: 29d2fc243e91572a4f1a83099e7f7d8f
+Requires: lattice
+
 Package: PiMP
 Source: source
-Version: 0.1
-Hash: e948876a2668d51b18166187606831a5
+Version: 0.1-1
+Hash: f4236dbe038bc92adafb8e51c0ab7ef3
 Requires: RColorBrewer, RCurl, RJSONIO, XLConnect, XML, digest,
     doParallel, foreach, gptk, gtools, impute, limma, mzmatch.R,
     outliers, rJava
@@ -81,8 +97,8 @@ SourcePath: ./PiMP
 
 Package: PiMPDB
 Source: source
-Version: 1.0
-Hash: d94079a22b580f6b0d05e28bd95ff378
+Version: 1.0-1
+Hash: f253c8f24497a5b9004ad7f87d695496
 Requires: DBI, RUnit
 SourcePath: ./PiMPDB
 
@@ -202,6 +218,16 @@ Version: 1.17.1
 Hash: 97cb6f6293cd18d17df77a6383cc6763
 Requires: bitops
 
+Package: cluster
+Source: CRAN
+Version: 2.0.3
+Hash: 60b0f8a680f03558a8841bb26fdecdb8
+
+Package: codetools
+Source: CRAN
+Version: 0.2-14
+Hash: 127e7e68dfa21d3f17c022df1e727d0a
+
 Package: colorspace
 Source: CRAN
 Version: 1.2-6
@@ -251,7 +277,12 @@ Package: foreach
 Source: CRAN
 Version: 1.4.3
 Hash: cd53ef4cf29dc59ce3f8c5c1af735fd1
-Requires: iterators
+Requires: codetools, iterators
+
+Package: foreign
+Source: CRAN
+Version: 0.8-66
+Hash: 99a453ffeef7ff27060aed83cde5bae3
 
 Package: gdata
 Source: CRAN
@@ -263,7 +294,7 @@ Package: ggplot2
 Source: CRAN
 Version: 1.0.1
 Hash: 4aff1b269135bd2cdea378f4f2f2895e
-Requires: digest, gtable, plyr, proto, reshape2, scales
+Requires: MASS, digest, gtable, plyr, proto, reshape2, scales
 
 Package: git2r
 Source: CRAN
@@ -274,13 +305,13 @@ Package: gplots
 Source: CRAN
 Version: 2.17.0
 Hash: ea8a8c502ae5e82f9978ddb93eb7cbd9
-Requires: caTools, gdata, gtools
+Requires: KernSmooth, caTools, gdata, gtools
 
 Package: gptk
 Source: CRAN
 Version: 1.08
 Hash: 7d026f782fc20c8d0f7b8fd63e189c23
-Requires: fields
+Requires: Matrix, fields
 
 Package: gridExtra
 Source: CRAN
@@ -324,11 +355,16 @@ Source: CRAN
 Version: 0.3
 Hash: ecf589b42cd284b03a4beb9665482d3e
 
+Package: lattice
+Source: CRAN
+Version: 0.20-33
+Hash: d7158cf4e63e8c12cb227738076b37d8
+
 Package: latticeExtra
 Source: CRAN
 Version: 0.6-26
 Hash: 07a60e9d5b59ddac85b9c26cd81867ca
-Requires: RColorBrewer
+Requires: RColorBrewer, lattice
 
 Package: limma
 Source: Bioconductor
@@ -380,6 +416,11 @@ Source: CRAN
 Version: 1.0.4
 Hash: 8053df240a4635aeb54fc68c6de67709
 
+Package: nnet
+Source: CRAN
+Version: 7.3-11
+Hash: 7ce468235b55bd6487a76d2093a6ce5d
+
 Package: outliers
 Source: CRAN
 Version: 0.14
@@ -429,6 +470,11 @@ Version: 5.0.1
 Hash: 764de5dbf10bcd671fde95798bf96112
 Requires: Rcpp, brew, digest, stringi, stringr
 
+Package: rpart
+Source: CRAN
+Version: 4.1-10
+Hash: 1eeecd328c5297c43e9d139944bb0775
+
 Package: rstudioapi
 Source: CRAN
 Version: 0.3.1
@@ -467,6 +513,11 @@ Version: 1.0.0
 Hash: 2676dd5f88890910962b733b0f9540e1
 Requires: magrittr, stringi
 
+Package: survival
+Source: CRAN
+Version: 2.38-3
+Hash: 31d55260e9a6a6ecbc001e2dfafaad43
+
 Package: whisker
 Source: CRAN
 Version: 0.3-2
@@ -476,7 +527,8 @@ Package: xcms
 Source: Bioconductor
 Version: 1.46.0
 Hash: 9633bd2532dd3fae90e43a72e61c756d
-Requires: Biobase, BiocGenerics, ProtGenerics, RColorBrewer, mzR
+Requires: Biobase, BiocGenerics, ProtGenerics, RColorBrewer, lattice,
+    mzR
 
 Package: xml2
 Source: CRAN

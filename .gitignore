@@ -91,3 +91,4 @@ venv
 packrat/lib*/
 packrat/src
 *.Rout
+.Rproj.user

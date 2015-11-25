@@ -2,7 +2,7 @@ Package: PiMP
 Type: Package
 Title: PiMP
 Description: A Pipeline for Matabolomics Analysis
-Version: 0.1
+Version: 0.1-1
 Date: 2013-08-19
 Author: Glasgow Polyomics
 Maintainer: Glasgow Polyomics <polyomics@glasgow.ac.uk>
