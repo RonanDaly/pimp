@@ -161,9 +161,12 @@ def populate():
                 pathway = add_pathway(
                     name = row[2],
                 )
-                superpathway = add_superpathway(
-                    name = row[4],
-                )
+                if row[4] != "NA":
+                    superpathway = add_superpathway(
+                        name = row[4],
+                    )
+                else:
+                    superpathway = None
                 datasource_super_pathway = add_datasource_super_pathway(
                     superpathway = superpathway,
                     pathway = pathway,
