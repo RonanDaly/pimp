@@ -147,8 +147,10 @@ class Command(BaseCommand):
 		for pathway_element in xmltree.getPathways():
 			################# Create pathway instance here using pathwayInfo #################
 			pathwayInfo = xmltree.getPathwayInfoFromElement(pathway_element)
-			pathway = Pathway(secondaryId=pathwayInfo["id"].split(":")[1], name=pathwayInfo["name"], compoundNumber=pathwayInfo["compoundNumber"])
-			pathway.save()
+			datasource_super_pathway = DataSourceSuperPathway.objects.get(identifier=pathwayInfo["id"].split(":")[1])
+			# pathway = Pathway(secondaryId=pathwayInfo["id"].split(":")[1], name=pathwayInfo["name"], compoundNumber=pathwayInfo["compoundNumber"])
+			# pathway.save()
+
 			compoundsInPathway = xmltree.getCompoundsInPathwayFromElement(pathway_element)
 			# print pathwayInfo["id"]
 			if compoundsInPathway:
@@ -157,8 +159,7 @@ class Command(BaseCommand):
 					# print compound_in_pathway_id
 					for compound_id in compound_id_map[compound_in_pathway_id]:
 						compound = Compound.objects.get(id=compound_id)
-						CompoundPathway.objects.create(compound=compound, pathway=pathway)
-			# if pathwayInfo["id"] == "path:map00052":
+						CompoundPathway.objects.create(compound=compound, pathway=datasource_super_pathway)			# if pathwayInfo["id"] == "path:map00052":
 				# print "pathway info"
 				# print pathwayInfo
 		analysis.status = 'Finished'
