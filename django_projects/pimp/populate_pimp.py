@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings')
+import csv
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
 
 import django
 django.setup()
@@ -8,6 +9,7 @@ django.setup()
 import jsonpickle
 from experiments.models import DefaultParameter, Database
 from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
+from compound.models import Pathway, SuperPathway, DataSource, DataSourceSuperPathway
 
 def populate():
     iqr_parameter = add_default_parameter(
@@ -68,11 +70,11 @@ def populate():
         name = "kegg"
     )
 
-    kegg_db = add_database(
+    hmdb_db = add_database(
         name = "hmdb"
     )
 
-    kegg_db = add_database(
+    lipidmaps_db = add_database(
         name = "lipidmaps"
     )
 
@@ -145,7 +147,66 @@ def populate():
         clean_annotation_tool
     )
 
+    # Pathway population for Kegg
+    kegg_datasource = add_datasource(
+        name = "kegg"
+    )
+    header_row = True
+    with open('./kegg_pathway_superPathway.csv', 'rb') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        for row in spamreader:
+            if header_row:
+                header_row = False
+            else:
+                pathway = add_pathway(
+                    name = row[2],
+                )
+                superpathway = add_superpathway(
+                    name = row[4],
+                )
+                datasource_super_pathway = add_datasource_super_pathway(
+                    superpathway = superpathway,
+                    pathway = pathway,
+                    datasource = kegg_datasource,
+                    compound_number = int(row[3]),
+                    identifier = row[1],
+                )
 
+def add_datasource(name):
+    datasource = DataSource.objects.get_or_create(
+        name = name,
+    )[0]
+    print 'Creating datasource - '+name+'...'
+    datasource.save()
+    return datasource
+
+def add_superpathway(name):
+    superpathway = SuperPathway.objects.get_or_create(
+        name = name,
+    )[0]
+    print 'Creating super pathway - '+name+'...'
+    superpathway.save()
+    return superpathway
+
+def add_pathway(name):
+    pathway = Pathway.objects.get_or_create(
+        name = name,
+    )[0]
+    print 'Creating pathway - '+name+'...'
+    pathway.save()
+    return pathway
+
+def add_datasource_super_pathway(superpathway, pathway, datasource, compound_number, identifier):
+    datasource_super_pathway = DataSourceSuperPathway.objects.get_or_create(
+        super_pathway = superpathway,
+        pathway = pathway,
+        data_source = datasource,
+        compound_number = compound_number,
+        identifier = identifier,
+    )[0]
+    print 'Creating datasource super pathway - '+datasource.name+' - '+identifier+'...'
+    datasource_super_pathway.save()
+    return datasource_super_pathway
 
 def add_default_parameter(name, value, state):
     parameter = DefaultParameter.objects.get_or_create(
