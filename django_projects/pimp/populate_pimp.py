@@ -152,7 +152,7 @@ def populate():
         name = "kegg"
     )
     header_row = True
-    with open('./kegg_pathway_superPathway.csv', 'rb') as csvfile:
+    with open('./django_projects/pimp/kegg_pathway_superPathway.csv', 'rb') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         for row in spamreader:
             if header_row:
