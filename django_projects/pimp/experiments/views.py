@@ -553,7 +553,7 @@ def analysis_result(request, project_id, analysis_id):
 		# print "databases: ",databases
 		pathway_start = timeit.default_timer()
 
-		pathways = Pathway.objects.filter(compound__peak__dataset=dataset).distinct()
+		pathways = Pathway.objects.filter(datasourcesuperpathway__data_source__name="kegg",datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).distinct()
 		print "pathway : ",len(pathways)
 		pathway_list = []
 
