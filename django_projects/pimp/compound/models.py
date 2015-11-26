@@ -1,60 +1,84 @@
 from django.db import models
 from data.models import Peak, PeakDtComparison, Dataset
 from collections import defaultdict
-
 import numpy as np
 import re
 
+
 # Create your models here.
 class Compound(models.Model):
-	secondaryId = models.IntegerField(null=True, blank=True)
-	peak = models.ForeignKey(Peak)
-	formula = models.CharField(max_length=100)
-	inchikey = models.CharField(max_length=27, null=True, blank=True)
-	# name = models.CharField(max_length=250)
-	# db = models.CharField(max_length=100)
-	# dbId = models.CharField(max_length=100)
-	# dbLink = models.CharField(max_length=250)
-	ppm = models.FloatField(null=True, blank=True)
-	adduct = models.CharField(max_length=100)
-	identified = models.CharField(max_length=10)
-	# pathways = models.ManyToManyField(Pathway, through='CompoundPathway')
+    secondaryId = models.IntegerField(null=True, blank=True)
+    peak = models.ForeignKey(Peak)
+    formula = models.CharField(max_length=100)
+    inchikey = models.CharField(max_length=27, null=True, blank=True)
+    # name = models.CharField(max_length=250)
+    # db = models.CharField(max_length=100)
+    # dbId = models.CharField(max_length=100)
+    # dbLink = models.CharField(max_length=250)
+    ppm = models.FloatField(null=True, blank=True)
+    adduct = models.CharField(max_length=100)
+    identified = models.CharField(max_length=10)
 
-	class Meta:
-		ordering = ['secondaryId']
+    # pathways = models.ManyToManyField(Pathway, through='CompoundPathway')
+
+    class Meta:
+        ordering = ['secondaryId']
 
 
 class RepositoryCompound(models.Model):
-	db_name = models.CharField(max_length=100)
-	identifier = models.CharField(max_length=100)
-	compound_name = models.CharField(max_length=250)
-	compound = models.ForeignKey(Compound)
+    db_name = models.CharField(max_length=100)
+    identifier = models.CharField(max_length=100)
+    compound_name = models.CharField(max_length=250)
+    compound = models.ForeignKey(Compound)
 
-	class Meta:
-		ordering = ['db_name']
+    class Meta:
+        ordering = ['db_name']
 
-	def __unicode__(self):
-		return self.db_name
+    def __unicode__(self):
+        return self.db_name
+
 
 class Pathway(models.Model):
-	name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
-	# def get_pathway_url(self, dataset_id, comparison_id=None):
-	# 	dsrcsp = DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self).first()
-	# 	# dsrcsp = self.datasourcesuperpathway_set.all().filter(data_source__name="kegg").first()
-	# 	map_id = dsrcsp.identifier
+    def get_pathway_compounds(self, dataset_id, id_type=None):
+        if id_type == "identified":
+            compounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset_id,
+                                                           compoundpathway__pathway__pathway=self).distinct()
+        elif id_type == "annotated":
+            identified_compounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset_id,
+                                                           compoundpathway__pathway__pathway=self).distinct()
+            compounds = Compound.objects.filter(identified='False', peak__dataset__id=dataset_id,
+                                                compoundpathway__pathway__pathway=self).exclude(
+                secondaryId__in=identified_compounds.values_list("secondaryId", flat=True)).distinct()
+        else:
+            compounds = Compound.objects.filter(peak__dataset__id=dataset_id,
+                                                compoundpathway_pathway_pathway=self).distinct()
 
-	# 	if DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self, compoundpathway__compound__peak__dataset_id=dataset_id):
-	# 		compounds = Compound.objects
+        kegg_compounds = defaultdict(list)
+        for compound in compounds:
+            repos_objs = compound.repositorycompound_set.filter(db_name="kegg")
+            if repos_objs:
+                for ro in repos_objs:
+                    kegg_compounds[ro.identifier].append(compound.peak_id)
 
-		
-# 		map_id = self.secondaryId
-# 		compounds = self.compound.all()
-		# dsrcsp: shortcut for "datasource_super_pathway"
-		
+        return kegg_compounds
+
+    # def get_pathway_url(self, dataset_id, comparison_id=None):
+    # 	dsrcsp = DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self).first()
+    # 	# dsrcsp = self.datasourcesuperpathway_set.all().filter(data_source__name="kegg").first()
+    # 	map_id = dsrcsp.identifier
+
+    # 	if DataSourceSuperPathway.objects.filter(data_source__name="kegg", pathway=self, compoundpathway__compound__peak__dataset_id=dataset_id):
+    # 		compounds = Compound.objects
 
 
-# 		kegg_identified_compounds = self.get_pathway_compounds(id_type="identified")
+    # 		map_id = self.secondaryId
+    # 		compounds = self.compound.all()
+    # dsrcsp: shortcut for "datasource_super_pathway"
+
+
+# kegg_identified_compounds = self.get_pathway_compounds(id_type="identified")
 # 		kegg_annotated_compounds = self.get_pathway_compounds(id_type="annotated")
 
 # 		overlap = np.intersect1d(kegg_identified_compounds.keys(), kegg_annotated_compounds.keys())
@@ -118,7 +142,7 @@ class Pathway(models.Model):
 # 			url += "/%s%%09%s,%s" % (compound, foreground_colours[compound], background_colours[compound]) #compound + "%%09" + foreground_colours[compound] + "," background_colours[compound]
 
 # 		url = self._clean_url(url)
-		
+
 # 		return url
 
 # 	def _clean_url(self, url):
@@ -130,17 +154,20 @@ class Pathway(models.Model):
 # 		return url
 
 class SuperPathway(models.Model):
-	name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+
 
 class DataSource(models.Model):
-	name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+
 
 class DataSourceSuperPathway(models.Model):
-	super_pathway = models.ForeignKey(SuperPathway, null=True, blank=True)
-	pathway = models.ForeignKey(Pathway)
-	data_source = models.ForeignKey(DataSource)
-	compound_number = models.IntegerField(max_length=10, null=True, blank=True)
-	identifier = models.CharField(max_length=100, null=True, blank=True)
+    super_pathway = models.ForeignKey(SuperPathway, null=True, blank=True)
+    pathway = models.ForeignKey(Pathway)
+    data_source = models.ForeignKey(DataSource)
+    compound_number = models.IntegerField(max_length=10, null=True, blank=True)
+    identifier = models.CharField(max_length=100, null=True, blank=True)
+
 
 # class Pathway(models.Model):
 # 	secondaryId = models.CharField(max_length=100)
@@ -217,7 +244,7 @@ class DataSourceSuperPathway(models.Model):
 # 			url += "/%s%%09%s,%s" % (compound, foreground_colours[compound], background_colours[compound]) #compound + "%%09" + foreground_colours[compound] + "," background_colours[compound]
 
 # 		url = self._clean_url(url)
-		
+
 # 		return url
 
 # 	def _clean_url(self, url):
@@ -229,7 +256,5 @@ class DataSourceSuperPathway(models.Model):
 # 		return url
 
 class CompoundPathway(models.Model):
-	compound = models.ForeignKey(Compound)
-	pathway = models.ForeignKey(DataSourceSuperPathway)
-
-	
+    compound = models.ForeignKey(Compound)
+    pathway = models.ForeignKey(DataSourceSuperPathway)
