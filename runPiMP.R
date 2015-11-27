@@ -6,6 +6,10 @@ getString = function(name, default) {
 	Sys.getenv(name, unset=default)
 }
 
+packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
+message(paste('Setting library path to:', packratLibPath))
+.libPaths(packratLibPath)
+
 #envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
 #	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
 #	'PIMP_DATABASE_PORT')
@@ -26,9 +30,6 @@ if(is.na(analysis.id)) {
 
 library(PiMPDB)
 library(PiMP)
-#library(yaml)
-
-#db.settings <- yaml.load_file("/opt/django/yaml/pimp_database.yml")[['database']]
 
 DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
 if ( DATABASE_FILENAME == '' )  {
