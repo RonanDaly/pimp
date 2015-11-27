@@ -2,11 +2,11 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 
 	#Create RSD directories if required
 	if(mzmatch.filters$rsd)	{ 
-		dir.create(mzmatch.outputs$combined.rsd.filtered.folder)
-		dir.create(mzmatch.outputs$combined.rsd.rejected.folder)
+		dir.create.ifNotExist(mzmatch.outputs$combined.rsd.filtered.folder)
+		dir.create.ifNotExist(mzmatch.outputs$combined.rsd.rejected.folder)
     }
 
-    dir.create(combined.dir)
+    dir.create.ifNotExist(combined.dir)
 
     if(nSlaves > 1) {
 		cl <- makeCluster(nSlaves, outfile="")
@@ -17,52 +17,11 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	}
 
 	heapsize <- getJavaHeapSize()
-	
-	print(names(groups))
-	
-	#############
-	group = names(groups)[1]
-	print('Initialising mzmatch')
-	mzmatch.init(version.1=FALSE)
-	message(paste("Combining group", group))
-	##get peakml files by group
-	group.files.idx <- which(basename(files) %in% paste0(groups[[group]], ".peakml"))
-	group.files <- files[group.files.idx]
-	#group.files <- grep(pattern=paste(groups[[group]], "\\.peakml", sep="", collapse="|"), files, value=TRUE)
-	
-	##created folder for combined files
-	# group.dir <- file.path(combined.dir, group)
-	
-	# if(getOption("verbose"))
-	# 	cat(paste("Creating directory:", group.dir, "\n"))
-	
-	# dir.create(group.dir, recursive=TRUE)
-	
-	combined.file <- file.path(combined.dir, paste(group, ".peakml", sep=""))
-	print(paste('Group', group))
-	combined.group.file <- .combinePeakmlFiles(files=group.files, outfile=combined.file, label=group, mzmatch.params=mzmatch.params)
-	
-	##RSD filter if required
-	if(mzmatch.filters$rsd) #change in params
-	{
-	  filtered.file <- file.path(mzmatch.outputs$combined.rsd.filtered.folder, basename(combined.file))
-	  rejected.file <- file.path(mzmatch.outputs$combined.rsd.rejected.folder, basename(combined.file))
-	  print(paste('Groupa', group))
-	  .mzmatch.ipeak.filter.RSDFilter(i=combined.group.file, o=filtered.file, rejected=rejected.file, rsd=mzmatch.params$rsd, v=T, JHeapSize=heapsize)
-	  #check file exists
-	  if(!file.exists(filtered.file)) stop(paste(filtered.file, "does not exist!\n"))
-	}
-	
-	##set working file depending on RSD filter status
-	grouped.file <- ifelse(mzmatch.filters$rsd, filtered.file, combined.group.file)
-	################
-	
 
-	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .export=c(".combinePeakmlFiles", ".mzmatch.ipeak.filter.RSDFilter", "mzmatch.ipeak.Combine", "files", "mzmatch.params", "mzmatch.init", "mzmatch.filters", "heapsize"), .combine='c', .verbose=TRUE) %dopar%
+	#	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .export=c(".combinePeakmlFiles", ".mzmatch.ipeak.filter.RSDFilter", "mzmatch.ipeak.Combine", "files", "mzmatch.params", "mzmatch.init", "mzmatch.filters", "heapsize"), .combine='c', .verbose=TRUE) %dopar%
+	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .combine='c', .verbose=TRUE) %dopar%
 	{
-	  print('Initialising mzmatch')
 		mzmatch.init(version.1=FALSE)
-		message(paste("Combining group", group))
 		##get peakml files by group
 		group.files.idx <- which(basename(files) %in% paste0(groups[[group]], ".peakml"))
 		group.files <- files[group.files.idx]
@@ -140,28 +99,16 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 }
 
 .mzmatch.ipeak.filter.RSDFilter <- function (JHeapSize = 2048, i = NULL, o = NULL, rejected = NULL, 
-    rsd = NULL, h = NULL, v = NULL) 
-{
+    rsd = NULL, h = NULL, v = NULL)  {
+  mzmatch.ipeak.filter.RSDFilter(
+    i = i,
+    o = o,
+    rejected = rejected,
+    rsd = rsd,
+    h = h,
+    v = v
     
-    java <- "java -da -dsa -Xmn1g -Xss160k -XX:+UseParallelGC -XX:ParallelGCThreads=10"
-    JHeapSize <- paste(JHeapSize, "m", sep = "")
-    java <- paste(java, " -Xms", JHeapSize, " -Xmx", JHeapSize, 
-        " -cp", sep = "")
-    mzmatch <- paste(java, " ", find.package("mzmatch.R"), "/java/mzmatch_2.0.jar", sep = "")
-    tool <- paste(mzmatch, "mzmatch.ipeak.filter.RSDFilter")   
-    if (!is.null(i)) 
-        tool <- paste(tool, "-i", i)
-    if (!is.null(o)) 
-        tool <- paste(tool, "-o", o)
-    if (!is.null(rejected)) 
-        tool <- paste(tool, "-rejected", rejected)
-    if (!is.null(rsd)) 
-        tool <- paste(tool, "-rsd", rsd)
-    if (!is.null(h) && h == T) 
-        tool <- paste(tool, "-h")
-    if (!is.null(v) && v == T) 
-        tool <- paste(tool, "-v")
-    system(tool)
+  )
 }
 
 validatePeaksets <- function(files=NULL) {

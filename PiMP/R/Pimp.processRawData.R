@@ -26,7 +26,7 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	#mzmatch.outputs[-stds.xml.db.idx] <- lapply(mzmatch.outputs[-stds.xml.db.idx], function(x){file.path(parent.dir, x)})
 	mzmatch.outputs <- lapply(mzmatch.outputs, sprintf, polarity)
 
-	dir.create(mzmatch.outputs$polarity.folder)
+	dir.create.ifNotExist(mzmatch.outputs$polarity.folder)
 	##
 	## Process mzXML files
 	##

@@ -47,3 +47,7 @@ getJavaHeapSize <- function(default=2048) {
 		return(default)
 	}	
 }
+
+dir.create.ifNotExist = function(path, showWarnings = TRUE, recursive = FALSE, mode = "0777") {
+  ifelse(!dir.exists(path), dir.create(path, showWarnings, recursive, mode), FALSE)
+}
