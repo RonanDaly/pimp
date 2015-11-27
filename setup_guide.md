@@ -5,7 +5,7 @@ This is a setup guide for the qPiMP pipeline. It contains instructions for Linux
 ## 1. System Setup
 
 ### Java
-Install [Java](https://java.com/en/), or make sure it is installed (run `java -version` from the command line to check).
+Install [Java](https://java.com/en/) version 8, or make sure it is installed (run `java -version` from the command line to check).
 
 **(Linux)** Linux often comes with OpenJDK pre-installed by default but [it's probably better to get Oracle's JDK](http://askubuntu.com/questions/521145/how-to-install-oracle-java-on-ubuntu-14-04).
 
@@ -13,7 +13,7 @@ Install [Java](https://java.com/en/), or make sure it is installed (run `java -v
 
 ### R
 
-Install [R](https://www.r-project.org/), or make sure it is installed (run `R --version` from the command line to check).
+Install [R](https://www.r-project.org/) version 3.2, or make sure it is installed (run `R --version` from the command line to check).
 
 **(Linux)** Install R via your package manager
 
@@ -21,7 +21,7 @@ Install [R](https://www.r-project.org/), or make sure it is installed (run `R --
 
 ### Python
 
-Install [Python](https://www.python.org/), or make sure it is installed (run `python --version` from the command line to check). Python version 2.7 is needed.
+Install [Python](https://www.python.org/) version 2.7, or make sure it is installed (run `python --version` from the command line to check).
 
 **(Linux)** Python should already be installed.
 
