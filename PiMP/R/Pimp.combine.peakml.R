@@ -19,7 +19,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	heapsize <- getJavaHeapSize()
 
 	#	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .export=c(".combinePeakmlFiles", ".mzmatch.ipeak.filter.RSDFilter", "mzmatch.ipeak.Combine", "files", "mzmatch.params", "mzmatch.init", "mzmatch.filters", "heapsize"), .combine='c', .verbose=TRUE) %dopar%
-	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .combine='c', .verbose=TRUE) %dopar%
+	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .combine='c') %dopar%
 	{
 		mzmatch.init(version.1=FALSE)
 		##get peakml files by group
