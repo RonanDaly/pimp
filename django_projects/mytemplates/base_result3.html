@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 {% load compound_tags %}
@@ -396,7 +397,7 @@
 				xAxis: {
 					title: {
 						text: "Retention time (s)",
-					}, 
+					},
 				},
 				yAxis: {
 					title: {
@@ -416,7 +417,7 @@
 				},
 				series: [
 					{% for sample,pos_neg in sample_dict.items %}
-					{	
+					{
 						type: 'area',
 						name: '{{sample}}',
 						data: {{pos_neg.pos}},
@@ -445,7 +446,7 @@
 			            	filename: "{{group.name | capfirst}}" + "_negative_TIC",
 			    },
 				xAxis: {
-					title: 
+					title:
 					{
 						text: "Retention time (s)",
 					},
@@ -469,7 +470,7 @@
 				},
 				series: [
 					{% for sample,pos_neg in sample_dict.items %}
-					{	
+					{
 						type: 'area',
 						name: '{{sample}}',
 						data: {{pos_neg.neg}},
@@ -2438,15 +2439,26 @@
 									<table id="identification-table" class="table table-striped">
 						              <thead>
 						                <tr>
-						                  <th>Compound id</th>
-						                  <th>ID</th>
-						                  <th>Peak id</th>
-						                  <th>Name</th>
-						                  <th>Formula</th>
-						                  <th>ppm</th>
-															<th>RT (s)</th>
-						                  <th>Identification</th>
-						                  <th>Polarity</th>
+						                  <th rowspan="2">Compound id</th>
+						                  <th rowspan="2">Peak ID</th>
+						                  <th rowspan="2">Name</th>
+						                  <th rowspan="2">Formula</th>
+						                  <th rowspan="2">SuperPathway</th>
+										  <th rowspan="2">Pathway</th>
+										  {% for member in member_list %}
+										  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
+										  {% endfor %}
+										  {% for member in member_list %}
+										  <th rowspan="2">{{ member.name }}</th>
+										  {% endfor %}
+										  <th rowspan="2">Identified/annotated</th>
+										 </tr>
+										 <tr>
+										  {% for sublist in sample_list %}
+											{% for sample in sublist %}
+											<th rowspan="1">{{ sample.name }}</th>
+											{% endfor %}
+										  {% endfor %}
 						                </tr>
 						              </thead>
 						            </table>

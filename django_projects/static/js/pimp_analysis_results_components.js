@@ -437,24 +437,27 @@ function set_idtable(url, callback){
 					"sPaginationType": "full_numbers",
 					"iDisplayLength": 100,
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumns": [
-					/* Secondary id */   null,
-					/* Primary id */  { "bSearchable": false,
-										"bVisible":    false },
-					/* Peak id */ null,
-					/* Name */	null,
-					/* Formula */	null,
-					/* PPM */	null,
-					/* RT */ {
-					"aTargets": [2],
-					"sType": "formatted-rt",
-					"mRender": function(rt, type, full) {
-						var minutes = Math.floor(rt / 60);
-						var seconds = Math.round(rt % 60); // Rounded to nearest second
-						return rt + " ("+ minutes + " min "+ seconds + " s)";
-					}},
-					/* Identification */	null,
-					/* Polarity */	null,
+					"aoColumnDefs": [
+						// { /* compound ID */
+						// 	"aTargets": [0],
+						// 	"bSearchable": false,
+						// 	"bVisible": false
+						// },
+						// { /* peak ID */
+						// 	"aTargets": [1],
+						// 	"bSearchable": false,
+						// 	"bVisible": false
+						// },
+						{
+							/* superpathways */
+							"aTargets": [4],
+							"bVisible": false,
+						},
+						{
+							/* pathways */
+							"aTargets": [5],
+							"bVisible": false,
+						}
 					],
 					"fnDrawCallback":function (oSettings) {
 						console.log("data finished loaded");
