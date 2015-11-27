@@ -1,4 +1,4 @@
-Pimp.runPipeline <- function(files=list(), groups=list(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
+Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
 
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)
@@ -75,8 +75,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), contrasts=character(),
 	stds <- NULL
 	if(length(standards) > 0) {
 		stds <- Pimp.stds.createAnnotationFile(files=standards, outfile=mzmatch.outputs$stds.xml.db)
-	}
-	else {
+	} else {
 		mzmatch.outputs$stds.xml.db <- NULL
 	}
 
@@ -118,16 +117,13 @@ Pimp.runPipeline <- function(files=list(), groups=list(), contrasts=character(),
 		save(file="raw.data.neg.RData", raw.data.neg)
 
 		raw.data <- rbind(raw.data.pos, raw.data.neg) #check columns
-	}
-	else if(exists("raw.data.pos")) {
+	} else if(exists("raw.data.pos")) {
 		save(file="raw.data.pos.RData", raw.data.pos)
 		raw.data <- raw.data.pos
-	}
-	else if(exists("raw.data.neg")) {
+	} else if(exists("raw.data.neg")) {
 		save(file="raw.data.neg.RData", raw.data.neg)
 		raw.data <- raw.data.neg
-	}
-	else {
+	} else {
 		stop("No Raw Data objects exist.")
 	}
 
@@ -156,7 +152,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), contrasts=character(),
 	##differential analysis using ebayes
 	diff.stats <- Pimp.statistics.differential(data=norm.data, groups=data.groups, contrasts=contrasts, method="ebayes", repblock=NULL)
 	toptables <- lapply(1:ncol(diff.stats$contrasts), function(i){topTable(diff.stats, coef=i, genelist=data.frame(Mass=preprocessed$Mass, RT=preprocessed$RT), number=length(diff.stats$coef[,1]), confint=TRUE)})      #[,c("Mass", "RT", "logFC","P.Value","adj.P.Val")]
-	names(toptables) <- colnames(diff.stats$contrasts)
+	names(toptables) <- comparisonNames
 
 	#pca plot coloured by groups
 	pca <- Pimp.statistics.pca(data=norm.data, groups=data.groups, file="pca.svg")

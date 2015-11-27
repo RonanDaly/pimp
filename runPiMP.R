@@ -6,6 +6,10 @@ getString = function(name, default) {
 	Sys.getenv(name, unset=default)
 }
 
+packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
+message(paste('Setting library path to:', packratLibPath))
+.libPaths(packratLibPath)
+
 #envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
 #	'PIMP_DATABASE_FILENAME', 'PIMP_DATABASE_USER', 'PIMP_DATABASE_PASSWORD', 'PIMP_DATABASE_HOST',
 #	'PIMP_DATABASE_PORT')
@@ -18,6 +22,7 @@ options(java.parameters=getString('PIMP_JAVA_PARAMETERS', paste("-Xmx",1024*8,"m
 ##need to setwd
 args <- commandArgs(trailingOnly=TRUE)
 analysis.id <- as.integer(args[1])
+print(analysis.id)
 
 if(is.na(analysis.id)) {
 	stop("Analysis ID must be an integer.")
@@ -25,9 +30,6 @@ if(is.na(analysis.id)) {
 
 library(PiMPDB)
 library(PiMP)
-#library(yaml)
-
-#db.settings <- yaml.load_file("/opt/django/yaml/pimp_database.yml")[['database']]
 
 DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
 if ( DATABASE_FILENAME == '' )  {
@@ -108,6 +110,7 @@ if(length(blank.idx) > 0) {
 #comparisons
 contrasts <- experiment.contrasts$contrast
 controls <- experiment.contrasts$control
+names <- experiment.contrasts$name
 con = unlist(strsplit(controls, '-'))
 if ( con[1] == '0' ) {
     cont = unlist(strsplit(contrasts))
@@ -146,4 +149,4 @@ if(length(param.idx) > 0) {
 
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
 
-Pimp.runPipeline(files=files, groups=groups, standards=stds, contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml", analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)
+Pimp.runPipeline(files=files, groups=groups, standards=stds, comparisonNames=names, contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml", analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)

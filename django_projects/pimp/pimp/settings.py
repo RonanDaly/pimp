@@ -30,7 +30,7 @@ CELERYD_LOG_COLOR = False
 DEBUG = getBool('PIMP_DEBUG', False)
 TEMPLATE_DEBUG = DEBUG
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.environ['PIMP_BASE_DIR'] = BASE_DIR
 
 # Set to True to enable registration

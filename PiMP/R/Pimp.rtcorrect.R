@@ -28,7 +28,7 @@ Pimp.rtcorrect <- function(xset=xcmsSet(), method=c("obiwarp", "loess", "none"),
 	#Need to get specified Java heapsize here. Barfs if called by function within foreach loop
 	heapsize <- getJavaHeapSize()
 
-	foreach(i=1:length(peakml.files), .packages=c("PiMP", "mzmatch.R", "rJava"), .export=c("xseto", "peakml.files", "peakml.params", "heapsize"), .combine='c') %dopar% {
+	foreach(i=1:length(peakml.files), .packages=c("PiMP", "mzmatch.R", "rJava"), .combine='c') %dopar% {
 		mzmatch.init(memorysize=heapsize, version.1=FALSE)
 
 		#Write out PeakML file

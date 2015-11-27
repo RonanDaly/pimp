@@ -39,7 +39,7 @@ Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzma
 
 	if(length(databases)==0 && ! file.exists(mzmatch.outputs$stds.xml.db)) {
 		warning("No Standards or External databases.")
-		mzmatch.ipeak.convert.ConvertToText(JHeapSize=4096,i=mzmatch.outputs$final.combined.related.id.file,o=mzmatch.outputs$final.combined.related.id.txt,v=T,annotations=annot)
+		mzmatch.ipeak.convert.ConvertToText(i=mzmatch.outputs$final.combined.related.id.file,o=mzmatch.outputs$final.combined.related.id.txt,v=T,annotations=annot)
 		data <- .parseMzMatchOutput(file=mzmatch.outputs$final.combined.related.id.txt, groups=groups)
 	}
 
@@ -51,11 +51,11 @@ Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzma
 
 Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=list(), annot=NULL, mzmatch.outputs=list(), adducts=NULL, ppm=NULL, rtwindow=NULL, rtwindowrelative=FALSE) {
 	outfile <- .generateIdentifiedFileName(file=mzmatch.outputs$final.combined.related.id.file, database=database)
-	mzmatch.ipeak.util.Identify(JHeapSize=4096,i=mzmatch.outputs$final.combined.related.file, v=T,o=outfile, ppm=ppm, rtwindow=rtwindow, rtwindowrelative=rtwindowrelative, databases=database,   ###, rtwindowrelative=TRUE
+	mzmatch.ipeak.util.Identify(i=mzmatch.outputs$final.combined.related.file, v=T,o=outfile, ppm=ppm, rtwindow=rtwindow, rtwindowrelative=rtwindowrelative, databases=database,   ###, rtwindowrelative=TRUE
 		adducts=adducts)#, polarity=polarity)
 
 	txtfile <- .generateIdentifiedFileName(file=mzmatch.outputs$final.combined.related.id.txt, database=database)
-  	mzmatch.ipeak.convert.ConvertToText(JHeapSize=4096,i=outfile,o=txtfile,v=T,annotations=annot)
+  	mzmatch.ipeak.convert.ConvertToText(i=outfile,o=txtfile,v=T,annotations=annot)
   	data <- .parseMzMatchOutput(file=txtfile, groups=groups)
 
 
