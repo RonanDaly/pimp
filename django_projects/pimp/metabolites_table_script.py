@@ -99,12 +99,16 @@ annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=
         secondaryId=identified_compounds.values_list("secondaryId", flat=True)).distinct()
 ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True)
 ac_compound_peakdtsamples = peakdtsamples.filter(sample=samples, peak__compound__in=annotated_compounds)
+start = timeit.default_timer()
 for secondary_id in ac_secondary_ids:
     c_data = []
 
-    p_max_intense_id = ac_compound_peakdtsamples.filter(peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
+    p_max_intense_id = peakdtsamples.filter(sample=samples, peak__compound__in=annotated_compounds, peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
+    # p_max_intense_id = ac_compound_peakdtsamples.filter(peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
+    print p_max_intense_id
 
-    max_compound_id = annotated_compounds.filter(peak__id=p_max_intense_id, secondaryId=secondary_id).values_list('id', flat=True)[0]
+    max_compound_id = annotated_compounds.filter(peak__id=p_max_intense_id, secondaryId=secondary_id).values_list('id', flat=True).first()
+    # print max_compound_id, p_max_intense_id
 
     best_compound = annotated_compounds.get(pk=max_compound_id)
 
@@ -139,20 +143,8 @@ for secondary_id in ac_secondary_ids:
         c_data.append("None") # no superpathways
         c_data.append("None") # no pathways
 
-    peak_intensities_by_samples = ac_compound_peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
-    if len(peak_intensities_by_samples) > 6:
-        print
-        print
-        print
-        print
-        print
-        print "TOO MANY SAMPLES, THERE ARE = ", len(peak_intensities_by_samples)
-        print
-        print
-        print
-        print
-        print
-
+    peak_intensities_by_samples = peakdtsamples.filter(peak=peak, sample=samples).order_by('sample__attribute__id', 'sample__id').distinct()
+    print peak
 
     for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
         c_data.append(str(intensity))  # individual sample intensities
@@ -166,6 +158,8 @@ for secondary_id in ac_secondary_ids:
     c_data.append('annotated')
     print c_data
 
+stop = timeit.default_timer()
+print "metabolite table processing time: ", str(stop - start)
 """
 response = simplejson.dumps({'aaData': data})
 

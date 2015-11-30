@@ -332,7 +332,7 @@ def start_analysis(request, project_id):
 
 def get_identification_table(request, project_id, analysis_id):
     if request.is_ajax():
-        print "metabolite table requested"
+        print "Metabolites table requested"
         start = timeit.default_timer()
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
@@ -341,13 +341,15 @@ def get_identification_table(request, project_id, analysis_id):
         samples = Sample.objects.filter(
             attribute=Attribute.objects.filter(comparison__in=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
-        # efficiency
+
         peakdtsamples = PeakDTSample.objects.filter(peak__dataset=dataset)
 
         data = []
+
         identified_compounds = Compound.objects.filter(identified='True', peak__dataset=dataset).distinct()
         id_compound_peakdtsamples = peakdtsamples.filter(sample__in=samples, peak__compound__in=identified_compounds)
         ic_secondary_ids = identified_compounds.values_list('secondaryId', flat=True)
+
         for secondary_id in ic_secondary_ids:
             c_data = []
 
@@ -375,7 +377,6 @@ def get_identification_table(request, project_id, analysis_id):
             if pathway_ids.exists():
                 superpathways = DataSourceSuperPathway.objects.filter(pathway__id__in=pathway_ids).values_list('super_pathway__name', flat=True)
                 if None not in superpathways or superpathways.count() > 0:
-                    print superpathways
                     try:
                         joined_sp = " ".join(superpathways)
                     except:
@@ -389,7 +390,7 @@ def get_identification_table(request, project_id, analysis_id):
                 c_data.append("None") # no pathways
 
             # Intensities of the peak across samples
-            peak_intensities_by_samples = id_compound_peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id')
+            peak_intensities_by_samples = id_compound_peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
                 c_data.append(str(intensity))  # individual sample intensities
@@ -402,20 +403,20 @@ def get_identification_table(request, project_id, analysis_id):
 
             c_data += averages_by_group # average intensities over groups
             c_data.append('identified')
-            print c_data
             # Add the compound information to data
             data.append(c_data)
 
         annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(
                 secondaryId=identified_compounds.values_list("secondaryId", flat=True)).distinct()
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True)
-        ac_compound_peakdtsamples = peakdtsamples.filter(sample__in=samples, peak__compound__in=annotated_compounds)
+        ac_compound_peakdtsamples = peakdtsamples.filter(sample=samples, peak__compound__in=annotated_compounds)
+
         for secondary_id in ac_secondary_ids:
             c_data = []
 
-            p_max_intense_id = ac_compound_peakdtsamples.filter(peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
+            p_max_intense_id = peakdtsamples.filter(sample=samples, peak__compound__in=annotated_compounds, peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
 
-            max_compound_id = annotated_compounds.filter(peak__id=p_max_intense_id, secondaryId=secondary_id).values_list('id', flat=True)[0]
+            max_compound_id = annotated_compounds.filter(peak__id=p_max_intense_id, secondaryId=secondary_id).values_list('id', flat=True).first()
 
             best_compound = annotated_compounds.get(pk=max_compound_id)
 
@@ -437,7 +438,6 @@ def get_identification_table(request, project_id, analysis_id):
             if pathway_ids.exists():
                 superpathways = DataSourceSuperPathway.objects.filter(pathway__id__in=pathway_ids).values_list('super_pathway__name', flat=True)
                 if None not in superpathways or superpathways.count() > 0: #
-                    print superpathways
                     try:
                         joined_sp = " ".join(superpathways)
                     except:
@@ -450,7 +450,7 @@ def get_identification_table(request, project_id, analysis_id):
                 c_data.append("None") # no superpathways
                 c_data.append("None") # no pathways
 
-            peak_intensities_by_samples = ac_compound_peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id')
+            peak_intensities_by_samples = peakdtsamples.filter(peak=peak, sample=samples).order_by('sample__attribute__id', 'sample__id').distinct()
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
                 c_data.append(str(intensity))  # individual sample intensities
@@ -464,11 +464,15 @@ def get_identification_table(request, project_id, analysis_id):
             c_data.append('annotated')
             data.append(c_data)
 
+        stop = timeit.default_timer()
+        print "metabolite table processing time: ", str(stop - start)
+
         response = simplejson.dumps({'aaData': data})
 
         stop = timeit.default_timer()
         print "metabolite table processing time: ", str(stop - start)
         return HttpResponse(response, content_type='application/json')
+
 
     else:
         # return Http404
