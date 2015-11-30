@@ -26,7 +26,7 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	#mzmatch.outputs[-stds.xml.db.idx] <- lapply(mzmatch.outputs[-stds.xml.db.idx], function(x){file.path(parent.dir, x)})
 	mzmatch.outputs <- lapply(mzmatch.outputs, sprintf, polarity)
 
-	dir.create(mzmatch.outputs$polarity.folder)
+	dir.create.ifNotExist(mzmatch.outputs$polarity.folder)
 	##
 	## Process mzXML files
 	##
@@ -98,7 +98,7 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
   	}
 
   	##Sort related peaks
-	mzmatch.ipeak.sort.RelatedPeaks(JHeapSize=getJavaHeapSize(),i=mzmatch.outputs$final.combined.gapfilled.file, v=T,o=mzmatch.outputs$final.combined.related.file,basepeaks=mzmatch.outputs$final.combined.basepeaks.file,ppm=mzmatch.params$ppm, rtwindow=mzmatch.params$rtwindow)
+	mzmatch.ipeak.sort.RelatedPeaks(i=mzmatch.outputs$final.combined.gapfilled.file, v=T,o=mzmatch.outputs$final.combined.related.file,basepeaks=mzmatch.outputs$final.combined.basepeaks.file,ppm=mzmatch.params$ppm, rtwindow=mzmatch.params$rtwindow)
 
 	#No return value from MZMatch functions. Stop if related peaks has barfed
 	if(!file.exists(mzmatch.outputs$final.combined.related.file))
