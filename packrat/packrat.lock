@@ -82,8 +82,8 @@ Hash: 0650d5701aa7e369e77c9e2c8e1dc913
 
 Package: Matrix
 Source: CRAN
-Version: 1.2-2
-Hash: 29d2fc243e91572a4f1a83099e7f7d8f
+Version: 1.2-3
+Hash: dde12803d25fe30668ce7b640c9f7072
 Requires: lattice
 
 Package: PiMP
