@@ -61,6 +61,10 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 2. Edit the `.env` file for your environment
 
+ **(OSX)** Make sure the DYLD_LIBRARY_PATH variable is set to the library folder
+ for your 1.8 JVM. This is to work around a bug with rJava finding the correct
+ JVM at runtime.
+
 3. Run the following command in the project root directory
 
         $ ./gradlew setupPiMP
