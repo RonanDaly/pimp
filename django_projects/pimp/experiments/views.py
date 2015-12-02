@@ -381,10 +381,10 @@ def get_identification_table(request, project_id, analysis_id):
                         joined_sp = " ".join(superpathways)
                     except:
                         joined_sp = "None"
-                    c_data.append(joined_sp) # superpathways
+                    c_data.append(joined_sp)  # superpathways
                 else:
                     c_data.append("None")
-                c_data.append(" ".join(Pathway.objects.filter(id=pathway_ids).values_list('name', flat=True))) # pathways
+                c_data.append(" ".join(Pathway.objects.filter(id=pathway_ids).values_list('name', flat=True)))  # pathways
             else:
                 c_data.append("None") # no superpathways
                 c_data.append("None") # no pathways
@@ -393,7 +393,7 @@ def get_identification_table(request, project_id, analysis_id):
             peak_intensities_by_samples = id_compound_peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
-                c_data.append(str(intensity))  # individual sample intensities
+                c_data.append(str(round(intensity)))  # individual sample intensities
 
             # Average intensity of the peak across attributes
             attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
@@ -401,7 +401,9 @@ def get_identification_table(request, project_id, analysis_id):
             for attribute_id in attribute_ids:
                 averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
 
-            c_data += averages_by_group # average intensities over groups
+            for group_average in averages_by_group:
+                c_data.append(str(round(group_average, 2)))
+
             c_data.append('identified')
             # Add the compound information to data
             data.append(c_data)
@@ -447,20 +449,22 @@ def get_identification_table(request, project_id, analysis_id):
                     c_data.append("None")
                 c_data.append(" ".join(Pathway.objects.filter(id__in=pathway_ids).values_list('name', flat=True))) # pathways
             else:
-                c_data.append("None") # no superpathways
-                c_data.append("None") # no pathways
+                c_data.append("None")  # no superpathways
+                c_data.append("None")  # no pathways
 
             peak_intensities_by_samples = peakdtsamples.filter(peak=peak, sample=samples).order_by('sample__attribute__id', 'sample__id').distinct()
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
-                c_data.append(str(intensity))  # individual sample intensities
+                c_data.append(str(round(intensity)))  # individual sample intensities
 
             attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
             averages_by_group = []
             for attribute_id in attribute_ids:
                 averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
 
-            c_data += averages_by_group
+            for group_average in averages_by_group:
+                c_data.append(str(round(group_average, 2)))
+
             c_data.append('annotated')
             data.append(c_data)
 
@@ -477,6 +481,48 @@ def get_identification_table(request, project_id, analysis_id):
     else:
         # return Http404
         pass
+
+def get_metabolite_info(request, project_id, analysis_id):
+    """
+    AJAX view to return information on a metabolite.
+
+    :param request: as well as the function parameters above, contains compound_id
+    :param project_id:
+    :param analysis_id:
+    :return: HttpResponse containing JSON-formatted data; the mass, rt, intensities the peaks annotated or identified
+    by the metabolite
+    """
+    if request.is_ajax():
+        analysis = Analysis.objects.get(pk=analysis_id)
+        dataset = analysis.dataset_set.first()
+        comparisons = analysis.experiment.comparison_set.all()
+        samples = Sample.objects.filter(
+            attribute=Attribute.objects.filter(comparison__in=comparisons).distinct().order_by('id')).distinct().order_by(
+            'attribute__id', 'id')
+        peakdtsamples = PeakDTSample.objects.filter(peak__dataset=dataset)
+        compound_id = int(request.GET['compound_id'])
+        compound_secondary_id = Compound.objects.get(pk=compound_id).secondaryId
+
+        peaks = Peak.objects.filter(dataset=dataset, compound__secondaryId=compound_secondary_id).order_by('secondaryId')
+
+        attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
+        peaks_data = []
+
+        for peak in peaks:
+            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 2)), str(peak.polarity)])
+
+            # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
+            #
+            # averages_by_group = []
+            # for attribute_id in attribute_ids:
+            #     averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
+            #
+            # peak_data += averages_by_group
+            # peaks_data.append(peak_data)
+
+        print peaks_data
+        response = simplejson.dumps({'aaData': peaks_data})
+        return HttpResponse(response, content_type='application/json')
 
 
 def get_peak_table(request, project_id, analysis_id):

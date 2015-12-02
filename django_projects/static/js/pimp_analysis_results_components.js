@@ -438,16 +438,16 @@ function set_idtable(url, callback){
 					"iDisplayLength": 100,
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
 					"aoColumnDefs": [
-						// { /* compound ID */
-						// 	"aTargets": [0],
-						// 	"bSearchable": false,
-						// 	"bVisible": false
-						// },
-						// { /* peak ID */
-						// 	"aTargets": [1],
-						// 	"bSearchable": false,
-						// 	"bVisible": false
-						// },
+						{ /* compound ID */
+							"aTargets": [0],
+							"bSearchable": false,
+							"bVisible": false
+						},
+						{ /* peak ID */
+							"aTargets": [1],
+							"bSearchable": false,
+							"bVisible": false
+						},
 						{
 							/* superpathways */
 							"aTargets": [4],
@@ -575,7 +575,7 @@ function set_peaktable(url, callback){
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
 					"fnDrawCallback":function (oSettings) {
 						console.log("peak data finished loaded");
-						peak_table_received = this
+						peak_table_received = this;
 						callback && callback.call(this, peak_table_received);
 					},
 	});
