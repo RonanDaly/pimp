@@ -20,7 +20,8 @@ import datetime
 
 
 @celery.task
-def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query_slug):
+def runNetworkSampler(annotation_query_id):
+# def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query_slug):
     """
     Method to run the Network Sampler developed by Simon Rogers
     :author Simon Rogers
@@ -29,13 +30,15 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
     :param annotation_query_slug: A string containing the unique slug for the annotation query
     :return: edge_dict:
     """
-
+    new_annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    parameters = jsonpickle.decode(new_annotation_query.annotation_tool_params)
+    fragmentation_set = new_annotation_query.fragmentation_set
     # fragmentation set is the fragmentation set we want to run the analysis on (slug)
     # annotation_query is the new annotation query slug
-    fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_slug)
-    new_annotation_query = AnnotationQuery.objects.get(slug=annotation_query_slug)
-    parent_annotation_query = new_annotation_query.parent_annotation_query
-    sample_file = SampleFile.objects.filter(name=sample_file_name)
+    # fragmentation_set = FragmentationSet.objects.get(slug=fragmentation_set_slug)
+    parent_annotation_query = AnnotationQuery.objects.filter(slug__in=parameters['parents'])[0]
+    # parent_annotation_query = new_annotation_query.parent_annotation_query
+    # sample_file = SampleFile.objects.filter(name=sample_file_name)
     # check if the new annotation query already has annotations attached and delete them if it does
     # might want to remove this at some point, but it's useful for debugging
     old_annotations = CandidateAnnotation.objects.filter(annotation_query=new_annotation_query)
@@ -47,7 +50,8 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
     new_annotation_query.status = 'Submitted'
     new_annotation_query.save()
     # Extract the peaks
-    peaks = Peak.objects.filter(fragmentation_set=fragmentation_set, msn_level=1, source_file=sample_file)
+    # peaks = Peak.objects.filter(fragmentation_set=fragmentation_set, msn_level=1, source_file=sample_file)
+    peaks = Peak.objects.filter(fragmentation_set=fragmentation_set, msn_level=1)
     print "Found " + str(len(peaks)) + " peaks"
 
     peakset = ns.FragSet()
@@ -67,29 +71,26 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
             split_name = annotation.compound.name.split(';')
             short_name = split_name[0]
             # find this one in the previous ones
-            previous_pos = [i for i,n in enumerate(peakset.annotations) if n.name==short_name]
-            if len(previous_pos) == 0:
+            previous_annotations = [n for n in newmeasurement.annotations if n.name==short_name]
+            if len(previous_annotations) == 0:
                 # ADD A COMPOUND ID
                 peakset.annotations.append(ns.Annotation(annotation.compound.formula,short_name,annotation.compound.id,annotation.id))
                 newmeasurement.annotations[peakset.annotations[-1]] = float(annotation.confidence)
             else:
                 # check if this measurement has had this compound in its annotation before 
                 # (to remove duplicates with different collision energies - highest confidence is used)
-                this_annotation = peakset.annotations[previous_pos[0]]
-                if this_annotation in newmeasurement.annotations:
-                    current_confidence = newmeasurement.annotations[this_annotation]
-                    if float(annotation.confidence) > current_confidence:
-                        newmeasurement.annotations[this_annotation] = float(annotation_confidence)
-                        this_annotation.parentid = annotation.id
-                else:
+                this_annotation = previous_annotations[0]
+                current_confidence = newmeasurement.annotations[this_annotation]
+                if float(annotation.confidence) > current_confidence:
                     newmeasurement.annotations[this_annotation] = float(annotation.confidence)
+                    this_annotation.parentid = annotation.id
 
     print "Stored " + str(len(peakset.measurements)) + " peaks and " + str(len(peakset.annotations)) + " unique annotations"
 
 
     print "Sampling..."
     sampler = ns.NetworkSampler(peakset)
-    sampler.set_parameters(jsonpickle.decode(new_annotation_query.massBank_params))
+    sampler.set_parameters(parameters)
     sampler.sample()
 
     new_annotation_query.status = 'Processing'
@@ -100,14 +101,14 @@ def runNetworkSampler(fragmentation_set_slug, sample_file_name, annotation_query
         peak = Peak.objects.get(id=m.id)
         for annotation in m.annotations:
             compound = Compound.objects.get(id=annotation.id)
-            parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid)
+            parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid) 
             add_info_string = "Prior: {:5.4f}, Edges: {:5.2f}".format(peakset.prior_probability[m][annotation],peakset.posterior_edges[m][annotation])
             an = CandidateAnnotation.objects.create(compound=compound, peak=peak, confidence=peakset.posterior_probability[m][annotation],
                 annotation_query=new_annotation_query, difference_from_peak_mass=parent_annotation.difference_from_peak_mass,
                 mass_match=parent_annotation.mass_match, additional_information=add_info_string)
 
     edge_dict = sampler.global_edge_count()
-    new_annotation_query.status = 'Completed'
+    new_annotation_query.status = 'Completed Successfully'
     new_annotation_query.save()
     return edge_dict
 
@@ -332,7 +333,8 @@ def precursor_mass_filter(annotation_query_id):
                         annotation_query = annotation_query,compound = a.compound,
                         mass_match = True, confidence = a.confidence, 
                         difference_from_peak_mass = peak.mass - a.compound.exact_mass , adduct = t,
-                        instrument_type = a.instrument_type, collision_energy = a.collision_energy)
+                        instrument_type = a.instrument_type, collision_energy = a.collision_energy,
+                        additional_information = a.additional_information)
                     new_annotation.save()
 
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
@@ -348,7 +350,8 @@ def precursor_mass_filter(annotation_query_id):
                         annotation_query = annotation_query,compound = a.compound,
                         mass_match = True, confidence = a.confidence, 
                         difference_from_peak_mass = peak.mass - a.compound.exact_mass , adduct = t,
-                        instrument_type = a.instrument_type, collision_energy = a.collision_energy)
+                        instrument_type = a.instrument_type, collision_energy = a.collision_energy,
+                        additional_information = a.additional_information)
                     new_annotation.save()
 
     annotation_query.status="Completed Successfully"

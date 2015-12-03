@@ -316,8 +316,6 @@ class Measurement(object):
 	def add_peak_set(self,peakset):
 		self.peakset = peakset
 
-
-
 class Annotation(object):
 	def __init__(self,formula,name,cid,parentid):
 		self.formula = Formula(formula)
