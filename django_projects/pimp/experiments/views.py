@@ -403,14 +403,14 @@ def get_identification_table(request, project_id, analysis_id):
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
                 c_data.append(round(intensity, 2))  # individual sample intensities
 
-            # Average intensity of the peak across attributes
-            attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
-            averages_by_group = []
-            for attribute_id in attribute_ids:
-                averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
-
-            for group_average in averages_by_group:
-                c_data.append(round(group_average, 2))
+            # # Average intensity of the peak across attributes
+            # attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
+            # averages_by_group = []
+            # for attribute_id in attribute_ids:
+            #     averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
+            #
+            # for group_average in averages_by_group:
+            #     c_data.append(round(group_average, 2))
 
             # print best_peak_logfcs
 
@@ -491,13 +491,13 @@ def get_identification_table(request, project_id, analysis_id):
                 c_data.append(round(intensity, 2))  # individual sample intensities
 
             # Average intensity of the peak across attributes
-            attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
-            averages_by_group = []
-            for attribute_id in attribute_ids:
-                averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
-
-            for group_average in averages_by_group:
-                c_data.append(round(group_average, 2))
+            # attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
+            # averages_by_group = []
+            # for attribute_id in attribute_ids:
+            #     averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
+            #
+            # for group_average in averages_by_group:
+            #     c_data.append(round(group_average, 2))
 
             for logfc in best_peak_logfcs:
                 if logfc == "NA":

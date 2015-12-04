@@ -382,23 +382,9 @@ function set_navbar(){
 	});
 }
 
-// Sort function for retention times, since they have a custom format of
-// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
-
-jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return a - b;
-};
-
-jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return b - a;
-};
-
 // Sort function for the comparison logFC in the metabolites table.
-// Required to set the NA values to 0 for sorting.
+// This forces rows with NA in the comparison logFC to the bottom of the sorted table, regardless
+// of whether sorted ascending or descending.
 jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-asc'] = function(a, b) {
     if (isNaN(a) && isNaN(b)) { // If a and b are both strings e.g. both NA
         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
@@ -447,27 +433,29 @@ function set_idtable(url, samplesGroupsNum, callback){
         sampleIdxArray.push(6 + n);
     }
 
-    // Compute the indices of the group averages and comparisons in the table
-    var numGroups = samplesGroupsNum[1];
-    var groupIdxArray = [];
-    for (var n=0; n<numGroups; n++) {
-        groupIdxArray.push(sampleIdxArray[sampleIdxArray.length - 1] + 1 + n);
-    }
+    //// Compute the indices of the group averages and comparisons in the table
+    //var numGroups = samplesGroupsNum[1];
+    //var groupIdxArray = [];
+    //for (var n=0; n<numGroups; n++) {
+    //    groupIdxArray.push(sampleIdxArray[sampleIdxArray.length - 1] + 1 + n);
+    //}
 
     // Compute the indices of the comparison logfc columns in the table
-    var numComparisons = samplesGroupsNum[2];
+    var numComparisons = samplesGroupsNum[1];
     var comparisonIdxArray = [];
     for (var n=0; n<numComparisons; n++) {
-        comparisonIdxArray.push(groupIdxArray[groupIdxArray.length -1] + 1 + n);
+        //comparisonIdxArray.push(groupIdxArray[groupIdxArray.length -1] + 1 + n);
+        comparisonIdxArray.push(sampleIdxArray[sampleIdxArray.length - 1] + 1 + n);
     }
 
     // Compute the index of the final column (which is ALWAYS there, irrespective of the number of samples or groups and comparisons)
-    var identifiedColIdx = 5 + numSamples + numGroups + numComparisons + 1;
+    //var identifiedColIdx = 5 + numSamples + numGroups + numComparisons + 1;
+    var identifiedColIdx = 5 + numSamples + numComparisons + 1;
 
     // Combine the indices into a single array, exludeColIdx (exclude col indices), to exclude
     var excludeColIdx = [0, 1, 2, 3, 4, 5];
     excludeColIdx.push.apply(excludeColIdx, sampleIdxArray);
-    excludeColIdx.push.apply(excludeColIdx, groupIdxArray);
+    //excludeColIdx.push.apply(excludeColIdx, groupIdxArray);
     excludeColIdx.push.apply(excludeColIdx, comparisonIdxArray);
     excludeColIdx.push(identifiedColIdx);
 
@@ -485,13 +473,13 @@ function set_idtable(url, samplesGroupsNum, callback){
     // elements and their columns.
     var initialCols = [0, 1];
 
-    // Add indices for the group columns
-    var initialGroupIdx = [];
-    for (var idx in groupIdxArray) {
-        var groupIdx = initialCols[initialCols.length - 1] + 1;
-        initialCols.push(groupIdx);
-        initialGroupIdx.push(groupIdx);
-    }
+    //// Add indices for the group columns
+    //var initialGroupIdx = [];
+    //for (var idx in groupIdxArray) {
+    //    var groupIdx = initialCols[initialCols.length - 1] + 1;
+    //    initialCols.push(groupIdx);
+    //    initialGroupIdx.push(groupIdx);
+    //}
     //console.log('Indices for initial groups = ' + initialGroupIdx);
 
     // Add indices for the comparison columns
@@ -516,7 +504,8 @@ function set_idtable(url, samplesGroupsNum, callback){
                             },
                             {
                                 "sTitle": "Conditions",
-                                "aiColumns": groupIdxArray.concat(comparisonIdxArray)
+                                //"aiColumns": groupIdxArray.concat(comparisonIdxArray)
+                                "aiColumns": comparisonIdxArray
                             }
                         ]
                     },
@@ -677,6 +666,21 @@ function set_pathwaytable(){
 
 	return pathwayTable;
 }
+
+// Sort function for retention times, since they have a custom format of
+// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return a - b;
+};
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return b - a;
+};
 
 function set_peaktable(url, callback){
 	var peakTable = $('#peak-table').dataTable( {

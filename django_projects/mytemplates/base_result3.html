@@ -140,7 +140,8 @@
 			set_navbar();
 			// Generate identification table with callback for click event
 
-            var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ member_list|length }}, {{ comparisons|length }}]; // [num samples, num groups, num comparisons]
+            // var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ member_list|length }}, {{ comparisons|length }}]; // [num samples, num groups, num comparisons]
+            var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
 
 			var idTable = set_idtable(id_table_url, samplesGroupsNum, function(){
 				set_idtable_click(table_received);
@@ -2208,9 +2209,9 @@
 										  {% for member in member_list %}
 										  <th rowspan="1" class="intensity-column" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 										  {% endfor %}
-										  {% for member in member_list %}
-										  <th rowspan="2" class="average-column">Average {{ member.name }}</th>
-										  {% endfor %}
+{#										  {% for member in member_list %}#}
+{#										  <th rowspan="2" class="average-column">Average {{ member.name }}</th>#}
+{#										  {% endfor %}#}
                                           {% for comparison in comparisons %}
                                           <th rowspan="2">logFC {{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</th>
                                           {% endfor %}
