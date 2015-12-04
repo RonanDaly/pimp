@@ -397,11 +397,170 @@ jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
 	return b - a;
 };
 
-function set_idtable(url, callback){
+// Sort function for the comparison logFC in the metabolites table.
+// Required to set the NA values to 0 for sorting.
+jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-asc'] = function(a, b) {
+    if (isNaN(a) && isNaN(b)) { // If a and b are both strings e.g. both NA
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+
+    if (isNaN(a)) {
+        return 1;
+    } else if (isNaN(b)) {
+        return -1;
+    }
+
+    return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+
+};
+
+jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-desc'] = function(a, b) {
+    if (isNaN(a) && isNaN(b)) { // If a and b are both strings e.g. both NA
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    }
+
+    if (isNaN(a)) {
+        return 1;
+    } else if (isNaN(b)) {
+        return -1;
+    }
+
+    return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+
+};
+
+function set_idtable(url, samplesGroupsNum, callback){
+    // Function to create the metabolites table using dataTables
+
+    // samplesGroupsNum is an array, where index [0] is the number of samples, [1] is the number of groups, and [2] is
+    // the number of comparisons
+    // These variables are needed to allow DataTables to show/hide the samples intensities or group average intensities.
+
+    // SampleIdxArray and GroupIdxArray are used to make groups for hiding/showing through the ColVis addon for
+    // DataTables
+
+    // Compute the indices of the sample intensities in the table
+    // There are ALWAYS 5 columns that precede the sample intensities (see experiments.views.get_identification_table)
+    var numSamples = samplesGroupsNum[0];
+    var sampleIdxArray = [];
+    for (var n=0; n<numSamples; n++) {
+        sampleIdxArray.push(6 + n);
+    }
+
+    // Compute the indices of the group averages and comparisons in the table
+    var numGroups = samplesGroupsNum[1];
+    var groupIdxArray = [];
+    for (var n=0; n<numGroups; n++) {
+        groupIdxArray.push(sampleIdxArray[sampleIdxArray.length - 1] + 1 + n);
+    }
+
+    // Compute the indices of the comparison logfc columns in the table
+    var numComparisons = samplesGroupsNum[2];
+    var comparisonIdxArray = [];
+    for (var n=0; n<numComparisons; n++) {
+        comparisonIdxArray.push(groupIdxArray[groupIdxArray.length -1] + 1 + n);
+    }
+
+    // Compute the index of the final column (which is ALWAYS there, irrespective of the number of samples or groups and comparisons)
+    var identifiedColIdx = 5 + numSamples + numGroups + numComparisons + 1;
+
+    // Combine the indices into a single array, exludeColIdx (exclude col indices), to exclude
+    var excludeColIdx = [0, 1, 2, 3, 4, 5];
+    excludeColIdx.push.apply(excludeColIdx, sampleIdxArray);
+    excludeColIdx.push.apply(excludeColIdx, groupIdxArray);
+    excludeColIdx.push.apply(excludeColIdx, comparisonIdxArray);
+    excludeColIdx.push(identifiedColIdx);
+
+    // Prepare variables for creating coloured logfc values
+    var up_colours = ["#FF6666", "#FF9999", "#FFCCCC"];
+    var down_colours = ["#6666FF", "#9999FF", "#CCCCFF"];
+    var fold_change_bins = [2, 1, 0.5849625];
+
+    // Get the indices of the initially visible columns, which are Name, Formula, groups, comparisons, Identification
+    // This is required since the index of a visible column does not necessarily equal the index of the same column
+    // in the whole table, including both hidden and visible rows.
+    // Explanation: The data variable in the createdRow anonymous function in the datatable initialisation
+    // (idTable below) contains every single column, irrespective of whether they are initially visible or not,
+    // whereas access to the data and rows using the jQuery select e.g. $('td', row) contains only the visible
+    // elements and their columns.
+    var initialCols = [0, 1];
+
+    // Add indices for the group columns
+    var initialGroupIdx = [];
+    for (var idx in groupIdxArray) {
+        var groupIdx = initialCols[initialCols.length - 1] + 1;
+        initialCols.push(groupIdx);
+        initialGroupIdx.push(groupIdx);
+    }
+    //console.log('Indices for initial groups = ' + initialGroupIdx);
+
+    // Add indices for the comparison columns
+    var initialComparisonIdx = [];
+    for (var idx in comparisonIdxArray) {
+        var comparisonIdx = initialCols[initialCols.length - 1] + 1;
+        initialCols.push(comparisonIdx);
+        initialComparisonIdx.push(comparisonIdx);
+    }
+    //console.log('Indices for initial comparisons = ' + initialComparisonIdx);
 
 	var idTable = $('#identification-table').dataTable( {
 					"sAjaxSource": url,
-					"sDom": '<"identification-table_wrapper_toolbar"liT>rtp',
+					"sDom": '<"identification-table_wrapper_toolbar"CliT>rtp',
+                    "oColVis": {
+                        "sButtonText": "Switch display",
+                        "aiExclude": excludeColIdx,
+                        "aoGroups": [
+                            {
+                                "sTitle": "Samples",
+                                "aiColumns": sampleIdxArray
+                            },
+                            {
+                                "sTitle": "Conditions",
+                                "aiColumns": groupIdxArray.concat(comparisonIdxArray)
+                            }
+                        ]
+                    },
+                    "createdRow": function(row, data, index) {
+                        // Set the background-color of the comparison logfc columns to match their values
+                        // Adapted from data.models.PeakDtComparison.get_fold_change_colour
+                        //console.log(data);
+
+                        // Choose the colour based on the logfc and apply it to the cell
+                        for (var idx in comparisonIdxArray) {
+
+                            var colours = [];
+
+                            //console.log(parseFloat(data[comparisonIdxArray[idx]]));
+
+                            if (parseFloat(data[comparisonIdxArray[idx]]) > 0) {
+                                colours = up_colours;
+                                //console.log("LogFC was > 0! " + parseFloat(data[comparisonIdxArray[idx]]));
+                            } else {
+                                colours = down_colours;
+                                //console.log("LogFC was < 0! " + parseFloat(data[comparisonIdxArray[idx]]));
+                            }
+
+                            var logFc = Math.abs(parseFloat(data[comparisonIdxArray[idx]]));
+
+
+                            var colour = null;
+                            for (var i in fold_change_bins) {
+                                if (logFc > fold_change_bins[i]) {
+                                    colour = colours[i];
+                                    //console.log("The colour will be changed to " + colour);
+
+                                    //console.log($('td', row).eq(initialComparisonIdx[idx]).val());
+                                    $('td', row).eq(initialComparisonIdx[idx]).css('background-color', colour);
+
+                                    //console.log("The colour is now ", $('td', row).eq(initialComparisonIdx[idx]).css('background-color'));
+
+                                    break;
+                                }
+                            }
+
+                        }
+                        //$('td', row).css('text-decoration', 'line-through');
+                    },
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
 			            "aButtons": [
@@ -438,33 +597,29 @@ function set_idtable(url, callback){
 					"iDisplayLength": 100,
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
 					"aoColumnDefs": [
-						{ /* compound ID */
-							"aTargets": [0],
+						{ /* compound ID, peak ID, superPathways, pathways */
+							"aTargets": [0, 1, 4, 5],
 							"bSearchable": false,
 							"bVisible": false
 						},
-						{ /* peak ID */
-							"aTargets": [1],
+						{ /* samples */
+							"aTargets": sampleIdxArray,
 							"bSearchable": false,
 							"bVisible": false
 						},
-						{
-							/* superpathways */
-							"aTargets": [4],
-							"bVisible": false,
-						},
-						{
-							/* pathways */
-							"aTargets": [5],
-							"bVisible": false,
-						}
+                        { // comparisons
+                            "aTargets": comparisonIdxArray,
+                            "sType": 'numeric-ignore-NA'
+                        }
 					],
 					"fnDrawCallback":function (oSettings) {
 						console.log("data finished loaded");
 						table_received = this;
 						callback && callback.call(this, table_received);
-					},
+					}
 	});
+
+    // console.log(excludeColIdx);
 
 	// callback && callback(idTable);
 

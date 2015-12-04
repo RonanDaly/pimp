@@ -1054,3 +1054,13 @@ a.DTTT_button_collection {
 #identification-table_next {
 	float: none;
 }*/
+
+.metabolites-chromatogram-div {
+	text-align: center;
+	padding: 3px;
+}
+
+.metabolites-intensity-plot-div {
+	text-align: center;
+	padding: 3px;
+}

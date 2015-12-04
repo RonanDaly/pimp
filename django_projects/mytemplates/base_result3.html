@@ -27,6 +27,8 @@
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables1.10.4.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables.columnFilter.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/dataTables.tableTools.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}ColVis-1.1.2/js/dataTables.colVis.js"></script>
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}ColVis-1.1.2/css/dataTables.colVis.css"/>
 		<script src="{{ STATIC_URL }}js/highcharts4.js"></script>
 		<script src="{{ STATIC_URL }}js/highcharts-more4.js"></script>
 		<script src="{{ STATIC_URL }}js/exporting4.js"></script>
@@ -137,10 +139,14 @@
 			set_click_actions(staticUrl,metexploreInfoUrl);
 			set_navbar();
 			// Generate identification table with callback for click event
-			var idTable = set_idtable(id_table_url, function(){
+
+            var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ member_list|length }}, {{ comparisons|length }}]; // [num samples, num groups, num comparisons]
+
+			var idTable = set_idtable(id_table_url, samplesGroupsNum, function(){
 				set_idtable_click(table_received);
 			});
-			var pathwayTable = set_pathwaytable();
+
+            var pathwayTable = set_pathwaytable();
 			var peakTable = set_peaktable(peak_table_url, function(){
 				set_peaktable_click(peak_table_received);
 			});
@@ -153,7 +159,7 @@
 
 					// get data from the row clicked as an array
 				    var data = table_received.fnGetData( this );
-					console.log(data);
+					// console.log(data);
 
 				    // remove any row selection from the table
 				    $(table_received.fnSettings().aoData).each(function (){
@@ -594,6 +600,7 @@
 			    var data = pathwayTable.fnGetData( this );
 
 			    map = $(this).attr("map");
+
 
 			    // remove any row selection from the table
 			    $(pathwayTable.fnSettings().aoData).each(function (){
@@ -1213,7 +1220,6 @@
 
                     // Get the associated peak ID
                     var peakID = $(this).prop('id').split("-")[1];
-                    console.log('Metabolites chromatogram button clicked for peak '+peakID);
 
                     // Remove the button and replace with a loading image
                     $(this).remove();
@@ -1256,7 +1262,6 @@
 
                     // Get the associated peak ID
                     var peakID = $(this).prop('id').split("-")[1];
-                    console.log('Metabolites intensity plot button clicked for peak '+peakID);
 
                     // Remove the button and replace with a loading image
                     $(this).remove();
@@ -1330,11 +1335,12 @@
                             peakDiv.append('<li><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</li>');
                             peakDiv.append('<li><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</li>');
                             peakDiv.append('<li><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</li>');
+                            peakDiv.append('<li><strong>Type</strong>: '+peaksData[peakDataId][4]+'</li>');
                             peakDiv.append('</ul>');
 
                             // Create and add divs and buttons to allow the user to load the peak chromatogram and average intensity plots
-                            peakDiv.append('<div class="metabolites-chromatogram-div"><button class="btn btn-sm metabolites-chromatogram-btn" id="peak-'+peaksData[peakDataId][0]+'">Click to load chromatogram</button></div>');
-                            peakDiv.append('<div class="metabolites-intensity-plot-div"><button class="btn btm-sm metabolites-intensity-plot-btn" id="peak-'+peaksData[peakDataId][0]+'">Click to load intensities</button></div>');
+                            peakDiv.append('<div class="metabolites-chromatogram-div"><button class="btn btn-sm metabolites-chromatogram-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/chromatogram_icon.png"/>Chromatogram</button></div>');
+                            peakDiv.append('<div class="metabolites-intensity-plot-div"><button class="btn btn-sm metabolites-intensity-plot-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/barchart_icon.png"/>Intensities</button></div>');
 
                             // Finally, add the peakDiv to the evidencePanel
                             evidencePanel.append(peakDiv);
@@ -1344,7 +1350,7 @@
 		         	    alert("Error with getting peak information");
 		        	}
 		        });
-            };
+            }
 
 			function createPeaksChromatogram(chartWidth, div, response){
 
@@ -2200,20 +2206,23 @@
 						                  <th rowspan="2">SuperPathway</th>
 										  <th rowspan="2">Pathway</th>
 										  {% for member in member_list %}
-										  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
+										  <th rowspan="1" class="intensity-column" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 										  {% endfor %}
 										  {% for member in member_list %}
-										  <th rowspan="2">Average {{ member.name }}</th>
+										  <th rowspan="2" class="average-column">Average {{ member.name }}</th>
 										  {% endfor %}
-										  <th rowspan="2">Identified/annotated</th>
-										 </tr>
-										 <tr>
+                                          {% for comparison in comparisons %}
+                                          <th rowspan="2">logFC {{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</th>
+                                          {% endfor %}
+										  <th rowspan="2">Identification</th>
+										  </tr>
+										  <tr>
 										  {% for sublist in sample_list %}
 											{% for sample in sublist %}
 											<th rowspan="1">{{ sample.name }}</th>
 											{% endfor %}
 										  {% endfor %}
-						                </tr>
+						                 </tr>
 						              </thead>
 						            </table>
 								</div>

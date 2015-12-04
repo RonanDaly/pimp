@@ -334,30 +334,38 @@ def get_identification_table(request, project_id, analysis_id):
     if request.is_ajax():
         print "Metabolites table requested"
         start = timeit.default_timer()
+        # project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
-        project = Project.objects.get(pk=project_id)
         dataset = analysis.dataset_set.first()
         comparisons = analysis.experiment.comparison_set.all()
-        samples = Sample.objects.filter(
-            attribute=Attribute.objects.filter(comparison__in=comparisons).distinct().order_by('id')).distinct().order_by(
-            'attribute__id', 'id')
-
-        peakdtsamples = PeakDTSample.objects.filter(peak__dataset=dataset)
+        num_comparisons = comparisons.count()
+        samples = Sample.objects.filter(attribute=Attribute.objects.filter(comparison__in=comparisons).distinct().order_by('id')).distinct().order_by('attribute__id', 'id')
 
         data = []
 
-        identified_compounds = Compound.objects.filter(identified='True', peak__dataset=dataset).distinct()
-        id_compound_peakdtsamples = peakdtsamples.filter(sample__in=samples, peak__compound__in=identified_compounds)
-        ic_secondary_ids = identified_compounds.values_list('secondaryId', flat=True)
+        identified_compounds = Compound.objects.filter(identified='True', peak__dataset=dataset)
+        ic_secondary_ids = identified_compounds.values_list('secondaryId', flat=True).distinct()
 
         for secondary_id in ic_secondary_ids:
             c_data = []
 
             # Select the most intense peak that has been identified by the compound
-            # and use this to represent the compound
-            p_max_intense_id = id_compound_peakdtsamples.filter(peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
+            # and use the logFC of this peak to represent the logfc with
+            peaks_by_intensities = PeakDTSample.objects.filter(peak__dataset=dataset, sample__in=samples, peak__compound__secondaryId=secondary_id, peak__compound__in=identified_compounds).distinct().values_list('peak__id', flat=True)
+            peaks_with_logfc = PeakDtComparison.objects.filter(peak__id__in=peaks_by_intensities).order_by('-peak__peakdtsample__intensity')
 
-            max_compound_id = identified_compounds.filter(peak__id=p_max_intense_id, secondaryId=secondary_id).values_list('id', flat=True)[0]
+            if peaks_with_logfc.exists():
+                best_peak_dtcomparison = peaks_with_logfc.first()
+                best_peak_id = best_peak_dtcomparison.peak.id
+                best_peak_logfcs = PeakDtComparison.objects.filter(peak__id=best_peak_id).order_by('comparison').values_list('logFC', flat=True)
+            else:
+                # print "No logFC for peak"
+                best_peak_id = peaks_by_intensities.first()
+                best_peak_logfcs = ["NA" for i in range(num_comparisons)]
+
+            # print "Peak ID", best_peak_id
+            # print "compound secondary ID", secondary_id
+            max_compound_id = identified_compounds.filter(peak__id=best_peak_id, secondaryId=secondary_id).values_list('id', flat=True).first()
 
             best_compound = identified_compounds.get(pk=max_compound_id)
 
@@ -390,10 +398,10 @@ def get_identification_table(request, project_id, analysis_id):
                 c_data.append("None") # no pathways
 
             # Intensities of the peak across samples
-            peak_intensities_by_samples = id_compound_peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
+            peak_intensities_by_samples = PeakDTSample.objects.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
-                c_data.append(str(round(intensity)))  # individual sample intensities
+                c_data.append(round(intensity, 2))  # individual sample intensities
 
             # Average intensity of the peak across attributes
             attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
@@ -402,81 +410,110 @@ def get_identification_table(request, project_id, analysis_id):
                 averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
 
             for group_average in averages_by_group:
-                c_data.append(str(round(group_average, 2)))
+                c_data.append(round(group_average, 2))
+
+            # print best_peak_logfcs
+
+            for logfc in best_peak_logfcs:
+                if logfc == "NA":
+                    c_data.append(logfc)
+                else:
+                    c_data.append(round(logfc, 2))
 
             c_data.append('identified')
             # Add the compound information to data
             data.append(c_data)
 
-        annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(
-                secondaryId=identified_compounds.values_list("secondaryId", flat=True)).distinct()
-        ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True)
-        ac_compound_peakdtsamples = peakdtsamples.filter(sample=samples, peak__compound__in=annotated_compounds)
+        annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=identified_compounds.values_list("secondaryId", flat=True))
+        ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
         for secondary_id in ac_secondary_ids:
             c_data = []
 
-            p_max_intense_id = peakdtsamples.filter(sample=samples, peak__compound__in=annotated_compounds, peak__compound__secondaryId=secondary_id).order_by('-intensity').values_list('peak__id', flat=True).first()
+            # Select the most intense peak that has been identified by the compound
+            # and use this to represent the compound
+            peaks_by_intensities = PeakDTSample.objects.filter(peak__dataset=dataset, sample__in=samples, peak__compound__secondaryId=secondary_id, peak__compound__in=annotated_compounds).distinct().values_list('peak__id', flat=True)
+            peaks_with_logfc = PeakDtComparison.objects.filter(peak__id__in=peaks_by_intensities).order_by('-peak__peakdtsample__intensity')
 
-            max_compound_id = annotated_compounds.filter(peak__id=p_max_intense_id, secondaryId=secondary_id).values_list('id', flat=True).first()
+            if peaks_with_logfc.exists():
+                # print "peak with logfc"
+                best_peak_dtcomparison = peaks_with_logfc.first()
+                best_peak_id = best_peak_dtcomparison.peak.id
+                best_peak_logfcs = PeakDtComparison.objects.filter(peak__id=best_peak_id).order_by('comparison').values_list('logFC', flat=True)
+            else:
+                # print "No peak with logfc"
+                best_peak_id = peaks_by_intensities.first()
+                best_peak_logfcs = ["NA" for i in range(num_comparisons)]
+
+            # print "peak id", best_peak_id
+            # print "compound id", secondary_id
+            max_compound_id = annotated_compounds.filter(peak__id=best_peak_id, secondaryId=secondary_id).values_list('id', flat=True).first()
 
             best_compound = annotated_compounds.get(pk=max_compound_id)
 
             peak = best_compound.peak
 
-            c_data.append(max_compound_id)
-            c_data.append(peak.id)
+            # compound id
+            c_data.append(str(max_compound_id))
+            # peak id
+            c_data.append(str(peak.id))
+            # compound name
             dbs = ['kegg', 'hmdb', 'lipidmaps']
             for db in dbs:
                 c_name = best_compound.repositorycompound_set.filter(db_name=db)
                 if len(c_name) != 0:
                     c_data.append(c_name.first().compound_name)
                     break
-
-            c_data.append(best_compound.formula)
+            # compound formula
+            c_data.append(str(best_compound.formula))
 
             # Get pathways
             pathway_ids = CompoundPathway.objects.filter(compound=best_compound).values_list('pathway__pathway__id', flat=True).distinct()
             if pathway_ids.exists():
                 superpathways = DataSourceSuperPathway.objects.filter(pathway__id__in=pathway_ids).values_list('super_pathway__name', flat=True)
-                if None not in superpathways or superpathways.count() > 0: #
+                if None not in superpathways or superpathways.count() > 0:
                     try:
                         joined_sp = " ".join(superpathways)
                     except:
                         joined_sp = "None"
-                    c_data.append(joined_sp) # superpathways
+                    c_data.append(joined_sp)  # superpathways
                 else:
                     c_data.append("None")
-                c_data.append(" ".join(Pathway.objects.filter(id__in=pathway_ids).values_list('name', flat=True))) # pathways
+                c_data.append(" ".join(Pathway.objects.filter(id=pathway_ids).values_list('name', flat=True)))  # pathways
             else:
-                c_data.append("None")  # no superpathways
-                c_data.append("None")  # no pathways
+                c_data.append("None") # no superpathways
+                c_data.append("None") # no pathways
 
-            peak_intensities_by_samples = peakdtsamples.filter(peak=peak, sample=samples).order_by('sample__attribute__id', 'sample__id').distinct()
+            # Intensities of the peak across samples
+            peak_intensities_by_samples = PeakDTSample.objects.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
-                c_data.append(str(round(intensity)))  # individual sample intensities
+                c_data.append(round(intensity, 2))  # individual sample intensities
 
+            # Average intensity of the peak across attributes
             attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
             averages_by_group = []
             for attribute_id in attribute_ids:
                 averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
 
             for group_average in averages_by_group:
-                c_data.append(str(round(group_average, 2)))
+                c_data.append(round(group_average, 2))
+
+            for logfc in best_peak_logfcs:
+                if logfc == "NA":
+                    c_data.append(logfc)
+                else:
+                    c_data.append(round(logfc, 2))
 
             c_data.append('annotated')
+            # Add the compound information to data
             data.append(c_data)
-
-        stop = timeit.default_timer()
-        print "metabolite table processing time: ", str(stop - start)
 
         response = simplejson.dumps({'aaData': data})
 
         stop = timeit.default_timer()
         print "metabolite table processing time: ", str(stop - start)
         return HttpResponse(response, content_type='application/json')
-
 
     else:
         # return Http404
@@ -509,7 +546,7 @@ def get_metabolite_info(request, project_id, analysis_id):
         peaks_data = []
 
         for peak in peaks:
-            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 2)), str(peak.polarity)])
+            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 2)), str(peak.polarity), str(peak.type)])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
