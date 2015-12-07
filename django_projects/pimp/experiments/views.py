@@ -874,6 +874,7 @@ def get_pathway_url(request, project_id, analysis_id):
     if request.is_ajax():
         project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
+        dataset_id = analysis.dataset_set.first().id
         pathway_id = int(request.GET['id'])
         pathway = Pathway.objects.get(pk=pathway_id)
 
@@ -884,7 +885,7 @@ def get_pathway_url(request, project_id, analysis_id):
             requested_comparison_id = None
             print "no comparison specified"
 
-        pathway_map = pathway.get_pathway_url(requested_comparison_id)
+        pathway_map = pathway.get_pathway_url(dataset_id, requested_comparison_id)
 
         print pathway_map
 

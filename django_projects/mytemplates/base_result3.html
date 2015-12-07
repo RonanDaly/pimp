@@ -151,6 +151,115 @@
             });
 
             var pathwayTable = set_pathwaytable();
+            //pathwayTable.$('tr').click( function () {
+            pathwayTable.on('click', 'tr', function() {
+
+                var rowInfo = pathwayTable.row(this).data();
+
+			    var map = $(this).attr("map");
+
+                var headers = pathwayTable.row(this).columns().header();
+                var headerInfo = [];
+
+                $.each(headers, function(idx) {
+                    headerInfo.push($(headers[idx]).html());
+                });
+
+				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+				updateRightPanel(rowInfo, headerInfo, innerSidePanel);
+
+				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+				var data = calculPathwayCoverage(rowInfo, headerInfo);
+				var chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				var chart1 = $('<div class="span12" style="margin-left:0px;">');
+				pieChart(chartWidth, chart1, data, 400);
+				$(kegg).appendTo($(innerSidePanel));
+				$(chart1).appendTo($(innerSidePanel));
+
+				$('#kegg-map-icon').click(function() {
+					var $modal = $('#full-width');
+
+					var chartWidth = $modal.width()-10;
+
+					var chartHeight = $(window).height()-200;
+
+					var modalLabel = $modal.find('#myModalLabel');
+					var modalBody = $modal.find('.modal-body');
+
+					$(modalLabel).empty();
+					$(modalBody).empty();
+
+					$(modalLabel).text("Kegg map");
+
+					var pathwaySelection = '<div class="span3"><label for="comparison_index" style="font-weight:bold;margin-right:12px;">Map comparison</label><select name="comparison_index_mapping" class="comparison_index" style="width:140px" id="comparison_index"><option value="None">None</option>';
+
+					$.each(comparisons, function( index, value ){
+						pathwaySelection += '<option value="'+ value +'">'+ index +'</option>';
+					});
+					pathwaySelection += '</select></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/identified_kegg_dot.png" alt="id_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Identified</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/annotated_kegg_dot.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Annotated</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/up_down_kegg.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Up/Down</span></div><div class="span3" style="padding-top: 16px;"><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;" class="gradient_legend" id="drapeau_francais"></div></div><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;"><span style="font-size: 12px;float: left;">-2</span><span style="font-size: 12px;float: left;margin-left: 41px;">0</span><span style="font-size: 12px;float: right;">2</span></div></div></div>';
+
+					var ajax_data = {"id": rowInfo[1]};
+
+					var url = "{% url 'get_pathway_url' project.id analysis.id %}";
+
+					$.ajax({
+						type: "GET",
+						traditional : true,
+			            url: url,
+			            data: ajax_data,
+			            success: function(response) {
+			            	console.log(response["pathway_map"]);
+			            	var frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+
+							$(pathwaySelection).appendTo($modal.find('.modal-body'));
+							$(frame).appendTo($modal.find('.modal-body'));
+
+							$modal.modal();
+
+							$('#drapeau_francais').click( function(){
+								if (marseillaise) {
+									marseillaise = false;
+									document.getElementById('marseillaise').pause();
+								}
+								else {
+									marseillaise = true;
+									document.getElementById('marseillaise').play();
+									document.getElementById('marseillaise').onended = function() {
+										marseillaise = false;
+									}
+								}
+							});
+
+							$('#comparison_index').change(function () {
+				        		console.log("comparison just changed!!");
+				        		var comparison_map = this.value;
+				        		var ajax_data = {"id":rowInfo[1], "comparison":comparison_map};
+				        		var frame = $modal.find('iframe');
+				        		$.ajax({
+									type: "GET",
+									traditional : true,
+						            url: url,
+						            data: ajax_data,
+						            success: function(response){
+						            	var new_frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+				        				$(frame).remove();
+				        				$(new_frame).appendTo($modal.find('.modal-body'));
+				        			},
+						            error: function(){
+						        		alert("Error");
+						        	}
+				        		});
+			        		});
+			            },
+			            error: function(){
+			        		alert("Error");
+			        	}
+			        });
+
+				});
+
+			});
+
             var peakTable = set_peaktable(peak_table_url);
             $('#peak-table tbody').on('click', 'tr', function() {
                 var averageChart = false;
@@ -524,124 +633,6 @@
             	]
         	});
 			{% endfor %}
-
-			pathwayTable.$('tr').click( function () {
-
-				// get data from the row clicked as an array
-			    var data = pathwayTable.fnGetData( this );
-
-			    map = $(this).attr("map");
-
-
-			    // remove any row selection from the table
-			    $(pathwayTable.fnSettings().aoData).each(function (){
-					$(this.nTr).removeClass('row_selected');
-				});
-
-				// set the clicked row as selected
-				var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-				// extract header information in an array
-				var headerInfo = new Array();
-				$.each(pathwayTable.dataTableSettings[1].aoColumns, function(i,v) {
-					headerInfo.push(v.sTitle);
-				});
-
-				var rowInfo = data;
-
-				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-				updateRightPanel(rowInfo,headerInfo,innerSidePanel);
-				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
-				data = calculPathwayCoverage(rowInfo,headerInfo);
-				chartWidth = $(innerSidePanel).find('.span12').width()-10;
-				var chart1 = $('<div class="span12" style="margin-left:0px;">');
-				pieChart(chartWidth, chart1, data, 400);
-				$(kegg).appendTo($(innerSidePanel));
-				$(chart1).appendTo($(innerSidePanel));
-
-				$('#kegg-map-icon').click( function (){
-					var $modal = $('#full-width');
-
-					var chartWidth = $modal.width()-10;
-
-					var chartHeight = $(window).height()-200;
-
-					var modalLabel = $modal.find('#myModalLabel');
-					var modalBody = $modal.find('.modal-body');
-
-					$(modalLabel).empty();
-					$(modalBody).empty();
-
-					$(modalLabel).text("Kegg map");
-
-					var pathwaySelection = '<div class="span3"><label for="comparison_index" style="font-weight:bold;margin-right:12px;">Map comparison</label><select name="comparison_index_mapping" class="comparison_index" style="width:140px" id="comparison_index"><option value="None">None</option>';
-
-					$.each(comparisons, function( index, value ){
-						pathwaySelection += '<option value="'+ value +'">'+ index +'</option>';
-					});
-					pathwaySelection += '</select></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/identified_kegg_dot.png" alt="id_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Identified</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/annotated_kegg_dot.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Annotated</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/up_down_kegg.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Up/Down</span></div><div class="span3" style="padding-top: 16px;"><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;" class="gradient_legend" id="drapeau_francais"></div></div><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;"><span style="font-size: 12px;float: left;">-2</span><span style="font-size: 12px;float: left;margin-left: 41px;">0</span><span style="font-size: 12px;float: right;">2</span></div></div></div>';
-
-					var ajax_data = {"id":rowInfo[1]};
-
-					var url = "{% url 'get_pathway_url' project.id analysis.id %}";
-
-					$.ajax({
-						type: "GET",
-						traditional : true,
-			            url: url,
-			            data: ajax_data,
-			            success: function(response){
-			            	console.log(response["pathway_map"]);
-			            	var frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
-
-							$(pathwaySelection).appendTo($modal.find('.modal-body'));
-							$(frame).appendTo($modal.find('.modal-body'));
-
-							$modal.modal();
-
-							$('#drapeau_francais').click( function(){
-								if (marseillaise) {
-									marseillaise = false;
-									document.getElementById('marseillaise').pause();
-								}
-								else {
-									marseillaise = true;
-									document.getElementById('marseillaise').play();
-									document.getElementById('marseillaise').onended = function() {
-										marseillaise = false;
-									}
-								}
-							});
-
-							$('#comparison_index').change(function () {
-				        		console.log("comparison just changed!!");
-				        		var comparison_map = this.value;
-				        		var ajax_data = {"id":rowInfo[1], "comparison":comparison_map};
-				        		var frame = $modal.find('iframe');
-				        		$.ajax({
-									type: "GET",
-									traditional : true,
-						            url: url,
-						            data: ajax_data,
-						            success: function(response){
-						            	var new_frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
-				        				$(frame).remove();
-				        				$(new_frame).appendTo($modal.find('.modal-body'));
-				        			},
-						            error: function(){
-						        		alert("Error");
-						        	}
-				        		});
-			        		});
-			            },
-			            error: function(){
-			        		alert("Error");
-			        	}
-			        });
-
-				});
-
-			});
 
 
 			$(".peak_id").click( function() {
@@ -2099,7 +2090,7 @@
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
 						              		<td>{{ pathway.0.id }}</td>
-						              		<td>{{ pathway.0.compoundNumber }}</td>
+						              		<td>{{ pathway.0.datasourcesuperpathway_set.first.compound_number }}</td>
 						              		<td>{{ pathway.2 }}</td>
 						              		<td>{{ pathway.1 }}</td>
 						              		<td>{{ pathway.3 }}</td></tr>

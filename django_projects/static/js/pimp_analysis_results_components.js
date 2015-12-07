@@ -622,7 +622,7 @@ function set_idtable(url, samplesGroupsNum){
 
 
 function set_pathwaytable(){
-	var pathwayTable = $('#pathway-table').dataTable( {
+	var pathwayTable = $('#pathway-table').DataTable( {
 					"sDom": '<"pathway-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
