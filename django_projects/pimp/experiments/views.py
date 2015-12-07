@@ -9,7 +9,7 @@ from django.forms.formsets import formset_factory, BaseFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
-
+from django.http import Http404
 # models
 from projects.models import Project
 from data.models import *
