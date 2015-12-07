@@ -55,7 +55,7 @@ def runNetworkSampler(annotation_query_id):
     print "Found " + str(len(peaks)) + " peaks"
 
     peakset = ns.FragSet()
-    peakset.annotations = []
+    peakset.compounds = []
 
 
     print "Extracting peaks"
@@ -71,21 +71,37 @@ def runNetworkSampler(annotation_query_id):
             split_name = annotation.compound.name.split(';')
             short_name = split_name[0]
             # find this one in the previous ones
-            previous_annotations = [n for n in newmeasurement.annotations if n.name==short_name]
-            if len(previous_annotations) == 0:
-                # ADD A COMPOUND ID
-                peakset.annotations.append(ns.Annotation(annotation.compound.formula,short_name,annotation.compound.id,annotation.id))
-                newmeasurement.annotations[peakset.annotations[-1]] = float(annotation.confidence)
+            previous_compound = [n for n in peakset.compounds if n.name == short_name]
+            if len(previous_compound)==0:
+                peakset.compounds.append(ns.Compound(annotation.compound.id,annotation.compound.formula,short_name))
+                newmeasurement.annotations[ns.Annotation(peakset.compounds[-1],annotation.id)] = float(annotation.confidence)
             else:
-                # check if this measurement has had this compound in its annotation before 
-                # (to remove duplicates with different collision energies - highest confidence is used)
-                this_annotation = previous_annotations[0]
-                current_confidence = newmeasurement.annotations[this_annotation]
-                if float(annotation.confidence) > current_confidence:
-                    newmeasurement.annotations[this_annotation] = float(annotation.confidence)
+                this_compound = previous_compound[0]
+                # Have we seen this compound in this measurement at all?
+                previous_annotation_local = [n for n in newmeasurement.annotations if n.compound == this_compound]
+                if len(previous_annotation_local) > 0:
+                    this_annotation = previous_annotation_local[0]
                     this_annotation.parentid = annotation.id
+                    newmeasurement.annotations[this_annotation] = float(annotation.confidence)
+                else:
+                    newmeasurement.annotations[ns.Annotation(this_compound,annotation.id)] = float(annotation.confidence)
 
-    print "Stored " + str(len(peakset.measurements)) + " peaks and " + str(len(peakset.annotations)) + " unique annotations"
+
+            # previous_annotations = [n for n in newmeasurement.annotations if n.name==short_name]
+            # if len(previous_annotations) == 0:
+            #     # ADD A COMPOUND ID
+            #     peakset.annotations.append(ns.Annotation(annotation.compound.formula,short_name,annotation.compound.id,annotation.id))
+            #     newmeasurement.annotations[peakset.annotations[-1]] = float(annotation.confidence)
+            # else:
+            #     # check if this measurement has had this compound in its annotation before 
+            #     # (to remove duplicates with different collision energies - highest confidence is used)
+            #     this_annotation = previous_annotations[0]
+            #     current_confidence = newmeasurement.annotations[this_annotation]
+            #     if float(annotation.confidence) > current_confidence:
+            #         newmeasurement.annotations[this_annotation] = float(annotation.confidence)
+            #         this_annotation.parentid = annotation.id
+
+    print "Stored " + str(len(peakset.measurements)) + " peaks and " + str(len(peakset.compounds)) + " unique compounds"
 
 
     print "Sampling..."
@@ -100,7 +116,7 @@ def runNetworkSampler(annotation_query_id):
     for m in peakset.measurements:
         peak = Peak.objects.get(id=m.id)
         for annotation in m.annotations:
-            compound = Compound.objects.get(id=annotation.id)
+            compound = Compound.objects.get(id=annotation.compound.id)
             parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid) 
             add_info_string = "Prior: {:5.4f}, Edges: {:5.2f}".format(peakset.prior_probability[m][annotation],peakset.posterior_edges[m][annotation])
             an = CandidateAnnotation.objects.create(compound=compound, peak=peak, confidence=peakset.posterior_probability[m][annotation],

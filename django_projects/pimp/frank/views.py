@@ -20,6 +20,7 @@ import StringIO
 from django.http import HttpResponse
 from django.db import transaction
 import json
+import csv
 
 """
 To reduce code repetition, add a method for the context_dict
@@ -1037,6 +1038,35 @@ def remove_preferred_annotation(peak):
     peak.preferred_candidate_description = ""
     peak.preferred_candidate_user_selector = None
     peak.preferred_candidate_updated_date = None
+
+def get_fragments_as_text(request,peak_name_slug,format_type):
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(peak_name_slug)
+
+    writer = csv.writer(response)
+
+    # Get the peak
+    peak = Peak.objects.get(slug=peak_name_slug)
+    # Get the peak's children
+    children = Peak.objects.filter(parent_peak=peak).order_by('mass')
+    # Find most intense
+    max_intensity = 0.0
+    for fragment in children:
+        if fragment.intensity > max_intensity:
+            max_intensity = float(fragment.intensity)
+
+    if format_type == 'list':
+        for fragment in children:
+            writer.writerow([fragment.mass,100.0*float(fragment.intensity)/max_intensity])
+    elif format_type == 'mona':
+        to_write = []
+        writer = csv.writer(response,delimiter=' ')
+        for fragment in children:
+            to_write.append('{}:{}'.format(fragment.mass,100.0*float(fragment.intensity)/max_intensity))
+        writer.writerow(to_write)
+
+    return response
 
 def run_network_sampler(request):
 

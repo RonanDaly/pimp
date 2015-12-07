@@ -59,7 +59,7 @@ class NetworkSampler(object):
 				tempprobs = {}
 				totalprob = 0.0
 
-				for a in self.adjacency[self.assignment[m]]:
+				for a in self.adjacency[self.assignment[m].compound]:
 					self.in_degree[a] -= 1
 
 				for k in m.annotations:
@@ -75,7 +75,7 @@ class NetworkSampler(object):
 						break
 
 				self.assignment[m] = choose
-				for a in self.adjacency[choose]:
+				for a in self.adjacency[choose.compound]:
 					self.in_degree[a] += 1
 
 				if record:
@@ -96,12 +96,12 @@ class NetworkSampler(object):
 				tempprobs = {}
 				totalprob = 0.0
 
-				for a in self.adjacency[self.assignment[m]]:
+				for a in self.adjacency[self.assignment[m].compound]:
 					self.in_degree[a] -= 1
 
 
 				for k in m.annotations:
-					tempprobs[k] = m.annotations[k] * (self.delta + self.in_degree[k])
+					tempprobs[k] = m.annotations[k] * (self.delta + self.in_degree[k.compound])
 					totalprob+=tempprobs[k]
 				
 				u = random.random()*totalprob
@@ -114,15 +114,15 @@ class NetworkSampler(object):
 
 				self.assignment[m] = choose
 
-				for a in self.adjacency[choose]:
+				for a in self.adjacency[choose.compound]:
 					self.in_degree[a] += 1
 
 				if record:
 					self.peakset.posterior_counts[m][choose] += 1
-					self.peakset.edge_counts[m][choose] += self.in_degree[choose]
+					self.peakset.edge_counts[m][choose] += self.in_degree[choose.compound]
 
 				if verbose:
-					print "Measurement: " + str(m.id) + " assigned to " + str(choose.formula) + "(" + str(self.peakset.posterior_counts[m][choose]) + ")"
+					print "Measurement: " + str(m.id) + " assigned to " + str(choose.compound.formula) + "(" + str(self.peakset.posterior_counts[m][choose]) + ")"
 
 
 	def initialise_sampler(self,verbose = False):
@@ -132,7 +132,7 @@ class NetworkSampler(object):
 		self.peakset.posterior_counts = {}
 		self.peakset.edge_counts = {}
 		self.in_degree = {}
-		for a in self.peakset.annotations:
+		for a in self.peakset.compounds:
 			self.in_degree[a] = 0
 		for m in self.peakset.measurements:
 			if m.annotations != {}:
@@ -155,7 +155,7 @@ class NetworkSampler(object):
 
 				self.assignment[m] = choose
 
-				for a in self.adjacency[choose]:
+				for a in self.adjacency[choose.compound]:
 					self.in_degree[a] += 1
 
 				if verbose:
@@ -168,8 +168,8 @@ class NetworkSampler(object):
 			edge_dict[t] = 0
 		for m1,m2 in itertools.combinations(self.peakset.measurements,2):
 			if m1.annotations != {} and m2.annotations!= {}:
-				if self.assignment[m2] in self.adjacency[self.assignment[m1]]:
-					this_edge = self.adjacency[self.assignment[m1]][self.assignment[m2]]
+				if self.assignment[m2] in self.adjacency[self.assignment[m1].compound]:
+					this_edge = self.adjacency[self.assignment[m1].compound][self.assignment[m2].compound]
 					edge_dict[this_edge] += 1
 		return edge_dict
 
@@ -203,21 +203,21 @@ class NetworkSampler(object):
 		self.adjacency = {}
 		import itertools
 		total_found = 0
-		for a in self.peakset.annotations:
+		for a in self.peakset.compounds:
 			self.adjacency[a] = {}
 		# Loop over annotations
-		for a1,a2 in itertools.combinations(self.peakset.annotations,2):
+		for a1,a2 in itertools.combinations(self.peakset.compounds,2):
 			match_t = self.can_transform(a1,a2)
 			if match_t!=None:
 				if verbose:
-					print "Found match: " + str(a1.formula) + " -> " + str(match_t.formula) + " -> " + str(a2.formula)
+					print "Found match: " + str(a1.compound.formula) + " -> " + str(match_t.formula) + " -> " + str(a2.compound.formula)
 				self.adjacency[a1][a2] = match_t
 				self.adjacency[a2][a1] = match_t
 				# self.adjacency[a1].append(a2)
 				# self.adjacency[a2].append(a1)
 				total_found += 2
 
-		print "Found " + str(total_found) + " (sparsity ratio = " + str(1.0*total_found/(1.0*len(self.peakset.annotations)**2)) + ")"
+		print "Found " + str(total_found) + " (sparsity ratio = " + str(1.0*total_found/(1.0*len(self.peakset.compounds)**2)) + ")"
 
 	def get_all_transforms(self,a1,a2):
 		tlist = []
@@ -316,12 +316,25 @@ class Measurement(object):
 	def add_peak_set(self,peakset):
 		self.peakset = peakset
 
-class Annotation(object):
-	def __init__(self,formula,name,cid,parentid):
+class Compound(object):
+	def __init__(self,cid,formula,name):
 		self.formula = Formula(formula)
 		self.name = name
 		self.id = cid
+
+
+# class Annotation(object):
+# 	def __init__(self,formula,name,cid,parentid):
+# 		self.formula = Formula(formula)
+# 		self.name = name
+# 		self.id = cid
+# 		self.parentid = parentid
+
+class Annotation(object):
+	def __init__(self,compound,parentid):
+		self.compound = compound
 		self.parentid = parentid
+
 
 class Formula(object):
 	def __init__(self,formula):

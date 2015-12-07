@@ -369,13 +369,16 @@ class NetworkSamplerForm(AnnotationQueryForm):
 
     n_samples = forms.IntegerField(
         min_value=1,
+        required = False,
         help_text="Please enter number of posterior samples (leave blank for default 1000)")
 
     n_burn = forms.IntegerField(
         min_value=1,
+        required = False,
         help_text="Please enter number of burn-in samples (leave blank for default 100)")
 
     delta = forms.DecimalField(
+        required = False,
         help_text="Please enter regularisation parameter delta")
 
     def clean(self):

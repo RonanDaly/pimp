@@ -49,6 +49,9 @@
 			</tr>
 			{% endfor %}
 		</table>
+	<p style="text-align:center;">
+		Download spectrum as <a href="{% url 'get_fragments_as_text' peak.slug 'list' %}">list</a>&nbsp;<a href="{% url 'get_fragments_as_text' peak.slug 'mona' %}">mona string</a>
+	</p>
 	{% else %}
 		<p>No peaks to display</p>
 	{% endif %}
