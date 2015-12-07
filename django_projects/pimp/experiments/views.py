@@ -31,6 +31,9 @@ import numpy as np
 from rpy2.robjects.packages import importr
 from rpy2 import robjects
 
+# Scikitlearn for the PCA
+from sklearn.decomposition import PCA
+
 from experiments.forms import *
 # import mdp
 # import matplotlib.pyplot as plt
@@ -463,11 +466,12 @@ def analysis_result(request, project_id, analysis_id):
 		log_pca_matrix = np.log2(pca_matrix)
 
 
-		from sklearn.decomposition import PCA
-
-		pca_obj = PCA(n_components=2,whiten=True)
-		pca_obj.fit(np.transpose(log_pca_matrix))
-		projected_data = pca_obj.transform(np.transpose(log_pca_matrix))
+		pca_obj = PCA(n_components=2,whiten=False)
+		pca_obj.fit(log_pca_matrix)
+		projected_data = pca_obj.transform(log_pca_matrix)
+		explained_variance = []
+		for i in range(2):
+			explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
 
 		# print "len pca matrix 1 :", pca_matrix[0][0]
 		# print "len log pca matrix 1 :", log_pca_matrix[0][0]
@@ -481,14 +485,14 @@ def analysis_result(request, project_id, analysis_id):
 		# print "pcan ",pcan.d[0],"  ",pcan.d[1]
 		# print "pcan again",pcan.d
 		# print "explained variance : ",pcan.explained_variance
-		nr, nc = log_pca_matrix.shape
-		xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
-		xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
-		stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
-		pca = stats.prcomp(xr)
+		# nr, nc = log_pca_matrix.shape
+		# xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
+		# xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
+		# stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
+		# pca = stats.prcomp(xr)
 
-		first_dim = list(pca.rx2['x'].rx(True, 1))
-		second_dim = list(pca.rx2['x'].rx(True, 2))
+		# first_dim = list(pca.rx2['x'].rx(True, 1))
+		# second_dim = list(pca.rx2['x'].rx(True, 2))
 
 		# pca_info = [pcan.d[0],pcan.d[1]]
 		pca_info = [None,None]
@@ -653,6 +657,7 @@ def analysis_result(request, project_id, analysis_id):
 			'comparison_hits_list': comparison_hits_list,
 			'potential_hits': potential_hits,
 			'tics':tics,
+			'explained_variance':explained_variance,
 		}
 		# print len(peak_set)
 		return render(request, 'base_result3.html', c)
