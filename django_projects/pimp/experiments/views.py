@@ -462,6 +462,13 @@ def analysis_result(request, project_id, analysis_id):
 		# print "after delete : ",np.where(pca_matrix == 0)[1]
 		log_pca_matrix = np.log2(pca_matrix)
 
+
+		from sklearn.decomposition import PCA
+
+		pca_obj = PCA(n_components=2,whiten=True)
+		pca_obj.fit(np.transpose(log_pca_matrix))
+		projected_data = pca_obj.transform(np.transpose(log_pca_matrix))
+
 		# print "len pca matrix 1 :", pca_matrix[0][0]
 		# print "len log pca matrix 1 :", log_pca_matrix[0][0]
 		# for yty in log_pca_matrix[0]:
@@ -488,14 +495,20 @@ def analysis_result(request, project_id, analysis_id):
 		pca_data_point = []
 		i = 0
 		j = 0
+
+
 		for member in sample_list:
 			pca_serie = [member_list[j].name]
 			for sample in member:
 				dic = []
 				dic.append(sample.name)
 				# dic.append(pcar[i][0])
-				dic.append(first_dim[i])
-				dic.append(second_dim[i])
+				# dic.append(first_dim[i])
+				# dic.append(second_dim[i])
+				# dic.append(pca_obj.components_[0,i])
+				# dic.append(pca_obj.components_[1,i])
+				dic.append(projected_data[i,0])
+				dic.append(projected_data[i,1])
 				# dic.append(pcar[i][1])
 				pca_serie.append(dic)
 				i += 1
@@ -506,7 +519,7 @@ def analysis_result(request, project_id, analysis_id):
 		print "after pca"
 		pca_stop = timeit.default_timer()
 
-		# print "pca_series: ",pca_data_point
+		print "pca_series: ",pca_data_point
 		############################################################################
 		########################## End PCA calculation #############################
 		############################################################################
