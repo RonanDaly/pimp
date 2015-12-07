@@ -6,6 +6,8 @@ getString = function(name, default) {
 	Sys.getenv(name, unset=default)
 }
 
+print('Start of script')
+
 packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
 message(paste('Setting library path to:', packratLibPath))
 .libPaths(packratLibPath)
@@ -27,6 +29,7 @@ print(analysis.id)
 if(is.na(analysis.id)) {
 	stop("Analysis ID must be an integer.")
 }
+
 
 library(PiMPDB)
 library(PiMP)
@@ -65,6 +68,7 @@ project.id <- getProjectID(db, analysis.id)
 
 DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', 'pimp_data')), 'projects')
 PROJECT_DIR = file.path(DATA_DIR, project.id)
+print(PROJECT_DIR)
 setwd(PROJECT_DIR)
 
 experiment.samples <- getExperimentSamples(db, experiment.id)
@@ -118,17 +122,25 @@ if ( con[1] == '0' ) {
 }
 
 #databases
-databases <- c("kegg", "hmdb", "lipidmaps")
-#databases <- getAnnotationDatabases(db, analysis.id)
-
+#databases <- c("kegg", "hmdb", "lipidmaps")
+databases <- getAnnotationDatabases(db, analysis.id)
+print(databases)
 #params
 param.idx <- which(analysis.params$state==1)
+print(param.idx)
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
+	print('Setting params')
 
 	for(i in 1:nrow(params)) {
+		print('Name')
+		print(params$name[i])
+		print('Value')
+		print(params$value[i])
+
 		if(params$name[i]=="ppm") {
 			xcms.params$ppm <- params$value[i]
+			mzmatch.params$ppm <- params$value[i]
 		}
 		else if(params$name[i]=="rt.alignment") {
 			mzmatch.params$rt.alignment <- "obiwarp"
@@ -146,6 +158,9 @@ if(length(param.idx) > 0) {
 		}
 	}
 }
+#message('Analysis parameters')
+print(mzmatch.params)
+#print(stds)
 
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
 

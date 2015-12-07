@@ -35,7 +35,7 @@ def populate():
     )
 
     min_detection = add_default_parameter(
-        name = "mindetection",
+        name = "mindetections",
         value = 3,
         state = True,
     )

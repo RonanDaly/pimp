@@ -73,11 +73,12 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 
 	#Generate STDs annotation XML file
 	stds <- NULL
-	if(length(standards) > 0) {
-		stds <- Pimp.stds.createAnnotationFile(files=standards, outfile=mzmatch.outputs$stds.xml.db)
+	if(length(standards) > 0 && 'standard' %in% databases) {
+		stds  <- Pimp.stds.createAnnotationFile(files=standards, outfile=mzmatch.outputs$stds.xml.db)
 	} else {
 		mzmatch.outputs$stds.xml.db <- NULL
 	}
+	databases = databases[ ! databases == 'standard']
 
 	
 	##Get external annotation database info - using our own DBs rather than the out of data MzMatch ones which are out of date.

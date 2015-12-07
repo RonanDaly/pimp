@@ -200,9 +200,9 @@ def experiment(request, project_id):
 		# print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
 		# print "parameter formset : ",parameter_formset
 		# print
-			# databases_ids = database_form.cleaned_data['databases']
-			# for db_id in databases_ids:
-			# 	params.databases.add(db_id)
+			databases_ids = database_form.cleaned_data['databases']
+			for db_id in databases_ids:
+			 	params.databases.add(db_id)
 
 			print "after databases added"
 
