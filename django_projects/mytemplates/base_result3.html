@@ -152,7 +152,7 @@
 
             var pathwayTable = set_pathwaytable();
             var peakTable = set_peaktable(peak_table_url);
-            $('#peak-table').on('click', 'tr', function() {
+            $('#peak-table tbody').on('click', 'tr', function() {
                 var averageChart = false;
 				var peaksChart = false;
 			    var data = peakTable.row(this).data();
