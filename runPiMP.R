@@ -117,7 +117,7 @@ controls <- experiment.contrasts$control
 names <- experiment.contrasts$name
 con = unlist(strsplit(controls, '-'))
 if ( con[1] == '0' ) {
-    cont = unlist(strsplit(contrasts))
+    cont = unlist(strsplit(contrasts, '-'))
     contrasts = paste0(cont[2], '-', cont[1])
 }
 

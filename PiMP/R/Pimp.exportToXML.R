@@ -100,6 +100,16 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     member.comparison.set <- newXMLNode("member_comparison_set", parent=settings)
 
     experiment.comparisons <- getExperimentComparisons(db, experiment_id)
+    for(i in nrow(experiment.comparisons)) {
+        contrasts <- experiment.comparisons$contrast
+        cntrls <- experiment.comparisons$control
+        con = unlist(strsplit(cntrls, '-'))
+        if ( con[1] == '0' ) {
+            cont = unlist(strsplit(contrasts, '-'))
+            contrasts = paste0(cont[2], '-', cont[1])
+            experiment.comparisons$contrast[i] <- contrasts
+        }
+    }
 
     for(i in 1:nrow(experiment.comparisons)) {
         member.comparison <- newXMLNode("member_comparison", attrs=c("id"=experiment.comparisons$id[i]), parent=member.comparison.set)
@@ -146,7 +156,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
     #compound.id <- 1
     for(i in 1:nrow(raw.data)) {
-        cat(paste(i,"of",nrow(raw.data),"\r"))
+        cat(paste(i,"of",nrow(raw.data), "my custom message", "\r"))
         peak.id <- rownames(raw.data)[i]
         peak <- newXMLNode("peak", attrs=c("id"=peak.id), parent=peakset)
         newXMLNode("mass", raw.data$Mass[i], parent=peak)
@@ -227,7 +237,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
             #comparisons            
         for(k in 1:nrow(experiment.comparisons)) {
-            tt <- toptables[[experiment.comparisons$name[k]]]
+            tt <- toptables[[experiment.comparisons$contrast[k]]]
             peak.idx <- match(peak.id, rownames(tt))
             if(!is.na(peak.idx) && !is.na(tt$P.Value[peak.idx])){
                 comparison <- newXMLNode("comparison", attrs=c("id"=experiment.comparisons$id[k]), parent=comparisonset) 
