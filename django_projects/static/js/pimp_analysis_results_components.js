@@ -492,121 +492,126 @@ function set_idtable(url, samplesGroupsNum, callback){
     //console.log('Indices for initial comparisons = ' + initialComparisonIdx);
 
 	var idTable = $('#identification-table').dataTable( {
-					"sAjaxSource": url,
-					"sDom": '<"identification-table_wrapper_toolbar"CliT>rtp',
-                    "oColVis": {
-                        "sButtonText": "Switch display",
-                        "aiExclude": excludeColIdx,
-                        "aoGroups": [
-                            {
-                                "sTitle": "Samples",
-                                "aiColumns": sampleIdxArray
-                            },
-                            {
-                                "sTitle": "Conditions",
-                                //"aiColumns": groupIdxArray.concat(comparisonIdxArray)
-                                "aiColumns": comparisonIdxArray
-                            }
-                        ]
-                    },
-                    "createdRow": function(row, data, index) {
-                        // Set the background-color of the comparison logfc columns to match their values
-                        // Adapted from data.models.PeakDtComparison.get_fold_change_colour
-                        //console.log(data);
+        "sAjaxSource": url,
+        "sDom": '<"identification-table_wrapper_toolbar"CliT>rtp',
+        "oColVis": {
+            "sButtonText": "Switch display",
+            "aiExclude": excludeColIdx,
+            "aoGroups": [
+                {
+                    "sTitle": "Samples",
+                    "aiColumns": sampleIdxArray
+                },
+                {
+                    "sTitle": "Conditions",
+                    //"aiColumns": groupIdxArray.concat(comparisonIdxArray)
+                    "aiColumns": comparisonIdxArray
+                }
+            ]
+        },
+        "createdRow": function (row, data, index) {
+            // Set the background-color of the comparison logfc columns to match their values
+            // Adapted from data.models.PeakDtComparison.get_fold_change_colour
+            //console.log(data);
 
-                        // Choose the colour based on the logfc and apply it to the cell
-                        for (var idx in comparisonIdxArray) {
+            // Choose the colour based on the logfc and apply it to the cell
+            for (var idx in comparisonIdxArray) {
 
-                            var colours = [];
+                var colours = [];
 
-                            //console.log(parseFloat(data[comparisonIdxArray[idx]]));
+                //console.log(parseFloat(data[comparisonIdxArray[idx]]));
 
-                            if (parseFloat(data[comparisonIdxArray[idx]]) > 0) {
-                                colours = up_colours;
-                                //console.log("LogFC was > 0! " + parseFloat(data[comparisonIdxArray[idx]]));
-                            } else {
-                                colours = down_colours;
-                                //console.log("LogFC was < 0! " + parseFloat(data[comparisonIdxArray[idx]]));
-                            }
+                if (parseFloat(data[comparisonIdxArray[idx]]) > 0) {
+                    colours = up_colours;
+                    //console.log("LogFC was > 0! " + parseFloat(data[comparisonIdxArray[idx]]));
+                } else {
+                    colours = down_colours;
+                    //console.log("LogFC was < 0! " + parseFloat(data[comparisonIdxArray[idx]]));
+                }
 
-                            var logFc = Math.abs(parseFloat(data[comparisonIdxArray[idx]]));
+                var logFc = Math.abs(parseFloat(data[comparisonIdxArray[idx]]));
 
 
-                            var colour = null;
-                            for (var i in fold_change_bins) {
-                                if (logFc > fold_change_bins[i]) {
-                                    colour = colours[i];
-                                    //console.log("The colour will be changed to " + colour);
+                var colour = null;
+                for (var i in fold_change_bins) {
+                    if (logFc > fold_change_bins[i]) {
+                        colour = colours[i];
+                        //console.log("The colour will be changed to " + colour);
 
-                                    //console.log($('td', row).eq(initialComparisonIdx[idx]).val());
-                                    $('td', row).eq(initialComparisonIdx[idx]).css('background-color', colour);
+                        //console.log($('td', row).eq(initialComparisonIdx[idx]).val());
+                        $('td', row).eq(initialComparisonIdx[idx]).css('background-color', colour);
 
-                                    //console.log("The colour is now ", $('td', row).eq(initialComparisonIdx[idx]).css('background-color'));
+                        //console.log("The colour is now ", $('td', row).eq(initialComparisonIdx[idx]).css('background-color'));
 
-                                    break;
-                                }
-                            }
+                        break;
+                    }
+                }
 
+            }
+            //$('td', row).css('text-decoration', 'line-through');
+        },
+        "tableTools": {
+            "sSwfPath": "/static/swf/copy_csv_xls.swf",
+            "aButtons": [
+                {
+                    "sExtends": "copy",
+                    "sButtonText": "Copy",
+                    "mColumns": "visible",
+                    "sToolTip": "Copy to clipboard"
+                },
+                {
+                    "sExtends": "collection",
+                    "sButtonText": "Export",
+                    "aButtons": [
+                        {
+                            "sExtends": "csv",
+                            "sButtonText": "csv",
+                            "mColumns": "visible",
+                            "sFileName": "compounds.csv",
+                            "sToolTip": "Save as CSV"
+                        },
+                        {
+                            "sExtends": "xls",
+                            "sButtonText": "xls",
+                            "mColumns": "visible",
+                            "sFileName": "compounds.xls",
+                            "sToolTip": "Save as XLS"
                         }
-                        //$('td', row).css('text-decoration', 'line-through');
-                    },
-					"tableTools": {
-			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
-			            "aButtons": [
-			                {
-                    			"sExtends": "copy",
-                    			"sButtonText": "Copy",
-                    			"mColumns": "visible",
-                    			"sToolTip": "Copy to clipboard"
-                			},
-			                {
-			                    "sExtends":    "collection",
-			                    "sButtonText": "Export",
-			                    "aButtons":    [
-			                    	{
-					                    "sExtends": "csv",
-					                    "sButtonText": "csv",
-					                    "mColumns": "visible",
-					                    "sFileName": "compounds.csv",
-					                    "sToolTip": "Save as CSV"
-                					},
-                					{
-                    					"sExtends": "xls",
-                    					"sButtonText": "xls",
-                    					"mColumns": "visible",
-                    					"sFileName": "compounds.xls",
-                    					"sToolTip": "Save as XLS"
-                					}
-                				]
-			                }
-			            ]
-			        },
-					"bPaginate": true,
-					"sPaginationType": "full_numbers",
-					"iDisplayLength": 100,
-					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumnDefs": [
-						{ /* compound ID, peak ID, superPathways, pathways */
-							"aTargets": [0, 1, 4, 5],
-							"bSearchable": false,
-							"bVisible": false
-						},
-						{ /* samples */
-							"aTargets": sampleIdxArray,
-							"bSearchable": false,
-							"bVisible": false
-						},
-                        { // comparisons
-                            "aTargets": comparisonIdxArray,
-                            "sType": 'numeric-ignore-NA'
-                        }
-					],
-					"fnDrawCallback":function (oSettings) {
-						console.log("data finished loaded");
-						table_received = this;
-						callback && callback.call(this, table_received);
-					}
-	});
+                    ]
+                }
+            ]
+        },
+        "bPaginate": true,
+        "sPaginationType": "full_numbers",
+        "iDisplayLength": 100,
+        "aLengthMenu": [100, 250, 500, 1000],
+        "aoColumnDefs": [
+            { // compound ID, peak ID
+                "aTargets": [0, 1,],
+                "bSearchable": false,
+                "bVisible": false
+            },
+            { // superpathways pathways
+                "aTargets": [4, 5],
+                "bSearchable": true,
+                "bVisible": false
+            },
+            { // samples
+                "aTargets": sampleIdxArray,
+                "bSearchable": false,
+                "bVisible": false
+            },
+            { // comparisons
+                "aTargets": comparisonIdxArray,
+                "sType": 'numeric-ignore-NA'
+            }
+        ],
+        "fnDrawCallback": function (oSettings) {
+            console.log("data finished loaded");
+            table_received = this;
+            callback && callback.call(this, table_received);
+        }
+    });
 
     // console.log(excludeColIdx);
 
@@ -614,6 +619,7 @@ function set_idtable(url, samplesGroupsNum, callback){
 
 	return idTable;
 }
+
 
 function set_pathwaytable(){
 	var pathwayTable = $('#pathway-table').dataTable( {
