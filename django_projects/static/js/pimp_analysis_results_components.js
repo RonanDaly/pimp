@@ -415,7 +415,7 @@ jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-desc'] = function(a, b) {
 
 };
 
-function set_idtable(url, samplesGroupsNum, callback){
+function set_idtable(url, samplesGroupsNum){
     // Function to create the metabolites table using dataTables
 
     // samplesGroupsNum is an array, where index [0] is the number of samples, [1] is the number of groups, and [2] is
@@ -491,7 +491,7 @@ function set_idtable(url, samplesGroupsNum, callback){
     }
     //console.log('Indices for initial comparisons = ' + initialComparisonIdx);
 
-	var idTable = $('#identification-table').dataTable( {
+	var idTable = $('#identification-table').DataTable( {
         "sAjaxSource": url,
         "sDom": '<"identification-table_wrapper_toolbar"CliT>rtp',
         "oColVis": {
@@ -548,7 +548,7 @@ function set_idtable(url, samplesGroupsNum, callback){
                 }
 
             }
-            //$('td', row).css('text-decoration', 'line-through');
+
         },
         "tableTools": {
             "sSwfPath": "/static/swf/copy_csv_xls.swf",
@@ -605,12 +605,12 @@ function set_idtable(url, samplesGroupsNum, callback){
                 "aTargets": comparisonIdxArray,
                 "sType": 'numeric-ignore-NA'
             }
-        ],
-        "fnDrawCallback": function (oSettings) {
-            console.log("data finished loaded");
-            table_received = this;
-            callback && callback.call(this, table_received);
-        }
+        ]
+        //"fnDrawCallback": function (oSettings) {
+        //    console.log("data finished loaded");
+        //    table_received = this;
+        //    callback && callback.call(this, table_received);
+        //}
     });
 
     // console.log(excludeColIdx);
@@ -689,7 +689,7 @@ jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
 };
 
 function set_peaktable(url, callback){
-	var peakTable = $('#peak-table').dataTable( {
+	var peakTable = $('#peak-table').DataTable( {
 					// "sDom": '<"toolbar">frtip',
 					// "sDom": 't',
 					"sAjaxSource": url,

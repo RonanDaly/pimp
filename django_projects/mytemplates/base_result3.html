@@ -140,80 +140,36 @@
 			set_navbar();
 			// Generate identification table with callback for click event
 
-            // var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ member_list|length }}, {{ comparisons|length }}]; // [num samples, num groups, num comparisons]
             var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
 
-			var idTable = set_idtable(id_table_url, samplesGroupsNum, function(){
-				set_idtable_click(table_received);
-			});
+			var idTable = set_idtable(id_table_url, samplesGroupsNum);
+            $('#identification-table tbody').on('click', 'tr', function() {
+                // When a tr is clicked, update the right panel with information about the contents of the tr
+                var data = idTable.row(this).data();
+                var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+                updateIdentificationRightPanel(data, innerSidePanel);
+            });
 
             var pathwayTable = set_pathwaytable();
-			var peakTable = set_peaktable(peak_table_url, function(){
-				set_peaktable_click(peak_table_received);
-			});
-			var comparisonTable = set_comparisontable();
-			var potentialsTable = set_potentialstable();
-
-			function set_idtable_click(table_received){
-				console.log(table_received);
-				table_received.$('tr').click( function () {
-
-					// get data from the row clicked as an array
-				    var data = table_received.fnGetData( this );
-					// console.log(data);
-
-				    // remove any row selection from the table
-				    $(table_received.fnSettings().aoData).each(function (){
-						$(this.nTr).removeClass('row_selected');
-					});
-
-					// set the clicked row as selected
-					var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-					// extract header information in an array
-					var headerInfo = new Array();
-					$.each(table_received.dataTableSettings[0].aoColumns, function(i,v) {
-						headerInfo.push(v.sTitle);
-					});
-
-					// get the right side panel div that has to be updated
-					var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-
-					// send info to update right panel
-					updateIdentificationRightPanel(data,headerInfo,innerSidePanel);
-			});
-			}
-
-			function set_peaktable_click(peak_table_received){
-				peak_table_received.$('tr').click( function () {
-				// get data from the row clicked as an array
-				var averageChart = false;
+            var peakTable = set_peaktable(peak_table_url);
+            $('#peak-table').on('click', 'tr', function() {
+                var averageChart = false;
 				var peaksChart = false;
-			    var data = peak_table_received.fnGetData( this );
+			    var data = peakTable.row(this).data();
 
-			    // remove any row selection from the table
-			    $(peak_table_received.fnSettings().aoData).each(function (){
-					$(this.nTr).removeClass('row_selected');
-				});
+                var headers = peakTable.row(this).columns([0, 1, 2, data.length - 1]).header();
+                var headerInfoToPass = [];
 
-				// set the clicked row as selected
-				var selectedRow = $(event.target.parentNode).addClass('row_selected');
+                $.each(headers, function(idx) {
+                    headerInfoToPass.push($(headers[idx]).html());
+                })
 
-				// extract header information in an array
-				var headerInfo = new Array();
-				$.each(peak_table_received.dataTableSettings[2].aoColumns, function(i,v) {
-					headerInfo.push(v.sTitle);
-				});
+                var rowInfo = [data[0], data[1], data[2], data[data.length - 1]];
 
-				// get the right side panel div that has to be updated
-				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+                var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+                updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
 
-				headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
-				rowInfo = [data[0],data[1],data[2],data[data.length-1]];
-
-				// send info to update right panel
-				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
-				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+                var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
 				$(loadingPan).appendTo($(innerSidePanel));
 				var ajax_data = {"id":rowInfo[0]};
 
@@ -271,7 +227,9 @@
 		        });
 				// Debug uncomment to here
 			});
-			}
+
+			var comparisonTable = set_comparisontable();
+			var potentialsTable = set_potentialstable();
 
 			// ***********************************************************************************************
 			// ******************************** End sparkline plot generation ********************************
@@ -567,34 +525,6 @@
         	});
 			{% endfor %}
 
-
-			// idTable.$('tr').click( function () {
-
-			// 	// get data from the row clicked as an array
-			//     var data = idTable.fnGetData( this );
-
-			//     // remove any row selection from the table
-			//     $(idTable.fnSettings().aoData).each(function (){
-			// 		$(this.nTr).removeClass('row_selected');
-			// 	});
-
-			// 	// set the clicked row as selected
-			// 	var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-			// 	// extract header information in an array
-			// 	var headerInfo = new Array();
-			// 	$.each(idTable.dataTableSettings[0].aoColumns, function(i,v) {
-			// 		headerInfo.push(v.sTitle);
-			// 	});
-
-			// 	// get the right side panel div that has to be updated
-			// 	var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-
-			// 	// send info to update right panel
-			// 	updateIdentificationRightPanel(data,headerInfo,innerSidePanel);
-			// });
-
-
 			pathwayTable.$('tr').click( function () {
 
 				// get data from the row clicked as an array
@@ -714,93 +644,6 @@
 			});
 
 
-			// peakTable.$('tr').click( function () {
-			// 	// get data from the row clicked as an array
-			// 	var averageChart = false;
-			// 	var peaksChart = false;
-			//     var data = peakTable.fnGetData( this );
-
-			//     // remove any row selection from the table
-			//     $(peakTable.fnSettings().aoData).each(function (){
-			// 		$(this.nTr).removeClass('row_selected');
-			// 	});
-
-			// 	// set the clicked row as selected
-			// 	var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-			// 	// extract header information in an array
-			// 	var headerInfo = new Array();
-			// 	$.each(peakTable.dataTableSettings[2].aoColumns, function(i,v) {
-			// 		headerInfo.push(v.sTitle);
-			// 	});
-
-			// 	// get the right side panel div that has to be updated
-			// 	var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-
-			// 	headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
-			// 	rowInfo = [data[0],data[1],data[2],data[data.length-1]];
-
-			// 	// send info to update right panel
-			// 	updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
-			// 	var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
-			// 	$(loadingPan).appendTo($(innerSidePanel));
-			// 	var ajax_data = {"id":rowInfo[0]};
-
-			// 	var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
-
-			// 	$.ajax({
-			// 		type: "GET",
-			// 		traditional : true,
-		 //            url: url,
-		 //            // async: false,
-		 //            data: ajax_data,
-		 //            success: function(response){
-		 //            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-			// 			var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
-
-			// 			averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
-			// 			$(loadingPan).before($(averageIntensityChart));
-
-			// 			averageChart = true;
-			// 			if (averageChart && peaksChart){
-			// 				$(loadingPan).remove();
-			// 			}
-		 //            },
-		 //            error: function(){
-		 //        		alert("Error");
-		 //        	}
-		 //        });
-			// 	// Debug uncomment from here
-		 //        var data = {"id":rowInfo[0],"ppm":ppm,"rtwindow":rtwindow};
-
-			// 	var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
-
-			// 	$.ajax({
-			// 		type: "GET",
-			// 		traditional : true,
-		 //            url: url,
-		 //            // async: false,
-		 //            data: data,
-		 //            success: function(response){
-		 //            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-			// 			var peakChart = $('<div class="span12" style="margin-left:0px;"></div>');
-
-			// 			createPeaksChromatogram(chartWidth, peakChart, response);
-
-			// 			$(loadingPan).before($(peakChart));
-
-			// 			peaksChart = true;
-			// 			if (averageChart && peaksChart){
-			// 				$(loadingPan).remove();
-			// 			}
-		 //            },
-		 //            error: function(){
-		 //        		alert("Error");
-		 //        	}
-		 //        });
-			// 	// Debug uncomment to here
-			// });
-
 			$(".peak_id").click( function() {
 
 				var ajax_data = {"id":$(this).html()};
@@ -892,7 +735,6 @@
 		        });
 
 			}
-
 
 			comparisonTable.$('tr').click( function () {
 				// get data from the row clicked as an array
@@ -1295,7 +1137,7 @@
                     });
                 });
 
-			function updateIdentificationRightPanel(rowInfo, header, innerSidePanel) {
+			function updateIdentificationRightPanel(rowInfo, innerSidePanel) {
                 // Function to add metabolite information to the right side pane in the metabolites tab, where the
                 // metabolite information is taken from the metabolite row that is clicked in the main table.
 				$(innerSidePanel).empty();
