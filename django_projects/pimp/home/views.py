@@ -21,6 +21,9 @@ def index(request):
 def about(request):
 	return render(request, 'about.html', {"home": True})
 
+def credits(request):
+	return render(request, 'credits.html', {})
+
 def chemical_library(request):
 	return render(request, 'chemical_library.html', {"home": True})
 	
