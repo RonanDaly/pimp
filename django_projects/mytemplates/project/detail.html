@@ -2378,7 +2378,7 @@ $(document).ready(function() {
 										</div>
 										<div class="row-fluid">
 											<div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
-												<img id="pic" src="{{ STATIC_URL }}/img/mzxml-icon.png" alt="The Scream" width="45">
+												<img id="pic" src="{{ STATIC_URL }}/img/mzxml-icon.png" width="45">
 											</div>
 											<div class="span4 user-span bold" style="padding-top: 10px;">
 												{% if project.calibrationsample_set.all %}
@@ -2392,7 +2392,7 @@ $(document).ready(function() {
 										</div>
 										<div class="row-fluid">
 											<div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
-												<img id="pic" src="{{ STATIC_URL }}/img/icon-csv.png" alt="The Scream" width="45">
+												<img id="pic" src="{{ STATIC_URL }}/img/icon-csv.png" width="45">
 											</div>
 											<div class="span4 user-span bold" style="padding-top: 10px;">
 												{% if project.calibrationsample_set.all %}
@@ -2449,12 +2449,18 @@ $(document).ready(function() {
 											</div>
 											<div class="span4 user-span bold">
 												<ul style="text-align:center;">
-													<li>Polarity</li>
+                                                    {% if attribute.name == 'standard' %}
+													<li>File type</li>
+                                                    {% else %}
+                                                    <li>Polarity</li>
+                                                    {% endif %}
 												</ul>
 											</div>
 											<div class="span4 user-span bold">
 												<ul style="text-align:center;">
+                                                    {% if attribute.name != 'standard' %}
 													<li>TIC</li>
+                                                    {% endif %}
 												</ul>
 											</div>
 										</div>
@@ -2472,7 +2478,9 @@ $(document).ready(function() {
 											</div>
 											<div class="span4 user-span">
 												<ul>
+                                                    {% if attribute.name != 'standard' %}
 													<li><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-calibration" data-toggle="tooltip" title="tic viewer soon" data-placement="left"></a></li>
+                                                    {% endif %}
 												</ul>
 											</div>
 	  									</div>
