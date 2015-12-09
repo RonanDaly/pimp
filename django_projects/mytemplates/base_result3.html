@@ -338,7 +338,6 @@
 			});
 
 			var comparisonTable = set_comparisontable();
-			var potentialsTable = set_potentialstable();
 
 			// ***********************************************************************************************
 			// ******************************** End sparkline plot generation ********************************
@@ -1696,7 +1695,6 @@
 					<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Metabolic Maps</a></li>
 					<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
 					<li id="peaks-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#peaks" style="float:left;">Peaks</a></li>
-					<li id="potentials-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#potentials" style="float:left;">Potentials</a></li>
 					<li class="dropdown" style="float:left;margin:0px;height:37px;margin-left:20px;">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">More<b id="nav-bar-caret" class="caret"></b></a>
 						<ul class="dropdown-menu" id="dropdown-comparison-menu" style="min-width:100px;">
@@ -2169,43 +2167,6 @@
 						                  {% endfor %}
 						                </tr>
 						              </thead>
-						            </table>
-								</div>
-							</div>
-						</div>
-						<div class="myspan3" style="height:100%;">
-							<div class="row-fluid">
-								<div class="right-side-bar-inner">
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div id="potentials" class="tab-pane">
-					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
-						<div class="myspan9" style="height:100%;">
-							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
-								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
-									<table id="potentials-table" class="table table-striped">
-						              <thead>
-						                <tr>
-						                  <th>ID</th>
-						                  <th>Mass</th>
-						                  <th>RT</th>
-						                  <th>Comparison</th>
-						                </tr>
-						              </thead>
-						              <tbody>
-						              	{% for potential in potential_hits %}
-						              	<tr>
-						              		<td>{{ potential.0 }}</td>
-						              		<td>{{ potential.1|floatformat:"-2" }}</td>
-						              		<td>{{ potential.2|floatformat:"-2" }}</td>
-						              		<td>{{ potential.3 }}</td>
-						              	</tr>
-						              	{% endfor %}
-						              </tbody>
-						              <!-- test -->
 						            </table>
 								</div>
 							</div>
