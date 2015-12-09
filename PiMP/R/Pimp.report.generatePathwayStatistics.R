@@ -45,14 +45,16 @@ Pimp.report.generatePathwayStatistics <- function(pathways=pathways, compound.in
 
 .get.identified.compounds.by.pathways <- function(ids=character(), compounds2Pathways=list()) {
 	compounds.id.by.pathway <- list()
-	for(i in 1:length(ids)) {
-		# compound.pathways <- names(compounds2Pathways[[paste('cpd:',ids[i],sep="")]])
+	#for(i in 1:length(ids)) {
+	for ( id in ids ) {
+
+		# compound.pathways <- names(compounds2Pathways[[paste('cpd:',id,sep="")]])
 		#print(ids[i])
-		compound.pathways <- compounds2Pathways[[ids[i]]]
+		compound.pathways <- compounds2Pathways[[id]]
 		if(!is.null(compound.pathways)) {
 			for(cp in 1:length(compound.pathways)) {
 				pathway <- compound.pathways[cp]
-				compounds.id.by.pathway[[pathway]] <- append(compounds.id.by.pathway[[pathway]], ids[i])
+				compounds.id.by.pathway[[pathway]] <- append(compounds.id.by.pathway[[pathway]], id)
 			}
 		}
 	}

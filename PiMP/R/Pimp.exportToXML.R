@@ -237,7 +237,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
             #comparisons            
         for(k in 1:nrow(experiment.comparisons)) {
-            tt <- toptables[[experiment.comparisons$contrast[k]]]
+            tt <- toptables[[experiment.comparisons$name[k]]]
             peak.idx <- match(peak.id, rownames(tt))
             if(!is.na(peak.idx) && !is.na(tt$P.Value[peak.idx])){
                 comparison <- newXMLNode("comparison", attrs=c("id"=experiment.comparisons$id[k]), parent=comparisonset) 
@@ -275,7 +275,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
     pathway.compounds <- identification[which(identification$DB=="kegg"),]    
 
-    for(i in 1:nrow(pathway.stats)) {
+    for(i in seq(length = nrow(pathway.stats))) {
         pathway <- newXMLNode("pathway", attrs=c("id"=pathway.stats$id[i]), parent=pathwayset)
         newXMLNode("name", pathway.stats$name[i], parent=pathway)
         newXMLNode("compound_number", pathway.stats$number.compounds[i], parent=pathway)

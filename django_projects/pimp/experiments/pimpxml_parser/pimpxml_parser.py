@@ -985,10 +985,11 @@ class Xmltree:
 		"""
 
 		pathways = self.tree.xpath("//pathway")
-		if len(pathways) > 0:
-			return pathways
-		else:
-			return None	
+		return pathways
+		#if len(pathways) > 0:
+		#	return pathways
+		#else:
+		#	return None
 
 
 	def getPathwayId(self,pathway):
