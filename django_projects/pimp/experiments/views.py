@@ -9,6 +9,7 @@ from django.forms.formsets import formset_factory, BaseFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 # models
 from projects.models import Project
 from data.models import *
@@ -197,9 +198,9 @@ def experiment(request, project_id):
             # print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
             # print "parameter formset : ",parameter_formset
             # print
-            # databases_ids = database_form.cleaned_data['databases']
-            # for db_id in databases_ids:
-            # 	params.databases.add(db_id)
+            databases_ids = database_form.cleaned_data['databases']
+            for db_id in databases_ids:
+            	params.databases.add(db_id)
 
             print "after databases added"
 
@@ -888,8 +889,7 @@ def analysis_result(request, project_id, analysis_id):
              'potential_hits': potential_hits,
 			'tics':tics,
 			'explained_variance':explained_variance,
-             }
-        # print len(peak_set)
+        }
         return render(request, 'base_result3.html', c)
 
 

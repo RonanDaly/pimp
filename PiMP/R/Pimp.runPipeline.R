@@ -170,8 +170,13 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	compound.std.ids <- unique(as.character(identification$DBID[which(identification$DB=="kegg" & identification$publishable=="Identified")]))
 	compound.info <- identification[which(identification$DB=="kegg"),]
 
-	identified.compounds.by.pathway <- .get.identified.compounds.by.pathways(ids=compound.ids, compounds2Pathways=compounds2Pathways)
-	pathway.stats <- Pimp.report.generatePathwayStatistics(pathways=pathways, compound.info=compound.info, compound.std.ids=compound.std.ids, identified.compounds.by.pathway=identified.compounds.by.pathway, toptables=toptables)
+	if ( 'kegg' %in% databases ) {
+		identified.compounds.by.pathway <- .get.identified.compounds.by.pathways(ids=compound.ids, compounds2Pathways=compounds2Pathways)
+		pathway.stats <- Pimp.report.generatePathwayStatistics(pathways=pathways, compound.info=compound.info, compound.std.ids=compound.std.ids, identified.compounds.by.pathway=identified.compounds.by.pathway, toptables=toptables)
+	} else {
+		identified.compounds.by.pathway = list()
+		pathway.stats = data.frame()
+	}
 
 	#excel
 	if("excel" %in% reports) {

@@ -88,8 +88,8 @@ Requires: lattice
 
 Package: PiMP
 Source: source
-Version: 0.1-2
-Hash: 54f1f8bf8b1c3563a31e429eb7244bd2
+Version: 0.1-3
+Hash: 8171b8551c3dec0243b0c8fbe1b8a62e
 Requires: RColorBrewer, RCurl, RJSONIO, XLConnect, XML, digest,
     doParallel, foreach, gptk, gtools, impute, limma, mzmatch.R,
     outliers, rJava
@@ -97,8 +97,8 @@ SourcePath: ./PiMP
 
 Package: PiMPDB
 Source: source
-Version: 1.0-2
-Hash: 31dbe6742a9db0ede01d6f7aa27c7850
+Version: 1.0-3
+Hash: 13d2e281024d5006554e7a82e809a2f5
 Requires: DBI, RUnit
 SourcePath: ./PiMPDB
 
