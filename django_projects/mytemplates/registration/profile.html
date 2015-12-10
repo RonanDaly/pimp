@@ -1,13 +1,91 @@
-{% extends "base.html" %}
+{% extends "base_bs3.html" %}
 
 {% block head %}
 {% endblock %}
 
 {% block content %}
 {% if user.is_authenticated %}
-		<p>{{user}}, welcome to your profile page {{ user.first_name }} {{ user.last_name }}</p>
-		<p>email address : {{user.email}}</p>
-		<p>There is currently no news to display on your profile</p>
+        <div class="page-header">
+            <h1>Welcome <small>{{ user.first_name }} {{ user.last_name }}</small></h1>
+            <p class="lead">Last login: {{ user.last_login }}</p>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4>User info</h4>
+            </div>
+            <div class="panel-body">
+                <p>Username: {{user}}</p>
+                <p>Email address: {{user.email}}</p>
+                {% if project_ids|length > 0 %}
+                    <p>Total projects: {{ total_projects }}</p>
+                    <p>Number of owned projects: {{ owned_projects|length }}</p>
+                {% else %}
+                    <p>You have no projects. Create one <a href="{% url 'newproject' %}">here</a></p>
+                {% endif %}
+                {% if collaborated_projects|length > 0 %}
+                <p>Number of collaborative projects: {{ collaborated_projects|length }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if collaborators|length > 0 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4>Collaborators</h4>
+                </div>
+                <div class="panel-body">
+                    <p>Number of collaborators: {{ collaborators|length }}</p>
+
+                    <div class="container">
+                        <div class="row">
+                            {% for collaborator in collaborators %}
+                                    <div class="col-md-4"><ul class="list-unstyled"><li style="text-align: center";>{{ collaborator.first_name }} {{ collaborator.last_name }}</li></ul></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div><!--/panel-body-->
+            </div>
+        {% endif %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4>Storage</h4>
+            </div>
+
+            <div class="panel-body">
+                {% if owned_projects|length > 0 %}
+{#                <div>#}
+{#                    <h4><span class="label pull-right label-info" style="margin-left: 1em;">{{ total_storage|filesizeformat }}</span></h4>#}
+{#                    <div class="progress">#}
+{#                        <div class="progress-bar progress-bar-info" style="width: {{ storage_taken_percent.samples }}%; background-color: rgb(234,175,53); background-img: none;">#}
+{#                            Samples#}
+{#                        </div>#}
+{#                        <div class="progress-bar progress-bar-info" style="width: {{ storage_taken_percent.calibration_samples }}%; background-color: rgb(88,132,193);">#}
+{#                            Calibration samples#}
+{#                        </div>#}
+{##}
+{#                    </div>#}
+{#                </div>#}
+                <h4>Sample storage</h4>
+                <p>{{ storage_taken.samples|filesizeformat }}</p>
+                <h4>Calibration sample storage</h4>
+                <p>{{ storage_taken.calibration_samples|filesizeformat }}</p>
+                <h4>Total used</h4>
+                <p>{{ storage_used|filesizeformat }}</p>
+                {% endif %}
+{#                <h4>Total storage</h4>#}
+{#                <p>{{ total_storage|filesizeformat }} ({{ storage_remaining|filesizeformat }} left) </p>#}
+
+            </div>
+        </div>
+
+        {% if user.username == 'GavinB' %}
+            <p>Fixed your Java issue!</p>
+        {% endif %}
+
+
 	{% endif %}
 
 {% endblock %}

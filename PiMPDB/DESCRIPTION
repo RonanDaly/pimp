@@ -1,7 +1,7 @@
 Package: PiMPDB
 Type: Package
 Title: Connection and querying of PiMP relational database
-Version: 1.0-2
+Version: 1.0-3
 Date: 2014-05-08
 Author: Fraser Morton
 Maintainer: Fraser Morton q<fraser.morton@glasgow.ac.uk>
