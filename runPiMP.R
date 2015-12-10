@@ -112,22 +112,21 @@ if(length(blank.idx) > 0) {
 }
 
 #comparisons
-contrasts <- experiment.contrasts$contrast
+fetchedContrasts <- experiment.contrasts$contrast
 controls <- experiment.contrasts$control
 names <- experiment.contrasts$name
-con = unlist(strsplit(controls, '-'))
-if ( con[1] == '0' ) {
-    cont = unlist(strsplit(contrasts, '-'))
-    contrasts = paste0(cont[2], '-', cont[1])
+contrasts = c()
+for ( i in 1:length(fetchedContrasts) ) {
+	con = unlist(strsplit(controls[i], '-'))
+	if ( con[1] == '0' ) {
+    	cont = unlist(strsplit(fetchedContrasts[i], '-'))
+    	fetchedContrasts[i] = paste0(cont[2], '-', cont[1])
+	}
+	contrasts = append(contrasts, fetchedContrasts[i])
 }
-
-#databases
-#databases <- c("kegg", "hmdb", "lipidmaps")
 databases <- getAnnotationDatabases(db, analysis.id)
 print(databases)
-#params
 param.idx <- which(analysis.params$state==1)
-print(param.idx)
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
 	print('Setting params')
@@ -158,6 +157,13 @@ if(length(param.idx) > 0) {
 		}
 	}
 }
+
+#print(groups)
+#print(contrasts)
+#print(names)
+#print(analysis.id)
+#stop()
+
 #message('Analysis parameters')
 print(mzmatch.params)
 #print(stds)

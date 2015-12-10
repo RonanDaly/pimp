@@ -12,8 +12,7 @@ Pimp.report.generateIdentifications <- function(raw.data=data.frame(), databases
 	#create vector of all DBs for identification
 	if(is.null(stds.db) || !file.exists(stds.db)) {
 		all.databases <- databases
-	}
-	else {
+	} else {
 		all.databases <- c(databases, stds.db)
 	}
 

@@ -9,6 +9,7 @@ from django.forms.formsets import formset_factory, BaseFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 # models
 from projects.models import Project
 from data.models import *
@@ -197,9 +198,9 @@ def experiment(request, project_id):
             # print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
             # print "parameter formset : ",parameter_formset
             # print
-            # databases_ids = database_form.cleaned_data['databases']
-            # for db_id in databases_ids:
-            # 	params.databases.add(db_id)
+            databases_ids = database_form.cleaned_data['databases']
+            for db_id in databases_ids:
+            	params.databases.add(db_id)
 
             print "after databases added"
 
@@ -686,12 +687,12 @@ def analysis_result(request, project_id, analysis_id):
         log_pca_matrix = np.log2(pca_matrix)
 
 
-		pca_obj = PCA(n_components=2,whiten=False)
-		pca_obj.fit(log_pca_matrix)
-		projected_data = pca_obj.transform(log_pca_matrix)
-		explained_variance = []
-		for i in range(2):
-			explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
+        pca_obj = PCA(n_components=2,whiten=False)
+        pca_obj.fit(log_pca_matrix)
+        projected_data = pca_obj.transform(log_pca_matrix)
+        explained_variance = []
+        for i in range(2):
+            explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
 
         # print "len pca matrix 1 :", pca_matrix[0][0]
         # print "len log pca matrix 1 :", log_pca_matrix[0][0]
@@ -731,8 +732,8 @@ def analysis_result(request, project_id, analysis_id):
 				# dic.append(second_dim[i])
 				# dic.append(pca_obj.components_[0,i])
 				# dic.append(pca_obj.components_[1,i])
-				dic.append(projected_data[i,0])
-				dic.append(projected_data[i,1])
+                dic.append(projected_data[i,0])
+                dic.append(projected_data[i,1])
                 # dic.append(pcar[i][1])
                 pca_serie.append(dic)
                 i += 1
@@ -743,7 +744,7 @@ def analysis_result(request, project_id, analysis_id):
         print "after pca"
         pca_stop = timeit.default_timer()
 
-		print "pca_series: ",pca_data_point
+        print "pca_series: ",pca_data_point
         ############################################################################
         ########################## End PCA calculation #############################
         ############################################################################
@@ -884,8 +885,7 @@ def analysis_result(request, project_id, analysis_id):
              'potential_hits': potential_hits,
 			'tics':tics,
 			'explained_variance':explained_variance,
-             }
-        # print len(peak_set)
+        }
         return render(request, 'base_result3.html', c)
 
 
