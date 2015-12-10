@@ -233,17 +233,19 @@ $(function() {
 {% endblock %}
 
 {% block content %}
-<div class="row" style="margin-bottom:10px;">
-  <div class="span12" style="float:none;margin: 0 auto;text-align:center; margin-top: 20px;">
-    <div class="alert">
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-      <strong>Warning!</strong> Registration is currently closed and will open soon, for more information about software release, training course and workshop please contact <a href="http://www.polyomics.gla.ac.uk/enquiry.php" target="_blank">Glasgow Polyomics</a>
-    </div>
-  </div>
-</div>
-<div class="row title-row">
-  <div class="span12" style="float:none;margin: 0 auto;text-align:center; margin-top: 20px;">
-    <h3><img src="{{ STATIC_URL }}img/PiMP_logo_no_background.png" class="img-polaroid" style="border-radius: 500px;width: 123px;">  An integrated, web-enabled tool for LC-MS data analysis and visualization</h3>
+    {% if not registration %}
+        <div class="row">
+          <div class="span12" style="float:none;margin: 0 auto;text-align:center; margin-top: 20px;">
+            <div class="alert"  style="margin-bottom: 0;">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              <strong>Warning!</strong> Registration is currently closed and will open soon, for more information about software release, training course and workshop please contact <a href="http://www.polyomics.gla.ac.uk/enquiry.php" target="_blank">Glasgow Polyomics</a>
+            </div>
+          </div>
+        </div>
+    {% endif %}
+<div class="row title-row" style="margin-bottom: 25px; margin-top: 25px;">
+  <div class="span12" style="float:none; margin: 0 auto;text-align:center; margin-top: 20px;">
+    <h1><img src="{{ STATIC_URL }}img/PiMP_logo_no_background.png" class="img-polaroid" style="border-radius: 500px;width: 123px;">  PiMP my metabolome!</h1>
   </div>
 </div>
 <div class="row" style="border-bottom: solid 10px rgb(125, 153, 194);">
@@ -273,7 +275,7 @@ $(function() {
     </div>
   </div>
 </div>
-<div class="row" style="border-bottom: solid 10px rgb(125, 153, 194);">
+<div class="row" style="border-bottom: solid 10px rgb(125, 153, 194); margin-top: 20px;">
   <div class="span12" style="float:none;margin: 0 auto;">
     <div class="row" style="margin-bottom: 20px;">
       <div class="span4" style="text-align: center;">
@@ -293,14 +295,14 @@ $(function() {
 </div>
 <div class="row">
   <div class="span12" style="float:none;margin: 0 auto;">
-      <h4>Why is PiMP developed ?</h4>
+      <h4>Why was PiMP developed ?</h4>
       <p>Rapid advances in metabolomics technology create enormous challenges for the development of data processing and visualization techniques that enable biological scientists to gain insight from complex data sets. Although programming libraries are available for informaticians, there remains a need for powerful, user-friendly software to support biological specialists in analysing metabolomics data.</p>
       </br>
-      <h4>PiMP main features :</h4>
+      <h4>PiMP's main features:</h4>
       <p>From raw data to the biological context of samples, the pipeline guides users through each core step in LC– MS data analysis. World-wide collaboration between groups is enabled by sharing both experimental designs and results online, overcoming limitations in big-data transfer. A robust and systematic statistical analysis is built into the pipeline, enabling users to differentiate and report both identified and annotated metabolites according to the Metabolomics Standard Initiative (MSI). State-of-the-art, multi-scale, multi-viewpoint visualization allows scientists to navigate and extract relevant information from sample data and to examine this information in a biological context.</p>
       </br>
-      <h4>PiMP aim !</h4>
-      <p>PiMP is currently being developed by Glasgow Polyomics. [...sentence to invite poeple to join the dev team...] The ultimate goal of our software is to standardize and automate metabolomics analysis by integrating all steps of a study -- from planning to analysis to reporting -- into one comprehensive tool spanning raw data to biological insight.</p>
+      <h4>PiMP's aim:</h4>
+      <p>PiMP is currently being developed by Glasgow Polyomics. The ultimate goal of our software is to standardize and automate metabolomics analysis by integrating all steps of a study -- from planning to analysis to biological impact reporting -- into one comprehensive tool. If you are a developer that wants to contribute to PiMP contact us <a href="http://www.polyomics.gla.ac.uk/enquiry.php">here</a>.</p>
   </div>
 </div>
 {% endblock %}
