@@ -49,9 +49,18 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	});
 
 	$('#tabnav a').click(function (e) {
-			e.preventDefault();
-			$(this).tab('show');
-			$("#first-pathway").css("margin-top",25);
+		e.preventDefault();
+		$(this).tab('show');
+		if ($(this).parent().attr('id') == "identification-li" ){
+			console.log("clicked on id tab");
+			$('#id_table_super_pathway_selector_div').show();
+			$('#id_table_pathway_selector_div').show();
+		}
+		else {
+			$('#id_table_super_pathway_selector_div').hide();
+			$('#id_table_pathway_selector_div').hide();
+		}
+		$("#first-pathway").css("margin-top",25);
 		$('#right-summary-panel').css('display','block');
 		$('#right-summary-panel').css('margin-right','-55%');
 		$('#right-summary-panel').css('display','none');
@@ -493,7 +502,7 @@ function set_idtable(url, samplesGroupsNum){
 
 	var idTable = $('#identification-table').DataTable( {
         "sAjaxSource": url,
-        "sDom": '<"identification-table_wrapper_toolbar"CliT>rtp',
+        "sDom": '<"identification-table_wrapper_toolbar"CilT>rtp',
         "oColVis": {
             "sButtonText": "Switch display",
             "aiExclude": excludeColIdx,
@@ -613,6 +622,8 @@ function set_idtable(url, samplesGroupsNum){
         //}
     });
 
+
+	// $("div.identification-table_wrapper_toolbar").append('<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_pathway_selector"><option></option></select></div><div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_super_pathway_selector"><option></option></select></div>');
     // console.log(excludeColIdx);
 
 	// callback && callback(idTable);

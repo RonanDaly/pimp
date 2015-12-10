@@ -22,6 +22,7 @@
     	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dataTable/dataTables.tableTools.css" media="screen" />
     	<link rel="stylesheet" href="{{ STATIC_URL }}css/result.css">
     	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/bootstrap-modal.css" media="screen" />
+    	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}select2-4.0.1/dist/css/select2.min.css" />
 
 		<script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap-modalmanager.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables1.10.4.js"></script>
@@ -38,6 +39,7 @@
 		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-slider.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/pimp_analysis_results_components.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/gp_chart.js"></script>
+		<script type="text/javascript" src="{{ STATIC_URL }}select2-4.0.1/dist/js/select2.min.js"></script>
 
 		<audio id="marseillaise" src="{{ STATIC_URL }}other/marseillaise.wav" preload="auto"></audio>
     	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
@@ -77,6 +79,9 @@
 			#close-right-summary-panel:hover {
 				background-image: url({{ STATIC_URL }}img/plus-icon-black.png);
 			}
+			.super_pathway_option {
+				font-weight: bold;
+			}
 		</style>
 		<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/prefixfree.min.js"></script>
@@ -95,6 +100,91 @@
 		var peak_table_url = "{% url 'get_peak_table' project.id analysis.id %}";
 		var averageChartType = 'column';
 		var peakChromatogramsGraph = false;
+
+		function modelMatcher (params, data) {
+		  data.parentText = data.parentText || "";
+
+		  // Always return the object if there is nothing to compare
+		  if ($.trim(params.term) === '') {
+		    return data;
+		  }
+
+		  // Do a recursive check for options with children
+		  if (data.children && data.children.length > 0) {
+		    // Clone the data object if there are children
+		    // This is required as we modify the object to remove any non-matches
+		    var match = $.extend(true, {}, data);
+
+		    // Check each child of the option
+		    for (var c = data.children.length - 1; c >= 0; c--) {
+		      var child = data.children[c];
+		      child.parentText += data.parentText + " " + data.text;
+
+		      var matches = modelMatcher(params, child);
+
+		      // If there wasn't a match, remove the object in the array
+		      if (matches == null) {
+		        match.children.splice(c, 1);
+		      }
+		    }
+
+		    // If any children matched, return the new object
+		    if (match.children.length > 0) {
+		      return match;
+		    }
+
+		    // If there were no matching children, check just the plain object
+		    return modelMatcher(params, match);
+		  }
+
+		  // If the typed-in term matches the text of this term, or the text from any
+		  // parent term, then it's a match.
+		  var original = (data.parentText + ' ' + data.text).toUpperCase();
+		  var term = params.term.toUpperCase();
+
+
+		  // Check if the text contains the term
+		  if (original.indexOf(term) > -1) {
+		    return data;
+		  }
+
+		  // If it doesn't contain the term, don't return anything
+		  return null;
+		}
+
+		var pathway_list = [
+			{% for super_pathway in super_pathways_list %}{
+				id: "{{ forloop.counter0 }}",
+        		text: "{{ super_pathway.0 }}",
+        		children: [
+        			{% for pathway_name in super_pathway.1 %}{
+        				id: "{{ pathway_name }}",
+                		text: "{{ pathway_name }}"
+        			},
+        			{% endfor %}
+        		]
+			},
+			{% endfor %}
+		];
+
+		var pathway_map = {}
+		{% for super_pathway in super_pathways_list %}
+		pathway_map["{{ super_pathway.0 }}"] = [{% for pathway_name in super_pathway.1 %}{id: "{{ pathway_name }}",text: "{{ pathway_name }}"},{% endfor %}];
+		{% endfor %}
+
+
+		console.log(pathway_map);
+
+		var super_pathway_list = [
+			{% for super_pathway in super_pathways_list %}{
+				id: "{{ super_pathway.0 }}",
+        		text: "{{ super_pathway.0 }}",
+			},
+			{% endfor %}
+		];
+
+
+		// console.log(super_pathway_list)
 
 		var comparisons = { {% for comparison in comparisons %}"{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}" : {{ comparison.id }} {% if not forloop.last %},{% endif %}{% endfor %} };
 		var memberList = [{% for member in member_list %}"{{ member.name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -139,6 +229,88 @@
 			set_click_actions(staticUrl,metexploreInfoUrl);
 			set_navbar();
 			// Generate identification table with callback for click event
+
+			$('#id_table_super_pathway_selector').select2({
+				placeholder: "Select super pathway",
+				allowClear: true,
+				data: super_pathway_list, 
+			});
+
+			$('#id_table_pathway_selector').select2({
+				placeholder: "Select pathway",
+				allowClear: true,
+				matcher: modelMatcher,
+				data: pathway_list, 
+			});
+
+			var $superPathwaySelect = $("#id_table_super_pathway_selector");
+			var $pathwaySelect = $('#id_table_pathway_selector');
+
+			// Select a super pathway function (logic explained)
+			$superPathwaySelect.on("select2:select", function (e) {
+				console.log("select2:select "+ e.target.value);
+				// Change pathway select component to no option (this doesn't trigger the unselect event, has to be done separately)
+				$pathwaySelect.val(null).trigger("change");
+				// Trigger pathway select component "unselect" event. See below for the logic of this event
+				$pathwaySelect.trigger("select2:unselect");
+				// Repopulate pathway select with pathways corresponding to the superpathway selected
+				var selectedSuperPathway = e.target.value;
+
+				// Filter the metabolite data
+				idTable.column(4).search('').draw();
+				idTable.column(4).search(selectedSuperPathway).draw();
+
+				$pathwaySelect.select2("destroy");
+				$pathwaySelect.html('<option></option>');
+
+				$pathwaySelect.select2({
+					placeholder: "Select pathway",
+  					allowClear: true,
+  					matcher: modelMatcher,
+  					data: pathway_map[selectedSuperPathway], 
+				});
+				// $superPathwaySelect.select2({
+				// 	placeholder: "Select super pathway",
+				// 		allowClear: true,
+				// 		data: super_pathway_list, 
+				// });
+				// $superPathwaySelect.val(selectedSuperPathway).trigger("change");
+
+			}).on("select2:unselect", function (e) {
+				// When unselect super pathway, destroy and re-initialise the pathway select to initial values
+				$pathwaySelect.val(null).trigger("change");
+				// Trigger pathway select component "unselect" event. See below for the logic of this event
+				$pathwaySelect.trigger("select2:unselect");
+
+				$pathwaySelect.select2("destroy");
+				$pathwaySelect.html('<option></option>');
+
+				idTable.column(4).search('').draw();
+				// idTable.search('').columns().search( '' ).draw();
+
+
+				$pathwaySelect.select2({
+					placeholder: "Select pathway",
+  					allowClear: true,
+  					matcher: modelMatcher,
+  					data: pathway_list, 
+				});
+			});
+
+			
+
+			$pathwaySelect.on("select2:select", function (e) {
+				var selectedPathway = e.target.value;
+
+				// Filter the metabolite data
+				idTable.column(5).search(selectedPathway).draw();			
+
+			}).on("select2:unselect", function (e) {
+				console.log("pathway:unselect"+ e.target.value);
+				idTable.column(5).search('').draw();
+
+				// remove filter on datable
+			});
 
             var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
 
@@ -986,7 +1158,7 @@
 			// Filter on the column (the index) of this element
 				// idTable.fnFilterAll(this.value);
 				$("#search2-input").val(String(this.value));
-				idTable.fnFilter(this.value);
+				idTable.search(this.value).draw();
 				pathwayTable.fnFilter(this.value);
 				peakTable.fnFilter(this.value);
 				comparisonTable.fnFilter(this.value);
@@ -998,7 +1170,7 @@
 			$("#search2-input").keyup( function () {
 			// Filter on the column (the index) of this element
 				$("#search").val(String(this.value));
-				idTable.fnFilter(this.value);
+				idTable.search(this.value).draw();
 				pathwayTable.fnFilter(this.value);
 				peakTable.fnFilter(this.value);
 				comparisonTable.fnFilter(this.value);
@@ -1753,17 +1925,33 @@
 		</div>
 		<header id="subheader" class="subhead" style="padding-top:40px">
 			<div id="serch-banner" class="container" style="padding:5px;">
-				<div class="span2">
+				<!-- <div class="span2">
 					<a href=""><img src="{{ STATIC_URL }}img/PiMP_logo.png" alt="index"></a>
-				</div>
-				<div class="span6" style="margin-top: 27px;">
-					<form class="navbar-search pull-left">
-  						<input type="text" class="search-query" placeholder="Search" id="search">
-						<img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;">
-					</form>
-				</div>
-				<div class="span3" style="margin-top: 32px;">
-					<p style="float:right;">{{ user.first_name }} {{ user.last_name }}</p>
+				</div> -->
+				<div class="row" style="height:65px;">
+					<div class="span3" style="margin-top: 14px;margin-bottom: 5px;">
+						<form class="navbar-search pull-left">
+	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;"> 
+							<img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;">
+						</form>
+					</div>
+					<div class="span3" style="margin-top: 22px;">
+						<div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
+							<select id="id_table_super_pathway_selector">
+								<option></option>
+							</select>
+						</div>
+					</div>
+					<div class="span3" style="margin-top: 22px;">
+						<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
+							<select id="id_table_pathway_selector">
+								<option></option>
+							</select>
+						</div>
+					</div>
+					<div class="span3" style="margin-top: 15px;">
+						<p style="float:right;">{{ user.first_name }} {{ user.last_name }}</p>
+					</div>
 				</div>
 			</div>
 			<div class="navtable" style="background-color:#f5f5f5;width:100%;padding:0px;text-align:center;height:40px;">
@@ -1810,7 +1998,7 @@
 				</div>
 			</div>
 		</div>
-		<div id="main-container" class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:175px;z-index:6;">
+		<div id="main-container" class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:155px;z-index:6;">
 			<div class="tab-content" id="general-tab-content">
 				<div id="summary" class="tab-pane active">
 					<div class="row" style="margin:0px;">

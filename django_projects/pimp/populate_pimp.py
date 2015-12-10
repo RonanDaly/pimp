@@ -78,6 +78,10 @@ def populate():
         name = "lipidmaps"
     )
 
+    standard_db = add_database(
+        name = "standard"
+    )
+
     mass_bank_annotation_tool = add_annotation_tool(
         name = 'MassBank',
         default_params= {
