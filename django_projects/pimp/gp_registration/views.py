@@ -16,6 +16,8 @@ def profile(request):
 
     storage_taken = {'samples': 0, 'calibration_samples': 0}
 
+    sample_number = calibration_samples.count() + samples.count()
+
     for calibration_sample in calibration_samples:
         storage_taken['calibration_samples'] += calibration_sample.file.size
     for sample in samples:
