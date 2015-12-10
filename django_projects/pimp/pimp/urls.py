@@ -117,6 +117,7 @@ urlpatterns = patterns('',
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('multiuploader.urls')),
     #url(r'^frank/', include('frank.urls')),
     url(r'^credits/$', 'home.views.credits', name='credits'),
+    url(r'^licence/$', 'home.views.licence', name='licence'),
 )
 
 urlpatterns += staticfiles_urlpatterns()
