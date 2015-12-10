@@ -1,6 +1,7 @@
 # Create your views here.
 from django.template import Context, loader
 from django.shortcuts import render
+from django.conf import settings
 try:
 	from django.utils import simplejson
 except:
@@ -16,7 +17,8 @@ from rpy2 import robjects
 import json
 
 def index(request):
-	return render(request, 'index.html', {"home": True})
+	registration = settings.REGISTRATION_OPEN
+	return render(request, 'index.html', {"home": True, 'registration': registration})
 
 def about(request):
 	return render(request, 'about.html', {"home": True})
@@ -26,6 +28,9 @@ def credits(request):
 
 def chemical_library(request):
 	return render(request, 'chemical_library.html', {"home": True})
+
+def licence(request):
+	return render(request, 'licence.html', {})
 	
 def polyomics_chemical_library(request):
 	# url = static('metexplore_mapping.json')
