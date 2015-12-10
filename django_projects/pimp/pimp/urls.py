@@ -63,6 +63,8 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/peak_info_peak_id/$', 'experiments.views.peak_info_peak_id', name='get_peak_info_peak_id'),
     # ajax request for compound info
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/compound_info/$', 'experiments.views.compound_info', name='get_compound_info'),
+    # ajax request for metabolite info
+    url(r'^account/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/metabolite_info/$', 'experiments.views.get_metabolite_info', name='get_metabolite_info'),
     # ajax request for peaks chromatogram from compound
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/peaks_from_compound/$', 'experiments.views.get_peaks_from_compound', name='get_peaks_from_compound'),
     # ajax request for peaks chromatogram from compound

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import csv
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings')
 
 import django
@@ -8,6 +9,7 @@ django.setup()
 import jsonpickle
 from experiments.models import DefaultParameter, Database
 from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
+from compound.models import Pathway, SuperPathway, DataSource, DataSourceSuperPathway
 
 def populate():
     iqr_parameter = add_default_parameter(
@@ -68,11 +70,11 @@ def populate():
         name = "kegg"
     )
 
-    kegg_db = add_database(
+    hmdb_db = add_database(
         name = "hmdb"
     )
 
-    kegg_db = add_database(
+    lipidmaps_db = add_database(
         name = "lipidmaps"
     )
 
@@ -92,10 +94,10 @@ def populate():
         }
     )
 
-    # network_sampler_annotation_tool = add_annotation_tool(
-    #     name = 'LCMS DDA Network Sampler',
-    #     default_params = {},
-    # )
+    network_sampler_annotation_tool = add_annotation_tool(
+        name = 'Network Sampler',
+        default_params = {},
+    )
 
     # this needs to be filled in properly
     precursor_mass_filter_annotation_tool = add_annotation_tool(
@@ -130,10 +132,10 @@ def populate():
         NIST_annotation_tool
     )
 
-    # network_sampler_annotation_tool = add_annotation_tool_protocols(
-    #     [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
-    #     network_sampler_annotation_tool
-    # )
+    network_sampler_annotation_tool = add_annotation_tool_protocols(
+        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        network_sampler_annotation_tool
+    )
 
     # this needs to be filled in properly
     mass_filter_protocols = add_annotation_tool_protocols(
@@ -145,7 +147,69 @@ def populate():
         clean_annotation_tool
     )
 
+    # Pathway population for Kegg
+    kegg_datasource = add_datasource(
+        name = "kegg"
+    )
+    header_row = True
+    with open('./django_projects/pimp/kegg_pathway_superPathway.csv', 'rb') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        for row in spamreader:
+            if header_row:
+                header_row = False
+            else:
+                pathway = add_pathway(
+                    name = row[1],
+                )
+                if row[3] != "NA":
+                    superpathway = add_superpathway(
+                        name = row[3],
+                    )
+                else:
+                    superpathway = None
+                datasource_super_pathway = add_datasource_super_pathway(
+                    superpathway = superpathway,
+                    pathway = pathway,
+                    datasource = kegg_datasource,
+                    compound_number = int(row[2]),
+                    identifier = row[0],
+                )
 
+def add_datasource(name):
+    datasource = DataSource.objects.get_or_create(
+        name = name,
+    )[0]
+    print 'Creating datasource - '+name+'...'
+    datasource.save()
+    return datasource
+
+def add_superpathway(name):
+    superpathway = SuperPathway.objects.get_or_create(
+        name = name,
+    )[0]
+    print 'Creating super pathway - '+name+'...'
+    superpathway.save()
+    return superpathway
+
+def add_pathway(name):
+    pathway = Pathway.objects.get_or_create(
+        name = name,
+    )[0]
+    print 'Creating pathway - '+name+'...'
+    pathway.save()
+    return pathway
+
+def add_datasource_super_pathway(superpathway, pathway, datasource, compound_number, identifier):
+    datasource_super_pathway = DataSourceSuperPathway.objects.get_or_create(
+        super_pathway = superpathway,
+        pathway = pathway,
+        data_source = datasource,
+        compound_number = compound_number,
+        identifier = identifier,
+    )[0]
+    print 'Creating datasource super pathway - '+datasource.name+' - '+identifier+'...'
+    datasource_super_pathway.save()
+    return datasource_super_pathway
 
 def add_default_parameter(name, value, state):
     parameter = DefaultParameter.objects.get_or_create(

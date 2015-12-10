@@ -173,6 +173,9 @@ class MassBankQueryTool:
         # The address required for the client is the MassBank server, again see population script, can be changed
         # there for change over to local install
         client_address = search_parameters['client']
+
+        client_address = "http://massbank.ufz.de:80/api/services/MassBankAPI?wsdl"
+
         client = Client(client_address)
         try:
             # Submit the batch search to MassBank, a job ID is returned
@@ -381,8 +384,8 @@ class NISTQueryTool:
             self._populate_annotation_list()
             print 'Annotations Completed'
             # Finally upon completion, delete both the temporary files for NIST
-            os.remove(self.nist_output_file_name)
-            os.remove(self.query_file_name)
+            # os.remove(self.nist_output_file_name)
+            # os.remove(self.query_file_name)
         except IOError:
             raise
         except OSError:

@@ -49,6 +49,9 @@
 			</tr>
 			{% endfor %}
 		</table>
+	<p style="text-align:center;">
+		Download spectrum as <a href="{% url 'get_fragments_as_text' peak.slug 'list' %}">list</a>&nbsp;<a href="{% url 'get_fragments_as_text' peak.slug 'mona' %}">mona string</a>
+	</p>
 	{% else %}
 		<p>No peaks to display</p>
 	{% endif %}
@@ -69,6 +72,7 @@
 						<th>Difference In Mass</th>
 						<th>Adduct</th>
 						<th>Collision Energy</th>
+						<th>Additional Information</th>
 						<th></th>
 					</tr>
 					{% for annotation in annotations %}
@@ -80,6 +84,7 @@
 							<td><p {% if annotation.mass_match == True %}style="color: rgb(59, 182, 59);"{% endif %}{% if annotation.mass_match == False %}style="color: rgb(232, 45, 45);"{% endif %}>{{annotation.difference_from_peak_mass|floatformat:3}}</p></td>
 							<td><p>{{annotation.adduct}}</p></td>
 							<td><p>{{annotation.collision_energy}}</p></td>
+							<td><p>{{annotation.additional_information}}</p></td>
 							<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
 						</tr>
 					{% endfor %}

@@ -2776,9 +2776,9 @@ $(document).ready(function() {
 											<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
 												<p class="text-in-table introduction_text">{{ comparison.name }}</p>
 											</div>
-											{% for attribute in comparison.attribute.all %}
-											<div class="span4 center-text"style="min-height:10px;">
-												<p class="text-in-table introduction_text">{{ attribute.name }}</p>
+											{% for attributecomp in comparison.attributecomparison_set.all %}
+											<div class="span4 center-text "style="min-height:10px;{% if not attributecomp.control %}float:right;{% endif %}">
+												<p class="text-in-table introduction_text">{{ attributecomp.attribute.name }}</p>
 											</div>
 											{% endfor %}
 										</div>

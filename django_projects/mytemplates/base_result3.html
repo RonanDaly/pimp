@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 {% load compound_tags %}
@@ -26,6 +27,8 @@
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables1.10.4.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/jquery.dataTables.columnFilter.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/dataTable/dataTables.tableTools.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}ColVis-1.1.2/js/dataTables.colVis.js"></script>
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}ColVis-1.1.2/css/dataTables.colVis.css"/>
 		<script src="{{ STATIC_URL }}js/highcharts4.js"></script>
 		<script src="{{ STATIC_URL }}js/highcharts-more4.js"></script>
 		<script src="{{ STATIC_URL }}js/exporting4.js"></script>
@@ -136,104 +139,146 @@
 			set_click_actions(staticUrl,metexploreInfoUrl);
 			set_navbar();
 			// Generate identification table with callback for click event
-			var idTable = set_idtable(id_table_url, function(){
-				set_idtable_click(table_received);
-			});
-			var pathwayTable = set_pathwaytable();
-			var peakTable = set_peaktable(peak_table_url, function(){
-				set_peaktable_click(peak_table_received);
-			});
-			var comparisonTable = set_comparisontable();
-			var potentialsTable = set_potentialstable();
 
-			function setMetabolitesTableClick(table_received){
-				console.log(table_received);
-				table_received.$('tr').click( function () {
+            var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
 
-					// get data from the row clicked as an array
-						var data = table_received.fnGetData( this );
+			var idTable = set_idtable(id_table_url, samplesGroupsNum);
+            $('#identification-table tbody').on('click', 'tr', function() {
+                // When a tr is clicked, update the right panel with information about the contents of the tr
+                var data = idTable.row(this).data();
+                var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+                updateIdentificationRightPanel(data, innerSidePanel);
+            });
 
-						// remove any row selection from the table
-						$(table_received.fnSettings().aoData).each(function (){
-						$(this.nTr).removeClass('row_selected');
-					});
+            var pathwayTable = set_pathwaytable();
+            //pathwayTable.$('tr').click( function () {
+            pathwayTable.on('click', 'tr', function() {
 
-					// set the clicked row as selected
-					var selectedRow = $(event.target.parentNode).addClass('row_selected');
+                var rowInfo = pathwayTable.row(this).data();
 
-					// extract header information in an array
-					var headerInfo = new Array();
-					$.each(table_received.dataTableSettings[0].aoColumns, function(i,v) {
-						headerInfo.push(v.sTitle);
-					});
+			    var map = $(this).attr("map");
 
-					// get the right side panel div that has to be updated
-					var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+                var headers = pathwayTable.row(this).columns().header();
+                var headerInfo = [];
 
-					// send info to update right panel
-					updateMetabolitesRightPanel(data,headerInfo,innerSidePanel);
-			});
-			}
+                $.each(headers, function(idx) {
+                    headerInfo.push($(headers[idx]).html());
+                });
 
-			function set_idtable_click(table_received){
-				console.log(table_received);
-				table_received.$('tr').click( function () {
-
-					// get data from the row clicked as an array
-				    var data = table_received.fnGetData( this );
-
-				    // remove any row selection from the table
-				    $(table_received.fnSettings().aoData).each(function (){
-						$(this.nTr).removeClass('row_selected');
-					});
-
-					// set the clicked row as selected
-					var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-					// extract header information in an array
-					var headerInfo = new Array();
-					$.each(table_received.dataTableSettings[0].aoColumns, function(i,v) {
-						headerInfo.push(v.sTitle);
-					});
-
-					// get the right side panel div that has to be updated
-					var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-
-					// send info to update right panel
-					updateIdentificationRightPanel(data,headerInfo,innerSidePanel);
-			});
-			}
-
-			function set_peaktable_click(peak_table_received){
-				peak_table_received.$('tr').click( function () {
-				// get data from the row clicked as an array
-				var averageChart = false;
-				var peaksChart = false;
-			    var data = peak_table_received.fnGetData( this );
-
-			    // remove any row selection from the table
-			    $(peak_table_received.fnSettings().aoData).each(function (){
-					$(this.nTr).removeClass('row_selected');
-				});
-
-				// set the clicked row as selected
-				var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-				// extract header information in an array
-				var headerInfo = new Array();
-				$.each(peak_table_received.dataTableSettings[2].aoColumns, function(i,v) {
-					headerInfo.push(v.sTitle);
-				});
-
-				// get the right side panel div that has to be updated
 				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+				updateRightPanel(rowInfo, headerInfo, innerSidePanel);
 
-				headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
-				rowInfo = [data[0],data[1],data[2],data[data.length-1]];
+				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+				var data = calculPathwayCoverage(rowInfo, headerInfo);
+				var chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				var chart1 = $('<div class="span12" style="margin-left:0px;">');
+				pieChart(chartWidth, chart1, data, 400);
+				$(kegg).appendTo($(innerSidePanel));
+				$(chart1).appendTo($(innerSidePanel));
 
-				// send info to update right panel
-				updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
-				var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				$('#kegg-map-icon').click(function() {
+					var $modal = $('#full-width');
+
+					var chartWidth = $modal.width()-10;
+
+					var chartHeight = $(window).height()-200;
+
+					var modalLabel = $modal.find('#myModalLabel');
+					var modalBody = $modal.find('.modal-body');
+
+					$(modalLabel).empty();
+					$(modalBody).empty();
+
+					$(modalLabel).text("Kegg map");
+
+					var pathwaySelection = '<div class="span3"><label for="comparison_index" style="font-weight:bold;margin-right:12px;">Map comparison</label><select name="comparison_index_mapping" class="comparison_index" style="width:140px" id="comparison_index"><option value="None">None</option>';
+
+					$.each(comparisons, function( index, value ){
+						pathwaySelection += '<option value="'+ value +'">'+ index +'</option>';
+					});
+					pathwaySelection += '</select></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/identified_kegg_dot.png" alt="id_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Identified</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/annotated_kegg_dot.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Annotated</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/up_down_kegg.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Up/Down</span></div><div class="span3" style="padding-top: 16px;"><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;" class="gradient_legend" id="drapeau_francais"></div></div><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;"><span style="font-size: 12px;float: left;">-2</span><span style="font-size: 12px;float: left;margin-left: 41px;">0</span><span style="font-size: 12px;float: right;">2</span></div></div></div>';
+
+					var ajax_data = {"id": rowInfo[1]};
+
+					var url = "{% url 'get_pathway_url' project.id analysis.id %}";
+
+					$.ajax({
+						type: "GET",
+						traditional : true,
+			            url: url,
+			            data: ajax_data,
+			            success: function(response) {
+			            	console.log(response["pathway_map"]);
+			            	var frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+
+							$(pathwaySelection).appendTo($modal.find('.modal-body'));
+							$(frame).appendTo($modal.find('.modal-body'));
+
+							$modal.modal();
+
+							$('#drapeau_francais').click( function(){
+								if (marseillaise) {
+									marseillaise = false;
+									document.getElementById('marseillaise').pause();
+								}
+								else {
+									marseillaise = true;
+									document.getElementById('marseillaise').play();
+									document.getElementById('marseillaise').onended = function() {
+										marseillaise = false;
+									}
+								}
+							});
+
+							$('#comparison_index').change(function () {
+				        		console.log("comparison just changed!!");
+				        		var comparison_map = this.value;
+				        		var ajax_data = {"id":rowInfo[1], "comparison":comparison_map};
+				        		var frame = $modal.find('iframe');
+				        		$.ajax({
+									type: "GET",
+									traditional : true,
+						            url: url,
+						            data: ajax_data,
+						            success: function(response){
+						            	var new_frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
+				        				$(frame).remove();
+				        				$(new_frame).appendTo($modal.find('.modal-body'));
+				        			},
+						            error: function(){
+						        		alert("Error");
+						        	}
+				        		});
+			        		});
+			            },
+			            error: function(){
+			        		alert("Error");
+			        	}
+			        });
+
+				});
+
+			});
+
+            var peakTable = set_peaktable(peak_table_url);
+            $('#peak-table tbody').on('click', 'tr', function() {
+                var averageChart = false;
+				var peaksChart = false;
+			    var data = peakTable.row(this).data();
+
+                var headers = peakTable.row(this).columns([0, 1, 2, data.length - 1]).header();
+                var headerInfoToPass = [];
+
+                $.each(headers, function(idx) {
+                    headerInfoToPass.push($(headers[idx]).html());
+                })
+
+                var rowInfo = [data[0], data[1], data[2], data[data.length - 1]];
+
+                var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
+                updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+
+                var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
 				$(loadingPan).appendTo($(innerSidePanel));
 				var ajax_data = {"id":rowInfo[0]};
 
@@ -291,7 +336,8 @@
 		        });
 				// Debug uncomment to here
 			});
-			}
+
+			var comparisonTable = set_comparisontable();
 
 			// ***********************************************************************************************
 			// ******************************** End sparkline plot generation ********************************
@@ -319,7 +365,7 @@
 	            xAxis: {
 	                title: {
 	                    enabled: true,
-	                    text: 'PC 1'
+	                    text: 'PC 1 ({{explained_variance.0|floatformat}}%)'
 	                },
 	                startOnTick: true,
 	                endOnTick: true,
@@ -327,7 +373,7 @@
 	            },
 	            yAxis: {
 	                title: {
-	                    text: 'PC 2'
+	                    text: 'PC 2 ({{explained_variance.1|floatformat}}%)'
 	                }
 	            },
 	            legend: {
@@ -396,7 +442,7 @@
 				xAxis: {
 					title: {
 						text: "Retention time (s)",
-					}, 
+					},
 				},
 				yAxis: {
 					title: {
@@ -416,7 +462,7 @@
 				},
 				series: [
 					{% for sample,pos_neg in sample_dict.items %}
-					{	
+					{
 						type: 'area',
 						name: '{{sample}}',
 						data: {{pos_neg.pos}},
@@ -445,7 +491,7 @@
 			            	filename: "{{group.name | capfirst}}" + "_negative_TIC",
 			    },
 				xAxis: {
-					title: 
+					title:
 					{
 						text: "Retention time (s)",
 					},
@@ -469,7 +515,7 @@
 				},
 				series: [
 					{% for sample,pos_neg in sample_dict.items %}
-					{	
+					{
 						type: 'area',
 						name: '{{sample}}',
 						data: {{pos_neg.neg}},
@@ -588,238 +634,6 @@
 			{% endfor %}
 
 
-			// idTable.$('tr').click( function () {
-
-			// 	// get data from the row clicked as an array
-			//     var data = idTable.fnGetData( this );
-
-			//     // remove any row selection from the table
-			//     $(idTable.fnSettings().aoData).each(function (){
-			// 		$(this.nTr).removeClass('row_selected');
-			// 	});
-
-			// 	// set the clicked row as selected
-			// 	var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-			// 	// extract header information in an array
-			// 	var headerInfo = new Array();
-			// 	$.each(idTable.dataTableSettings[0].aoColumns, function(i,v) {
-			// 		headerInfo.push(v.sTitle);
-			// 	});
-
-			// 	// get the right side panel div that has to be updated
-			// 	var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-
-			// 	// send info to update right panel
-			// 	updateIdentificationRightPanel(data,headerInfo,innerSidePanel);
-			// });
-
-
-			pathwayTable.$('tr').click( function () {
-
-				// get data from the row clicked as an array
-			    var data = pathwayTable.fnGetData( this );
-
-			    map = $(this).attr("map");
-
-			    // remove any row selection from the table
-			    $(pathwayTable.fnSettings().aoData).each(function (){
-					$(this.nTr).removeClass('row_selected');
-				});
-
-				// set the clicked row as selected
-				var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-				// extract header information in an array
-				var headerInfo = new Array();
-				$.each(pathwayTable.dataTableSettings[1].aoColumns, function(i,v) {
-					headerInfo.push(v.sTitle);
-				});
-
-				var rowInfo = data;
-
-				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-				updateRightPanel(rowInfo,headerInfo,innerSidePanel);
-				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
-				data = calculPathwayCoverage(rowInfo,headerInfo);
-				chartWidth = $(innerSidePanel).find('.span12').width()-10;
-				var chart1 = $('<div class="span12" style="margin-left:0px;">');
-				pieChart(chartWidth, chart1, data, 400);
-				$(kegg).appendTo($(innerSidePanel));
-				$(chart1).appendTo($(innerSidePanel));
-
-				$('#kegg-map-icon').click( function (){
-					var $modal = $('#full-width');
-
-					var chartWidth = $modal.width()-10;
-
-					var chartHeight = $(window).height()-200;
-
-					var modalLabel = $modal.find('#myModalLabel');
-					var modalBody = $modal.find('.modal-body');
-
-					$(modalLabel).empty();
-					$(modalBody).empty();
-
-					$(modalLabel).text("Kegg map");
-
-					var pathwaySelection = '<div class="span3"><label for="comparison_index" style="font-weight:bold;margin-right:12px;">Map comparison</label><select name="comparison_index_mapping" class="comparison_index" style="width:140px" id="comparison_index"><option value="None">None</option>';
-
-					$.each(comparisons, function( index, value ){
-						pathwaySelection += '<option value="'+ value +'">'+ index +'</option>';
-					});
-					pathwaySelection += '</select></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/identified_kegg_dot.png" alt="id_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Identified</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/annotated_kegg_dot.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Annotated</span></div><div class="span2" style="padding-top: 24px;"><img src="{{ STATIC_URL }}img/up_down_kegg.png" alt="anot_kegg" style="height:10px;"><span style="margin-left: 10px;font-size: 12px;">Up/Down</span></div><div class="span3" style="padding-top: 16px;"><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;" class="gradient_legend" id="drapeau_francais"></div></div><div class="row" style="margin-left:0px; margin-bottom:0px;"><div style="height: 20px;width: 110px;"><span style="font-size: 12px;float: left;">-2</span><span style="font-size: 12px;float: left;margin-left: 41px;">0</span><span style="font-size: 12px;float: right;">2</span></div></div></div>';
-
-					var ajax_data = {"id":rowInfo[1]};
-
-					var url = "{% url 'get_pathway_url' project.id analysis.id %}";
-
-					$.ajax({
-						type: "GET",
-						traditional : true,
-			            url: url,
-			            data: ajax_data,
-			            success: function(response){
-			            	console.log(response["pathway_map"]);
-			            	var frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
-
-							$(pathwaySelection).appendTo($modal.find('.modal-body'));
-							$(frame).appendTo($modal.find('.modal-body'));
-
-							$modal.modal();
-
-							$('#drapeau_francais').click( function(){
-								if (marseillaise) {
-									marseillaise = false;
-									document.getElementById('marseillaise').pause();
-								}
-								else {
-									marseillaise = true;
-									document.getElementById('marseillaise').play();
-									document.getElementById('marseillaise').onended = function() {
-										marseillaise = false;
-									}
-								}
-							});
-
-							$('#comparison_index').change(function () {
-				        		console.log("comparison just changed!!");
-				        		var comparison_map = this.value;
-				        		var ajax_data = {"id":rowInfo[1], "comparison":comparison_map};
-				        		var frame = $modal.find('iframe');
-				        		$.ajax({
-									type: "GET",
-									traditional : true,
-						            url: url,
-						            data: ajax_data,
-						            success: function(response){
-						            	var new_frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
-				        				$(frame).remove();
-				        				$(new_frame).appendTo($modal.find('.modal-body'));
-				        			},
-						            error: function(){
-						        		alert("Error");
-						        	}
-				        		});
-			        		});
-			            },
-			            error: function(){
-			        		alert("Error");
-			        	}
-			        });
-
-				});
-
-			});
-
-
-			// peakTable.$('tr').click( function () {
-			// 	// get data from the row clicked as an array
-			// 	var averageChart = false;
-			// 	var peaksChart = false;
-			//     var data = peakTable.fnGetData( this );
-
-			//     // remove any row selection from the table
-			//     $(peakTable.fnSettings().aoData).each(function (){
-			// 		$(this.nTr).removeClass('row_selected');
-			// 	});
-
-			// 	// set the clicked row as selected
-			// 	var selectedRow = $(event.target.parentNode).addClass('row_selected');
-
-			// 	// extract header information in an array
-			// 	var headerInfo = new Array();
-			// 	$.each(peakTable.dataTableSettings[2].aoColumns, function(i,v) {
-			// 		headerInfo.push(v.sTitle);
-			// 	});
-
-			// 	// get the right side panel div that has to be updated
-			// 	var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-
-			// 	headerInfoToPass = [headerInfo[0],headerInfo[1],headerInfo[2],headerInfo[headerInfo.length-1]];
-			// 	rowInfo = [data[0],data[1],data[2],data[data.length-1]];
-
-			// 	// send info to update right panel
-			// 	updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
-			// 	var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
-			// 	$(loadingPan).appendTo($(innerSidePanel));
-			// 	var ajax_data = {"id":rowInfo[0]};
-
-			// 	var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
-
-			// 	$.ajax({
-			// 		type: "GET",
-			// 		traditional : true,
-		 //            url: url,
-		 //            // async: false,
-		 //            data: ajax_data,
-		 //            success: function(response){
-		 //            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-			// 			var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
-
-			// 			averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
-			// 			$(loadingPan).before($(averageIntensityChart));
-
-			// 			averageChart = true;
-			// 			if (averageChart && peaksChart){
-			// 				$(loadingPan).remove();
-			// 			}
-		 //            },
-		 //            error: function(){
-		 //        		alert("Error");
-		 //        	}
-		 //        });
-			// 	// Debug uncomment from here
-		 //        var data = {"id":rowInfo[0],"ppm":ppm,"rtwindow":rtwindow};
-
-			// 	var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
-
-			// 	$.ajax({
-			// 		type: "GET",
-			// 		traditional : true,
-		 //            url: url,
-		 //            // async: false,
-		 //            data: data,
-		 //            success: function(response){
-		 //            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-			// 			var peakChart = $('<div class="span12" style="margin-left:0px;"></div>');
-
-			// 			createPeaksChromatogram(chartWidth, peakChart, response);
-
-			// 			$(loadingPan).before($(peakChart));
-
-			// 			peaksChart = true;
-			// 			if (averageChart && peaksChart){
-			// 				$(loadingPan).remove();
-			// 			}
-		 //            },
-		 //            error: function(){
-		 //        		alert("Error");
-		 //        	}
-		 //        });
-			// 	// Debug uncomment to here
-			// });
-
 			$(".peak_id").click( function() {
 
 				var ajax_data = {"id":$(this).html()};
@@ -911,7 +725,6 @@
 		        });
 
 			}
-
 
 			comparisonTable.$('tr').click( function () {
 				// get data from the row clicked as an array
@@ -1227,369 +1040,150 @@
 		        });
 			}
 
-			function updateMetabolitesRightPanel(rowInfo, header, innerSidePanel){
+            // Functions for the chromatogram and intensity plot buttons in the metabolites side bar
+            $('.right-side-bar-inner')
+                    .on('click', '.metabolites-chromatogram-btn', function(e) {
+                    // Creates the chromatogram, which is used to replace the associated button
+
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the correct div to insert the chromatogram
+                    var chromatogramDiv = $(this).closest('.metabolites-chromatogram-div');
+
+                    // Get the associated peak ID
+                    var peakID = $(this).prop('id').split("-")[1];
+
+                    // Remove the button and replace with a loading image
+                    $(this).remove();
+                    var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
+                    $(loadingPan).appendTo(chromatogramDiv);
+
+                    // Make the AJAX call for the chromatogram
+                    var data = {"id": peakID, "ppm": ppm, "rtwindow": rtwindow};
+                    var url = "{% url 'get_peaks_from_compound' project.id analysis.id %}";
+
+                    $.ajax({
+                        type: "GET",
+                        traditional : true,
+                        url: url,
+                        data: data,
+                        success: function(response){
+                            // Empty the chromatogramDiv
+                            chromatogramDiv.empty();
+
+                            // And fill the div with the chromatogram
+                            var chartWidth = $(chromatogramDiv).width() - 10;
+
+                            createPeaksChromatogram(chartWidth, chromatogramDiv, response);
+
+                            // Remove the loading graphic
+                            loadingPan.remove();
+                        },
+                        error: function(){
+                            alert("Error with chromatogram in metabolites tab");
+                        }
+                    });
+
+                })
+                .on('click', '.metabolites-intensity-plot-btn', function(e) {
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the correct div to insert the intensity plot
+                    var intensityPlotDiv = $(this).closest('.metabolites-intensity-plot-div');
+
+                    // Get the associated peak ID
+                    var peakID = $(this).prop('id').split("-")[1];
+
+                    // Remove the button and replace with a loading image
+                    $(this).remove();
+                    var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
+                    $(loadingPan).appendTo(intensityPlotDiv);
+
+                    // Make the ajax call for the intensity plot
+                    var data = {"id": peakID};
+                    var url = "{% url 'get_peak_info' project.id analysis.id %}";
+
+                    $.ajax({
+                        type: "GET",
+                        traditional : true,
+                        url: url,
+                        data: data,
+                        success: function(response) {
+                            // Empty the intensityPlotDiv
+                            intensityPlotDiv.empty();
+
+                            // And fill the div with the intensity plot
+                            var chartWidth = $(intensityPlotDiv).width() - 10;
+                            averageIntensityChartFromCompound(chartWidth, intensityPlotDiv, response);
+
+                            // Remove the loading graphic
+                            loadingPan.remove();
+                        },
+                        error: function() {
+                            alert("Error with average intensity plot in metabolites tab");
+                        }
+                    });
+                });
+
+			function updateIdentificationRightPanel(rowInfo, innerSidePanel) {
+                // Function to add metabolite information to the right side pane in the metabolites tab, where the
+                // metabolite information is taken from the metabolite row that is clicked in the main table.
 				$(innerSidePanel).empty();
 				var averageChart = false;
 				var peaksChart = false;
-				var newDetailsDom = '';
-				var newSummaryDom = '';
-				var db = null;
-				var dbId = null;
-				var summaryPanel = $('<div class="span12" id="MetabolitesSideSummaryPanel" style="margin:0px;"></div>');
-				var detailsPanel = $('<div class="span12" id="MetabolitesSideDetailsPanel" style="margin:0px;"></div>');
-				var summaryMetabolitesPanelButton = $('<div class="span6 right-side-panel-button" id="summaryMetabolites" style="margin:0px;width:50%;"><span>Summary</span></div>');
-				var detailsMetabolitesPanelButton = $('<div class="span6 right-side-panel-button" id="detailsMetabolites" style="margin:0px;width:50%;"><span>Details</span></div>');
-				var buttonDiv = $('<div class="span12" style="margin:0px;"></div>');
-				$(summaryMetabolitesPanelButton).appendTo($(buttonDiv));
-				$(detailsMetabolitesPanelButton).appendTo($(buttonDiv));
-				var summaryloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
-				var detailsloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
-				$(detailsloadingPan).appendTo($(detailsPanel));
-				$(summaryloadingPan).appendTo($(summaryPanel));
-				$(buttonDiv).appendTo($(innerSidePanel));
+				var newEvidenceDom = '';
+				var evidencePanel = $('<div class="span12" id="identificationSideEvidencePanel"><h3 class="right-side-title">Evidence</h3></div>');
 
-				if (rightPanelPreference == "summary"){
-					$(detailsPanel).hide();
-					$('#summaryMetabolites').addClass('active');
-				}
-				else {
-					$(summaryPanel).hide();
-					$('#detailsMetabolites').addClass('active');
-				}
-				$('#summaryMetabolites').click(function (e) {
-  					e.preventDefault();
-  					$('#metabolitesSideDetailsPanel').hide();
-  					$('#metabolitesSideSummaryPanel').show();
-  					$(this).addClass('active');
-  					$('#detailsMetabolites').removeClass('active');
-  				});
-				$('#detailsMetabolites').click(function (e) {
-  					e.preventDefault();
-  					$('#metabolitesSideDetailsPanel').show();
-  					$('#metabolitesSideSummaryPanel').hide();
-  					$(this).addClass('active');
-  					$('#summaryMetabolites').removeClass('active');
-  				});
+				$(evidencePanel).appendTo($(innerSidePanel));
 
-				$(detailsPanel).appendTo($(innerSidePanel));
-				$(summaryPanel).appendTo($(innerSidePanel));
-
-				var data = {"id":rowInfo[1]};
-
-				var url = "{% url 'get_compound_info' project.id analysis.id %}";
+                var data = {"compound_id": rowInfo[0]};
+				var url = "{% url 'get_metabolite_info' project.id analysis.id %}";
 
 				$.ajax({
-					type: "GET",
-					traditional : true,
-		            url: url,
-		            data: data,
+				    type: "GET",
+				    traditional : true,
+                    url: url,
+                    data: data,
+                    dataType: "json",
 		            success: function(response){
-		            	var database_info = {};
-		            	for (var i=2;i<response.length;i++){
-		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
-										//database_info[compound.database_name] = [compound_name, compound_identifier]
-		            	}
-		            	newSummaryDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
-		            	newDetailsDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
-		            	for (var index in database_info){
-		            		newSummaryDom += '<option value="'+index+'">'+index+'</option>';
-		            		newDetailsDom += '<option value="'+index+'">'+index+'</option>';
-		            	}
-		            	newSummaryDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Metabolites</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>';
-		            	newDetailsDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Metabolites</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">inchikey</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+response[1]+'</div>';
-		            	$(summaryloadingPan).before($(newSummaryDom));
-		            	$(detailsloadingPan).before($(newDetailsDom));
-		            	name = database_info[String($('select.db_selector').val())][0];
-		            	var structureDom;
-		            	$('.compound_name').text(name);
-		            	if ($('select.db_selector').val() == "hmdb"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
-		            	}
-		            	else if ($('select.db_selector').val() == "kegg"){
-		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
-		            	}
-		            	else if ($('select.db_selector').val() == "lipidmaps"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
-		            	}
-		            	else {
-		            		structureDom = $('<p>Structure not available</p>');
-		            	}
-		            	structureDiv = $('.structure');
-		            	$(structureDom).appendTo($(structureDiv));
-		            	$('select.db_selector').change(function (){
-		            		name = database_info[$(this).val()][0];
-		            		$('.compound_name').text(name);
-		            		$('select.db_selector').val($(this).val());
-		            		if ($(this).val() == "hmdb"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
-			            	}
-			            	else if ($(this).val() == "kegg"){
-			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
-			            	}
-			            	else if ($(this).val() == "lipidmaps"){
-		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
-		            		}
-			            	else {
-			            		structureDom = $('<p>Structure not available</p>');
-			            	}
-			            	$(structureDiv).empty();
-			            	$(structureDom).appendTo($(structureDiv));
-			            });
+                        var peaksData = response["aaData"];
+                        $.each(peaksData, function(peakDataId) {
+                            // Creates a peakDiv for every peak that is associated with the compound. The id of the peakDiv is set to peak.ID for ease of access. $('#evidencePanel #1')
+                            var peakDiv = $('<div class="span12 peak-div" id="peak-'+peaksData[peakDataId][0]+'" style="border-top: solid 1px gray; margin: 0px;"></div>');
+
+                            // If there is more than one peak, add the peak number to the peakDiv
+                            if (peaksData.length > 1) {
+                                peakDiv.append('<h5>Peak #'+(peakDataId + 1)+'</h5>');
+                            }
+
+                            // If the peakDiv is the last one to be made, add a border to the bottom
+                            if (peakDataId + 1 == peaksData.length) {
+                                peakDiv.css('border-bottom', 'solid 1px gray');
+                            }
+
+                            // Add retention time and mass information
+                            peakDiv.append('<ul>');
+                            peakDiv.append('<li><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</li>');
+                            peakDiv.append('<li><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</li>');
+                            peakDiv.append('<li><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</li>');
+                            peakDiv.append('<li><strong>Type</strong>: '+peaksData[peakDataId][4]+'</li>');
+                            peakDiv.append('</ul>');
+
+                            // Create and add divs and buttons to allow the user to load the peak chromatogram and average intensity plots
+                            peakDiv.append('<div class="metabolites-chromatogram-div"><button class="btn btn-sm metabolites-chromatogram-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/chromatogram_icon.png"/>Chromatogram</button></div>');
+                            peakDiv.append('<div class="metabolites-intensity-plot-div"><button class="btn btn-sm metabolites-intensity-plot-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/barchart_icon.png"/>Intensities</button></div>');
+
+                            // Finally, add the peakDiv to the evidencePanel
+                            evidencePanel.append(peakDiv);
+                            });
 		            },
-		            error: function(){
-		        		alert("Error");
+                    error: function(){
+		         	    alert("Error with getting peak information");
 		        	}
 		        });
-
-				var data = {"id":rowInfo[1]};
-
-				var url = "{% url 'get_peak_info' project.id analysis.id %}";
-
-				$.ajax({
-					type: "GET",
-					traditional : true,
-		            url: url,
-		            data: data,
-		            success: function(response){
-		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-						var chartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
-						var chartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
-
-						averageIntensityChartFromCompound(chartWidth, chartSummary, response);
-						averageIntensityChartFromCompound(chartWidth, chartDetail, response);
-
-						$(summaryloadingPan).before($(chartSummary));
-						$(detailsloadingPan).before($(chartDetail));
-
-						averageChart = true;
-						if (averageChart && peaksChart){
-							$(summaryloadingPan).remove();
-							$(detailsloadingPan).remove();
-						}
-		            },
-		            error: function(){
-		        		alert("Error");
-		        	}
-		        });
-				// Debug uncomment from here
-		    if (peakChromatogramsGraph) {
-					var data = {"id":rowInfo[1],"ppm":ppm,"rtwindow":rtwindow};
-					var url = "{% url 'get_peaks_from_compound' project.id analysis.id %}";
-
-					$.ajax({
-						type: "GET",
-						traditional : true,
-			            url: url,
-			            data: data,
-			            success: function(response){
-			            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-							var peakChartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
-							var peakChartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
-
-							createPeaksChromatogram(chartWidth, peakChartSummary, response);
-							createPeaksChromatogram(chartWidth, peakChartDetail, response);
-
-							$(summaryloadingPan).before($(peakChartSummary));
-							$(detailsloadingPan).before($(peakChartDetail));
-
-							peaksChart = true;
-							if (averageChart && peaksChart){
-								$(summaryloadingPan).remove();
-								$(detailsloadingPan).remove();
-							}
-			            },
-			            error: function(){
-			        		alert("Error");
-			        	}
-			        });
-				}
-				else {
-					peaksChart = true;
-				}
-			// debug uncomment to here
-			}
-
-			function updateIdentificationRightPanel(rowInfo, header, innerSidePanel){
-				$(innerSidePanel).empty();
-				var averageChart = false;
-				var peaksChart = false;
-				var newDetailsDom = '';
-				var newSummaryDom = '';
-				var db = null;
-				var dbId = null;
-				var summaryPanel = $('<div class="span12" id="identificationSideSummaryPanel" style="margin:0px;"></div>');
-				var detailsPanel = $('<div class="span12" id="identificationSideDetailsPanel" style="margin:0px;"></div>');
-				var summaryIdentificationPanelButton = $('<div class="span6 right-side-panel-button" id="summaryIdentification" style="margin:0px;width:50%;"><span>Summary</span></div>');
-				var detailsIdentificationPanelButton = $('<div class="span6 right-side-panel-button" id="detailsIdentification" style="margin:0px;width:50%;"><span>Details</span></div>');
-				var buttonDiv = $('<div class="span12" style="margin:0px;"></div>');
-				$(summaryIdentificationPanelButton).appendTo($(buttonDiv));
-				$(detailsIdentificationPanelButton).appendTo($(buttonDiv));
-				var summaryloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
-				var detailsloadingPan = $('<div class="span12" style="margin-left:0px;margin-top:20px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading information...</p></div>');
-				$(detailsloadingPan).appendTo($(detailsPanel));
-				$(summaryloadingPan).appendTo($(summaryPanel));
-				$(buttonDiv).appendTo($(innerSidePanel));
-
-				if (rightPanelPreference == "summary"){
-					$(detailsPanel).hide();
-					$('#summaryIdentification').addClass('active');
-				}
-				else {
-					$(summaryPanel).hide();
-					$('#detailsIdentification').addClass('active');
-				}
-				$('#summaryIdentification').click(function (e) {
-  					e.preventDefault();
-  					$('#identificationSideDetailsPanel').hide();
-  					$('#identificationSideSummaryPanel').show();
-  					$(this).addClass('active');
-  					$('#detailsIdentification').removeClass('active');
-  				});
-				$('#detailsIdentification').click(function (e) {
-  					e.preventDefault();
-  					$('#identificationSideDetailsPanel').show();
-  					$('#identificationSideSummaryPanel').hide();
-  					$(this).addClass('active');
-  					$('#summaryIdentification').removeClass('active');
-  				});
-
-				$(detailsPanel).appendTo($(innerSidePanel));
-				$(summaryPanel).appendTo($(innerSidePanel));
-
-				var data = {"id":rowInfo[1]};
-
-				var url = "{% url 'get_compound_info' project.id analysis.id %}";
-
-				$.ajax({
-					type: "GET",
-					traditional : true,
-		            url: url,
-		            data: data,
-		            success: function(response){
-		            	var database_info = {};
-		            	for (var i=2;i<response.length;i++){
-		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
-										//database_info[compound.database_name] = [compound_name, compound_identifier]
-		            	}
-		            	newSummaryDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
-		            	newDetailsDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Name</h5></div><div class="span12 compound_name" style="margin-left:0px;padding-left:13px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;""><select class="span6 db_selector">';
-		            	for (var index in database_info){
-		            		newSummaryDom += '<option value="'+index+'">'+index+'</option>';
-		            		newDetailsDom += '<option value="'+index+'">'+index+'</option>';
-		            	}
-		            	newSummaryDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Identification</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>';
-		            	newDetailsDom += '</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Identification</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+rowInfo[rowInfo.length-1]+'</div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">inchikey</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;">'+response[1]+'</div>';
-		            	$(summaryloadingPan).before($(newSummaryDom));
-		            	$(detailsloadingPan).before($(newDetailsDom));
-		            	name = database_info[String($('select.db_selector').val())][0];
-		            	var structureDom;
-		            	$('.compound_name').text(name);
-		            	if ($('select.db_selector').val() == "hmdb"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
-		            	}
-		            	else if ($('select.db_selector').val() == "kegg"){
-		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
-		            	}
-		            	else if ($('select.db_selector').val() == "lipidmaps"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
-		            	}
-		            	else {
-		            		structureDom = $('<p>Structure not available</p>');
-		            	}
-		            	structureDiv = $('.structure');
-		            	$(structureDom).appendTo($(structureDiv));
-		            	$('select.db_selector').change(function (){
-		            		name = database_info[$(this).val()][0];
-		            		$('.compound_name').text(name);
-		            		$('select.db_selector').val($(this).val());
-		            		if ($(this).val() == "hmdb"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
-			            	}
-			            	else if ($(this).val() == "kegg"){
-			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
-			            	}
-			            	else if ($(this).val() == "lipidmaps"){
-		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
-		            		}
-			            	else {
-			            		structureDom = $('<p>Structure not available</p>');
-			            	}
-			            	$(structureDiv).empty();
-			            	$(structureDom).appendTo($(structureDiv));
-			            });
-		            },
-		            error: function(){
-		        		alert("Error");
-		        	}
-		        });
-
-				var data = {"id":rowInfo[1]};
-
-				var url = "{% url 'get_peak_info' project.id analysis.id %}";
-
-				$.ajax({
-					type: "GET",
-					traditional : true,
-		            url: url,
-		            data: data,
-		            success: function(response){
-		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-						var chartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
-						var chartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
-
-						averageIntensityChartFromCompound(chartWidth, chartSummary, response);
-						averageIntensityChartFromCompound(chartWidth, chartDetail, response);
-
-						$(summaryloadingPan).before($(chartSummary));
-						$(detailsloadingPan).before($(chartDetail));
-
-						averageChart = true;
-						if (averageChart && peaksChart){
-							$(summaryloadingPan).remove();
-							$(detailsloadingPan).remove();
-						}
-		            },
-		            error: function(){
-		        		alert("Error");
-		        	}
-		        });
-				// Debug uncomment from here
-		    if (peakChromatogramsGraph) {
-					var data = {"id":rowInfo[1],"ppm":ppm,"rtwindow":rtwindow};
-					var url = "{% url 'get_peaks_from_compound' project.id analysis.id %}";
-
-					$.ajax({
-						type: "GET",
-						traditional : true,
-			            url: url,
-			            data: data,
-			            success: function(response){
-			            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-							var peakChartSummary = $('<div class="span12" style="margin-left:0px;"></div>');
-							var peakChartDetail = $('<div class="span12" style="margin-left:0px;"></div>');
-
-							createPeaksChromatogram(chartWidth, peakChartSummary, response);
-							createPeaksChromatogram(chartWidth, peakChartDetail, response);
-
-							$(summaryloadingPan).before($(peakChartSummary));
-							$(detailsloadingPan).before($(peakChartDetail));
-
-							peaksChart = true;
-							if (averageChart && peaksChart){
-								$(summaryloadingPan).remove();
-								$(detailsloadingPan).remove();
-							}
-			            },
-			            error: function(){
-			        		alert("Error");
-			        	}
-			        });
-				}
-				else {
-					peaksChart = true;
-				}
-			// debug uncomment to here
-			}
+            }
 
 			function createPeaksChromatogram(chartWidth, div, response){
 
@@ -2101,7 +1695,6 @@
 					<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Metabolic Maps</a></li>
 					<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
 					<li id="peaks-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#peaks" style="float:left;">Peaks</a></li>
-					<li id="potentials-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#potentials" style="float:left;">Potentials</a></li>
 					<li class="dropdown" style="float:left;margin:0px;height:37px;margin-left:20px;">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">More<b id="nav-bar-caret" class="caret"></b></a>
 						<ul class="dropdown-menu" id="dropdown-comparison-menu" style="min-width:100px;">
@@ -2438,16 +2031,30 @@
 									<table id="identification-table" class="table table-striped">
 						              <thead>
 						                <tr>
-						                  <th>Compound id</th>
-						                  <th>ID</th>
-						                  <th>Peak id</th>
-						                  <th>Name</th>
-						                  <th>Formula</th>
-						                  <th>ppm</th>
-															<th>RT (s)</th>
-						                  <th>Identification</th>
-						                  <th>Polarity</th>
-						                </tr>
+						                  <th rowspan="2">Compound id</th>
+						                  <th rowspan="2">Peak ID</th>
+						                  <th rowspan="2">Name</th>
+						                  <th rowspan="2">Formula</th>
+						                  <th rowspan="2">SuperPathway</th>
+										  <th rowspan="2">Pathway</th>
+										  {% for member in member_list %}
+										  <th rowspan="1" class="intensity-column" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
+										  {% endfor %}
+{#										  {% for member in member_list %}#}
+{#										  <th rowspan="2" class="average-column">Average {{ member.name }}</th>#}
+{#										  {% endfor %}#}
+                                          {% for comparison in comparisons %}
+                                          <th rowspan="2">logFC {{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</th>
+                                          {% endfor %}
+										  <th rowspan="2">Identification</th>
+										  </tr>
+										  <tr>
+										  {% for sublist in sample_list %}
+											{% for sample in sublist %}
+											<th rowspan="1">{{ sample.name }}</th>
+											{% endfor %}
+										  {% endfor %}
+						                 </tr>
 						              </thead>
 						            </table>
 								</div>
@@ -2481,7 +2088,7 @@
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
 						              		<td>{{ pathway.0.id }}</td>
-						              		<td>{{ pathway.0.compoundNumber }}</td>
+						              		<td>{{ pathway.0.datasourcesuperpathway_set.first.compound_number }}</td>
 						              		<td>{{ pathway.2 }}</td>
 						              		<td>{{ pathway.1 }}</td>
 						              		<td>{{ pathway.3 }}</td></tr>
@@ -2560,43 +2167,6 @@
 						                  {% endfor %}
 						                </tr>
 						              </thead>
-						            </table>
-								</div>
-							</div>
-						</div>
-						<div class="myspan3" style="height:100%;">
-							<div class="row-fluid">
-								<div class="right-side-bar-inner">
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div id="potentials" class="tab-pane">
-					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
-						<div class="myspan9" style="height:100%;">
-							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
-								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
-									<table id="potentials-table" class="table table-striped">
-						              <thead>
-						                <tr>
-						                  <th>ID</th>
-						                  <th>Mass</th>
-						                  <th>RT</th>
-						                  <th>Comparison</th>
-						                </tr>
-						              </thead>
-						              <tbody>
-						              	{% for potential in potential_hits %}
-						              	<tr>
-						              		<td>{{ potential.0 }}</td>
-						              		<td>{{ potential.1|floatformat:"-2" }}</td>
-						              		<td>{{ potential.2|floatformat:"-2" }}</td>
-						              		<td>{{ potential.3 }}</td>
-						              	</tr>
-						              	{% endfor %}
-						              </tbody>
-						              <!-- test -->
 						            </table>
 								</div>
 							</div>
