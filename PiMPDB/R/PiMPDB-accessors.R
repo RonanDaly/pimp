@@ -183,13 +183,24 @@ setMethod("getProjectID", "PiMPDB", function(object, analysis.id) {
 	})
 
 setMethod("getAnnotationDatabases", "PiMPDB", function(object, analysis.id) {
-  databases <- querydb(object, 
+
+  #print('newMethod!!!!!')
+  #databases <- querydb(object,
+  #                     paste("SELECT experiments_database.name",
+  #                     "FROM experiments_database",
+  #                     "INNER JOIN experiments_params_databases ON experiments_database.id = experiments_params_databases.database_id",
+  #                     "INNER JOIN experiments_analysis ON experiments_analysis.params_id = experiments_params_databases.params_id",
+  #                     "WHERE experiments_analysis.id = %d"),
+  #                     bind=analysis.id)
+  databases <- querydb(object,
                        paste("SELECT experiments_database.name",
-                       "FROM experiments_database",
-                       "INNER JOIN experiments_params_databases ON experiments_database.id = experiments_params_databases.database_id",
-                       "WHERE experiments_params_databases.params_id = %d"),
+                       "FROM experiments_database, experiments_params_databases, experiments_analysis",
+                       "WHERE experiments_database.id = experiments_params_databases.database_id",
+                       "AND experiments_analysis.params_id = experiments_params_databases.params_id",
+                       "AND experiments_analysis.id = %d"),
                        bind=analysis.id)
-  return(as.character(databases))
+  #print(databases)
+  return(as.character(databases$name))
   })
 
 

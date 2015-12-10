@@ -348,6 +348,52 @@ class CleanFilterForm(AnnotationQueryForm):
             self.add_error("parents", "No parents were selected. Please select at least one parent query.")
             raise forms.ValidationError("No parents were selected. Please select at least one parent query.")
 
+class NetworkSamplerForm(AnnotationQueryForm):
+    __author__ = 'Simon Rogers'
+    possible_parents = []
+    def __init__(self,fragmentation_set_name_slug,*args, **kwargs):
+        super(NetworkSamplerForm,self).__init__(*args, **kwargs)
+        fragmentation_set = FragmentationSet.objects.get(slug = fragmentation_set_name_slug)
+        parent_annotations = AnnotationQuery.objects.filter(fragmentation_set = fragmentation_set)
+        possible_parents = ()
+        for a in parent_annotations:
+            possible_parents = possible_parents + ((a.slug,a.name),)
+        self.fields['parent_annotation_queries'] = forms.MultipleChoiceField(
+            choices = possible_parents,
+            required = True,
+            help_text = "Please choose a parent Annotation Query to filter")
+
+    parent_annotation_queries = forms.MultipleChoiceField(
+        choices = possible_parents,
+        help_text = "Please choose a parent Annotation Query to filter")
+
+    n_samples = forms.IntegerField(
+        min_value=1,
+        required = False,
+        help_text="Please enter number of posterior samples (leave blank for default 1000)")
+
+    n_burn = forms.IntegerField(
+        min_value=1,
+        required = False,
+        help_text="Please enter number of burn-in samples (leave blank for default 100)")
+
+    delta = forms.DecimalField(
+        required = False,
+        help_text="Please enter regularisation parameter delta")
+
+    def clean(self):
+        cleaned_data = super(NetworkSamplerForm, self).clean()
+        user_selections = cleaned_data.get('parent_annotation_queries')
+        if user_selections == None:
+            self.add_error("no parent", "No parent query was selected. Please select at least one parent.")
+            raise forms.ValidationError("No parent query was selected. Please select at least one parent.")
+        n_samples = cleaned_data.get('n_samples',1000)
+        n_burn = cleaned_data.get('n_burn',100)
+        if n_burn > n_samples:
+            self.add_error("Number of posterior samples must be greater than the  burn-in period")
+            raise forms.ValidationError("Number of posterior samples must be greater than the  burn-in period")
+
+
 
 class PrecursorMassFilterForm(AnnotationQueryForm):
     """
@@ -519,9 +565,7 @@ class MassBankQueryForm(AnnotationQueryForm):
             )
 
 
-class NetworkSamplerQueryForm(AnnotationQueryForm):
-    __author__ = 'Simon Rogers'
-    pass
+
 
 
 class PreferredAnnotationForm(forms.ModelForm):

@@ -74,15 +74,15 @@
 						{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
-							<li class="dropdown">
-								<a class"=dropdown-toggle" data-toggle="dropdown" href="#">FrAnK
-									<span class="caret"></span></a>
-									<ul class="dropdown-menu">
-										<li><a href="{% url 'frank_index' %}">FrAnK Home</a></li>
-										<li><a href="{% url 'my_experiments' %}">My Experiments</a></li>
-										<li><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></li>
-									</ul>
-							</li>
+{#							<li class="dropdown">#}
+{#								<a class"=dropdown-toggle" data-toggle="dropdown" href="#">FrAnK#}
+{#									<span class="caret"></span></a>#}
+{#									<ul class="dropdown-menu">#}
+{#										<li><a href="{% url 'frank_index' %}">FrAnK Home</a></li>#}
+{#										<li><a href="{% url 'my_experiments' %}">My Experiments</a></li>#}
+{#										<li><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></li>#}
+{#									</ul>#}
+{#							</li>#}
 							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 						{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
@@ -94,7 +94,6 @@
 			</div>
 		</div>
 
-
         <div class="container" id="base_container">
             <div class="row" style="padding-top:20px;">
                 <div class="col-md-12">
@@ -102,25 +101,24 @@
                 </div>
             </div>
         </div>
-        <div class="push"></div>
-		<footer class="footer">
 
+        <div class="push"></div>
+		<footer class="footer navbar navbar-fixed-bottom">
 				<p>
 					Designed and built by Glasgow Polyomics <a href="http://twitter.com/polyomics">@polyomics</a>.
 				</p>
 				<ul class="footer-links">
 					<li>
-						<a href="http://www.gla.ac.uk/colleges/mvls/research/gpf/">Polyomics website</a>
+						<a href="http://www.polyomics.gla.ac.uk/">Polyomics website</a>
 					</li>
 					<li class="muted">·</li>
 					<li>
-						<a href="#">Licence</a>
+						<a href="{% url 'licence' %}">Licence</a>
 					</li>
 					<li class="muted">·</li>
 					<li>
-						<a href="#">Credits</a>
+						<a href="{% url 'credits' %}">Credits</a>
 					</li>
-
 		</footer>
 	</body>
 </html>

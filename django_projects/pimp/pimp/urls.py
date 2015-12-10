@@ -48,7 +48,7 @@ urlpatterns = patterns('',
     # url(r'^accounts/profile/$', direct_to_template,
     #     {'template': 'registration/profile.html'},
     #     name='profile'),
-    url(r'^accounts/profile/$', TemplateView.as_view(template_name="registration/profile.html"), name='profile'),
+    url(r'^accounts/profile/$', 'gp_registration.views.profile', name='profile'),
     # projects page : display all projects belonging to the user
     url(r'^accounts/project/$', 'projects.views.summary', name='project_summary'),
     # new project page : form to create a new project (title and comments only)
@@ -115,7 +115,9 @@ urlpatterns = patterns('',
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', 'projects.views.groupcreation', name='create_goupe'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('groups.urls')),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('multiuploader.urls')),
-    url(r'^frank/', include('frank.urls')),
+    #url(r'^frank/', include('frank.urls')),
+    url(r'^credits/$', 'home.views.credits', name='credits'),
+    url(r'^licence/$', 'home.views.licence', name='licence'),
 )
 
 urlpatterns += staticfiles_urlpatterns()

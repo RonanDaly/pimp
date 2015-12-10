@@ -9,6 +9,7 @@ from django.forms.formsets import formset_factory, BaseFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 # models
 from projects.models import Project
 from data.models import *
@@ -29,6 +30,10 @@ import datetime
 import numpy as np
 from rpy2.robjects.packages import importr
 from rpy2 import robjects
+
+# Scikitlearn for the PCA
+from sklearn.decomposition import PCA
+
 from experiments.forms import *
 # import mdp
 # import matplotlib.pyplot as plt
@@ -193,9 +198,9 @@ def experiment(request, project_id):
             # print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
             # print "parameter formset : ",parameter_formset
             # print
-            # databases_ids = database_form.cleaned_data['databases']
-            # for db_id in databases_ids:
-            # 	params.databases.add(db_id)
+            databases_ids = database_form.cleaned_data['databases']
+            for db_id in databases_ids:
+            	params.databases.add(db_id)
 
             print "after databases added"
 
@@ -430,7 +435,6 @@ def get_identification_table(request, project_id, analysis_id):
         # i = 0
         for secondary_id in ac_secondary_ids:
             # i += 1
-            # print i
             # if i == 10:
             #     break
             c_data = []
@@ -551,7 +555,7 @@ def get_metabolite_info(request, project_id, analysis_id):
         peaks_data = []
 
         for peak in peaks:
-            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 2)), str(peak.polarity), str(peak.type)])
+            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type)])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
@@ -686,6 +690,14 @@ def analysis_result(request, project_id, analysis_id):
         # print "after delete : ",np.where(pca_matrix == 0)[1]
         log_pca_matrix = np.log2(pca_matrix)
 
+
+        pca_obj = PCA(n_components=2,whiten=False)
+        pca_obj.fit(log_pca_matrix)
+        projected_data = pca_obj.transform(log_pca_matrix)
+        explained_variance = []
+        for i in range(2):
+            explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
+
         # print "len pca matrix 1 :", pca_matrix[0][0]
         # print "len log pca matrix 1 :", log_pca_matrix[0][0]
         # for yty in log_pca_matrix[0]:
@@ -698,28 +710,34 @@ def analysis_result(request, project_id, analysis_id):
         # print "pcan ",pcan.d[0],"  ",pcan.d[1]
         # print "pcan again",pcan.d
         # print "explained variance : ",pcan.explained_variance
-        nr, nc = log_pca_matrix.shape
-        xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
-        xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
-        stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
-        pca = stats.prcomp(xr)
+        # nr, nc = log_pca_matrix.shape
+        # xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
+        # xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
+        # stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
+        # pca = stats.prcomp(xr)
 
-        first_dim = list(pca.rx2['x'].rx(True, 1))
-        second_dim = list(pca.rx2['x'].rx(True, 2))
+        # first_dim = list(pca.rx2['x'].rx(True, 1))
+        # second_dim = list(pca.rx2['x'].rx(True, 2))
 
         # pca_info = [pcan.d[0],pcan.d[1]]
         pca_info = [None, None]
         pca_data_point = []
         i = 0
         j = 0
+
+
         for member in sample_list:
             pca_serie = [member_list[j].name]
             for sample in member:
                 dic = []
                 dic.append(sample.name)
                 # dic.append(pcar[i][0])
-                dic.append(first_dim[i])
-                dic.append(second_dim[i])
+                # dic.append(first_dim[i])
+                # dic.append(second_dim[i])
+                # dic.append(pca_obj.components_[0,i])
+                # dic.append(pca_obj.components_[1,i])
+                dic.append(projected_data[i,0])
+                dic.append(projected_data[i,1])
                 # dic.append(pcar[i][1])
                 pca_serie.append(dic)
                 i += 1
@@ -730,7 +748,7 @@ def analysis_result(request, project_id, analysis_id):
         print "after pca"
         pca_stop = timeit.default_timer()
 
-        # print "pca_series: ",pca_data_point
+        print "pca_series: ",pca_data_point
         ############################################################################
         ########################## End PCA calculation #############################
         ############################################################################
@@ -889,8 +907,9 @@ def analysis_result(request, project_id, analysis_id):
              'potential_hits': potential_hits,
              'tics': tics,
              'super_pathways_list': super_pathways_list,
-             }
-        # print len(peak_set)
+             'explained_variance':explained_variance,
+            }
+
         return render(request, 'base_result3.html', c)
 
 

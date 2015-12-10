@@ -18,11 +18,26 @@
 {% endblock %}
 
 {% block content %}
-    <div id="row">
+    <div class="row">
         <div class="col-md-12">
             <div class="page-header">
-                <h1>{{ project }}</h1>
-                <p class="lead">Create experimental conditions and assign samples to them.</p>
+                <div class="row">
+                    <div class="col-md-8">
+                        <h1>{{ project }}</h1>
+                    </div>
+                    <div class="col-md-4">
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-default btn-sm pull-right" data-toggle="modal" data-target="#myModalCancel">
+                            <span class="glyphicon glyphicon-step-backward"></span>
+                            Back to project page
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                            <p class="lead">Create experimental conditions and assign samples to them.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -143,7 +158,6 @@
 
 
                             <p>When you are done, click the "Save" button below to store your changes.</p>
-                            <a class="btn btn-default" href="{% url 'project_detail' project.id %}">Return without saving</a>
                             <button type="button" class="btn btn-default" data-toggle="modal" data-target="#submit_warning">
                                 Save
                             </button>
@@ -181,4 +195,28 @@
             <!--/modal -->
         </form>
 
+    <div id="myModalCancel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <h4 class="modal-title">Warning</h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+                    <p>Every change you may have made be will be lost.</p>
+
+                    <p>Do you want to continue?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" aria-hidden="true">
+                        Cancel
+                    </button>
+                    <a type="button" class="btn btn-sm btn-primary" href="{% url 'project_detail' project.id %}">Continue to project page</a>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
