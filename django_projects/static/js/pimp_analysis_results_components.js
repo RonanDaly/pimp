@@ -49,9 +49,18 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	});
 
 	$('#tabnav a').click(function (e) {
-			e.preventDefault();
-			$(this).tab('show');
-			$("#first-pathway").css("margin-top",25);
+		e.preventDefault();
+		$(this).tab('show');
+		if ($(this).parent().attr('id') == "identification-li" ){
+			console.log("clicked on id tab");
+			$('#id_table_super_pathway_selector_div').show();
+			$('#id_table_pathway_selector_div').show();
+		}
+		else {
+			$('#id_table_super_pathway_selector_div').hide();
+			$('#id_table_pathway_selector_div').hide();
+		}
+		$("#first-pathway").css("margin-top",25);
 		$('#right-summary-panel').css('display','block');
 		$('#right-summary-panel').css('margin-right','-55%');
 		$('#right-summary-panel').css('display','none');
