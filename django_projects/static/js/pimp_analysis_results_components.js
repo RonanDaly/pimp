@@ -491,9 +491,9 @@ function set_idtable(url, samplesGroupsNum, callback){
     }
     //console.log('Indices for initial comparisons = ' + initialComparisonIdx);
 
-	var idTable = $('#identification-table').dataTable( {
+	var idTable = $('#identification-table').DataTable( {
         "sAjaxSource": url,
-        "sDom": '<"identification-table_wrapper_toolbar"CliT>rtp',
+        "sDom": '<"identification-table_wrapper_toolbar"CilT>rtp',
         "oColVis": {
             "sButtonText": "Switch display",
             "aiExclude": excludeColIdx,
@@ -613,6 +613,8 @@ function set_idtable(url, samplesGroupsNum, callback){
         }
     });
 
+
+	// $("div.identification-table_wrapper_toolbar").append('<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_pathway_selector"><option></option></select></div><div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_super_pathway_selector"><option></option></select></div>');
     // console.log(excludeColIdx);
 
 	// callback && callback(idTable);

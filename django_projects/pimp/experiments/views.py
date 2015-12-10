@@ -427,7 +427,12 @@ def get_identification_table(request, project_id, analysis_id):
         annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=identified_compounds.values_list("secondaryId", flat=True))
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
+        # i = 0
         for secondary_id in ac_secondary_ids:
+            # i += 1
+            # print i
+            # if i == 10:
+            #     break
             c_data = []
 
             # Select the most intense peak that has been identified by the compound
@@ -835,6 +840,24 @@ def analysis_result(request, project_id, analysis_id):
         #  			if peak._minimum_intensities_present(groups[0].sample.all()) or peak._minimum_intensities_present(groups[1].sample.all()):
         # 				potential_hits.append([peak.id, peak.mass, peak.rt, groups[0].name + " / " + groups[1].name])
 
+        super_pathways = DataSourceSuperPathway.objects.all().values_list('super_pathway', flat=True).distinct()
+
+        super_pathways_list = []
+        for i in super_pathways:
+            single_super_pathway_list = []
+            pathway_name_list = []
+            if i is None:
+                single_super_pathway_list.append(None)
+            else:
+                single_super_pathway_list.append(SuperPathway.objects.get(pk=i).name)
+
+            for i2 in DataSourceSuperPathway.objects.filter(super_pathway=i):
+                pathway_name_list.append(i2.pathway.name)
+                print "\t", i2.pathway.name
+            single_super_pathway_list.append(pathway_name_list)
+            super_pathways_list.append(single_super_pathway_list)
+
+
         print "apres comparison peak machin chose"
         stop = timeit.default_timer()
 
@@ -865,6 +888,7 @@ def analysis_result(request, project_id, analysis_id):
              'comparison_hits_list': comparison_hits_list,
              'potential_hits': potential_hits,
              'tics': tics,
+             'super_pathways_list': super_pathways_list,
              }
         # print len(peak_set)
         return render(request, 'base_result3.html', c)
