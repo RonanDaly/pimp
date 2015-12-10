@@ -145,6 +145,11 @@
 			var idTable = set_idtable(id_table_url, samplesGroupsNum);
             $('#identification-table tbody').on('click', 'tr', function() {
                 // When a tr is clicked, update the right panel with information about the contents of the tr
+
+                // Row selection
+                idTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
+                $(this).addClass('row_selected'); // Select the current row
+
                 var data = idTable.row(this).data();
                 var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
                 updateIdentificationRightPanel(data, innerSidePanel);
@@ -153,6 +158,10 @@
             var pathwayTable = set_pathwaytable();
             //pathwayTable.$('tr').click( function () {
             pathwayTable.on('click', 'tr', function() {
+
+                // Row selection
+                pathwayTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
+                $(this).addClass('row_selected'); // Select the current row
 
                 var rowInfo = pathwayTable.row(this).data();
 
@@ -262,6 +271,10 @@
 
             var peakTable = set_peaktable(peak_table_url);
             $('#peak-table tbody').on('click', 'tr', function() {
+                // Row selection
+                peakTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
+                $(this).addClass('row_selected'); // Select the current row
+
                 var averageChart = false;
 				var peaksChart = false;
 			    var data = peakTable.row(this).data();
@@ -1130,6 +1143,7 @@
 			function updateIdentificationRightPanel(rowInfo, innerSidePanel) {
                 // Function to add metabolite information to the right side pane in the metabolites tab, where the
                 // metabolite information is taken from the metabolite row that is clicked in the main table.
+                // more info...
 				$(innerSidePanel).empty();
 				var averageChart = false;
 				var peaksChart = false;
@@ -1138,6 +1152,70 @@
 
 				$(evidencePanel).appendTo($(innerSidePanel));
 
+                // Structure for the compound
+
+                var data = {"id":rowInfo[0]};
+
+				var url = "{% url 'get_compound_info' project.id analysis.id %}";
+
+				$.ajax({
+					type: "GET",
+					traditional : true,
+		            url: url,
+		            data: data,
+		            success: function(response){
+		            	var database_info = {};
+		            	for (var i=2;i<response.length;i++){
+		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
+		            	}
+		            	$(evidencePanel).append('<div class="span12" style="margin-left:0px;"><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><select class="span6 db_selector">');
+		            	for (var index in database_info){
+		            		$('.db_selector').append('<option value="'+index+'">'+index+'</option>');
+		            	}
+		            	$(evidencePanel).append('</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>');
+                        var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading structure...</p></div>');
+		            	$(loadingPan).appendTo(evidencePanel);
+		            	var structureDom;
+		            	if ($('select.db_selector').val() == "hmdb"){
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            	}
+		            	else if ($('select.db_selector').val() == "kegg"){
+		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+		            	}
+		            	else if ($('select.db_selector').val() == "lipidmaps"){
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            	}
+		            	else {
+		            		structureDom = $('<p>Structure not available</p>');
+		            	}
+                        $(loadingPan).remove();
+
+		            	var structureDiv = $('.structure');
+		            	$(structureDom).appendTo($(structureDiv));
+		            	$('select.db_selector').change(function (){
+		            		$('select.db_selector').val($(this).val());
+		            		if ($(this).val() == "hmdb"){
+		            		    structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+			            	}
+			            	else if ($(this).val() == "kegg"){
+			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+			            	}
+			            	else if ($(this).val() == "lipidmaps"){
+		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            		}
+			            	else {
+			            		structureDom = $('<p>Structure not available</p>');
+			            	}
+			            	$(structureDiv).empty();
+			            	$(structureDom).appendTo($(structureDiv));
+			            });
+		            },
+		            error: function(){
+		        		alert("Error");
+		        	}
+		        });
+
+                // Peak information for the compound
                 var data = {"compound_id": rowInfo[0]};
 				var url = "{% url 'get_metabolite_info' project.id analysis.id %}";
 
@@ -1176,13 +1254,15 @@
                             peakDiv.append('<div class="metabolites-intensity-plot-div"><button class="btn btn-sm metabolites-intensity-plot-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/barchart_icon.png"/>Intensities</button></div>');
 
                             // Finally, add the peakDiv to the evidencePanel
-                            evidencePanel.append(peakDiv);
+                            $(evidencePanel).append(peakDiv);
                             });
 		            },
                     error: function(){
 		         	    alert("Error with getting peak information");
 		        	}
 		        });
+
+
             }
 
 			function createPeaksChromatogram(chartWidth, div, response){

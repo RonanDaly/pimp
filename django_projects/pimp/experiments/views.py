@@ -431,7 +431,11 @@ def get_identification_table(request, project_id, analysis_id):
         annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=identified_compounds.values_list("secondaryId", flat=True))
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
+        # i = 0
         for secondary_id in ac_secondary_ids:
+            # i += 1
+            # if i == 10:
+            #     break
             c_data = []
 
             # Select the most intense peak that has been identified by the compound
@@ -550,7 +554,7 @@ def get_metabolite_info(request, project_id, analysis_id):
         peaks_data = []
 
         for peak in peaks:
-            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 2)), str(peak.polarity), str(peak.type)])
+            peaks_data.append([peak.id, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type)])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
@@ -686,12 +690,12 @@ def analysis_result(request, project_id, analysis_id):
         log_pca_matrix = np.log2(pca_matrix)
 
 
-		pca_obj = PCA(n_components=2,whiten=False)
-		pca_obj.fit(log_pca_matrix)
-		projected_data = pca_obj.transform(log_pca_matrix)
-		explained_variance = []
-		for i in range(2):
-			explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
+        pca_obj = PCA(n_components=2,whiten=False)
+        pca_obj.fit(log_pca_matrix)
+        projected_data = pca_obj.transform(log_pca_matrix)
+        explained_variance = []
+        for i in range(2):
+            explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
 
         # print "len pca matrix 1 :", pca_matrix[0][0]
         # print "len log pca matrix 1 :", log_pca_matrix[0][0]
@@ -705,14 +709,14 @@ def analysis_result(request, project_id, analysis_id):
         # print "pcan ",pcan.d[0],"  ",pcan.d[1]
         # print "pcan again",pcan.d
         # print "explained variance : ",pcan.explained_variance
-		# nr, nc = log_pca_matrix.shape
-		# xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
-		# xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
-		# stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
-		# pca = stats.prcomp(xr)
+        # nr, nc = log_pca_matrix.shape
+        # xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
+        # xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
+        # stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
+        # pca = stats.prcomp(xr)
 
-		# first_dim = list(pca.rx2['x'].rx(True, 1))
-		# second_dim = list(pca.rx2['x'].rx(True, 2))
+        # first_dim = list(pca.rx2['x'].rx(True, 1))
+        # second_dim = list(pca.rx2['x'].rx(True, 2))
 
         # pca_info = [pcan.d[0],pcan.d[1]]
         pca_info = [None, None]
@@ -727,12 +731,12 @@ def analysis_result(request, project_id, analysis_id):
                 dic = []
                 dic.append(sample.name)
                 # dic.append(pcar[i][0])
-				# dic.append(first_dim[i])
-				# dic.append(second_dim[i])
-				# dic.append(pca_obj.components_[0,i])
-				# dic.append(pca_obj.components_[1,i])
-				dic.append(projected_data[i,0])
-				dic.append(projected_data[i,1])
+                # dic.append(first_dim[i])
+                # dic.append(second_dim[i])
+                # dic.append(pca_obj.components_[0,i])
+                # dic.append(pca_obj.components_[1,i])
+                dic.append(projected_data[i,0])
+                dic.append(projected_data[i,1])
                 # dic.append(pcar[i][1])
                 pca_serie.append(dic)
                 i += 1
@@ -743,7 +747,7 @@ def analysis_result(request, project_id, analysis_id):
         print "after pca"
         pca_stop = timeit.default_timer()
 
-		print "pca_series: ",pca_data_point
+        print "pca_series: ",pca_data_point
         ############################################################################
         ########################## End PCA calculation #############################
         ############################################################################
