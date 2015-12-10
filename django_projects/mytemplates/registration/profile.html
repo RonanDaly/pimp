@@ -38,6 +38,7 @@
                     <p>Number of collaborators: {{ collaborators|length }}</p>
 
                     <div class="container">
+                        <h4>Name of collaborator{{ collaborators|length|pluralize }}</h4>
                         <div class="row">
                             {% for collaborator in collaborators %}
                                     <div class="col-md-4"><ul class="list-unstyled"><li style="text-align: center";>{{ collaborator.first_name }} {{ collaborator.last_name }}</li></ul></div>
@@ -55,7 +56,8 @@
             </div>
 
             <div class="panel-body">
-                {% if owned_projects|length > 0 %}
+                {% if sample_number > 0 %}
+
 {#                <div>#}
 {#                    <h4><span class="label pull-right label-info" style="margin-left: 1em;">{{ total_storage|filesizeformat }}</span></h4>#}
 {#                    <div class="progress">#}
@@ -74,6 +76,8 @@
                 <p>{{ storage_taken.calibration_samples|filesizeformat }}</p>
                 <h4>Total used</h4>
                 <p>{{ storage_used|filesizeformat }}</p>
+                {% else %}
+                <p>You do not have any uploaded samples</p>
                 {% endif %}
 {#                <h4>Total storage</h4>#}
 {#                <p>{{ total_storage|filesizeformat }} ({{ storage_remaining|filesizeformat }} left) </p>#}
