@@ -210,7 +210,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	intensities.idx <- match(as.character(unlist(groups)), colnames(raw.data))
 	
 	#get rows containing basepeaks or match to standard
-	basepeaks <- which(raw.data$relation.ship=="bp")
+	basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
 	stds <- which(!is.na(raw.data$stds_db_identification))
 
 	data <- as.matrix(raw.data[unique(basepeaks,stds),intensities.idx]) #subset to produce data for statistical analysis
