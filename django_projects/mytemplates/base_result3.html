@@ -1247,7 +1247,7 @@
                     // Get the correct div to insert the chromatogram
                     var chromatogramDiv = $(this).closest('.metabolites-chromatogram-div');
 
-                    // Get the associated peak ID
+                    // Get the associated peak secondaryID
                     var peakID = $(this).prop('id').split("-")[1];
 
                     // Remove the button and replace with a loading image
@@ -1289,7 +1289,7 @@
                     // Get the correct div to insert the intensity plot
                     var intensityPlotDiv = $(this).closest('.metabolites-intensity-plot-div');
 
-                    // Get the associated peak ID
+                    // Get the associated peak secondaryID
                     var peakID = $(this).prop('id').split("-")[1];
 
                     // Remove the button and replace with a loading image
@@ -1411,7 +1411,7 @@
 		            success: function(response){
                         var peaksData = response["aaData"];
                         $.each(peaksData, function(peakDataId) {
-                            // Creates a peakDiv for every peak that is associated with the compound. The id of the peakDiv is set to peak.ID for ease of access. $('#evidencePanel #1')
+                            // Creates a peakDiv for every peak that is associated with the compound. The id of the peakDiv is set to peak.secondaryID for ease of access. $('#evidencePanel #1')
                             var peakDiv = $('<div class="span12 peak-div" id="peak-'+peaksData[peakDataId][0]+'" style="border-top: solid 1px gray; margin: 0px;"></div>');
 
                             // If there is more than one peak, add the peak number to the peakDiv
@@ -1923,7 +1923,7 @@
 							{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
-							<li><a href="{% url 'auth_logout' %}">ogout</a></li>
+							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 							{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
 							<li><a href="{% url 'registration_register' %}">Register</a></li>
