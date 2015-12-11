@@ -5,7 +5,7 @@
 
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="shortcut icon" href="{{ STATIC_URL }}/img/logo_blue_white_icon_large.png">
+		<link rel="shortcut icon" href="{{ STATIC_URL }}img/logo_blue_white_icon_large.png">
 		{% load staticfiles %}
 
 		{% block jQuery %}
@@ -58,6 +58,7 @@
 	</head>
 
 	<body>
+    <div class="wrapper">
 		<div class="navbar navbar-default navbar-fixed-top">
 			<div class="container">
 				<div class="navbar-header navbar-right">
@@ -103,7 +104,8 @@
         </div>
 
         <div class="push"></div>
-		<footer class="footer navbar navbar-fixed-bottom">
+    </div>
+		<footer class="footer">
 				<p>
 					Designed and built by Glasgow Polyomics <a href="http://twitter.com/polyomics">@polyomics</a>.
 				</p>
