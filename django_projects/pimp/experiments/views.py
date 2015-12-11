@@ -432,11 +432,11 @@ def get_metabolites_table(request, project_id, analysis_id):
         annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=identified_compounds.values_list("secondaryId", flat=True))
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
-        i = 0
+        # i = 0
         for secondary_id in ac_secondary_ids:
-            i += 1
-            if i == 10:
-                break
+            # i += 1
+            # if i == 10:
+            #     break
             c_data = []
 
             # Select the most intense peak that has been identified by the compound
