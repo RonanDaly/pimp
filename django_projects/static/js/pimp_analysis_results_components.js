@@ -52,7 +52,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		e.preventDefault();
 		$(this).tab('show');
 		if ($(this).parent().attr('id') == "metabolites-li" ){
-			console.log("clicked on id tab");
+			//console.log("clicked on id tab");
 			$('#metabolites_table_super_pathway_selector_div').show();
 			$('#metabolites_table_pathway_selector_div').show();
 		}

@@ -183,7 +183,7 @@
 		{% endfor %}
 
 
-		console.log(pathway_map);
+		// console.log(pathway_map);
 
 		var super_pathway_list = [
 			{% for super_pathway in super_pathways_list %}{
@@ -258,7 +258,7 @@
 
 			// Select a super pathway function (logic explained)
 			$superPathwaySelect.on("select2:select", function (e) {
-				console.log("select2:select "+ e.target.value);
+				// console.log("select2:select "+ e.target.value);
 				// Change pathway select component to no option (this doesn't trigger the unselect event, has to be done separately)
 				$pathwaySelect.val(null).trigger("change");
 				// Trigger pathway select component "unselect" event. See below for the logic of this event
@@ -316,7 +316,7 @@
 				metabolitesTable.column(5).search(selectedPathway).draw();
 
 			}).on("select2:unselect", function (e) {
-				console.log("pathway:unselect"+ e.target.value);
+				// console.log("pathway:unselect"+ e.target.value);
 				metabolitesTable.column(5).search('').draw();
 
 				// remove filter on datable
@@ -400,7 +400,7 @@
 			            url: url,
 			            data: ajax_data,
 			            success: function(response) {
-			            	console.log(response["pathway_map"]);
+			            	// console.log(response["pathway_map"]);
 			            	var frame = $('<iframe id="frame" src="'+response["pathway_map"]+'" width="'+chartWidth+'px" height="'+chartHeight+'px" style="border:none;"></iframe>');
 
 							$(pathwaySelection).appendTo($modal.find('.modal-body'));
@@ -423,7 +423,7 @@
 							});
 
 							$('#comparison_index').change(function () {
-				        		console.log("comparison just changed!!");
+				        		// console.log("comparison just changed!!");
 				        		var comparison_map = this.value;
 				        		var ajax_data = {"id":rowInfo[1], "comparison":comparison_map};
 				        		var frame = $modal.find('iframe');
@@ -857,7 +857,7 @@
 		            url: url,
 		            data: ajax_data,
 		            success: function(response){
-		            	console.log(response);
+		            	//console.log(response);
 		            	if (response.length > 1){
 		            		var pluralize_compound = "compounds";
 		            	}
@@ -1923,7 +1923,7 @@
 							{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
-							<li><a href="{% url 'auth_logout' %}">logout</a></li>
+							<li><a href="{% url 'auth_logout' %}">ogout</a></li>
 							{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
 							<li><a href="{% url 'registration_register' %}">Register</a></li>
