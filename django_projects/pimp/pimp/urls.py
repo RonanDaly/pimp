@@ -74,7 +74,7 @@ urlpatterns = patterns('',
     # ajax request to get info for MetExplpore
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_info/$', 'experiments.views.get_metexplore_info', name='get_metexplore_info'),
     # ajax request to get identification table
-    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_identification_table/$', 'experiments.views.get_identification_table', name='get_identification_table'),
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metabolites_table/$', 'experiments.views.get_metabolites_table', name='get_metabolites_table'),
     # ajax request to get peak table
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_peak_table/$', 'experiments.views.get_peak_table', name='get_peak_table'),
     # ajax request to get pathway map url

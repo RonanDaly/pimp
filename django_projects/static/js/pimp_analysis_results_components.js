@@ -11,7 +11,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',40);
 			$('#serch-banner').show();
 			$('#main-container').css('top',175);
-			$('.identification-table_wrapper_toolbar').css('top',175);
+			$('.metabolites-table_wrapper_toolbar').css('top',175);
 			$('.pathway-table_wrapper_toolbar').css('top',175);
 			$('.comparison-table_wrapper_toolbar').css('top',175);
 			$('.peak-table_wrapper_toolbar').css('top',175);
@@ -27,7 +27,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',0);
 			$('#serch-banner').hide();
 			$('#main-container').css('top',41);
-			$('.identification-table_wrapper_toolbar').css('top',41);
+			$('.metabolites-table_wrapper_toolbar').css('top',41);
 			$('.pathway-table_wrapper_toolbar').css('top',41);
 			$('.comparison-table_wrapper_toolbar').css('top',41);
 			$('.peak-table_wrapper_toolbar').css('top',41);
@@ -51,14 +51,14 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	$('#tabnav a').click(function (e) {
 		e.preventDefault();
 		$(this).tab('show');
-		if ($(this).parent().attr('id') == "identification-li" ){
+		if ($(this).parent().attr('id') == "metabolites-li" ){
 			console.log("clicked on id tab");
-			$('#id_table_super_pathway_selector_div').show();
-			$('#id_table_pathway_selector_div').show();
+			$('#metabolites_table_super_pathway_selector_div').show();
+			$('#metabolites_table_pathway_selector_div').show();
 		}
 		else {
-			$('#id_table_super_pathway_selector_div').hide();
-			$('#id_table_pathway_selector_div').hide();
+			$('#metabolites_table_super_pathway_selector_div').hide();
+			$('#metabolites_table_pathway_selector_div').hide();
 		}
 		$("#first-pathway").css("margin-top",25);
 		$('#right-summary-panel').css('display','block');
@@ -75,7 +75,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		if (right_panel) {
 			$('.myspan3').width('0%');
 			$('.myspan9').width('100%');
-			$('.identification-table_wrapper_toolbar').width('100%');
+			$('.metabolites-table_wrapper_toolbar').width('100%');
 			$('.peak-table_wrapper_toolbar').width('100%');
 			$('.comparison-table_wrapper_toolbar').width('100%');
 			$('.pathway-table_wrapper_toolbar').width('100%');
@@ -86,7 +86,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		else {
 			$('.myspan3').width('20%');
 			$('.myspan9').width('80%');
-			$('.identification-table_wrapper_toolbar').width('80%');
+			$('.metabolites-table_wrapper_toolbar').width('80%');
 			$('.peak-table_wrapper_toolbar').width('80%');
 			$('.comparison-table_wrapper_toolbar').width('80%');
 			$('.pathway-table_wrapper_toolbar').width('80%');
@@ -424,7 +424,7 @@ jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-desc'] = function(a, b) {
 
 };
 
-function set_idtable(url, samplesGroupsNum){
+function set_metabolitestable(url, samplesGroupsNum){
     // Function to create the metabolites table using dataTables
 
     // samplesGroupsNum is an array, where index [0] is the number of samples, [1] is the number of groups, and [2] is
@@ -435,7 +435,7 @@ function set_idtable(url, samplesGroupsNum){
     // DataTables
 
     // Compute the indices of the sample intensities in the table
-    // There are ALWAYS 5 columns that precede the sample intensities (see experiments.views.get_identification_table)
+    // There are ALWAYS 5 columns that precede the sample intensities (see experiments.views.get_metabolites_table)
     var numSamples = samplesGroupsNum[0];
     var sampleIdxArray = [];
     for (var n=0; n<numSamples; n++) {
@@ -500,9 +500,9 @@ function set_idtable(url, samplesGroupsNum){
     }
     //console.log('Indices for initial comparisons = ' + initialComparisonIdx);
 
-	var idTable = $('#identification-table').DataTable( {
+	var metabolitesTable = $('#metabolites-table').DataTable( {
         "sAjaxSource": url,
-        "sDom": '<"identification-table_wrapper_toolbar"CilT>rtp',
+        "sDom": '<"metabolites-table_wrapper_toolbar"CilT>rtp',
         "oColVis": {
             "sButtonText": "Switch display",
             "aiExclude": excludeColIdx,
@@ -596,7 +596,7 @@ function set_idtable(url, samplesGroupsNum){
         "aLengthMenu": [100, 250, 500, 1000],
         "aoColumnDefs": [
             { // compound ID, peak ID
-                "aTargets": [0, 1,],
+                "aTargets": [0, 1],
                 "bSearchable": false,
                 "bVisible": false
             },
@@ -623,12 +623,12 @@ function set_idtable(url, samplesGroupsNum){
     });
 
 
-	// $("div.identification-table_wrapper_toolbar").append('<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_pathway_selector"><option></option></select></div><div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_super_pathway_selector"><option></option></select></div>');
+	// $("div.metabolites-table_wrapper_toolbar").append('<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_pathway_selector"><option></option></select></div><div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_super_pathway_selector"><option></option></select></div>');
     // console.log(excludeColIdx);
 
 	// callback && callback(idTable);
 
-	return idTable;
+	return metabolitesTable;
 }
 
 

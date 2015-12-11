@@ -106,7 +106,7 @@
 		var right_panel = true;
 		var staticUrl = "{{ STATIC_URL }}";
 		var metexploreInfoUrl = "{% url 'get_metexplore_info' project.id analysis.id %}";
-		var id_table_url = "{% url 'get_identification_table' project.id analysis.id %}";
+		var metabolites_table_url = "{% url 'get_metabolites_table' project.id analysis.id %}";
 		var peak_table_url = "{% url 'get_peak_table' project.id analysis.id %}";
 		var averageChartType = 'column';
 		var peakChromatogramsGraph = false;
@@ -238,23 +238,23 @@
 			cell_chart();
 			set_click_actions(staticUrl,metexploreInfoUrl);
 			set_navbar();
-			// Generate identification table with callback for click event
+			// Generate metabolites table with callback for click event
 
-			$('#id_table_super_pathway_selector').select2({
+			$('#metabolites_table_super_pathway_selector').select2({
 				placeholder: "Select super pathway",
 				allowClear: true,
 				data: super_pathway_list, 
 			});
 
-			$('#id_table_pathway_selector').select2({
+			$('#metabolites_table_pathway_selector').select2({
 				placeholder: "Select pathway",
 				allowClear: true,
 				matcher: modelMatcher,
 				data: pathway_list, 
 			});
 
-			var $superPathwaySelect = $("#id_table_super_pathway_selector");
-			var $pathwaySelect = $('#id_table_pathway_selector');
+			var $superPathwaySelect = $("#metabolites_table_super_pathway_selector");
+			var $pathwaySelect = $('#metabolites_table_pathway_selector');
 
 			// Select a super pathway function (logic explained)
 			$superPathwaySelect.on("select2:select", function (e) {
@@ -267,8 +267,8 @@
 				var selectedSuperPathway = e.target.value;
 
 				// Filter the metabolite data
-				idTable.column(4).search('').draw();
-				idTable.column(4).search(selectedSuperPathway).draw();
+				metabolitesTable.column(4).search('').draw();
+				metabolitesTable.column(4).search(selectedSuperPathway).draw();
 
 				$pathwaySelect.select2("destroy");
 				$pathwaySelect.html('<option></option>');
@@ -295,8 +295,8 @@
 				$pathwaySelect.select2("destroy");
 				$pathwaySelect.html('<option></option>');
 
-				idTable.column(4).search('').draw();
-				// idTable.search('').columns().search( '' ).draw();
+				metabolitesTable.column(4).search('').draw();
+				// metabolitesTable.search('').columns().search( '' ).draw();
 
 
 				$pathwaySelect.select2({
@@ -313,28 +313,29 @@
 				var selectedPathway = e.target.value;
 
 				// Filter the metabolite data
-				idTable.column(5).search(selectedPathway).draw();			
+				metabolitesTable.column(5).search(selectedPathway).draw();
 
 			}).on("select2:unselect", function (e) {
 				console.log("pathway:unselect"+ e.target.value);
-				idTable.column(5).search('').draw();
+				metabolitesTable.column(5).search('').draw();
 
 				// remove filter on datable
 			});
 
             var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
 
-			var idTable = set_idtable(id_table_url, samplesGroupsNum);
-            $('#identification-table tbody').on('click', 'tr', function() {
+			var metabolitesTable = set_metabolitestable(metabolites_table_url, samplesGroupsNum);
+            $('#metabolites-table tbody').on('click', 'tr', function() {
                 // When a tr is clicked, update the right panel with information about the contents of the tr
 
                 // Row selection
-                idTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
+                metabolitesTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
                 $(this).addClass('row_selected'); // Select the current row
 
-                var data = idTable.row(this).data();
+                var data = metabolitesTable.row(this).data();
+
                 var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-                updateIdentificationRightPanel(data, innerSidePanel);
+                updateMetabolitesRightPanel(data, innerSidePanel);
             });
 
             var pathwayTable = set_pathwaytable();
@@ -1163,12 +1164,12 @@
 			{% endfor %}
 
 
-			// Add search handler for search on idTable only
+			// Add search handler for search on metabolitesTable only
 			$("#search").keyup( function () {
 			// Filter on the column (the index) of this element
-				// idTable.fnFilterAll(this.value);
+				// metabolitesTable.fnFilterAll(this.value);
 				$("#search2-input").val(String(this.value));
-				idTable.search(this.value).draw();
+				metabolitesTable.search(this.value).draw();
 				pathwayTable.fnFilter(this.value);
 				peakTable.fnFilter(this.value);
 				comparisonTable.fnFilter(this.value);
@@ -1180,7 +1181,7 @@
 			$("#search2-input").keyup( function () {
 			// Filter on the column (the index) of this element
 				$("#search").val(String(this.value));
-				idTable.search(this.value).draw();
+				metabolitesTable.search(this.value).draw();
 				pathwayTable.fnFilter(this.value);
 				peakTable.fnFilter(this.value);
 				comparisonTable.fnFilter(this.value);
@@ -1256,7 +1257,7 @@
 
                     // Make the AJAX call for the chromatogram
                     var data = {"id": peakID, "ppm": ppm, "rtwindow": rtwindow};
-                    var url = "{% url 'get_peaks_from_compound' project.id analysis.id %}";
+                    var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
 
                     $.ajax({
                         type: "GET",
@@ -1298,7 +1299,7 @@
 
                     // Make the ajax call for the intensity plot
                     var data = {"id": peakID};
-                    var url = "{% url 'get_peak_info' project.id analysis.id %}";
+                    var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
 
                     $.ajax({
                         type: "GET",
@@ -1322,7 +1323,7 @@
                     });
                 });
 
-			function updateIdentificationRightPanel(rowInfo, innerSidePanel) {
+			function updateMetabolitesRightPanel(rowInfo, innerSidePanel) {
                 // Function to add metabolite information to the right side pane in the metabolites tab, where the
                 // metabolite information is taken from the metabolite row that is clicked in the main table.
                 // more info...
@@ -1330,7 +1331,7 @@
 				var averageChart = false;
 				var peaksChart = false;
 				var newEvidenceDom = '';
-				var evidencePanel = $('<div class="span12" id="identificationSideEvidencePanel"><h3 class="right-side-title">Evidence</h3></div>');
+				var evidencePanel = $('<div class="span12" id="metabolitesSideEvidencePanel"><h3 class="right-side-title">Evidence</h3></div>');
 
 				$(evidencePanel).appendTo($(innerSidePanel));
 
@@ -1946,15 +1947,15 @@
 						</form>
 					</div>
 					<div class="span3" style="margin-top: 22px;">
-						<div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
-							<select id="id_table_super_pathway_selector">
+						<div id="metabolites_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
+							<select id="metabolites_table_super_pathway_selector">
 								<option></option>
 							</select>
 						</div>
 					</div>
 					<div class="span3" style="margin-top: 22px;">
-						<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
-							<select id="id_table_pathway_selector">
+						<div id="metabolites_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
+							<select id="metabolites_table_pathway_selector">
 								<option></option>
 							</select>
 						</div>
@@ -1969,7 +1970,7 @@
 				<div id="tool_button"><img src="{{ STATIC_URL }}img/tool_icon.png" alt="tools"><span id="tool_button_text">Tools</span><img src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
 				<ul id="tabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
 					<li id="summary-li" class="active" style="float:left;margin:0px;height:37px;"><a href="#summary" style="float:left;margin:0px;">Summary</a></li>
-					<li id="identification-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#identification" style="float:left;">Identification</a></li>
+					<li id="metabolites-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#metabolites" style="float:left;">Metabolites</a></li>
 					<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Metabolic Maps</a></li>
 					<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
 					<li id="peaks-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#peaks" style="float:left;">Peaks</a></li>
@@ -2301,12 +2302,12 @@
 						</div>
 					</div>
 				</div>
-				<div id="identification" class="tab-pane">
+				<div id="metabolites" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
 							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
 								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
-									<table id="identification-table" class="table table-striped">
+									<table id="metabolites-table" class="table table-striped">
 						              <thead>
 						                <tr>
 						                  <th rowspan="2">Compound id</th>

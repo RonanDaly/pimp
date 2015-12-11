@@ -335,7 +335,7 @@ def start_analysis(request, project_id):
                 return HttpResponse(response, content_type='application/json')
 
 
-def get_identification_table(request, project_id, analysis_id):
+def get_metabolites_table(request, project_id, analysis_id):
     if request.is_ajax():
         print "Metabolites table requested"
         start = timeit.default_timer()
@@ -377,9 +377,9 @@ def get_identification_table(request, project_id, analysis_id):
             peak = best_compound.peak
 
             # compound id
-            c_data.append(str(max_compound_id))
+            c_data.append(max_compound_id)
             # peak id
-            c_data.append(str(peak.id))
+            c_data.append(peak.id)
             # compound name
             c_data.append(best_compound.repositorycompound_set.filter(db_name='stds_db').values_list('compound_name',flat=True).first())
             # compound formula
@@ -436,7 +436,7 @@ def get_identification_table(request, project_id, analysis_id):
         for secondary_id in ac_secondary_ids:
             # i += 1
             # if i == 10:
-            #     break
+                # break
             c_data = []
 
             # Select the most intense peak that has been identified by the compound
@@ -463,9 +463,9 @@ def get_identification_table(request, project_id, analysis_id):
             peak = best_compound.peak
 
             # compound id
-            c_data.append(str(max_compound_id))
+            c_data.append(max_compound_id)
             # peak id
-            c_data.append(str(peak.id))
+            c_data.append(peak.id)
             # compound name
             dbs = ['kegg', 'hmdb', 'lipidmaps']
             for db in dbs:
