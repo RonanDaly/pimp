@@ -70,7 +70,8 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 		Rawpath=NULL, 
 		outputfile=mzmatch.outputs$final.combined.gapfilled.file, 
 		ppm=peakml.params$ppm, 
-		rtwin=peakml.params$rtwin,nSlaves=0
+		rtwin=peakml.params$rtwin,nSlaves=0,
+		fillAll=TRUE
   	)
 
 	#Stop if gapfilling has barfed
