@@ -214,7 +214,10 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	stds <- which(!is.na(raw.data$stds_db_identification))
 
 	data <- as.matrix(raw.data[unique(basepeaks,stds),intensities.idx]) #subset to produce data for statistical analysis
-	data[data==0] <- NA ##convert 0s to NAs
+	# NB The gap filler must have fillAll=TRUE to make sure we aren't setting missing peaks to 1, i.e. the only
+	# peaks that should be set to 1 are those that have levels too low to detect.
+	data[data==0] <- 1.0 ##convert 0s to 1s
+	data[is.na(data)] <- 1.0 ##convert NAs to 1s
 
 	Mass <- raw.data[unique(basepeaks,stds),'Mass']
 	RT <- raw.data[unique(basepeaks,stds),'RT']
