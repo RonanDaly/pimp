@@ -357,12 +357,12 @@ def get_metabolites_table(request, project_id, analysis_id):
             # Select the most intense peak that has been identified by the compound
             # and use the logFC of this peak to represent the logfc with
             peaks_by_intensities = PeakDTSample.objects.filter(peak__dataset=dataset, sample__in=samples, peak__compound__secondaryId=secondary_id, peak__compound__in=identified_compounds).distinct().values_list('peak__secondaryId', flat=True)
-            peaks_with_logfc = PeakDtComparison.objects.filter(peak__secondaryId__in=peaks_by_intensities).order_by('-peak__peakdtsample__intensity')
+            peaks_with_logfc = PeakDtComparison.objects.filter(peak__secondaryId__in=peaks_by_intensities, comparison__in=comparisons).order_by('-peak__peakdtsample__intensity')
 
             if peaks_with_logfc.exists():
                 best_peak_dtcomparison = peaks_with_logfc.first()
                 best_peak_id = best_peak_dtcomparison.peak.secondaryId
-                best_peak_logfcs = PeakDtComparison.objects.filter(peak__secondaryId=best_peak_id).order_by('comparison').values_list('logFC', flat=True)
+                best_peak_logfcs = PeakDtComparison.objects.filter(peak__secondaryId=best_peak_id, comparison__in=comparisons).order_by('comparison').values_list('logFC', flat=True)
             else:
                 # print "No logFC for peak"
                 best_peak_id = peaks_by_intensities.first()
@@ -408,17 +408,6 @@ def get_metabolites_table(request, project_id, analysis_id):
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
                 c_data.append(round(intensity, 2))  # individual sample intensities
 
-            # # Average intensity of the peak across attributes
-            # attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
-            # averages_by_group = []
-            # for attribute_id in attribute_ids:
-            #     averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
-            #
-            # for group_average in averages_by_group:
-            #     c_data.append(round(group_average, 2))
-
-            # print best_peak_logfcs
-
             for logfc in best_peak_logfcs:
                 if logfc == "NA":
                     c_data.append(logfc)
@@ -442,13 +431,13 @@ def get_metabolites_table(request, project_id, analysis_id):
             # Select the most intense peak that has been identified by the compound
             # and use this to represent the compound
             peaks_by_intensities = PeakDTSample.objects.filter(peak__dataset=dataset, sample__in=samples, peak__compound__secondaryId=secondary_id, peak__compound__in=annotated_compounds).distinct().values_list('peak__secondaryId', flat=True)
-            peaks_with_logfc = PeakDtComparison.objects.filter(peak__secondaryId__in=peaks_by_intensities).order_by('-peak__peakdtsample__intensity')
+            peaks_with_logfc = PeakDtComparison.objects.filter(peak__secondaryId__in=peaks_by_intensities, comparison__in=comparisons).order_by('-peak__peakdtsample__intensity')
 
             if peaks_with_logfc.exists():
                 # print "peak with logfc"
                 best_peak_dtcomparison = peaks_with_logfc.first()
                 best_peak_id = best_peak_dtcomparison.peak.secondaryId
-                best_peak_logfcs = PeakDtComparison.objects.filter(peak__secondaryId=best_peak_id).order_by('comparison').values_list('logFC', flat=True)
+                best_peak_logfcs = PeakDtComparison.objects.filter(peak__secondaryId=best_peak_id, comparison__in=comparisons).order_by('comparison').values_list('logFC', flat=True)
             else:
                 # print "No peak with logfc"
                 best_peak_id = peaks_by_intensities.first()
@@ -498,15 +487,6 @@ def get_metabolites_table(request, project_id, analysis_id):
 
             for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
                 c_data.append(round(intensity, 2))  # individual sample intensities
-
-            # Average intensity of the peak across attributes
-            # attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
-            # averages_by_group = []
-            # for attribute_id in attribute_ids:
-            #     averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
-            #
-            # for group_average in averages_by_group:
-            #     c_data.append(round(group_average, 2))
 
             for logfc in best_peak_logfcs:
                 if logfc == "NA":
