@@ -73,7 +73,7 @@ def start_pimp_pipeline(analysis, project, user):
     xml_file_name = ".".join(["_".join(["analysis", str(analysis.id)]), "xml"])
     # xml_file_path = os.path.join('/opt/django/data/pimp_data/projects/',str(project.id), xml_file_name)
     ############## Again Hard coded path incorrect for me
-    xml_file_path = os.path.join(os.path.dirname(settings.BASE_DIR), 'pimp_data', 'projects', str(project.id),
+    xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(project.id),
                                  xml_file_name)
 
     if os.path.exists(xml_file_path):
@@ -91,7 +91,7 @@ def start_pimp_pipeline(analysis, project, user):
         dataset = Dataset(analysis=analysis)
         dataset.save()
 
-        bp_regex = re.compile('^potential bp$|^bp$')  # Create a regex to match peaks with type base peak (bp) but not potential bp
+        bp_regex = re.compile('^potential bp$|^bp$')  # Create a regex to match peaks with type base peak (bp) and potential bp
 
         ############ Create a dataset instance here ##################
         peakSecondaryId = 1

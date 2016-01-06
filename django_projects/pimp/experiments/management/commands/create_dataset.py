@@ -27,7 +27,7 @@ class Command(BaseCommand):
         dataset = Dataset(analysis=analysis)
         dataset.save()
 
-        bp_regex = re.compile('^potential bp$|^bp$')  # Create a regex to match peaks with type base peak (bp) but not potential bp
+        bp_regex = re.compile('^potential bp$|^bp$')  # Create a regex to match peaks with type base peak (bp) and potential bp
 
         ############ Create a dataset instance here ##################
         peakSecondaryId = 1
