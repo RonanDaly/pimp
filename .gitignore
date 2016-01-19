@@ -92,5 +92,6 @@ packrat/lib*/
 packrat/src/*
 !packrat/src/S4Vectors/
 !packrat/src/IRanges/
+!packrat/src/AnnotationDbi/
 *.Rout
 .Rproj.user
