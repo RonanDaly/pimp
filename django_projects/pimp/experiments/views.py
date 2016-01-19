@@ -19,7 +19,7 @@ from fileupload.models import Sample, CalibrationSample, Curve
 # Add on
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
-from django.db.models import Avg
+from django.db.models import Avg, Max, Q
 
 try:
     from django.utils import simplejson
@@ -334,7 +334,6 @@ def start_analysis(request, project_id):
                 response = simplejson.dumps(data)
                 return HttpResponse(response, content_type='application/json')
 
-
 def get_metabolites_table(request, project_id, analysis_id):
     if request.is_ajax():
         print "Metabolites table requested"
@@ -347,156 +346,176 @@ def get_metabolites_table(request, project_id, analysis_id):
         samples = Sample.objects.filter(attribute=Attribute.objects.filter(comparison__in=comparisons).distinct().order_by('id')).distinct().order_by('attribute__id', 'id')
 
         data = []
+        c_data = []
 
         identified_compounds = Compound.objects.filter(identified='True', peak__dataset=dataset)
+        # list(identified_compounds)
         ic_secondary_ids = identified_compounds.values_list('secondaryId', flat=True).distinct()
 
-        for secondary_id in ic_secondary_ids:
-            c_data = []
+        sample_map = [sample.id for sample in samples]
+        new_test_start = timeit.default_timer()
 
-            # Select the most intense peak that has been identified by the compound
-            # and use the logFC of this peak to represent the logfc with
-            peaks_by_intensities = PeakDTSample.objects.filter(peak__dataset=dataset, sample__in=samples, peak__compound__secondaryId=secondary_id, peak__compound__in=identified_compounds).distinct().values_list('peak__secondaryId', flat=True)
-            peaks_with_logfc = PeakDtComparison.objects.filter(peak__secondaryId__in=peaks_by_intensities, comparison__in=comparisons).order_by('-peak__peakdtsample__intensity')
+        test = PeakDtComparison.objects.filter(peak__dataset=dataset, comparison__in=comparisons, peak__compound__secondaryId__in=ic_secondary_ids, peak__compound__in=identified_compounds).distinct().order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        identified_compound_pathway_list = identified_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
+        pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
 
-            if peaks_with_logfc.exists():
-                best_peak_dtcomparison = peaks_with_logfc.first()
-                best_peak_id = best_peak_dtcomparison.peak.secondaryId
-                best_peak_logfcs = PeakDtComparison.objects.filter(peak__secondaryId=best_peak_id, comparison__in=comparisons).order_by('comparison').values_list('logFC', flat=True)
+        superpathway_dict = {}
+
+        for pathway_name in pathway_super_pathway_list:
+            if pathway_name[0] in superpathway_dict:
+                if pathway_name[1] not in superpathway_dict[pathway_name[0]]:
+                    superpathway_dict[pathway_name[0]] = " ".join(superpathway_dict[pathway_name[0]], pathway_name[1])
             else:
-                # print "No logFC for peak"
-                best_peak_id = peaks_by_intensities.first()
-                best_peak_logfcs = ["NA" for i in range(num_comparisons)]
-
-            # print "Peak ID", best_peak_id
-            # print "compound secondary ID", secondary_id
-            max_compound_id = identified_compounds.filter(peak__secondaryId=best_peak_id, secondaryId=secondary_id).values_list('id', flat=True).first()
-
-            best_compound = identified_compounds.get(pk=max_compound_id)
-
-            peak = best_compound.peak
-
-            # compound id
-            c_data.append(max_compound_id)
-            # peak id
-            c_data.append(peak.secondaryId)
-            # compound name
-            c_data.append(best_compound.repositorycompound_set.filter(db_name='stds_db').values_list('compound_name',flat=True).first())
-            # compound formula
-            c_data.append(str(best_compound.formula))
-
-            # Get pathways
-            pathway_ids = CompoundPathway.objects.filter(compound=best_compound).values_list('pathway__pathway__id', flat=True).distinct()
-            if pathway_ids.exists():
-                superpathways = DataSourceSuperPathway.objects.filter(pathway__id__in=pathway_ids).values_list('super_pathway__name', flat=True)
-                if None not in superpathways or superpathways.count() > 0:
-                    try:
-                        joined_sp = " ".join(superpathways)
-                    except:
-                        joined_sp = "None"
-                    c_data.append(joined_sp)  # superpathways
+                if pathway_name[1] == None:
+                    superpathway_dict[pathway_name[0]] = "None"
                 else:
-                    c_data.append("None")
-                c_data.append(" ".join(Pathway.objects.filter(id=pathway_ids).values_list('name', flat=True)))  # pathways
+                    superpathway_dict[pathway_name[0]] = pathway_name[1]
+
+        pathway_name_dict = {}
+        # Create dictionnary with pathway names for each compound
+        for pathway_name in identified_compound_pathway_list:
+            # 
+            if pathway_name[0] in pathway_name_dict:
+                if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
+                    pathway_name_dict[pathway_name[0]][0] = " ".join(pathway_name_dict[pathway_name[0]][0], pathway_name[1])
+                    pathway_name_dict[pathway_name[0]][1] = " ".join(pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]])
             else:
-                c_data.append("None") # no superpathways
-                c_data.append("None") # no pathways
-
-            # Intensities of the peak across samples
-            peak_intensities_by_samples = PeakDTSample.objects.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
-
-            for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
-                c_data.append(round(intensity, 2))  # individual sample intensities
-
-            for logfc in best_peak_logfcs:
-                if logfc == "NA":
-                    c_data.append(logfc)
+                if pathway_name[1] == None:
+                    pathway_name_dict[pathway_name[0]] = ["None","None"]
                 else:
-                    c_data.append(round(logfc, 2))
+                    pathway_name_dict[pathway_name[0]] = [pathway_name[1],  superpathway_dict[pathway_name[1]]]
 
-            c_data.append('identified')
-            # Add the compound information to data
-            data.append(c_data)
+        # print pathway_name_dict
 
+        list(test)
+        current_compound = None
+        current_peak = None
+        comparison_id_list = None
+        sample_id_list = None
+        first = True
+        for i in range(len(test)):
+            if test[i][0] != current_compound:
+                if not first:
+                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['identified']
+                    data.append(c_data)
+                else:
+                    first = False
+                current_compound = test[i][0]
+                current_peak = test[i][1]
+                comparison_id_list = [test[i][2]]
+                sample_id_list = [test[i][3]]
+                compound_id = test[i][4]
+                peak_secondary_id = test[i][5]
+                formula = test[i][6]
+                logfc_list = [round(test[i][8], 2)]
+                intensity_list = [None] * len(sample_map)
+                intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
+                # Get the compound name
+                compound_name = identified_compounds.get(pk=compound_id).repositorycompound_set.filter(db_name='stds_db').values_list('compound_name',flat=True).first()
+                pathway_names = pathway_name_dict[current_compound][0]
+                super_pathway_names = pathway_name_dict[current_compound][1]
+            else:
+                if current_peak == test[i][1]:
+                    if test[i][2] not in comparison_id_list:
+                        logfc_list.append(round(test[i][8], 2))
+                        comparison_id_list.append(test[i][2])
+                    if test[i][3] not in sample_id_list:
+                        intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
+                        sample_id_list.append(test[i][3])
+
+        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['identified']
+        data.append(c_data)
+
+        new_test_stop = timeit.default_timer()
+
+        print "Identified metabolites processing time: ", str(new_test_stop - new_test_start)
+        print "--------------------------------------------------------"
+
+        ac_start = timeit.default_timer()
+
+        # Create a list of the compound objects that are annotated removing all identified
         annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=identified_compounds.values_list("secondaryId", flat=True))
+        # Get the list of secondary Ids of compounds that are annotated only
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
-        # i = 0
-        for secondary_id in ac_secondary_ids:
-            # i += 1
-            # if i == 10:
-            #     break
-            c_data = []
+        new_test_ac_start = timeit.default_timer()
+        test = PeakDtComparison.objects.filter(peak__dataset=dataset, comparison__in=comparisons, peak__compound__secondaryId__in=ac_secondary_ids, peak__compound__in=annotated_compounds).distinct().order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        annotated_compound_name_list = annotated_compounds.order_by("secondaryId").values_list("id","repositorycompound__db_name","repositorycompound__compound_name").distinct()
+        annotated_compound_pathway_list = annotated_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
+        pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
 
-            # Select the most intense peak that has been identified by the compound
-            # and use this to represent the compound
-            peaks_by_intensities = PeakDTSample.objects.filter(peak__dataset=dataset, sample__in=samples, peak__compound__secondaryId=secondary_id, peak__compound__in=annotated_compounds).distinct().values_list('peak__secondaryId', flat=True)
-            peaks_with_logfc = PeakDtComparison.objects.filter(peak__secondaryId__in=peaks_by_intensities, comparison__in=comparisons).order_by('-peak__peakdtsample__intensity')
+        superpathway_dict = {}
 
-            if peaks_with_logfc.exists():
-                # print "peak with logfc"
-                best_peak_dtcomparison = peaks_with_logfc.first()
-                best_peak_id = best_peak_dtcomparison.peak.secondaryId
-                best_peak_logfcs = PeakDtComparison.objects.filter(peak__secondaryId=best_peak_id, comparison__in=comparisons).order_by('comparison').values_list('logFC', flat=True)
+        for pathway_name in pathway_super_pathway_list:
+            if pathway_name[0] in superpathway_dict:
+                if pathway_name[1] not in superpathway_dict[pathway_name[0]]:
+                    superpathway_dict[pathway_name[0]] = " ".join(superpathway_dict[pathway_name[0]], pathway_name[1])
             else:
-                # print "No peak with logfc"
-                best_peak_id = peaks_by_intensities.first()
-                best_peak_logfcs = ["NA" for i in range(num_comparisons)]
-
-            # print "peak id", best_peak_id
-            # print "compound id", secondary_id
-            max_compound_id = annotated_compounds.filter(peak__secondaryId=best_peak_id, secondaryId=secondary_id).values_list('id', flat=True).first()
-
-            best_compound = annotated_compounds.get(pk=max_compound_id)
-
-            peak = best_compound.peak
-
-            # compound id
-            c_data.append(max_compound_id)
-            # peak id
-            c_data.append(peak.secondaryId)
-            # compound name
-            dbs = ['kegg', 'hmdb', 'lipidmaps']
-            for db in dbs:
-                c_name = best_compound.repositorycompound_set.filter(db_name=db)
-                if len(c_name) != 0:
-                    c_data.append(c_name.first().compound_name)
-                    break
-            # compound formula
-            c_data.append(str(best_compound.formula))
-
-            # Get pathways
-            pathway_ids = CompoundPathway.objects.filter(compound=best_compound).values_list('pathway__pathway__id', flat=True).distinct()
-            if pathway_ids.exists():
-                superpathways = DataSourceSuperPathway.objects.filter(pathway__id__in=pathway_ids).values_list('super_pathway__name', flat=True)
-                if None not in superpathways or superpathways.count() > 0:
-                    try:
-                        joined_sp = " ".join(superpathways)
-                    except:
-                        joined_sp = "None"
-                    c_data.append(joined_sp)  # superpathways
+                if pathway_name[1] == None:
+                    superpathway_dict[pathway_name[0]] = "None"
                 else:
-                    c_data.append("None")
-                c_data.append(" ".join(Pathway.objects.filter(id=pathway_ids).values_list('name', flat=True)))  # pathways
+                    superpathway_dict[pathway_name[0]] = pathway_name[1]
+
+        pathway_name_dict = {}
+        # Create dictionnary with pathway names for each compound
+        for pathway_name in annotated_compound_pathway_list:
+            if pathway_name[0] in pathway_name_dict:
+                if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
+                    pathway_name_dict[pathway_name[0]][0] = " ".join(pathway_name_dict[pathway_name[0]][0], pathway_name[1])
+                    pathway_name_dict[pathway_name[0]][1] = " ".join(pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]])
             else:
-                c_data.append("None") # no superpathways
-                c_data.append("None") # no pathways
-
-            # Intensities of the peak across samples
-            peak_intensities_by_samples = PeakDTSample.objects.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
-
-            for intensity in peak_intensities_by_samples.values_list('intensity', flat=True):
-                c_data.append(round(intensity, 2))  # individual sample intensities
-
-            for logfc in best_peak_logfcs:
-                if logfc == "NA":
-                    c_data.append(logfc)
+                if pathway_name[1] == None:
+                    pathway_name_dict[pathway_name[0]] = ["None","None"]
                 else:
-                    c_data.append(round(logfc, 2))
+                    pathway_name_dict[pathway_name[0]] = [pathway_name[1],  superpathway_dict[pathway_name[1]]]
+        
+        compound_name_dict = {}
+        for compound_name in annotated_compound_name_list:
+            compound_name_dict[compound_name[0]] = compound_name[2]
 
-            c_data.append('annotated')
-            # Add the compound information to data
-            data.append(c_data)
+        list(test)
+        current_compound = None
+        current_peak = None
+        comparison_id_list = None
+        sample_id_list = None
+        first = True
+        for i in range(len(test)):
+            if test[i][0] != current_compound:
+                if not first:
+                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['annotated']
+                    data.append(c_data)
+                else:
+                    first = False
+                current_compound = test[i][0]
+                current_peak = test[i][1]
+                comparison_id_list = [test[i][2]]
+                sample_id_list = [test[i][3]]
+                compound_id = test[i][4]
+                peak_secondary_id = test[i][5]
+                formula = test[i][6]
+                logfc_list = [round(test[i][8], 2)]
+                intensity_list = [None] * len(sample_map)
+                intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
+                # Get the compound name
+                compound_name = compound_name_dict[compound_id]
+                pathway_names = pathway_name_dict[current_compound][0]
+                super_pathway_names = pathway_name_dict[current_compound][1]
+                
+            else:
+                if current_peak == test[i][1]:
+                    if test[i][2] not in comparison_id_list:
+                        logfc_list.append(round(test[i][8], 2))
+                        comparison_id_list.append(test[i][2])
+                    if test[i][3] not in sample_id_list:
+                        intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
+                        sample_id_list.append(test[i][3])
+
+        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['annotated']
+        data.append(c_data)
+
+        new_test_ac_stop = timeit.default_timer()
+
+        print "Annotated metabolites processing time: ", str(new_test_ac_stop - new_test_ac_start)
 
         response = simplejson.dumps({'aaData': data})
 
@@ -590,9 +609,11 @@ def analysis_result(request, project_id, analysis_id):
         except Project.DoesNotExist:
             raise Http404
         start = timeit.default_timer()
-        comparisons = analysis.experiment.comparison_set.all()
+        comparisons = analysis.experiment.comparison_set.all().order_by('id')
+        list(comparisons)
         # print comparisons
         dataset = analysis.dataset_set.all()[0]
+        print "dataset id: ",dataset.id
         compounds = Compound.objects.filter(peak__dataset=dataset)
         print dataset
         ######## Old query for members ########
@@ -738,15 +759,18 @@ def analysis_result(request, project_id, analysis_id):
         ############################################################################
         comp_start = timeit.default_timer()
         comparison_hits_list = {}
+        identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
+        # list(identified_peak)
+        annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
+        # list(annotated_peak)
         for c in comparisons:
-            identified_peak = Peak.objects.filter(dataset__analysis=analysis, compound__identified='True').distinct()
-            annotated_peak = Peak.objects.filter(dataset__analysis=analysis).exclude(
-                compound__identified='True').distinct()
 
             identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
-                peak__in=identified_peak).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC")
+                peak__in=identified_peak).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
+            # list(identified_peakdtcomparisonList)
             annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
-                peak__in=annotated_peak).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC")
+                peak__in=annotated_peak).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
+            # list(annotated_peakdtcomparisonList)
 
             identified_info_list = []
             for identified_compound in identified_peakdtcomparisonList:
@@ -824,7 +848,22 @@ def analysis_result(request, project_id, analysis_id):
         # print "compound number ",pathway_list[0][0].compoundNumber
 
         peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison__in=comparisons,
-                                                   dataset__analysis=analysis).distinct()
+                                                   dataset=dataset).distinct()
+
+        new_query_start = timeit.default_timer()
+        comparison_info = []
+        for comparison in comparisons:
+            peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
+            print peak_comparison_info.count()
+            comparison_info.append([comparison,peak_comparison_info])
+        new_query_stop = timeit.default_timer()
+        print "new comparison info list : ", str(new_query_stop - new_query_start)
+
+        new_comp_query_start = timeit.default_timer()
+        all_comparison_info_query = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list).values_list('peak__secondaryId','logFC','adjPvalue').order_by('peak__secondaryId','comparison__id').distinct()
+        all_comparison_info = zip(*[iter(all_comparison_info_query)]*comparisons.count())
+        new_comp_query_stop = timeit.default_timer()
+        print "all comparison info list : ", str(new_comp_query_stop - new_comp_query_start)
 
         ##potetial hits that can't do statistics on.
         potential_hits = []
@@ -851,7 +890,7 @@ def analysis_result(request, project_id, analysis_id):
 
             for i2 in DataSourceSuperPathway.objects.filter(super_pathway=i):
                 pathway_name_list.append(i2.pathway.name)
-                print "\t", i2.pathway.name
+                # print "\t", i2.pathway.name
             single_super_pathway_list.append(pathway_name_list)
             super_pathways_list.append(single_super_pathway_list)
 
@@ -876,6 +915,8 @@ def analysis_result(request, project_id, analysis_id):
              'pathway_list': pathway_list,
              'databases': databases,
              'dataset': dataset,
+             'comparison_info': comparison_info,
+             'all_comparison_info': all_comparison_info,
              # 'peak_table': pp,
              # 'compounds': compounds,
              'project': project,
@@ -890,7 +931,11 @@ def analysis_result(request, project_id, analysis_id):
              'explained_variance':explained_variance,
             }
 
-        return render(request, 'base_result3.html', c)
+        rendering_start = timeit.default_timer()
+        rendering = render(request, 'base_result3.html', c)
+        rendering_stop = timeit.default_timer()
+        print "rendering time", str(rendering_stop - rendering_start)
+        return rendering
 
 
 def get_pathway_url(request, project_id, analysis_id):
@@ -1417,7 +1462,7 @@ def create_member_tic(attribute_id):
         else:
             posmzxmlfile = sample.samplefile.posdata
             if not posmzxmlfile.tic:
-                print "over here"
+                # print "over here"
                 posdata = getIntensity(posmzxmlfile)
                 # print "posdata ",[i[0] for i in posdata]
                 x_axis = [i[0] for i in posdata]
@@ -1426,13 +1471,13 @@ def create_member_tic(attribute_id):
                 y = pickle.dumps(y_axis)
                 mean = np.mean(y_axis)
                 median = np.median(y_axis)
-                print "pos median : ", median
-                print "pos mean : ", mean
+                # print "pos median : ", median
+                # print "pos mean : ", mean
                 posBarTic = [mean, median]
 
                 # print x
 
-                print "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+                # print "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
 
                 curve = Curve.objects.create(x_axis=x, y_axis=y, mean=mean, median=median)
                 curve.save()
@@ -1443,25 +1488,25 @@ def create_member_tic(attribute_id):
             # posintensity = posdata[0]
             # postime = posdata[1]
             else:
-                print "tic exist"
+                # print "tic exist"
                 # print str(posmzxmlfile.tic.x_axis)
                 x_axis = pickle.loads(str(posmzxmlfile.tic.x_axis))
                 y_axis = pickle.loads(str(posmzxmlfile.tic.y_axis))
-                print "pos median : ", posmzxmlfile.tic.median
-                print "pos mean : ", posmzxmlfile.tic.mean
+                # print "pos median : ", posmzxmlfile.tic.median
+                # print "pos mean : ", posmzxmlfile.tic.mean
                 posBarTic = [posmzxmlfile.tic.mean, posmzxmlfile.tic.median]
                 posdata = []
-                print "after loads"
+                # print "after loads"
                 for i in range(len(x_axis)):
                     posdata.append([float(x_axis[i]), float(y_axis[i])])
-                print "after for"
+                # print "after for"
             # print posdata
         if not sample.samplefile.negdata:
             negdata = "None"
         else:
             negmzxmlfile = sample.samplefile.negdata
             if not negmzxmlfile.tic:
-                print "over there :)"
+                # print "over there :)"
                 negdata = getIntensity(negmzxmlfile)
                 x_axis = [i[0] for i in negdata]
                 y_axis = [i[1] for i in negdata]
@@ -1469,8 +1514,8 @@ def create_member_tic(attribute_id):
                 y = pickle.dumps(y_axis)
                 mean = np.mean(y_axis)
                 median = np.median(y_axis)
-                print "neg median : ", median
-                print "neg mean : ", mean
+                # print "neg median : ", median
+                # print "neg mean : ", mean
                 negBarTic = [mean, median]
 
                 curve = Curve.objects.create(x_axis=x, y_axis=y, mean=mean, median=median)
@@ -1478,11 +1523,11 @@ def create_member_tic(attribute_id):
                 negmzxmlfile.tic = curve
                 negmzxmlfile.save()
             else:
-                print "tic exist"
+                # print "tic exist"
                 x_axis = pickle.loads(str(negmzxmlfile.tic.x_axis))
                 y_axis = pickle.loads(str(negmzxmlfile.tic.y_axis))
-                print "neg median : ", negmzxmlfile.tic.median
-                print "neg mean : ", negmzxmlfile.tic.mean
+                # print "neg median : ", negmzxmlfile.tic.median
+                # print "neg mean : ", negmzxmlfile.tic.mean
                 negBarTic = [negmzxmlfile.tic.mean, negmzxmlfile.tic.median]
                 negdata = []
                 for i in range(len(x_axis)):

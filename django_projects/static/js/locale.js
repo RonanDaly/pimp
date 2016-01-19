@@ -19,7 +19,8 @@ window.locale = {
             "acceptFileTypes": "Filetype not allowed",
             "maxNumberOfFiles": "Max number of files exceeded",
             "uploadedBytes": "Uploaded bytes exceed file size",
-            "emptyResult": "Empty file upload result"
+            "emptyResult": "Empty file upload result",
+            "maxSizeOfFiles": "Maximum size of all files exceeded - Not enough free space left"
         },
         "error": "Error",
         "start": "Start",

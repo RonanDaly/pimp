@@ -17,8 +17,8 @@
 			</div>
 			<div class="col-md-6 list-span date-span">
 				<ul>
-					<li class="project-date-info">Created : {{ project.0.created }}</li>
-					<li class="project-date-info">Modified : {{ project.0.modified}}</li>
+					<li class="project-date-info">Created : {{ project.0.created|date:"d M Y P" }}</li>
+					<li class="project-date-info">Modified : {{ project.0.modified|date:"d M Y P" }}</li>
 				</ul>
 			</div>
 		</div>
@@ -66,7 +66,7 @@
 		{% endif %}
 		<div class="row"  style="margin-bottom:0px;">
 			<div class="col-md-12">
-				<p class="project-date-info" style="float:right; margin-top:10px;">Created by: {{ project.0.owner }}</p>
+				<p class="project-date-info" style="float:right; margin-top:10px;">Created by: {{ project.0.user_owner.first_name }} {{ project.0.user_owner.last_name }}</p>
 			</div>
 		</div>
  	</div>

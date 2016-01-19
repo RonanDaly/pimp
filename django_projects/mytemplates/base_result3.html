@@ -722,8 +722,8 @@
 			{% endfor %}
 
 
-			{% for comparison in comparisons %}
-			$('#comparison{{ comparison.id }}-volcano-plot').highcharts({
+			{% for comparison in comparison_info %}
+			$('#comparison{{ comparison.0.id }}-volcano-plot').highcharts({
 				credits : {
 						enabled : false
 				},
@@ -734,7 +734,7 @@
 	                width: 500,
 	            },
 	            title: {
-	                text: '{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }} volcano plot'
+	                text: '{{ comparison.0.attributecomparison_set.all.0.attribute.name }} / {{ comparison.0.attributecomparison_set.all.1.attribute.name }} volcano plot'
 	            },
 	            subtitle: {
 	                text: 'Click and drag in the plot area to zoom in'
@@ -797,31 +797,31 @@
 	            },
 	            series: [{
 	                name: 'Adj. P-value > 0.05',
-	                data: [{% for peak in peak_comparison_list %}
-		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
-		                			{% if compinfo.adjPvalue > 0.05 %}
-		                			{
-		                				name: 'Peak {{ peak.secondaryId }}',
-		                				x: {{ compinfo.logFC  }},
-		                				y: {{ compinfo|minuslogten }},
+	                data: [{% for peak in comparison.1 %}
+{#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
+		                			{% if peak.2 > 0.05 %} 
+		                			{ 
+		                				name: 'Peak {{ peak.0 }}',
+		                				x: {{ peak.1  }},
+		                				y: {{ peak.2|minuslogten }},
 		                			}{% if not forloop.last %},{% endif %}
-		                			{% endif %}
-		                		{% endwith %}
+		                			{% endif %} 
+{#		                		{% endwith %} #}
 		                	{% endfor %}
-		                	]
+		                	] 
 		            },
 		            {
 	                name: 'Adj. P-value &lt; 0.05',
-	                data: [{% for peak in peak_comparison_list %}
-		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
-		                			{% if compinfo.adjPvalue < 0.05 %}
+	                data: [{% for peak in comparison.1 %}
+{#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
+		                			{% if peak.2 < 0.05 %}
 		                			{
-		                				name: 'Peak {{ peak.secondaryId }}',
-		                				x: {{ compinfo.logFC  }},
-		                				y: {{ compinfo|minuslogten }},
+		                				name: 'Peak {{ peak.0 }}',
+		                				x: {{ peak.1  }},
+		                				y: {{ peak.2|minuslogten }},
 		                			}{% if not forloop.last %},{% endif %}
 		                			{% endif %}
-		                		{% endwith %}
+{#		                		{% endwith %} #}
 		                	{% endfor %}
 		                	]
 		            },
@@ -1928,7 +1928,7 @@
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
 							<li><a href="{% url 'registration_register' %}">Register</a></li>
 							{% endif %}
-							<li><a href="{% url 'about' %}">About</a></li>
+							{# <li><a href="{% url 'about' %}">About</a></li> #}
 						</ul>
 					</div>
 				</div>
@@ -2401,13 +2401,20 @@
 						                 </tr>
 						              </thead>
 						              <tbody>
-						              	{% for peak in peak_comparison_list %}
-						              	<tr><td>{{ peak.secondaryId }}</td>
-						              		{% for comp in peak.peakdtcomparison_set.all %}
-						              		 <td{% autoescape off %}{% if comp.is_significant %}{{ comp|fold_change_colour }}{% endif %}{% endautoescape %}>{% if comp.logFC != 0 %}{{ comp.logFC|floatformat:"-2" }}{% else %}NA{% endif %}</td>
-						              		 {% endfor %}
+						              	{% for peak in all_comparison_info %}
+						              	<tr><td>{{ peak.0.0 }}</td>
+						              		{% for comp in peak %}
+						              		<td{% autoescape off %}{% if comp.2 <= 0.05 %}{{ comp.1|get_fold_change_colour }}{% endif %}{% endautoescape %}>{% if comp.1 != 0 %}{{ comp.1|floatformat:"-2" }}{% else %}NA{% endif %}</td>
+						              		{% endfor %}
 						              	</tr>
-						                {% endfor %}
+						              	{% endfor %}
+{#						              	{% for peak in peak_comparison_list %} #}
+{#						              	<tr><td>{{ peak.secondaryId }}</td> #}
+{#						              		{% for comp in peak.peakdtcomparison_set.all %} #}
+{#						              		 <td{% autoescape off %}{% if comp.is_significant %}{{ comp|fold_change_colour }}{% endif %}{% {#endautoescape %}>{% if comp.logFC != 0 %}{{ comp.logFC|floatformat:"-2" }}{% else %}NA{% endif %}</td> #}
+{#						              		 {% endfor %} #}
+{#						              	</tr> #}
+{#						                {% endfor %} #}
 						              </tbody>
 						            </table>
 								</div>
@@ -2458,13 +2465,13 @@
 						</div>
 					</div>
 				</div>
-				{% for comparison in comparisons %}
-    			<div id="comparison{{ comparison.id }}" class="tab-pane">
+				{% for comparison in comparison_info %}
+    			<div id="comparison{{ comparison.0.id }}" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
 							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
 								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
-									<table id="comparison{{ comparison.id }}-table" class="table table-striped">
+									<table id="comparison{{ comparison.0.id }}-table" class="table table-striped">
 						              <thead>
 						              	<tr class="row-filter">
 						               	  <th class="column-filter" style="width: 20%;clear:both;vertical-align:top;">ID</th>
@@ -2482,14 +2489,14 @@
 						                 </tr>
 						              </thead>
 						              <tbody>
-						              	{% for peak in peak_comparison_list %}
-						              	<tr><td>{{ peak.secondaryId }}</td>
-						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %}
-						              		<td>{{ compinfo.logFC|floatformat:"-2" }}</td>
-						              		<td>{{ compinfo.pValue|stringformat:".2g" }}</td>
-						              		<td>{{ compinfo.adjPvalue|stringformat:".2g" }}</td>
-						              		<td>{{ compinfo.logOdds|floatformat:"-2" }}</td>
-						              		{% endwith %}
+						              	{% for peak in comparison.1 %}
+						              	<tr><td>{{ peak.0 }}</td>
+{#						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
+						              		<td>{{ peak.1|floatformat:"-2" }}</td>
+						              		<td>{{ peak.3|stringformat:".2g" }}</td>
+						              		<td>{{ peak.2|stringformat:".2g" }}</td>
+						              		<td>{{ peak.4|floatformat:"-2" }}</td>
+{#						              		{% endwith %} #}
 						              	</tr>
 						                {% endfor %}
 						              </tbody>

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container">
     <div class="row">
-        <div class="span8"><h1>Upload file to {{ project }}</h1></div>
+        <div class="span8"><h1>Upload calibration files</h1></div>
         {% if not new_project %}
         <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
         {% endif %}
@@ -109,7 +109,7 @@
         <h3 id="myModalLabel">Warning!</h3>
     </div>
     <div class="modal-body">
-        <p>Every change you may have made be will lost.</p>
+        <p>Every change you may have made will be lost.</p>
         <p>Are you sure you want to continue?</p>
     </div>
     <div class="modal-footer">
@@ -159,6 +159,11 @@
 <!script src="{{ STATIC_URL }}js/bootstrap.min.js"><!/script>
 <script src="{{ STATIC_URL }}js/bootstrap-image-gallery.min.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.iframe-transport.js"></script>
+<script type="text/javascript">
+// Here is set the maximum number of bits that can be uploaded, this corresponds to the free space left on the user account
+var maximumGlobalSizeFile = {{ storage_remaining }};
+console.log(maximumGlobalSizeFile)
+</script>
 <script src="{{ STATIC_URL }}js/jquery.fileupload.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.fileupload-fp.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.fileupload-ui.js"></script>
