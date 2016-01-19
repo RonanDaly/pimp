@@ -91,5 +91,6 @@ venv
 packrat/lib*/
 packrat/src/*
 !packrat/src/S4Vectors/
+!packrat/src/IRanges/
 *.Rout
 .Rproj.user
