@@ -12,9 +12,9 @@ lxml==3.4.4
 MySQL-python==1.2.5
 numpy==1.9.2
 pytz==2015.4
-rpy2==2.3.10
+rpy2==2.7.7
 scikit-learn==0.16.1
 scipy==0.14.1
-six==1.9.0
+six==1.10.0
 wheel==0.24.0
 honcho==0.6.6
