@@ -74,7 +74,32 @@ class PictureCreateView(CreateView):
         context_data = super(PictureCreateView, self).get_context_data(
             *args, **kwargs)
         print "context_data: ",context_data
-        # print "session_data: ",self.request.session
+        print "session_data: ",self.request.session
+        print "user: ",self.request.user
+
+        user = self.request.user
+
+        # Add for space limitation - the following code is used to calculate how much space is left to restrict the upload size
+        owned_projects = Project.objects.filter(user_owner=user)
+        calibration_samples = ProjFile.objects.filter(project__in=owned_projects).order_by('project__id')
+        samples = Picture.objects.filter(project__in=owned_projects).order_by('project__id')
+
+        storage_taken = {'samples': 0, 'calibration_samples': 0}
+
+
+        for calibration_sample in calibration_samples:
+            storage_taken['calibration_samples'] += calibration_sample.file.size
+        for sample in samples:
+            storage_taken['samples'] += sample.file.size
+
+        total_storage = 53687091200
+
+        storage_used = storage_taken['calibration_samples'] + storage_taken['samples']
+        storage_remaining = int(float(total_storage) - storage_used)
+
+        print "storage_used: ",storage_used
+        print "storage_remaining: ",storage_remaining
+
         # if 'new_project' in self.request.session and self.request.session['new_project']:
         #     print "my session : ",self.request.session['new_project']
         #     new_project = self.request.session['new_project']
@@ -84,7 +109,7 @@ class PictureCreateView(CreateView):
         #     calibration = self.request.session['calibration']
         # else:
         #     calibration = False
-        context_data.update({'project': self.project}) #,'new_project': new_project, 'calibration': calibration})
+        context_data.update({'project': self.project, 'storage_remaining': storage_remaining}) #,'new_project': new_project, 'calibration': calibration})
         # context_data.['pictures'] = Picture.objects.all()
         return context_data
     
@@ -200,13 +225,38 @@ class ProjfileCreateView(CreateView):
     def get_context_data(self, *args, **kwargs):
         context_data = super(ProjfileCreateView, self).get_context_data(
             *args, **kwargs)
-        # print "session_data: ",self.request.session
+        print "session_data: ",self.request.session
+        print "user: ",self.request.user
+
+        user = self.request.user
+
+        # Add for space limitation - the following code is used to calculate how much space is left to restrict the upload size
+        owned_projects = Project.objects.filter(user_owner=user)
+        calibration_samples = ProjFile.objects.filter(project__in=owned_projects).order_by('project__id')
+        samples = Picture.objects.filter(project__in=owned_projects).order_by('project__id')
+
+        storage_taken = {'samples': 0, 'calibration_samples': 0}
+
+
+        for calibration_sample in calibration_samples:
+            storage_taken['calibration_samples'] += calibration_sample.file.size
+        for sample in samples:
+            storage_taken['samples'] += sample.file.size
+
+        total_storage = 53687091200
+
+        storage_used = storage_taken['calibration_samples'] + storage_taken['samples']
+        storage_remaining = int(float(total_storage) - storage_used)
+
+        print "storage_used: ",storage_used
+        print "storage_remaining: ",storage_remaining
+
         # if 'new_project' in self.request.session and self.request.session['new_project']:
         #     print "my session : ",self.request.session['new_project']
         #     new_project = self.request.session['new_project']
         # else:
         #     new_project = False
-        context_data.update({'project': self.project})#,'new_project': new_project})
+        context_data.update({'project': self.project, 'storage_remaining': storage_remaining})#,'new_project': new_project})
 
         return context_data
 

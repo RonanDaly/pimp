@@ -7,12 +7,12 @@
 {% if user.is_authenticated %}
         <div class="page-header">
             <h1>Welcome <small>{{ user.first_name }} {{ user.last_name }}</small></h1>
-            <p class="lead">Last login: {{ user.last_login }}</p>
+            <p class="lead">Last login: {{ user.last_login|date:"D d M Y P" }}</p>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4>User info</h4>
+                <h4 style="color: #00355E;">User info</h4>
             </div>
             <div class="panel-body">
                 <p>Username: {{user}}</p>
@@ -32,7 +32,7 @@
         {% if collaborators|length > 0 %}
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h4>Collaborators</h4>
+                    <h4 style="color: #00355E;">Collaborators</h4>
                 </div>
                 <div class="panel-body">
                     <p>Number of collaborators: {{ collaborators|length }}</p>
@@ -52,24 +52,28 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4>Storage</h4>
+                <h4 style="color: #00355E;">Storage</h4>
             </div>
 
             <div class="panel-body">
                 {% if sample_number > 0 %}
 
-{#                <div>#}
-{#                    <h4><span class="label pull-right label-info" style="margin-left: 1em;">{{ total_storage|filesizeformat }}</span></h4>#}
-{#                    <div class="progress">#}
-{#                        <div class="progress-bar progress-bar-info" style="width: {{ storage_taken_percent.samples }}%; background-color: rgb(234,175,53); background-img: none;">#}
-{#                            Samples#}
-{#                        </div>#}
-{#                        <div class="progress-bar progress-bar-info" style="width: {{ storage_taken_percent.calibration_samples }}%; background-color: rgb(88,132,193);">#}
-{#                            Calibration samples#}
-{#                        </div>#}
-{##}
-{#                    </div>#}
-{#                </div>#}
+                <div>
+                    <h4><span class="label pull-right" style="margin-left: 1em; border-radius: 2.25em;background-color: #00355E;">{{ total_storage|filesizeformat }}</span></h4>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-info" style="width: {{ storage_taken_percent.samples }}%; background-color: rgb(234,175,53); background-img: none;">
+                            Samples
+                        </div>
+                        <div class="progress-bar progress-bar-info" style="width: {{ storage_taken_percent.calibration_samples }}%; background-color: rgb(88,132,193);">
+                            Calibration samples
+                        </div>
+
+                    </div>
+                </div>
+                <div style="display:block;">
+                    <div style="width: 20px; height:20px;background-color: rgb(234,175,53);display:inline;"> </div>
+                    <span style="display:inline;">Samples</span>
+                </div>
                 <h4>Sample storage</h4>
                 <p>{{ storage_taken.samples|filesizeformat }}</p>
                 <h4>Calibration sample storage</h4>
@@ -79,8 +83,8 @@
                 {% else %}
                 <p>You do not have any uploaded samples</p>
                 {% endif %}
-{#                <h4>Total storage</h4>#}
-{#                <p>{{ total_storage|filesizeformat }} ({{ storage_remaining|filesizeformat }} left) </p>#}
+                <h4>Total storage</h4>
+                <p>{{ total_storage|filesizeformat }} ({{ storage_remaining|filesizeformat }} left) </p>
 
             </div>
         </div>

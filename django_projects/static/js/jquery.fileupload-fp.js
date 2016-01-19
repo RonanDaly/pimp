@@ -26,11 +26,16 @@
         // Browser globals:
         factory(
             window.jQuery,
-            window.loadImage
+            window.loadImage,
+            window.maximumGlobalSizeFile
         );
     }
-}(function ($, loadImage) {
+}(function ($, loadImage, maximumGlobalSizeFile) {
     'use strict';
+
+    // $.blueimp.fileupload.prototype.options.processQueue.push(
+        
+    // );
 
     // The File Upload IP version extends the basic fileupload widget
     // with file processing functionality:
@@ -39,6 +44,14 @@
         options: {
             // The list of file processing actions:
             process: [
+            {
+                action: 'validateTotalSize',
+                // Always trigger this action,
+                // even if the previous action was rejected: 
+                always: true,
+                // Options taken from the global options map:
+                maxSizeOfFiles: maximumGlobalSizeFile,
+            },
             /*
                 {
                     action: 'load',
@@ -58,6 +71,20 @@
             */
             ],
 
+            /*
+            // The maximum allowed size of all files combined in bytes:
+            maxSizeOfFiles: 10000000, // 10 MB
+            */
+
+            // Function returning the current size of files,
+            // has to be overriden for maxSizeOfFiles validation:
+            getSizeOfFiles: $.noop,
+
+            // Error and info messages:
+            messages: {
+                maxSizeOfFiles: 'Maximum size of all files exceeded',
+            },
+
             // The add callback is invoked as soon as files are added to the
             // fileupload widget (via file input selection, drag & drop or add
             // API call). See the basic file upload widget for more information:
@@ -73,6 +100,42 @@
             // as canvas element.
             // Accepts the options fileTypes (regular expression)
             // and maxFileSize (integer) to limit the files to load:
+
+            validateTotalSize: function (data, options) {
+                var $this = $(this),
+                    that = $this.data('blueimp-fileupload') ||
+                        $this.data('fileupload');
+
+                if (options.disabled) {
+                    return data;
+                }
+
+                var dfd = $.Deferred(),
+                    settings = this.options,
+                    file = data.files[data.index];
+
+                console.log(settings.getSizeOfFiles());
+                console.log("BLABLBALBALA " + options.maxSizeOfFiles);
+                if (settings.getSizeOfFiles() > options.maxSizeOfFiles) {
+                    console.log("total file size exceded!");
+                    // file.error = settings.i18n('maxSizeOfFiles');
+                    file.error = 'maxSizeOfFiles'
+                }
+                //else {
+                //    delete file.error;
+                //}
+
+                if (file.error || data.files.error) {
+                    data.files.error = true;
+                    dfd.rejectWith(this, [data]);
+                } else {
+                    dfd.resolveWith(this, [data]);
+                }
+
+                return dfd.promise();
+            },
+
+
             load: function (data, options) {
                 var that = this,
                     file = data.files[data.index],
