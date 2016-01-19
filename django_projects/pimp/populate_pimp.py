@@ -60,11 +60,11 @@ def populate():
         state = True,
     )
 
-    normalization = add_default_parameter(
-        name = "normalization",
-        value = None,
-        state = False,
-    )
+    # normalization = add_default_parameter(
+    #     name = "normalization",
+    #     value = None,
+    #     state = False,
+    # )
 
     kegg_db = add_database(
         name = "kegg"

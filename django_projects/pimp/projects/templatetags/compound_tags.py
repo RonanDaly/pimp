@@ -45,7 +45,8 @@ def comparisoninfo(objects, compId):
 @register.filter(name='minuslogten')
 def minuslogten(object):
 	# print object.adjPvalue
-	return -np.log10(object.adjPvalue)
+	# return -np.log10(object.adjPvalue)
+	return -np.log10(object)
 
 @register.filter(name='samplelistlength')
 def samplelistlength(list):
@@ -74,6 +75,33 @@ def fold_change_colour(object):
 	if colour == None:
 		colour = "None"
 	return ' style="background-color:' + colour + '"'
+
+@register.filter(name='get_fold_change_colour')
+def get_fold_change_colour(value):
+	#get_fold_change_colour()
+	up_colours = ["#FF6666", "#FF9999", "#FFCCCC"]
+	down_colours = ["#6666FF", "#9999FF", "#CCCCFF"]
+	fold_change_bins = [2, 1, 0.5849625]
+
+	colours = []
+	if value > 0:
+		colours = up_colours
+	else:
+		colours = down_colours
+
+	log_fc = abs(value)
+
+	colour = None
+	for idx, fc in enumerate(fold_change_bins):
+		if log_fc > fc:
+			colour = colours[idx]
+			break
+
+	if colour == None:
+		colour = "None"
+	return ' style="background-color:' + colour + '"'
+
+	return colour
 
 @register.filter(name='significant_pathway_coverage')
 def significant_pathway_coverage(object, cutoff=75):

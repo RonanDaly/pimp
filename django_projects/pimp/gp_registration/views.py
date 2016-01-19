@@ -23,13 +23,13 @@ def profile(request):
     for sample in samples:
         storage_taken['samples'] += sample.file.size
 
-    # storage_taken_percent = {}
-    # total_storage = 1073741824
-    # storage_taken_percent['calibration_samples'] = (storage_taken['calibration_samples'] / float(total_storage)) * 100
-    # storage_taken_percent['samples'] = (storage_taken['samples'] / float(total_storage)) * 100
+    storage_taken_percent = {}
+    total_storage = 53687091200
+    storage_taken_percent['calibration_samples'] = (storage_taken['calibration_samples'] / float(total_storage)) * 100
+    storage_taken_percent['samples'] = (storage_taken['samples'] / float(total_storage)) * 100
 
     storage_used = storage_taken['calibration_samples'] + storage_taken['samples']
-    # storage_remaining = float(total_storage) - storage_used
+    storage_remaining = float(total_storage) - storage_used
 
 
     # collaborators and collaborated projects
