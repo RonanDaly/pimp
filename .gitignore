@@ -89,6 +89,7 @@ venv
 # Local environment files
 .env
 packrat/lib*/
-packrat/src
+packrat/src/*
+!packrat/src/S4Vectors/
 *.Rout
 .Rproj.user
