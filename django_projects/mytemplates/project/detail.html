@@ -124,9 +124,8 @@ $(document).ready(function() {
       $('body').css({overflow: ''}); 
     }); 
 
-	function massSpectra(sample_id, polarity, retentionTime){
-		console.log(sample_id + " " + polarity + " " + retentionTime);
-		var data = {"id": sample_id, "polarity": polarity, "rt":retentionTime};
+	function massSpectra(sample_id, polarity, retentionTime, sampleType){
+		var data = {"id": sample_id, "polarity": polarity, "rt":retentionTime, "type": sampleType};
 		var chartWidth = $('#main-container').width()-10;
 		var url = "{% url 'project_detail' project.id %}" + "sample/" + sample_id + "/scan/";
 		if (polarity == "NEG"){
@@ -398,7 +397,7 @@ $(document).ready(function() {
 			                        events: {
 			                            click: function() {
 			                            	console.log("retention time :" + this.x);
-			                            	massSpectra(sampleId, "NEG", this.x);
+			                            	massSpectra(sampleId, "NEG", this.x, sampleType);
 			                            }
 			                        }
 			                    },
@@ -511,7 +510,7 @@ $(document).ready(function() {
 				                        events: {
 				                            click: function() {
 				                            	console.log("retention time :" + this.x);
-				                            	massSpectra(sampleId, "POS", this.x);
+				                            	massSpectra(sampleId, "POS", this.x, sampleType);
 				                            }
 				                        }
 				                    },
@@ -631,7 +630,7 @@ $(document).ready(function() {
 			                        events: {
 			                            click: function() {
 			                            	console.log("retention time :" + this.x);
-			                            	massSpectra(sampleId, "POS", this.x);
+			                            	massSpectra(sampleId, "POS", this.x, sampleType);
 			                            }
 			                        }
 			                    },
@@ -723,7 +722,7 @@ $(document).ready(function() {
 			                        events: {
 			                            click: function() {
 			                            	console.log("retention time :" + this.x);
-			                            	massSpectra(sampleId, "NEG", this.x);
+			                            	massSpectra(sampleId, "NEG", this.x, sampleType);
 			                            }
 			                        }
 			                    },

@@ -333,10 +333,17 @@ def get_scan(request, project_id, sample_id):
 		sample_id = request.GET['id']
 		polarity = request.GET['polarity']
 		rt = request.GET['rt']
+		sample_type = request.GET['type']
+		if sample_type == "sample":
+			sample = Sample.objects.get(id=sample_id).samplefile
+		elif sample_type == "calibration":
+			sample = CalibrationSample.objects.get(id=sample_id).standardFile
 		if polarity == "NEG":
-			mzxmlfile = Sample.objects.get(id=sample_id).samplefile.negdata
+			# mzxmlfile = Sample.objects.get(id=sample_id).samplefile.negdata
+			mzxmlfile = sample.negdata
 		else:
-			mzxmlfile = Sample.objects.get(id=sample_id).samplefile.posdata
+			# mzxmlfile = Sample.objects.get(id=sample_id).samplefile.posdata
+			mzxmlfile = sample.posdata
 		data = get_scan_data(mzxmlfile, rt)
 		print "my polarity : ",polarity
 		print "my sample id : ",sample_id
