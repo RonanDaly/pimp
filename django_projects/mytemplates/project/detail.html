@@ -1076,7 +1076,7 @@ $(document).ready(function() {
 							exact_mass = parseFloat(mass)+1.0073;
 						}
 					}
-					var leftPanel = $('<div class="span3" style="position:static;margin:0px;width:'+chartWidth+'px;padding-top:20px;"><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Neutral mass: '+mass+'</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Exact mass: '+exact_mass+' &plusmn; '+ppm+' ppm</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Retention time: '+rt+' &plusmn; '+rt_window/2+' s</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Polarity: '+polarity_display+'</p><br><button class="btn btn-primary new-screening" style="margin-left:10px;" data-toggle="tooltip" title="Process" id="new-screening"><i class="icon-refresh icon-white"></i> New screening</button></div>');
+					var leftPanel = $('<div class="span3" style="position:static;margin:0px;width:'+chartWidth+'px;padding-top:20px;"><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Mass: '+mass+'</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Exact mass: '+exact_mass+' &plusmn; '+ppm+' ppm</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Retention time: '+rt+' &plusmn; '+rt_window/2+' s</p><br><p style="font-size: 15px;font-weight:bold;margin-left:12px;">Polarity: '+polarity_display+'</p><br><button class="btn btn-primary new-screening" style="margin-left:10px;" data-toggle="tooltip" title="Process" id="new-screening"><i class="icon-refresh icon-white"></i> New screening</button></div>');
 					var rightPanel = $('<div class="span9 rightPanel" style="position:static;overflow:auto;margin:0px;width:'+chartWidth*3+'px"></div>');
 					var innerRightPanel = $('<div class="span12" style="margin:0px;width:'+innerWidth*3+'px"></div>');
 					var j = 0;
@@ -1242,7 +1242,7 @@ $(document).ready(function() {
 
 		$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="{{ STATIC_URL }}/img/peak_icon.png" alt="tools" style="margin-bottom: 3px;"> Peak discovery</h3>').appendTo($(modalHeader));
 
-		var content = $('<h3 style="margin-left:10px;">Exactive screening</h3><div class="row" style="margin-left:0px;"><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Neutral mass</span><input value="'+mass+'" id="exact_mass" class="span2" type="text" name="exact-mass"><br><h4 style="margin-bottom: 20px;">Mass window (ppm): <span id="ppm_span">'+ppm+'</span></h4><span style="font-weight: bold;margin-right: 12px;">1</span><input id="ppm_slider" type="text" class="span4" value="" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="'+ppm+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">5</span><br><h4 style="margin-bottom: 20px;">Samples</h4><label for="all_samples_checkbox" style="font-weight: bold;margin-left:12px;margin-bottom:0px;">All samples <input id="all_samples_checkbox" type="checkbox" name="all_samples" value="all_samples" style="margin-top:0px"></label><br><select id="multiple_select_sample" multiple="multiple" style="margin-top:0px;margin-left:10px;">{% for sample in project.sample_set.all %}<option class="sample_option" value="{{ sample.id }}">{{ sample.name|truncatechars:20 }}</option>{% endfor %}</select></div><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Retention time</span><input value="'+rt+'" id="exact-rt" class="span2" type="text" name="exact-rt"><br><h4 style="margin-bottom: 20px;">Retention time window (s): <span id="rtwindow_span">'+rt_window+'</span></h4><span style="font-weight:bold;margin-right:12px;">15</span><input id="rt_window_slider" type="text" class="span4" value="" data-slider-min="15" data-slider-max="300" data-slider-step="5" data-slider-value="'+rt_window+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">300</span><br><h4 style="margin-bottom: 20px;">Polarity</h4><input type="radio" name="polarity" value="dual" style="margin:0px 0px 2px;" checked><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Dual</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup> & [M-H]<sup>-</sup></span><br><input type="radio" name="polarity" value="positive" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Positive</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup></span><br><input type="radio" name="polarity" value="negative" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Negative</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M-H]<sup>-</sup></span><br><button class="btn btn-primary" style="margin-right: 5px;margin-top:8px;float:right;" data-toggle="tooltip" title="Process" id="exactive-screening-process"><i class="icon-play icon-white"></i> Process</button></div>');
+		var content = $('<h3 style="margin-left:10px;">Exactive screening</h3><div class="row" style="margin-left:0px;"><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Neutral monoisotopic mass</span><input value="'+mass+'" id="exact_mass" class="span2" type="text" name="exact-mass"><br><h4 style="margin-bottom: 20px;">Mass window (ppm): <span id="ppm_span">'+ppm+'</span></h4><span style="font-weight: bold;margin-right: 12px;">1</span><input id="ppm_slider" type="text" class="span4" value="" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="'+ppm+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">5</span><br><h4 style="margin-bottom: 20px;">Samples</h4><label for="all_samples_checkbox" style="font-weight: bold;margin-left:12px;margin-bottom:0px;">All samples <input id="all_samples_checkbox" type="checkbox" name="all_samples" value="all_samples" style="margin-top:0px"></label><br><select id="multiple_select_sample" multiple="multiple" style="margin-top:0px;margin-left:10px;">{% for sample in project.sample_set.all %}<option class="sample_option" value="{{ sample.id }}">{{ sample.name|truncatechars:20 }}</option>{% endfor %}</select></div><div class="span6" style="margin-left:10px;"><span style="font-size: 17.5px;font-weight:bold;margin-right:12px;">Retention time</span><input value="'+rt+'" id="exact-rt" class="span2" type="text" name="exact-rt"><br><h4 style="margin-bottom: 20px;">Retention time window (s): <span id="rtwindow_span">'+rt_window+'</span></h4><span style="font-weight:bold;margin-right:12px;">15</span><input id="rt_window_slider" type="text" class="span4" value="" data-slider-min="15" data-slider-max="300" data-slider-step="5" data-slider-value="'+rt_window+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">300</span><br><h4 style="margin-bottom: 20px;">Polarity</h4><input type="radio" name="polarity" value="dual" style="margin:0px 0px 2px;" checked><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Dual</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup> & [M-H]<sup>-</sup></span><br><input type="radio" name="polarity" value="positive" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Positive</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M+H]<sup>+</sup></span><br><input type="radio" name="polarity" value="negative" style="margin:0px 0px 2px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Negative</span><span style="color:#A4A4A5;margin-left:12px;margin-right:12px;">[M-H]<sup>-</sup></span><br><button class="btn btn-primary" style="margin-right: 5px;margin-top:8px;float:right;" data-toggle="tooltip" title="Process" id="exactive-screening-process"><i class="icon-play icon-white"></i> Process</button></div>');
 
 		$(content).appendTo($(modalBody));
 
@@ -1327,8 +1327,10 @@ $(document).ready(function() {
 		
 		var attributeId = $(this).attr('id').split("-")[1];
 
+		var sampleType = $(this).attr('sample-type');
+
 		var url = "{% url 'project_detail' project.id %}" + attributeId + "/";
-		var attribute_id = {"id": attributeId};
+		var attribute_id = {"id": attributeId, "type": sampleType};
 
 		$('body').modalmanager('loading');
 		$('body').css('cursor', 'wait');
@@ -2440,6 +2442,22 @@ $(document).ready(function() {
 		  							{% else %}
 		  							<div class="tab-pane" id="{{ attribute.name }}">
 			  						{% endif %}
+			  							{% if attribute.name != 'standard' %}
+			  							<div class="row-fluid" style="background-color: whitesmoke;margin-bottom: 5px;">
+			  								<div class="span4 user-span bold">
+			  									<ul>
+													<li class="text-in-table introduction_text">All TICs</li>
+												</ul>
+			  									<!-- <p class="text-in-table introduction_text" style="margin-left:25px;"></p> -->
+			  								</div>
+			  								<div class="span4"></div>
+			  								<div class="span4 user-span bold">
+			  									<ul style="margin-bottom: 0px;margin-top: 5px;">
+			  										<li><a class="tic-viewer" sample-type="calibration" id="ticviewer-{{ attribute.id }}" href="#" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></a></li>
+			  									</ul>
+			  								</div>
+			  							</div>
+			  							{% endif %}
 			  							<div class="row-fluid">
 											<div class="span4 user-span bold">
 												<ul>
@@ -2478,7 +2496,7 @@ $(document).ready(function() {
 											<div class="span4 user-span">
 												<ul>
                                                     {% if attribute.name != 'standard' %}
-													<li><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-calibration" data-toggle="tooltip" title="tic viewer soon" data-placement="left"></a></li>
+													<li><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-calibration" data-toggle="tooltip" title="TIC viewer" data-placement="left"></a></li>
                                                     {% endif %}
 												</ul>
 											</div>
@@ -2590,7 +2608,7 @@ $(document).ready(function() {
 										{% endif %}
 		  								<a href="#{{ group.name }}">{{ group.name }}</a></li>
 		  							{% endfor %}
-		  							<div class="tic-group" style="margin-right: 5px;margin-top: 5px;" id="ticviewer" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></div>
+		  							<!-- <div class="tic-group" style="margin-right: 5px;margin-top: 5px;" id="ticviewer" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></div> -->
 								</ul>
 								{% else %}
 								<ul class="nav nav-tabs" id="group-tab" style="margin-bottom: 0px;">
@@ -2640,7 +2658,7 @@ $(document).ready(function() {
 											<p class="text-in-table introduction_text">{{ attribute.sample.all|length }}</p>
 										</div>
 										<div class="span2 center-text" style="min-height:10px;">
-											<p class="text-in-table introduction_text"><a class="tic-viewer" id="ticviewer-{{ attribute.id }}" href="#" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></a></p>
+											<p class="text-in-table introduction_text"><a class="tic-viewer" sample-type="sample" id="ticviewer-{{ attribute.id }}" href="#" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></a></p>
 										</div>
 										<div class="span4 center-text" style="min-height:10px">
 											<p class="text-in-table introduction_text">
