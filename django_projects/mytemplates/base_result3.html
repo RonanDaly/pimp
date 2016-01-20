@@ -1081,7 +1081,7 @@
 
 				// extract header information in an array
 				var headerInfo = new Array();
-				$.each(comparisonTable{{ comparison.id }}.dataTableSettings[{{ forloop.counter0 }}+5].aoColumns, function(i,v) {
+				$.each(comparisonTable{{ comparison.id }}.dataTableSettings[{{ forloop.counter0 }}+4].aoColumns, function(i,v) {
 					headerInfo.push(v.sTitle);
 				});
 
@@ -1996,16 +1996,16 @@
 				</div>
 				<div class="inner_button" id="enlarge"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/fullscreen_icon.png" alt="tools" ><span id="tool_button_text">Full screen</span></div>
 				</div>
-				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/cluster_icon.png" alt="tools" ><span id="tool_button_text">Fragmentation</span></div>
-				</div>
+				<!-- <div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/cluster_icon.png" alt="tools" ><span id="tool_button_text">Fragmentation</span></div>
+				</div> -->
 				<!-- <div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/sort_icon.png" alt="tools" ><span id="tool_button_text">Sort</span></div>
 				</div>
 				<div class="inner_button"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/pca_icon.png" alt="tools" ><span id="tool_button_text">PCA</span></div>
 				</div> -->
-				<div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">MetExplore</span></div>
-				</div>
+				<!-- <div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">MetExplore</span></div>
+				</div> -->
 				<div class="side_footer">
-					<span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span>
+					<!-- <span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span> -->
 				</div>
 			</div>
 		</div>
