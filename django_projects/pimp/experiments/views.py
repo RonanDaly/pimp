@@ -364,7 +364,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         for pathway_name in pathway_super_pathway_list:
             if pathway_name[0] in superpathway_dict:
                 if pathway_name[1] not in superpathway_dict[pathway_name[0]]:
-                    superpathway_dict[pathway_name[0]] = " ".join(superpathway_dict[pathway_name[0]], pathway_name[1])
+                    superpathway_dict[pathway_name[0]] = " ".join([superpathway_dict[pathway_name[0]], pathway_name[1]])
             else:
                 if pathway_name[1] == None:
                     superpathway_dict[pathway_name[0]] = "None"
@@ -377,8 +377,8 @@ def get_metabolites_table(request, project_id, analysis_id):
             # 
             if pathway_name[0] in pathway_name_dict:
                 if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
-                    pathway_name_dict[pathway_name[0]][0] = " ".join(pathway_name_dict[pathway_name[0]][0], pathway_name[1])
-                    pathway_name_dict[pathway_name[0]][1] = " ".join(pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]])
+                    pathway_name_dict[pathway_name[0]][0] = " ".join([pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
+                    pathway_name_dict[pathway_name[0]][1] = " ".join([pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]]])
             else:
                 if pathway_name[1] == None:
                     pathway_name_dict[pathway_name[0]] = ["None","None"]
@@ -449,7 +449,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         for pathway_name in pathway_super_pathway_list:
             if pathway_name[0] in superpathway_dict:
                 if pathway_name[1] not in superpathway_dict[pathway_name[0]]:
-                    superpathway_dict[pathway_name[0]] = " ".join(superpathway_dict[pathway_name[0]], pathway_name[1])
+                    superpathway_dict[pathway_name[0]] = " ".join([superpathway_dict[pathway_name[0]], pathway_name[1]])
             else:
                 if pathway_name[1] == None:
                     superpathway_dict[pathway_name[0]] = "None"
@@ -461,8 +461,8 @@ def get_metabolites_table(request, project_id, analysis_id):
         for pathway_name in annotated_compound_pathway_list:
             if pathway_name[0] in pathway_name_dict:
                 if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
-                    pathway_name_dict[pathway_name[0]][0] = " ".join(pathway_name_dict[pathway_name[0]][0], pathway_name[1])
-                    pathway_name_dict[pathway_name[0]][1] = " ".join(pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]])
+                    pathway_name_dict[pathway_name[0]][0] = " ".join([pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
+                    pathway_name_dict[pathway_name[0]][1] = " ".join([pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]]])
             else:
                 if pathway_name[1] == None:
                     pathway_name_dict[pathway_name[0]] = ["None","None"]
