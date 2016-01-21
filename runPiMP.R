@@ -6,6 +6,14 @@ getString = function(name, default) {
 	Sys.getenv(name, unset=default)
 }
 
+getInteger = function(name, default) {
+	value = getNeededString(name)
+	if ( is.na(value) ) {
+		return(default)
+	}
+	return(strtoi(value))
+}
+
 print('Start of script')
 
 packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
@@ -55,7 +63,7 @@ db <- new("PiMPDB",
 	dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
 	dbname=DATABASE_NAME,
 	dbhost=getString('PIMP_DATABASE_HOST', ''),
-	dbport=getString('PIMP_DATABASE_PORT', ''),
+	dbport=getInteger('PIMP_DATABASE_PORT', 0),
 	dbtype=DATABASE_TYPE
 	)
 
