@@ -1,3 +1,4 @@
+library(logging)
 logging::basicConfig()
 logger <- logging::getLogger('Pimp.runPimp')
 
