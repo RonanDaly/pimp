@@ -125,6 +125,7 @@ if(length(blank.idx) > 0) {
 
 #comparisons
 fetchedContrasts <- experiment.contrasts$contrast
+loginfo('Number of fetchedContrats: %d', length(fetchedContrasts), logger=logger)
 loginfo('fetchedContrasts %s', fetchedContrasts, logger=logger)
 controls <- experiment.contrasts$control
 names <- experiment.contrasts$name
