@@ -1,4 +1,5 @@
 Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), ...) {
+    logger <- getLogger('Pimp.exportToXML')
 
     if(is.null(id)) {
         stop("No analysis id found.")
@@ -155,8 +156,10 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     identification <- .generateCompoundIds(identification)
 
     #compound.id <- 1
+    nrow.raw.data = nrow(raw.data)
     for(i in 1:nrow(raw.data)) {
-        cat(paste(i,"of",nrow(raw.data), "my custom message", "\r"))
+        logfine('Peak %d of %d', i, nrow.raw.data, logger=logger)
+        #cat(paste(i,"of",nrow(raw.data), "my custom message", "\r"))
         peak.id <- rownames(raw.data)[i]
         peak <- newXMLNode("peak", attrs=c("id"=peak.id), parent=peakset)
         newXMLNode("mass", raw.data$Mass[i], parent=peak)
