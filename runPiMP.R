@@ -1,5 +1,5 @@
-basicConfig()
-logger <- getLogger('Pimp.runPimp')
+logging::basicConfig()
+logger <- logging::getLogger('Pimp.runPimp')
 
 getNeededString = function(name) {
 	Sys.getenv(name, unset=NA)
