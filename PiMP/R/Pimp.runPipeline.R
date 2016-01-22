@@ -1,4 +1,5 @@
 Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
+	logger <- getLogger('Pimp.runPipeline')
 
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)
@@ -44,9 +45,12 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 		stop(paste("The following samples are found in groups, but not found in files: ", paste(groups.not.in.files, collapse=", ")))
 	}
 	
-	
+
+
 	#Check contrasts information for the statistics calculations exist
-	if(!all(unique(unlist(strsplit(contrasts, "-"))) %in% names(groups))) {
+	if(!all(unique(unlist(strsplit(contrasts, ","))) %in% names(groups))) {
+		logerror('contrasts: %s', contrasts, logger=logger)
+		logerror('groups: %s', groups, logger=logger)
 		stop("Some contrast levels not found in groups.")
 	}
 

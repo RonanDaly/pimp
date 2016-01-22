@@ -1,9 +1,21 @@
+library(logging)
+logging::basicConfig()
+logger <- logging::getLogger('Pimp.runPimp')
+
 getNeededString = function(name) {
 	Sys.getenv(name, unset=NA)
 }
 
 getString = function(name, default) {
 	Sys.getenv(name, unset=default)
+}
+
+getInteger = function(name, default) {
+	value = getNeededString(name)
+	if ( is.na(value) ) {
+		return(default)
+	}
+	return(as.numeric(value))
 }
 
 print('Start of script')
@@ -55,7 +67,7 @@ db <- new("PiMPDB",
 	dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
 	dbname=DATABASE_NAME,
 	dbhost=getString('PIMP_DATABASE_HOST', ''),
-	dbport=getString('PIMP_DATABASE_PORT', ''),
+	dbport=getInteger('PIMP_DATABASE_PORT', 0),
 	dbtype=DATABASE_TYPE
 	)
 
@@ -113,17 +125,22 @@ if(length(blank.idx) > 0) {
 
 #comparisons
 fetchedContrasts <- experiment.contrasts$contrast
+loginfo('Number of fetchedContrasts: %d', length(fetchedContrasts), logger=logger)
+loginfo('fetchedContrasts %s', fetchedContrasts, logger=logger)
 controls <- experiment.contrasts$control
 names <- experiment.contrasts$name
 contrasts = c()
 for ( i in 1:length(fetchedContrasts) ) {
-	con = unlist(strsplit(controls[i], '-'))
+	con = unlist(strsplit(controls[i], ','))
 	if ( con[1] == '0' ) {
-    	cont = unlist(strsplit(fetchedContrasts[i], '-'))
-    	fetchedContrasts[i] = paste0(cont[2], '-', cont[1])
+    	cont = unlist(strsplit(fetchedContrasts[i], ','))
+    	fetchedContrasts[i] = paste0(cont[2], ',', cont[1])
 	}
 	contrasts = append(contrasts, fetchedContrasts[i])
 }
+loginfo('Number of contrasts: %d', length(contrasts), logger=logger)
+loginfo('contrasts: %s', contrasts, logger=logger)
+print(contrasts)
 databases <- getAnnotationDatabases(db, analysis.id)
 print(databases)
 param.idx <- which(analysis.params$state==1)

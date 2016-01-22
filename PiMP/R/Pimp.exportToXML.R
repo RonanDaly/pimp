@@ -103,10 +103,10 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     for(i in nrow(experiment.comparisons)) {
         contrasts <- experiment.comparisons$contrast
         cntrls <- experiment.comparisons$control
-        con = unlist(strsplit(cntrls, '-'))
+        con = unlist(strsplit(cntrls, ','))
         if ( con[1] == '0' ) {
-            cont = unlist(strsplit(contrasts, '-'))
-            contrasts = paste0(cont[2], '-', cont[1])
+            cont = unlist(strsplit(contrasts, ','))
+            contrasts = paste0(cont[2], ',', cont[1])
             experiment.comparisons$contrast[i] <- contrasts
         }
     }
