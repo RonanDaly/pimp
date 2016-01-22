@@ -136,7 +136,7 @@ for ( i in 1:length(fetchedContrasts) ) {
 	}
 	contrasts = append(contrasts, fetchedContrasts[i])
 }
-loginfo('Number of contrasts: ', length(contrasts))
+loginfo('Number of contrasts: %d', length(contrasts))
 databases <- getAnnotationDatabases(db, analysis.id)
 print(databases)
 param.idx <- which(analysis.params$state==1)
