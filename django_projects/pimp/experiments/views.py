@@ -438,7 +438,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         ac_start = timeit.default_timer()
 
         # Create a list of the compound objects that are annotated removing all identified
-        annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(identified_compounds).values_list("secondaryId", flat=True))
+        annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(ic_secondary_ids))
         # Get the list of secondary Ids of compounds that are annotated only
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
