@@ -1,3 +1,6 @@
+basicConfig()
+logger <- getLogger('Pimp.runPimp')
+
 getNeededString = function(name) {
 	Sys.getenv(name, unset=NA)
 }
@@ -11,7 +14,7 @@ getInteger = function(name, default) {
 	if ( is.na(value) ) {
 		return(default)
 	}
-	return(strtoi(value))
+	return(as.numeric(value))
 }
 
 print('Start of script')
