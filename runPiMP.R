@@ -125,17 +125,16 @@ if(length(blank.idx) > 0) {
 
 #comparisons
 fetchedContrasts <- experiment.contrasts$contrast
-loginfo('Number of fetchedContrats: %d', length(fetchedContrasts), logger=logger)
-print(fetchedContrasts)
+loginfo('Number of fetchedContrasts: %d', length(fetchedContrasts), logger=logger)
 loginfo('fetchedContrasts %s', fetchedContrasts, logger=logger)
 controls <- experiment.contrasts$control
 names <- experiment.contrasts$name
 contrasts = c()
 for ( i in 1:length(fetchedContrasts) ) {
-	con = unlist(strsplit(controls[i], '-'))
+	con = unlist(strsplit(controls[i], ','))
 	if ( con[1] == '0' ) {
-    	cont = unlist(strsplit(fetchedContrasts[i], '-'))
-    	fetchedContrasts[i] = paste0(cont[2], '-', cont[1])
+    	cont = unlist(strsplit(fetchedContrasts[i], ','))
+    	fetchedContrasts[i] = paste0(cont[2], ',', cont[1])
 	}
 	contrasts = append(contrasts, fetchedContrasts[i])
 }
