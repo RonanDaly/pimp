@@ -48,6 +48,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	
 	#Check contrasts information for the statistics calculations exist
 	if(!all(unique(unlist(strsplit(contrasts, "-"))) %in% names(groups))) {
+		logerror('Testing')
 		logerror('contrasts: ', contrasts, logger=logger)
 		logerror('groups: ', groups, logger=logger)
 		stop("Some contrast levels not found in groups.")
