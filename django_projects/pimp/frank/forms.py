@@ -41,6 +41,7 @@ NIST_GCMS_LIBRARIES = (
 NIST_LCMS_LIBRARIES = (
     ('nist_msms', 'Tandem (MS/MS) Library - Small Molecules'),
     ('nist_msms2', 'Tandem (MS/MS) Library - Biologically-Active Peptides'),
+    ('massbank_msms','MassBank MSMS Library'),
 )
 
 # The search types suitable for GCMS

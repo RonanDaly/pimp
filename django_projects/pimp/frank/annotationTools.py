@@ -411,7 +411,10 @@ class NISTQueryTool:
         # From the annotation query - get the user selected parameters
         nist_parameters = jsonpickle.decode(self.annotation_query.annotation_tool_params)
         tool_parameters = jsonpickle.decode(self.annotation_tool.default_params)
+        
+
         library_list = nist_parameters['library']
+
         # Check that the user has specified at least one library for the query
         if len(library_list) == 0:
             raise ValueError('No NIST Libraries were selected by the user')
@@ -438,6 +441,8 @@ class NISTQueryTool:
                 nist_query_call.extend(['/LIB', 'nist_msms2'])
             elif library == 'nist_ri':
                 nist_query_call.extend(['/LIB', 'nist_ri'])
+            elif library == 'massbank_msms':
+                nist_query_call.extend(['/LIB', 'massbank_msms'])
             elif library == 'replib':
                 nist_query_call.extend(['/REPL', 'replib'])
         additional_parameters = ['/INP', self.query_file_name,
