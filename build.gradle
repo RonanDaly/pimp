@@ -121,13 +121,13 @@ task installPiMPRDependencies(type: Exec, dependsOn: setupProjectProperties) {
 
 task installPiMPDependencies(dependsOn: [installPiMPPythonDependencies, installPiMPRDependencies])
 
-task synchroniseDatabase(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties]) {
+task synchroniseDatabase(type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties]) {
 	//println project.ext.props.PATH
 	environment 'PATH', project.ext.props['PATH']
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/manage.py', 'migrate'
 }
 
-task populatePiMP (type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties, synchroniseDatabase]) {
+task populatePiMP (type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties, synchroniseDatabase]) {
 	environment 'PATH', project.ext.props['PATH']
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/populate_pimp.py'
 }
@@ -160,7 +160,7 @@ task setupSuperUser(dependsOn: [setupProjectProperties, populatePiMP]) {
 	}
 }
 
-task createSuperUser(type: Exec, dependsOn: [installPiMPDependencies, setupProjectProperties, setupSuperUser]) {
+task createSuperUser(type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties, setupSuperUser]) {
 	environment 'PATH', project.ext.props['PATH']
 	//environment 'PIMP_INITIAL_USERNAME', project.ext.props['PIMP_INITIAL_USERNAME']
 	//environment 'PIMP_INITIAL_EMAIL_ADDRESS', project.ext.props['PIMP_INITIAL_EMAIL_ADDRESS']

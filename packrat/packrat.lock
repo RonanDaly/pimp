@@ -1,11 +1,11 @@
 PackratFormat: 1.4
 PackratVersion: 0.4.6.1
-RVersion: 3.2.1
+RVersion: 3.2.2
 Repos: PuMP=http://puma.ibls.gla.ac.uk/R,
-    BioCsoft=http://bioconductor.org/packages/3.2/bioc,
-    BioCann=http://bioconductor.org/packages/3.2/data/annotation,
-    BioCexp=http://bioconductor.org/packages/3.2/data/experiment,
-    BioCextra=http://bioconductor.org/packages/3.2/extra,
+    BioCsoft=https://bioconductor.org/packages/3.2/bioc,
+    BioCann=https://bioconductor.org/packages/3.2/data/annotation,
+    BioCexp=https://bioconductor.org/packages/3.2/data/experiment,
+    BioCextra=https://bioconductor.org/packages/3.2/extra,
     CRAN=http://cran.rstudio.com
 
 Package: AnnotationDbi
@@ -89,17 +89,17 @@ Requires: lattice
 Package: PiMP
 Source: source
 Version: 0.1-3
-Hash: 8171b8551c3dec0243b0c8fbe1b8a62e
+Hash: d97575e999e6334ac3e1c093b5c07e98
 Requires: RColorBrewer, RCurl, RJSONIO, XLConnect, XML, digest,
-    doParallel, foreach, gptk, gtools, impute, limma, mzmatch.R,
-    outliers, rJava
+    doParallel, foreach, gptk, gtools, impute, limma, logging,
+    mzmatch.R, outliers, rJava
 SourcePath: ./PiMP
 
 Package: PiMPDB
 Source: source
 Version: 1.0-3
-Hash: 13d2e281024d5006554e7a82e809a2f5
-Requires: DBI, RUnit
+Hash: 9472f9967a52491dc9563f3abd6c7fbd
+Requires: DBI, RUnit, logging
 SourcePath: ./PiMPDB
 
 Package: ProtGenerics
@@ -412,9 +412,9 @@ Requires: Biobase, BiocGenerics, ProtGenerics, Rcpp, zlibbioc
 Package: mzmatch.R
 Source: PuMP
 Version: 1.0-2
-Hash: 0d08297cc8b113e22b78d8eb0f93ab04
-Requires: R.utils, Rcpp, XML, bitops, caTools, gplots, mzR, ptw, rJava,
-    snow, xcms
+Hash: 2ed1822a465fbb3fc91f1f326a3112a1
+Requires: R.utils, Rcpp, XML, bitops, caTools, gplots, logging, mzR,
+    ptw, rJava, snow, xcms
 
 Package: nloptr
 Source: CRAN
