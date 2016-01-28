@@ -1,3 +1,7 @@
+library(logging)
+logging::basicConfig()
+logger <- logging::getLogger('Pimp.runPimp')
+
 getNeededString = function(name) {
 	Sys.getenv(name, unset=NA)
 }
@@ -5,6 +9,16 @@ getNeededString = function(name) {
 getString = function(name, default) {
 	Sys.getenv(name, unset=default)
 }
+
+getInteger = function(name, default) {
+	value = getNeededString(name)
+	if ( is.na(value) ) {
+		return(default)
+	}
+	return(as.numeric(value))
+}
+
+print('Start of script')
 
 packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
 message(paste('Setting library path to:', packratLibPath))
@@ -27,6 +41,7 @@ print(analysis.id)
 if(is.na(analysis.id)) {
 	stop("Analysis ID must be an integer.")
 }
+
 
 library(PiMPDB)
 library(PiMP)
@@ -52,7 +67,7 @@ db <- new("PiMPDB",
 	dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
 	dbname=DATABASE_NAME,
 	dbhost=getString('PIMP_DATABASE_HOST', ''),
-	dbport=getString('PIMP_DATABASE_PORT', ''),
+	dbport=getInteger('PIMP_DATABASE_PORT', 0),
 	dbtype=DATABASE_TYPE
 	)
 
@@ -65,6 +80,7 @@ project.id <- getProjectID(db, analysis.id)
 
 DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', 'pimp_data')), 'projects')
 PROJECT_DIR = file.path(DATA_DIR, project.id)
+print(PROJECT_DIR)
 setwd(PROJECT_DIR)
 
 experiment.samples <- getExperimentSamples(db, experiment.id)
@@ -108,27 +124,39 @@ if(length(blank.idx) > 0) {
 }
 
 #comparisons
-contrasts <- experiment.contrasts$contrast
+fetchedContrasts <- experiment.contrasts$contrast
+loginfo('Number of fetchedContrasts: %d', length(fetchedContrasts), logger=logger)
+loginfo('fetchedContrasts %s', fetchedContrasts, logger=logger)
 controls <- experiment.contrasts$control
 names <- experiment.contrasts$name
-con = unlist(strsplit(controls, '-'))
-if ( con[1] == '0' ) {
-    cont = unlist(strsplit(contrasts))
-    contrasts = paste0(cont[2], '-', cont[1])
+contrasts = c()
+for ( i in 1:length(fetchedContrasts) ) {
+	con = unlist(strsplit(controls[i], ','))
+	if ( con[1] == '0' ) {
+    	cont = unlist(strsplit(fetchedContrasts[i], ','))
+    	fetchedContrasts[i] = paste0(cont[2], ',', cont[1])
+	}
+	contrasts = append(contrasts, fetchedContrasts[i])
 }
-
-#databases
-databases <- c("kegg", "hmdb", "lipidmaps")
-#databases <- getAnnotationDatabases(db, analysis.id)
-
-#params
+loginfo('Number of contrasts: %d', length(contrasts), logger=logger)
+loginfo('contrasts: %s', contrasts, logger=logger)
+print(contrasts)
+databases <- getAnnotationDatabases(db, analysis.id)
+print(databases)
 param.idx <- which(analysis.params$state==1)
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
+	print('Setting params')
 
 	for(i in 1:nrow(params)) {
+		print('Name')
+		print(params$name[i])
+		print('Value')
+		print(params$value[i])
+
 		if(params$name[i]=="ppm") {
 			xcms.params$ppm <- params$value[i]
+			mzmatch.params$ppm <- params$value[i]
 		}
 		else if(params$name[i]=="rt.alignment") {
 			mzmatch.params$rt.alignment <- "obiwarp"
@@ -146,6 +174,16 @@ if(length(param.idx) > 0) {
 		}
 	}
 }
+
+#print(groups)
+#print(contrasts)
+#print(names)
+#print(analysis.id)
+#stop()
+
+#message('Analysis parameters')
+print(mzmatch.params)
+#print(stds)
 
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
 

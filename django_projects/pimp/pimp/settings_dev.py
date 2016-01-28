@@ -98,7 +98,7 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/static/'
+STATIC_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) + '/static/'
 #STATIC_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/static/'
 
 # URL prefix for static files.
@@ -112,7 +112,7 @@ STATICFILES_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
     # '/Users/yoanngloaguen/Documents/django_projects/pimp/static/',
     # '/opt/django/projects/django_projects/static/',
-    os.path.join(os.path.dirname(BASE_DIR), 'static'),
+    os.path.join(os.path.dirname(__file__), 'static'),
 )
 
 # List of finder classes that know how to find static files in

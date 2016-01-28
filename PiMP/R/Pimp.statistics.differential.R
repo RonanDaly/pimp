@@ -1,4 +1,10 @@
+fixContrasts <- function(contrasts) {
+	sapply(strsplit(contrasts, ','), FUN = function(x) paste(x[1], x[2], sep='-'))
+}
+
+
 Pimp.statistics.differential <- function(data=matrix(), groups=list(), contrasts=NULL, method="ebayes", repblock=NULL) {
+
 	method <- match.arg(method)
 
 	if(!is.numeric(data))
@@ -16,7 +22,7 @@ Pimp.statistics.differential <- function(data=matrix(), groups=list(), contrasts
 		combined.classvector <- as.factor(groups.matrix$groups)
 		design <- model.matrix(~0+combined.classvector)
 		colnames(design) <- levels(combined.classvector)
-		contrast.matrix <- makeContrasts(contrasts=contrasts, levels=design)
+		contrast.matrix <- makeContrasts(contrasts=fixContrasts(contrasts), levels=design)
 
 		if(!is.null(repblock)) {
       		dupcor <- duplicateCorrelation(data, design=design, block=repblock)

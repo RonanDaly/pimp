@@ -31,22 +31,22 @@ $(document).ready(function() {
             name: { // experiment title (group name)
                 required: true,
                 minlength: 2,
-                pattern: /^[^0-9\s][\Sa-zA-Z_-]+$/ // no whitespace, must not start with number
+                pattern: /^[a-zA-Z][\w]+$/ // no whitespace, must not start with number
             },
             attribute_name_field: {
                 minlength: 2,
-                pattern: /^[^0-9\s][\Sa-zA-Z_-]+$/
+                pattern: /^[a-zA-Z][\w]+$/
             }
         },
         messages: {
             name: {
                 required: "Please enter an experiment name",
                 minlength: "Must have 2 or more characters",
-                pattern: "Must start with a letter. No whitespace. Letters, numbers, hyphens, and underscores only"
+                pattern: "Must start with a letter. No whitespace. Letters, numbers and underscores only"
             },
             attribute_name_field: {
                 minlength: "Must have 2 or more characters",
-                pattern: "Must start with a letter, contain more than 1 letter, and contain no whitespace"
+                pattern: "Must start with a letter. No whitespace. Letters, numbers and underscores only"
             }
         },
         submitHandler: function(form) {

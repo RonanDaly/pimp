@@ -1,4 +1,5 @@
 Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), ...) {
+    logger <- getLogger('Pimp.exportToXML')
 
     if(is.null(id)) {
         stop("No analysis id found.")
@@ -100,6 +101,16 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     member.comparison.set <- newXMLNode("member_comparison_set", parent=settings)
 
     experiment.comparisons <- getExperimentComparisons(db, experiment_id)
+    for(i in nrow(experiment.comparisons)) {
+        contrasts <- experiment.comparisons$contrast
+        cntrls <- experiment.comparisons$control
+        con = unlist(strsplit(cntrls, ','))
+        if ( con[1] == '0' ) {
+            cont = unlist(strsplit(contrasts, ','))
+            contrasts = paste0(cont[2], ',', cont[1])
+            experiment.comparisons$contrast[i] <- contrasts
+        }
+    }
 
     for(i in 1:nrow(experiment.comparisons)) {
         member.comparison <- newXMLNode("member_comparison", attrs=c("id"=experiment.comparisons$id[i]), parent=member.comparison.set)
@@ -145,8 +156,10 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     identification <- .generateCompoundIds(identification)
 
     #compound.id <- 1
+    nrow.raw.data = nrow(raw.data)
     for(i in 1:nrow(raw.data)) {
-        cat(paste(i,"of",nrow(raw.data),"\r"))
+        logfine('Peak %d of %d', i, nrow.raw.data, logger=logger)
+        #cat(paste(i,"of",nrow(raw.data), "my custom message", "\r"))
         peak.id <- rownames(raw.data)[i]
         peak <- newXMLNode("peak", attrs=c("id"=peak.id), parent=peakset)
         newXMLNode("mass", raw.data$Mass[i], parent=peak)
@@ -265,7 +278,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
     pathway.compounds <- identification[which(identification$DB=="kegg"),]    
 
-    for(i in 1:nrow(pathway.stats)) {
+    for(i in seq(length = nrow(pathway.stats))) {
         pathway <- newXMLNode("pathway", attrs=c("id"=pathway.stats$id[i]), parent=pathwayset)
         newXMLNode("name", pathway.stats$name[i], parent=pathway)
         newXMLNode("compound_number", pathway.stats$number.compounds[i], parent=pathway)

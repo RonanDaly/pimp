@@ -3,9 +3,18 @@
 	<head>
 		<title>PiMP</title>
 
+        <meta name="author" content="Glasgow Polyomics, University of Glasgow, UK">
+        <meta name="author" content="Yoann Gloaguen">
+        <meta name="author" content="Fraser Morton">
+        <meta name="author" content="Ross Gurden">
+        <meta name="author" content="Ronan Daly">
+        <meta name="author" content="Joe Wandy">
+        <meta name="author" content="Simon Rogers">
+        <meta name="author" content="Karl Burgess">
+
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="shortcut icon" href="{{ STATIC_URL }}/img/logo_blue_white_icon_large.png">
+		<link rel="shortcut icon" href="{{ STATIC_URL }}img/logo_blue_white_icon_large.png">
 		{% load staticfiles %}
 
 		{% block jQuery %}
@@ -58,6 +67,7 @@
 	</head>
 
 	<body>
+
 		<div class="navbar navbar-default navbar-fixed-top">
 			<div class="container">
 				<div class="navbar-header navbar-right">
@@ -74,26 +84,25 @@
 						{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
-							<li class="dropdown">
-								<a class"=dropdown-toggle" data-toggle="dropdown" href="#">FrAnK
-									<span class="caret"></span></a>
-									<ul class="dropdown-menu">
-										<li><a href="{% url 'frank_index' %}">FrAnK Home</a></li>
-										<li><a href="{% url 'my_experiments' %}">My Experiments</a></li>
-										<li><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></li>
-									</ul>
-							</li>
+{#							<li class="dropdown">#}
+{#								<a class"=dropdown-toggle" data-toggle="dropdown" href="#">FrAnK#}
+{#									<span class="caret"></span></a>#}
+{#									<ul class="dropdown-menu">#}
+{#										<li><a href="{% url 'frank_index' %}">FrAnK Home</a></li>#}
+{#										<li><a href="{% url 'my_experiments' %}">My Experiments</a></li>#}
+{#										<li><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></li>#}
+{#									</ul>#}
+{#							</li>#}
 							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 						{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
 							<!-- <li><a href="{% url 'registration_register' %}">Register</a></li> -->
 						{% endif %}
-						<li><a href="{% url 'about' %}">About</a></li>
+{#						<li><a href="{% url 'about' %}">About</a></li>#}
 					</ul>
 				</div>
 			</div>
 		</div>
-
 
         <div class="container" id="base_container">
             <div class="row" style="padding-top:20px;">
@@ -102,25 +111,25 @@
                 </div>
             </div>
         </div>
-        <div class="push"></div>
-		<footer class="footer">
 
+        <div class="push"></div>
+
+		<footer class="footer navbar navbar-fixed-bottom">
 				<p>
 					Designed and built by Glasgow Polyomics <a href="http://twitter.com/polyomics">@polyomics</a>.
 				</p>
 				<ul class="footer-links">
 					<li>
-						<a href="http://www.gla.ac.uk/colleges/mvls/research/gpf/">Polyomics website</a>
+						<a href="http://www.polyomics.gla.ac.uk/">Polyomics website</a>
 					</li>
 					<li class="muted">·</li>
 					<li>
-						<a href="#">Licence</a>
+						<a href="{% url 'licence' %}">Licence</a>
 					</li>
 					<li class="muted">·</li>
 					<li>
-						<a href="#">Credits</a>
+						<a href="{% url 'credits' %}">Credits</a>
 					</li>
-
 		</footer>
 	</body>
 </html>

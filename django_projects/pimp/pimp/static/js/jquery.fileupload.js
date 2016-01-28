@@ -114,6 +114,8 @@
             // Interval in milliseconds to calculate progress bitrate:
             bitrateInterval: 500,
 
+            // maxSizeOfFiles: 10000,
+
             // Additional form data to be sent along with the file uploads can be set
             // using this option, which accepts an array of objects with name and
             // value properties, a function returning such an array, a FormData

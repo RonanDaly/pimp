@@ -1,4 +1,5 @@
 Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
+	logger <- getLogger('Pimp.runPipeline')
 
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)
@@ -44,9 +45,12 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 		stop(paste("The following samples are found in groups, but not found in files: ", paste(groups.not.in.files, collapse=", ")))
 	}
 	
-	
+
+
 	#Check contrasts information for the statistics calculations exist
-	if(!all(unique(unlist(strsplit(contrasts, "-"))) %in% names(groups))) {
+	if(!all(unique(unlist(strsplit(contrasts, ","))) %in% names(groups))) {
+		logerror('contrasts: %s', contrasts, logger=logger)
+		logerror('groups: %s', groups, logger=logger)
 		stop("Some contrast levels not found in groups.")
 	}
 
@@ -73,11 +77,12 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 
 	#Generate STDs annotation XML file
 	stds <- NULL
-	if(length(standards) > 0) {
-		stds <- Pimp.stds.createAnnotationFile(files=standards, outfile=mzmatch.outputs$stds.xml.db)
+	if(length(standards) > 0 && 'standard' %in% databases) {
+		stds  <- Pimp.stds.createAnnotationFile(files=standards, outfile=mzmatch.outputs$stds.xml.db)
 	} else {
 		mzmatch.outputs$stds.xml.db <- NULL
 	}
+	databases = databases[ ! databases == 'standard']
 
 	
 	##Get external annotation database info - using our own DBs rather than the out of data MzMatch ones which are out of date.
@@ -169,8 +174,13 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	compound.std.ids <- unique(as.character(identification$DBID[which(identification$DB=="kegg" & identification$publishable=="Identified")]))
 	compound.info <- identification[which(identification$DB=="kegg"),]
 
-	identified.compounds.by.pathway <- .get.identified.compounds.by.pathways(ids=compound.ids, compounds2Pathways=compounds2Pathways)
-	pathway.stats <- Pimp.report.generatePathwayStatistics(pathways=pathways, compound.info=compound.info, compound.std.ids=compound.std.ids, identified.compounds.by.pathway=identified.compounds.by.pathway, toptables=toptables)
+	if ( 'kegg' %in% databases ) {
+		identified.compounds.by.pathway <- .get.identified.compounds.by.pathways(ids=compound.ids, compounds2Pathways=compounds2Pathways)
+		pathway.stats <- Pimp.report.generatePathwayStatistics(pathways=pathways, compound.info=compound.info, compound.std.ids=compound.std.ids, identified.compounds.by.pathway=identified.compounds.by.pathway, toptables=toptables)
+	} else {
+		identified.compounds.by.pathway = list()
+		pathway.stats = data.frame()
+	}
 
 	#excel
 	if("excel" %in% reports) {
@@ -204,11 +214,14 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	intensities.idx <- match(as.character(unlist(groups)), colnames(raw.data))
 	
 	#get rows containing basepeaks or match to standard
-	basepeaks <- which(raw.data$relation.ship=="bp")
+	basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
 	stds <- which(!is.na(raw.data$stds_db_identification))
 
 	data <- as.matrix(raw.data[unique(basepeaks,stds),intensities.idx]) #subset to produce data for statistical analysis
-	data[data==0] <- NA ##convert 0s to NAs
+	# NB The gap filler must have fillAll=TRUE to make sure we aren't setting missing peaks to 1, i.e. the only
+	# peaks that should be set to 1 are those that have levels too low to detect.
+	data[data==0] <- 1.0 ##convert 0s to 1s
+	data[is.na(data)] <- 1.0 ##convert NAs to 1s
 
 	Mass <- raw.data[unique(basepeaks,stds),'Mass']
 	RT <- raw.data[unique(basepeaks,stds),'RT']

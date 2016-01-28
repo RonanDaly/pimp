@@ -10,13 +10,13 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#main-pimp-navbar').show();
 			$('#subheader').css('padding-top',40);
 			$('#serch-banner').show();
-			$('#main-container').css('top',175);
-			$('.identification-table_wrapper_toolbar').css('top',175);
-			$('.pathway-table_wrapper_toolbar').css('top',175);
-			$('.comparison-table_wrapper_toolbar').css('top',175);
-			$('.peak-table_wrapper_toolbar').css('top',175);
+			$('#main-container').css('top',155);
+			$('.metabolites-table_wrapper_toolbar').css('top',155);
+			$('.pathway-table_wrapper_toolbar').css('top',155);
+			$('.comparison-table_wrapper_toolbar').css('top',155);
+			$('.peak-table_wrapper_toolbar').css('top',155);
 			$('#search2').hide();
-			$('#tool_menu_bar').css('top',135);
+			$('#tool_menu_bar').css('top',115);
 			$('#polyomics_logo').hide();
 			$('#tool_button').css('left',20);
 			$('#tool_button_text').show();
@@ -27,7 +27,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			$('#subheader').css('padding-top',0);
 			$('#serch-banner').hide();
 			$('#main-container').css('top',41);
-			$('.identification-table_wrapper_toolbar').css('top',41);
+			$('.metabolites-table_wrapper_toolbar').css('top',41);
 			$('.pathway-table_wrapper_toolbar').css('top',41);
 			$('.comparison-table_wrapper_toolbar').css('top',41);
 			$('.peak-table_wrapper_toolbar').css('top',41);
@@ -49,9 +49,18 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	});
 
 	$('#tabnav a').click(function (e) {
-			e.preventDefault();
-			$(this).tab('show');
-			$("#first-pathway").css("margin-top",25);
+		e.preventDefault();
+		$(this).tab('show');
+		if ($(this).parent().attr('id') == "metabolites-li" ){
+			//console.log("clicked on id tab");
+			$('#metabolites_table_super_pathway_selector_div').show();
+			$('#metabolites_table_pathway_selector_div').show();
+		}
+		else {
+			$('#metabolites_table_super_pathway_selector_div').hide();
+			$('#metabolites_table_pathway_selector_div').hide();
+		}
+		$("#first-pathway").css("margin-top",25);
 		$('#right-summary-panel').css('display','block');
 		$('#right-summary-panel').css('margin-right','-55%');
 		$('#right-summary-panel').css('display','none');
@@ -66,7 +75,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		if (right_panel) {
 			$('.myspan3').width('0%');
 			$('.myspan9').width('100%');
-			$('.identification-table_wrapper_toolbar').width('100%');
+			$('.metabolites-table_wrapper_toolbar').width('100%');
 			$('.peak-table_wrapper_toolbar').width('100%');
 			$('.comparison-table_wrapper_toolbar').width('100%');
 			$('.pathway-table_wrapper_toolbar').width('100%');
@@ -77,7 +86,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 		else {
 			$('.myspan3').width('20%');
 			$('.myspan9').width('80%');
-			$('.identification-table_wrapper_toolbar').width('80%');
+			$('.metabolites-table_wrapper_toolbar').width('80%');
 			$('.peak-table_wrapper_toolbar').width('80%');
 			$('.comparison-table_wrapper_toolbar').width('80%');
 			$('.pathway-table_wrapper_toolbar').width('80%');
@@ -382,94 +391,249 @@ function set_navbar(){
 	});
 }
 
-// Sort function for retention times, since they have a custom format of
-// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
+// Sort function for the comparison logFC in the metabolites table.
+// This forces rows with NA in the comparison logFC to the bottom of the sorted table, regardless
+// of whether sorted ascending or descending.
+jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-asc'] = function(a, b) {
+    if (isNaN(a) && isNaN(b)) { // If a and b are both strings e.g. both NA
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
 
-jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return a - b;
+    if (isNaN(a)) {
+        return 1;
+    } else if (isNaN(b)) {
+        return -1;
+    }
+
+    return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+
 };
 
-jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
-	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
-	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
-	return b - a;
+jQuery.fn.dataTableExt.oSort['numeric-ignore-NA-desc'] = function(a, b) {
+    if (isNaN(a) && isNaN(b)) { // If a and b are both strings e.g. both NA
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    }
+
+    if (isNaN(a)) {
+        return 1;
+    } else if (isNaN(b)) {
+        return -1;
+    }
+
+    return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+
 };
 
-function set_idtable(url, callback){
+function set_metabolitestable(url, samplesGroupsNum){
+    // Function to create the metabolites table using dataTables
 
-	var idTable = $('#identification-table').dataTable( {
-					"sAjaxSource": url,
-					"sDom": '<"identification-table_wrapper_toolbar"liT>rtp',
-					"tableTools": {
-			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
-			            "aButtons": [
-			                {
-                    			"sExtends": "copy",
-                    			"sButtonText": "Copy",
-                    			"mColumns": "visible",
-                    			"sToolTip": "Copy to clipboard"
-                			},
-			                {
-			                    "sExtends":    "collection",
-			                    "sButtonText": "Export",
-			                    "aButtons":    [
-			                    	{
-					                    "sExtends": "csv",
-					                    "sButtonText": "csv",
-					                    "mColumns": "visible",
-					                    "sFileName": "compounds.csv",
-					                    "sToolTip": "Save as CSV"
-                					},
-                					{
-                    					"sExtends": "xls",
-                    					"sButtonText": "xls",
-                    					"mColumns": "visible",
-                    					"sFileName": "compounds.xls",
-                    					"sToolTip": "Save as XLS"
-                					}
-                				]
-			                }
-			            ]
-			        },
-					"bPaginate": true,
-					"sPaginationType": "full_numbers",
-					"iDisplayLength": 100,
-					"aLengthMenu": [ 100, 250, 500, 1000 ],
-					"aoColumns": [
-					/* Secondary id */   null,
-					/* Primary id */  { "bSearchable": false,
-										"bVisible":    false },
-					/* Peak id */ null,
-					/* Name */	null,
-					/* Formula */	null,
-					/* PPM */	null,
-					/* RT */ {
-					"aTargets": [2],
-					"sType": "formatted-rt",
-					"mRender": function(rt, type, full) {
-						var minutes = Math.floor(rt / 60);
-						var seconds = Math.round(rt % 60); // Rounded to nearest second
-						return rt + " ("+ minutes + " min "+ seconds + " s)";
-					}},
-					/* Identification */	null,
-					/* Polarity */	null,
-					],
-					"fnDrawCallback":function (oSettings) {
-						console.log("data finished loaded");
-						table_received = this;
-						callback && callback.call(this, table_received);
-					},
-	});
+    // samplesGroupsNum is an array, where index [0] is the number of samples, [1] is the number of groups, and [2] is
+    // the number of comparisons
+    // These variables are needed to allow DataTables to show/hide the samples intensities or group average intensities.
+
+    // SampleIdxArray and GroupIdxArray are used to make groups for hiding/showing through the ColVis addon for
+    // DataTables
+
+    // Compute the indices of the sample intensities in the table
+    // There are ALWAYS 5 columns that precede the sample intensities (see experiments.views.get_metabolites_table)
+    var numSamples = samplesGroupsNum[0];
+    var sampleIdxArray = [];
+    for (var n=0; n<numSamples; n++) {
+        sampleIdxArray.push(6 + n);
+    }
+
+    //// Compute the indices of the group averages and comparisons in the table
+    //var numGroups = samplesGroupsNum[1];
+    //var groupIdxArray = [];
+    //for (var n=0; n<numGroups; n++) {
+    //    groupIdxArray.push(sampleIdxArray[sampleIdxArray.length - 1] + 1 + n);
+    //}
+
+    // Compute the indices of the comparison logfc columns in the table
+    var numComparisons = samplesGroupsNum[1];
+    var comparisonIdxArray = [];
+    for (var n=0; n<numComparisons; n++) {
+        //comparisonIdxArray.push(groupIdxArray[groupIdxArray.length -1] + 1 + n);
+        comparisonIdxArray.push(sampleIdxArray[sampleIdxArray.length - 1] + 1 + n);
+    }
+
+    // Compute the index of the final column (which is ALWAYS there, irrespective of the number of samples or groups and comparisons)
+    //var identifiedColIdx = 5 + numSamples + numGroups + numComparisons + 1;
+    var identifiedColIdx = 5 + numSamples + numComparisons + 1;
+
+    // Combine the indices into a single array, exludeColIdx (exclude col indices), to exclude
+    var excludeColIdx = [0, 1, 2, 3, 4, 5];
+    excludeColIdx.push.apply(excludeColIdx, sampleIdxArray);
+    //excludeColIdx.push.apply(excludeColIdx, groupIdxArray);
+    excludeColIdx.push.apply(excludeColIdx, comparisonIdxArray);
+    excludeColIdx.push(identifiedColIdx);
+
+    // Prepare variables for creating coloured logfc values
+    var up_colours = ["#FF6666", "#FF9999", "#FFCCCC"];
+    var down_colours = ["#6666FF", "#9999FF", "#CCCCFF"];
+    var fold_change_bins = [2, 1, 0.5849625];
+
+    // Get the indices of the initially visible columns, which are Name, Formula, groups, comparisons, Identification
+    // This is required since the index of a visible column does not necessarily equal the index of the same column
+    // in the whole table, including both hidden and visible rows.
+    // Explanation: The data variable in the createdRow anonymous function in the datatable initialisation
+    // (idTable below) contains every single column, irrespective of whether they are initially visible or not,
+    // whereas access to the data and rows using the jQuery select e.g. $('td', row) contains only the visible
+    // elements and their columns.
+    var initialCols = [0, 1];
+
+    //// Add indices for the group columns
+    //var initialGroupIdx = [];
+    //for (var idx in groupIdxArray) {
+    //    var groupIdx = initialCols[initialCols.length - 1] + 1;
+    //    initialCols.push(groupIdx);
+    //    initialGroupIdx.push(groupIdx);
+    //}
+    //console.log('Indices for initial groups = ' + initialGroupIdx);
+
+    // Add indices for the comparison columns
+    var initialComparisonIdx = [];
+    for (var idx in comparisonIdxArray) {
+        var comparisonIdx = initialCols[initialCols.length - 1] + 1;
+        initialCols.push(comparisonIdx);
+        initialComparisonIdx.push(comparisonIdx);
+    }
+    //console.log('Indices for initial comparisons = ' + initialComparisonIdx);
+
+	var metabolitesTable = $('#metabolites-table').DataTable( {
+        "sAjaxSource": url,
+        "sDom": '<"metabolites-table_wrapper_toolbar"CilT>rtp',
+        "oColVis": {
+            "sButtonText": "Switch display",
+            "aiExclude": excludeColIdx,
+            "aoGroups": [
+                {
+                    "sTitle": "Samples",
+                    "aiColumns": sampleIdxArray
+                },
+                {
+                    "sTitle": "Conditions",
+                    //"aiColumns": groupIdxArray.concat(comparisonIdxArray)
+                    "aiColumns": comparisonIdxArray
+                }
+            ]
+        },
+        "createdRow": function (row, data, index) {
+            // Set the background-color of the comparison logfc columns to match their values
+            // Adapted from data.models.PeakDtComparison.get_fold_change_colour
+            //console.log(data);
+
+            // Choose the colour based on the logfc and apply it to the cell
+            for (var idx in comparisonIdxArray) {
+
+                var colours = [];
+
+                //console.log(parseFloat(data[comparisonIdxArray[idx]]));
+
+                if (parseFloat(data[comparisonIdxArray[idx]]) > 0) {
+                    colours = up_colours;
+                    //console.log("LogFC was > 0! " + parseFloat(data[comparisonIdxArray[idx]]));
+                } else {
+                    colours = down_colours;
+                    //console.log("LogFC was < 0! " + parseFloat(data[comparisonIdxArray[idx]]));
+                }
+
+                var logFc = Math.abs(parseFloat(data[comparisonIdxArray[idx]]));
+
+
+                var colour = null;
+                for (var i in fold_change_bins) {
+                    if (logFc > fold_change_bins[i]) {
+                        colour = colours[i];
+                        //console.log("The colour will be changed to " + colour);
+
+                        //console.log($('td', row).eq(initialComparisonIdx[idx]).val());
+                        $('td', row).eq(initialComparisonIdx[idx]).css('background-color', colour);
+
+                        //console.log("The colour is now ", $('td', row).eq(initialComparisonIdx[idx]).css('background-color'));
+
+                        break;
+                    }
+                }
+
+            }
+
+        },
+        "tableTools": {
+            "sSwfPath": "/static/swf/copy_csv_xls.swf",
+            "aButtons": [
+                {
+                    "sExtends": "copy",
+                    "sButtonText": "Copy",
+                    "mColumns": "visible",
+                    "sToolTip": "Copy to clipboard"
+                },
+                {
+                    "sExtends": "collection",
+                    "sButtonText": "Export",
+                    "aButtons": [
+                        {
+                            "sExtends": "csv",
+                            "sButtonText": "csv",
+                            "mColumns": "visible",
+                            "sFileName": "compounds.csv",
+                            "sToolTip": "Save as CSV"
+                        },
+                        {
+                            "sExtends": "xls",
+                            "sButtonText": "xls",
+                            "mColumns": "visible",
+                            "sFileName": "compounds.xls",
+                            "sToolTip": "Save as XLS"
+                        }
+                    ]
+                }
+            ]
+        },
+        "bPaginate": true,
+        "sPaginationType": "full_numbers",
+        "iDisplayLength": 100,
+        "aLengthMenu": [100, 250, 500, 1000],
+        "aoColumnDefs": [
+            { // compound ID, peak ID
+                "aTargets": [0, 1],
+                "bSearchable": false,
+                "bVisible": false
+            },
+            { // superpathways pathways
+                "aTargets": [4, 5],
+                "bSearchable": true,
+                "bVisible": false
+            },
+            { // samples
+                "aTargets": sampleIdxArray,
+                "bSearchable": false,
+                "bVisible": false
+            },
+            { // comparisons
+                "aTargets": comparisonIdxArray,
+                "sType": 'numeric-ignore-NA'
+            }
+        ]
+        //"fnDrawCallback": function (oSettings) {
+        //    console.log("data finished loaded");
+        //    table_received = this;
+        //    callback && callback.call(this, table_received);
+        //}
+    });
+
+
+	// $("div.metabolites-table_wrapper_toolbar").append('<div id="id_table_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_pathway_selector"><option></option></select></div><div id="id_table_super_pathway_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;"><select id="id_table_super_pathway_selector"><option></option></select></div>');
+    // console.log(excludeColIdx);
 
 	// callback && callback(idTable);
 
-	return idTable;
+	return metabolitesTable;
 }
 
+
 function set_pathwaytable(){
-	var pathwayTable = $('#pathway-table').dataTable( {
+	var pathwayTable = $('#pathway-table').DataTable( {
 					"sDom": '<"pathway-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
@@ -520,8 +684,23 @@ function set_pathwaytable(){
 	return pathwayTable;
 }
 
+// Sort function for retention times, since they have a custom format of
+// "<rt in seconds as float> (<rt in minutes> min <rt in seconds> s)"
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-asc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return a - b;
+};
+
+jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
+	var a = parseFloat(a.match(/^[0-9]*\.?[0-9]+/)[0]);
+	var b = parseFloat(b.match(/^[0-9]*\.?[0-9]+/)[0]);
+	return b - a;
+};
+
 function set_peaktable(url, callback){
-	var peakTable = $('#peak-table').dataTable( {
+	var peakTable = $('#peak-table').DataTable( {
 					// "sDom": '<"toolbar">frtip',
 					// "sDom": 't',
 					"sAjaxSource": url,
@@ -572,7 +751,7 @@ function set_peaktable(url, callback){
 					"aLengthMenu": [ 100, 250, 500, 1000 ],
 					"fnDrawCallback":function (oSettings) {
 						console.log("peak data finished loaded");
-						peak_table_received = this
+						peak_table_received = this;
 						callback && callback.call(this, peak_table_received);
 					},
 	});
@@ -621,47 +800,4 @@ function set_comparisontable(){
 	});
 
 	return comparisonTable;
-}
-
-function set_potentialstable(){
-	var potentialsTable = $('#potentials-table').dataTable( {
-					"sDom": '<"potentials-table_wrapper_toolbar"liT>rtp',
-					"tableTools": {
-			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
-			            "aButtons": [
-			                {
-                    			"sExtends": "copy",
-                    			"sButtonText": "Copy",
-                    			"mColumns": "visible",
-                    			"sToolTip": "Copy to clipboard"
-                			},
-			                {
-			                    "sExtends":    "collection",
-			                    "sButtonText": "Export",
-			                    "aButtons":    [
-			                    	{
-					                    "sExtends": "csv",
-					                    "sButtonText": "csv",
-					                    "mColumns": "visible",
-					                    "sFileName": "potential.csv",
-					                    "sToolTip": "Save as CSV"
-                					},
-                					{
-                    					"sExtends": "xls",
-                    					"sButtonText": "xls",
-                    					"mColumns": "visible",
-                    					"sFileName": "potential.xls",
-                    					"sToolTip": "Save as XLS"
-                					}
-                				]
-			                }
-			            ]
-			        },
-					"bPaginate": true,
-					"sPaginationType": "full_numbers",
-					"iDisplayLength": 100,
-					"aLengthMenu": [ 100, 250, 500, 1000 ],
-	});
-
-	return potentialsTable;
 }

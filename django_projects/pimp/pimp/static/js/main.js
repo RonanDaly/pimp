@@ -84,8 +84,14 @@ $(function () {
         // add by Yoann for file format restriction
         var url = document.URL;
 
+        var totalSize = 0;
+
         $('#fileupload').fileupload({
             dropZone: $('#dropzone'),
+            maxSizeOfFiles: 100000,
+            getSizeOfFiles: function () {
+                    return totalSize;
+            },
             // add: function (e, data) {
             //     var jqXHR = data.submit()
             //         .success(function (result, textStatus, jqXHR) {
@@ -100,10 +106,26 @@ $(function () {
             // }
         });
 
+        $('#fileupload').bind('fileuploadadd', function (e, data) {
+            $.each(data.files, function (index, file) {
+                console.log('Adding file: ' + file.name + ', ' + file.size);
+                totalSize = totalSize + file.size;
+                console.log('Total size: ' + totalSize);
+            });
+        });
+
+        $('#fileupload').bind('fileuploadfailed', function (e, data) {
+            $.each(data.files, function (index, file) {
+                console.log('Removed file: ' + file.name + ', ' + file.size);
+                totalSize = totalSize - file.size;
+                console.log('Total size: ' + totalSize);
+            });
+        });
+
         if (url.split("/")[url.split("/").length-2] == "projectfile"){
             console.log("hihi");
             $('#fileupload').fileupload('option', {
-                acceptFileTypes: /(\.|\/)(mzxml|csv|jpe?g|png)$/i,
+                acceptFileTypes: /(\.|\/)(mzxml|csv)$/i,
                 sequentialUploads: true,
             });
         }
@@ -111,7 +133,7 @@ $(function () {
         if (url.split("/")[url.split("/").length-2] == "new"){
             console.log("hihi");
             $('#fileupload').fileupload('option', {
-                acceptFileTypes: /(\.|\/)(mzxml|jpe?g)$/i,
+                acceptFileTypes: /(\.|\/)(mzxml)$/i,
                 sequentialUploads: true,
             });
             // $('#fileupload').fileupload({maxChunkSize: 100000})

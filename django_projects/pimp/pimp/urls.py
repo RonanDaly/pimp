@@ -48,7 +48,7 @@ urlpatterns = patterns('',
     # url(r'^accounts/profile/$', direct_to_template,
     #     {'template': 'registration/profile.html'},
     #     name='profile'),
-    url(r'^accounts/profile/$', TemplateView.as_view(template_name="registration/profile.html"), name='profile'),
+    url(r'^accounts/profile/$', 'gp_registration.views.profile', name='profile'),
     # projects page : display all projects belonging to the user
     url(r'^accounts/project/$', 'projects.views.summary', name='project_summary'),
     # new project page : form to create a new project (title and comments only)
@@ -63,6 +63,8 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/peak_info_peak_id/$', 'experiments.views.peak_info_peak_id', name='get_peak_info_peak_id'),
     # ajax request for compound info
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/compound_info/$', 'experiments.views.compound_info', name='get_compound_info'),
+    # ajax request for metabolite info
+    url(r'^account/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/metabolite_info/$', 'experiments.views.get_metabolite_info', name='get_metabolite_info'),
     # ajax request for peaks chromatogram from compound
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/peaks_from_compound/$', 'experiments.views.get_peaks_from_compound', name='get_peaks_from_compound'),
     # ajax request for peaks chromatogram from compound
@@ -72,7 +74,7 @@ urlpatterns = patterns('',
     # ajax request to get info for MetExplpore
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_info/$', 'experiments.views.get_metexplore_info', name='get_metexplore_info'),
     # ajax request to get identification table
-    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_identification_table/$', 'experiments.views.get_identification_table', name='get_identification_table'),
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metabolites_table/$', 'experiments.views.get_metabolites_table', name='get_metabolites_table'),
     # ajax request to get peak table
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_peak_table/$', 'experiments.views.get_peak_table', name='get_peak_table'),
     # ajax request to get pathway map url
@@ -113,7 +115,9 @@ urlpatterns = patterns('',
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', 'projects.views.groupcreation', name='create_goupe'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('groups.urls')),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('multiuploader.urls')),
-    url(r'^frank/', include('frank.urls')),
+    #url(r'^frank/', include('frank.urls')),
+    url(r'^credits/$', 'home.views.credits', name='credits'),
+    url(r'^licence/$', 'home.views.licence', name='licence'),
 )
 
 urlpatterns += staticfiles_urlpatterns()

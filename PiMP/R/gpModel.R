@@ -224,9 +224,14 @@ predictFromModels <- function(meanVarFunction, output, group, peak, times, inten
 	#	return(intensities)
 	#}
 
+	if ( ! peak %in% output$peak ) {
+		return(rep(0, length(intensities)))
+	}
     selectedModels = output$model[output$group == group & output$peak == peak]
 	if ( length(selectedModels) != 1 ) {
 		# Sanity check
+		show(group)
+		show(peak)
 		stop('Should not be getting here')
 	}
   m = output$mean[output$group == group & output$peak == peak]

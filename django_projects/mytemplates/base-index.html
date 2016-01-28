@@ -2,6 +2,16 @@
 <html>
 	<head>
 		<title>PiMP</title>
+
+        <meta name="author" content="Glasgow Polyomics, University of Glasgow, UK">
+        <meta name="author" content="Yoann Gloaguen">
+        <meta name="author" content="Fraser Morton">
+        <meta name="author" content="Ross Gurden">
+        <meta name="author" content="Ronan Daly">
+        <meta name="author" content="Joe Wandy">
+        <meta name="author" content="Simon Rogers">
+        <meta name="author" content="Karl Burgess">
+
 		<script src="http://code.jquery.com/jquery-latest.js"></script>
 		<!script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"><!/script>
 		{% block head %} {% endblock %}
@@ -59,12 +69,12 @@
 							{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
-							<li><a href="{% url 'auth_logout' %}">logout</a></li>
+							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 							{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
 							<li><a href="{% url 'registration_register' %}">Register</a></li>
 							{% endif %}
-							<li><a href="{% url 'about' %}">About</a></li>
+{#							<li><a href="{% url 'about' %}">About</a></li>#}
 						</ul>
 					</div>
 				</div>
@@ -88,12 +98,13 @@
 					</li>
 					<li class="muted">·</li>
 					<li>
-						<a href="#">Licence</a>
+						<a href="{% url 'licence' %}">Licence</a>
 					</li>
 					<li class="muted">·</li>
 					<li>
-						<a href="#">Credits</a>
+						<a href="{% url 'credits' %}">Credits</a>
 					</li>
+                </ul>
 			</div>
 		</footer>
 	</body>
