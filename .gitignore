@@ -95,5 +95,6 @@ packrat/src/*
 !packrat/src/AnnotationDbi/
 !packrat/src/limma/
 !packrat/src/Biostrings/
+!packrat/src/KEGGREST/
 *.Rout
 .Rproj.user
