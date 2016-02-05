@@ -10,12 +10,12 @@ from django.db.models import Max
 import datetime
 import jsonpickle
 from django.core.exceptions import ValidationError
-from matplotlib import patches as mpatches
-from matplotlib import pyplot as plt
-from matplotlib import pylab
-from pylab import *
-import PIL
-import PIL.Image
+# from matplotlib import patches as mpatches
+# from matplotlib import pyplot as plt
+# from matplotlib import pylab
+# from pylab import *
+# import PIL
+# import PIL.Image
 import StringIO
 from django.http import HttpResponse
 from django.db import transaction

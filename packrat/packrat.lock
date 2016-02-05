@@ -460,8 +460,8 @@ Requires: nloptr
 
 Package: rJava
 Source: CRAN
-Version: 0.9-7
-Hash: bf541ef2ee8a6515eba35256566e64cf
+Version: 0.9-8
+Hash: 3e8627a2a5bd45c9bad6112acfc231d9
 
 Package: reshape2
 Source: CRAN
