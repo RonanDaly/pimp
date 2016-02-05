@@ -1,5 +1,8 @@
 Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
-	
+	logger <- getLogger('Pimp.processRawData')	
+	loginfo('files: %s', files, logger=logger)
+	loginfo('groups: %s', groups, logger=logger)
+	loginfo('mzmatch.outputs: %s', mzmatch.outputs, logger=logger)
 	##
 	## Initial checks ensuring all required information is present
 	##
@@ -25,7 +28,7 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	#stds.xml.db.idx <- match("stds.xml.db", names(mzmatch.outputs))
 	#mzmatch.outputs[-stds.xml.db.idx] <- lapply(mzmatch.outputs[-stds.xml.db.idx], function(x){file.path(parent.dir, x)})
 	mzmatch.outputs <- lapply(mzmatch.outputs, sprintf, polarity)
-
+	loginfo('mzmatch.outputs: %s', mzmatch.outputs, logger=logger)
 	dir.create.ifNotExist(mzmatch.outputs$polarity.folder)
 	##
 	## Process mzXML files
@@ -44,17 +47,17 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	if(verbose) { message("Correcting retention times.") }
 	
 	peakml.files <- Pimp.rtcorrect(xset=xset, method=mzmatch.params$rt.alignment, peakml.params=peakml.params, mzmatch.outputs=mzmatch.outputs, nSlaves=nSlaves)	
-
+	loginfo('peakml.files: %s', peakml.files, logger=logger)
 	
 	#Combine files by group, RSD filter if required (Not convinced we should be using this filter) and combine group files
 	#combined directory
 	combined.dir <- ifelse(mzmatch.params$rt.alignment != "none", mzmatch.outputs$alignment.folder, mzmatch.outputs$combined.folder) #"combined_rt.alignment", "combined"
-
+	loginfo('combined.dir: %s', combined.dir, logger=logger)
 	if(verbose) { message("Combined directory ", combined.dir) }
-
+	
 	#combine and RSD
 	final.combined.peakml <- Pimp.combine.peakml(files=peakml.files, combined.dir=combined.dir, groups=groups, mzmatch.filters=mzmatch.filters, mzmatch.outputs=mzmatch.outputs, nSlaves=nSlaves)
-
+	loginfo('final.combined.peakml: %s', final.combined.peakml, logger=logger)
 	if(verbose) { message("Final combined file", final.combined.peakml) }
 
 
