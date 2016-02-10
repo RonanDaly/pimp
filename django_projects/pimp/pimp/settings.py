@@ -201,7 +201,15 @@ INSTALLED_APPS = (
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
+    'django_spaghetti',
 )
+
+SPAGHETTI_SAUCE = {
+  'apps':['auth','polls','frank','data','fileupload','projects','experiments','groups','compound'],
+  'show_fields':False,
+  'exclude':{'auth':['user']}
+}
+
 
 ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.
 
