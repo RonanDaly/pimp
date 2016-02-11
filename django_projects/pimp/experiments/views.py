@@ -16,6 +16,7 @@ from data.models import *
 from compound.models import *
 from groups.models import Attribute
 from fileupload.models import Sample, CalibrationSample, Curve
+from frank.models import PimpFrankPeakLink
 # Add on
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
@@ -589,10 +590,32 @@ def get_peak_table(request, project_id, analysis_id):
                                                                                                   'sample__attribute__id',
                                                                                                   'sample__id'))
         pp = map(list, zip(*[iter(p)] * s.count()))
+
+
+
+        # Simon's addition to fetch frank_annotations if the peak
+        # has been linked to a frank peak and the frank_peak has
+        # a preferred_candidate_annotation set
+
+        frank_annotations = {}
+        for peakgroup in pp:
+            p2f = PimpFrankPeakLink.objects.filter(pimp_peak = peakgroup[0].peak)
+            if p2f:
+                if p2f[0].frank_peak.preferred_candidate_annotation:
+                    ac = p2f[0].frank_peak.preferred_candidate_annotation
+                    fset = p2f[0].frank_peak.fragmentation_set.slug
+                    pslug = p2f[0].frank_peak.slug
+                    annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
+                    frank_annotations[peakgroup[0].peak] = annot_string
+
         data = [
             [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [
                 round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
-                peakgroup] + [str(peakgroup[0].peak.polarity)] for peakgroup in pp]
+                peakgroup] + [str(peakgroup[0].peak.polarity)] + [str(frank_annotations[peakgroup[0].peak]) if peakgroup[0].peak in frank_annotations else 'None'] for peakgroup in pp]
+
+        
+
+        print "SIMON", len(p),len(data),len(pp)
 
         response = simplejson.dumps({"aaData": data})
 
@@ -1233,6 +1256,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
         data_hash = {"samples": data, "blanks": blankInfo}
         print data_hash
 
+
         message = "got somthing on the server!!!"
         response = simplejson.dumps(data_hash)
 
@@ -1345,6 +1369,7 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
         analysis = Analysis.objects.get(pk=analysis_id)
         peak = analysis.dataset_set.all()[0].peak_set.get(secondaryId=peak_id)
 
+
         rt = float(peak.rt)
         mass = float(peak.mass)
         polarity = peak.polarity
@@ -1408,6 +1433,8 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
                 data.append([name, lineList])
                 print data
         message = "got somthing on the server for peaks chromatogram!!!"
+
+
         response = simplejson.dumps(data)
         return HttpResponse(response, content_type='application/json')
 

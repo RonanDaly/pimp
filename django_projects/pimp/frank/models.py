@@ -560,7 +560,7 @@ class AnnotationQueryHierarchy (models.Model):
 
 class PimpFrankPeakLink(models.Model):
     frank_peak = models.ForeignKey(Peak)
-    pimp_peak = models.ForeignKey(PimpPeak)
+    pimp_peak = models.ForeignKey(PimpPeak,unique=True)
 
     def __unicode__(self):
         return "Pimp: {}, Frank: {}".format(pimp_peak.mass,frank_peak.mass)
