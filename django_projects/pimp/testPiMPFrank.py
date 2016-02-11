@@ -11,14 +11,17 @@ from experiments.models import DefaultParameter, Database, Experiment, Analysis
 from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
 from compound.models import Pathway, SuperPathway, DataSource, DataSourceSuperPathway
 from frank.models import Peak as FrankPeak
+from frank.models import PimpFrankPeakLink
 from data.models import Peak, Dataset,PeakDTSample
 from frank.models import FragmentationSet,SampleFile
 from fileupload.models import Sample
 from projects.models import Project
 
 def hit(pimp_peak,frank_peak,masstol,rttol):
+	pimp_mass = float(pimp_peak.mass)
+	frank_mass = float(frank_peak.mass)
 	if np.abs(frank_peak.retention_time - pimp_peak.rt) < rttol:
-		if 1e6*float(np.abs(frank_peak.mass - pimp_peak.mass)/frank_peak.mass) < masstol:
+		if 1e6*np.abs(frank_mass - pimp_mass)/frank_mass < masstol:
 			return True
 		else:
 			return False
@@ -57,15 +60,34 @@ if __name__=='__main__':
 	masstol = 1
 	rttol = 5
 
+
+	# Delete old link objects
+	print "Deleting old links"
+	links = PimpFrankPeakLink.objects.all()
+	for l in links:
+		l.delete()
+
+
 	hit_count = 0
 	# for i in range(100):
 	for peak in peaks:
 		# peak = peaks[i]
 		in_range = [fp for fp in frankpeaks if hit(peak,fp,masstol,rttol)]
 		if len(in_range)>0:
+			if len(in_range) == 1:
+				top_hit = in_range[0]
+			else:
+				# Find the closest
+				top_hit = None
+				closest_mass_diff = 1e6
+				for p in in_range:
+					mass_diff = np.abs(peak.mass-fp.mass)
+					if mass_diff < closest_mass_diff:
+						top_hit = p
+						closest_mass_diff = mass_diff
 			hit_count += 1
-			top_hit = in_range[0]
 			print top_hit.mass,peak.mass,top_hit.retention_time,peak.rt
 			if top_hit.preferred_candidate_annotation:
 				print top_hit.preferred_candidate_annotation.compound.name,top_hit.preferred_candidate_annotation.confidence
+			PimpFrankPeakLink.objects.create(frank_peak = top_hit,pimp_peak = peak)
 	print hit_count,1.0*hit_count/len(peaks)

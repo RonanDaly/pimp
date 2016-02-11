@@ -8,6 +8,8 @@ from pimp.settings_dev import MEDIA_ROOT
 from django.db.models import Max
 from django.core.exceptions import ValidationError
 
+from data.models import Peak as PimpPeak
+
 """
  The default Django User model provides the following attributes:
  username
@@ -555,3 +557,10 @@ class AnnotationQueryHierarchy (models.Model):
         """
 
         return 'AnnotationQueryHierarchy' + str(self.id)
+
+class PimpFrankPeakLink(models.Model):
+    frank_peak = models.ForeignKey(Peak)
+    pimp_peak = models.ForeignKey(PimpPeak)
+
+    def __unicode__(self):
+        return "Pimp: {}, Frank: {}".format(pimp_peak.mass,frank_peak.mass)
