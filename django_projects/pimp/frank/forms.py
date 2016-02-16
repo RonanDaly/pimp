@@ -3,7 +3,7 @@ __author__ = 'Scott Greig'
 from django import forms
 from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol,\
     Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, AnnotationTool, \
-    IONISATION_PROTOCOLS, FILE_TYPES
+    IONISATION_PROTOCOLS, FILE_TYPES, PimpAnalysisFrankFs
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
@@ -585,3 +585,28 @@ class PreferredAnnotationForm(forms.ModelForm):
         fields = (
             'preferred_candidate_description',
         )
+
+class SelectFragmentationSetForm(forms.Form):
+    """
+    Form class for the selection of an AnnotationTool for a query
+    """
+
+    # The default is for all annotation tools to be available
+    fragmentation_sets = forms.ModelChoiceField(
+        queryset=FragmentationSet.objects.all(),
+        empty_label=None,
+        help_text='Select a fragmentation set to link'
+    )
+
+    def __init__(self,*args,**kwargs):
+        if 'current_user' in kwargs:
+            self.user = kwargs.pop('current_user')
+        super(SelectFragmentationSetForm, self).__init__(*args, **kwargs)
+        if self.user:
+            self.fields['fragmentation_sets'] = forms.ModelChoiceField(
+                queryset=FragmentationSet.objects.filter(experiment__created_by = self.user),
+                empty_label=None,
+                help_text='Select a fragmentation set to link'
+            )
+
+    

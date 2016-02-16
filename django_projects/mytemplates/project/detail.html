@@ -2767,9 +2767,20 @@ $(document).ready(function() {
 											</div>
 											<div class="span2 center-text" style="min-height:10px;">
 												<p class="text-in-table introduction_text" {% ifequal analysis.status 'Finished' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal analysis.status 'Ready' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Submitted' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Processing' %}style="color: rgb(213, 170, 60);"{% endifequal %}{% ifequal analysis.status 'Error' %}style="color: rgb(232, 45, 45);"{% endifequal %}>{{ analysis.status }}</p>
+												{% for f in analysis.pimpanalysisfrankfs_set.all %}
+														<p style="font-size:13px;"><i>FrAnK {{ f }}</i>
+												{% endfor %}
 											</div>
 											<div class="span2 center-text" style="min-height:10px;padding-top: 4px;">
-												{% ifequal analysis.status 'Finished' %}<a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">Access result</a>{% endifequal %}{% ifequal analysis.status 'Ready' %}<a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">Submit analysis</a>{% endifequal %}
+												{% ifequal analysis.status 'Finished' %}<a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">Access result</a>
+												{% if analysis.pimpanalysisfrankfs_set.all %}
+													
+												{% else %}
+													<a href="{% url 'connect' project.id analysis.id %}" class="text-in-table analysis_result_button" style="font-size:13px;">Connect to FrAnK</a>
+												{% endif %}
+
+												{% endifequal %}{% ifequal analysis.status 'Ready' %}<a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">Submit analysis</a>{% endifequal %}
+
 											</div>
 										</div>
 									</div>

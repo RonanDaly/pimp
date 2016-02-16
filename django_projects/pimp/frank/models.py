@@ -9,6 +9,7 @@ from django.db.models import Max
 from django.core.exceptions import ValidationError
 
 from data.models import Peak as PimpPeak
+from experiments.models import Analysis as PimpAnalysis
 
 """
  The default Django User model provides the following attributes:
@@ -244,7 +245,7 @@ class FragmentationSet(models.Model):
         :return: String:    The string contains the 'id' of the FragmentationSet
         """
 
-        return 'Fragmentation Set '+str(self.id)
+        return self.name + ' (from experiment ' + self.experiment.title + ')'
 
 
 class AnnotationQuery(models.Model):
@@ -564,3 +565,12 @@ class PimpFrankPeakLink(models.Model):
 
     def __unicode__(self):
         return "Pimp: {}, Frank: {}".format(pimp_peak.mass,frank_peak.mass)
+
+
+class PimpAnalysisFrankFs(models.Model):
+	# Object that links a PiMP analysis with a Frank fragmentation set
+	pimp_analysis = models.ForeignKey(PimpAnalysis,unique=True)
+	frank_fs = models.ForeignKey(FragmentationSet)
+
+	def __unicode__(self):
+		return self.frank_fs.name

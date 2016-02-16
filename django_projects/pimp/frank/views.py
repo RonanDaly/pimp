@@ -1,6 +1,6 @@
 __author__ = 'Scott Greig'
 
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from frank.models import *
 from frank.forms import *
 from django.contrib.auth.decorators import login_required
@@ -21,6 +21,9 @@ from django.http import HttpResponse
 from django.db import transaction
 import json
 import csv
+
+from experiments.models import Analysis
+from projects.models import Project
 
 """
 To reduce code repetition, add a method for the context_dict
@@ -1194,3 +1197,34 @@ def make_frag_spectra_plot(request, fragmentation_set_name_slug, peak_name_slug)
     pylab.close()
     # Return the graph to the page, allowing for display
     return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+def connect(request,pimp_project_id,pimp_analysis_id):
+    analysis = Analysis.objects.get(id = pimp_analysis_id)
+    project= Project.objects.get(id = pimp_project_id)
+    context_dict = {}
+    context_dict['analysis'] = analysis
+    context_dict['project'] = project
+    fs = []
+    frank_experiments = Experiment.objects.filter(created_by = request.user)
+    for experiment in frank_experiments:
+        fsets = experiment.fragmentationset_set.all()
+        for f in fsets:
+            fs.append(f)
+    context_dict['fs'] = fs
+    if len(fs)==0:
+        fs = None
+
+
+    if request.method=='POST':
+        fs_form = SelectFragmentationSetForm(request.POST,current_user = request.user)
+        if fs_form.is_valid():
+            PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis = analysis,frank_fs = fs_form.cleaned_data['fragmentation_sets'])
+        url = '/accounts/project/{}'.format(project.id)
+        return redirect(url)
+        
+    else:
+        fs_form = SelectFragmentationSetForm(current_user = request.user)
+        context_dict['fs_form'] = fs_form
+        print fs_form.fields
+    return render(request,'frank/connect.html',context_dict)

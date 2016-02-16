@@ -37,5 +37,6 @@ urlpatterns = patterns(
         r'/(?P<annotation_query_slug>[\w\-]+)/$',views.delete_annotation_query, name='delete_annotation_query'),
     # Network sample URL added by Simon
     url(r'^network_sampler/$',views.run_network_sampler, name='network_sampler'),
+    url(r'^connect/(?P<pimp_project_id>[\w\-]+)/(?P<pimp_analysis_id>[\w\-]+)/$',views.connect,name='connect'),
     url(r'^get_fragments_as_text/(?P<peak_name_slug>[\w\-]+)/(?P<format_type>[\w\-]+)/$',views.get_fragments_as_text, name='get_fragments_as_text'),
 )

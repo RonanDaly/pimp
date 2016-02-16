@@ -1,0 +1,20 @@
+{% extends "base_bs3.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+		<div>
+		<h3>Welcome to FrAnK</h3>
+		<p>You have selected linking a FrAnK fragmentation set to a PiMP analysis linked with experiment {{analysis.experiment.title }}</p>
+
+		{% if fs_form %}
+		 <form id="fragmentation_set_selection_form" method="post" action="{% url 'connect' project.id analysis.id %}">
+		 	{% csrf_token %}
+			{{ fs_form }}
+		    <input type="submit" value="Submit" />
+        </form>
+            {% endif %}
+		<p><a href="{% url 'project_detail' project.id %}">Return to PiMP Project</a></p>
+		</div>
+{% endblock %}
