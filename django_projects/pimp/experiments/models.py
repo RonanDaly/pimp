@@ -50,6 +50,9 @@ class Analysis(models.Model):
 	params = models.ForeignKey(Params)
 	status = models.CharField(max_length=100) 
 
+	def __unicode__(self):
+		return self.experiment.title
+
 class DefaultParameter(models.Model):
 	name = models.CharField(max_length=100)
 	value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)

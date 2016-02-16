@@ -25,6 +25,7 @@ import csv
 from experiments.models import Analysis
 from projects.models import Project
 
+
 """
 To reduce code repetition, add a method for the context_dict
 of each page here at the top of the page.
@@ -1219,7 +1220,11 @@ def connect(request,pimp_project_id,pimp_analysis_id):
     if request.method=='POST':
         fs_form = SelectFragmentationSetForm(request.POST,current_user = request.user)
         if fs_form.is_valid():
-            PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis = analysis,frank_fs = fs_form.cleaned_data['fragmentation_sets'])
+            chosen_frag_set = fs_form.cleaned_data['fragmentation_sets']
+            rt_tol = fs_form.cleaned_data['rt_tolerance']
+            mass_tol = fs_form.cleaned_data['mass_tolerance']
+            link = PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis = analysis,frank_fs = chosen_frag_set,status = 'Processing')[0]
+            tasks.simple_pimp_frank_linker.delay(pimp_analysis_id,chosen_frag_set.id,mass_tol,rt_tol,link.id)
         url = '/accounts/project/{}'.format(project.id)
         return redirect(url)
         

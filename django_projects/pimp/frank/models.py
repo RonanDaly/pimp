@@ -564,13 +564,13 @@ class PimpFrankPeakLink(models.Model):
     pimp_peak = models.ForeignKey(PimpPeak,unique=True)
 
     def __unicode__(self):
-        return "Pimp: {}, Frank: {}".format(pimp_peak.mass,frank_peak.mass)
+        return "Pimp: {}, Frank: {}".format(self.pimp_peak.mass,self.frank_peak.mass)
 
 
 class PimpAnalysisFrankFs(models.Model):
 	# Object that links a PiMP analysis with a Frank fragmentation set
 	pimp_analysis = models.ForeignKey(PimpAnalysis,unique=True)
 	frank_fs = models.ForeignKey(FragmentationSet)
-
+	status = models.CharField(max_length = 500)
 	def __unicode__(self):
-		return self.frank_fs.name
+		return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name

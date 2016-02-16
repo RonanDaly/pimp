@@ -11,7 +11,11 @@
 		{% if fs_form %}
 		 <form id="fragmentation_set_selection_form" method="post" action="{% url 'connect' project.id analysis.id %}">
 		 	{% csrf_token %}
-			{{ fs_form }}
+		 	{% for field in fs_form.visible_fields %}
+		 	{{field.label}}{{field}}
+		 	<br/>
+		 	<br/>
+		 	{% endfor %}
 		    <input type="submit" value="Submit" />
         </form>
             {% endif %}

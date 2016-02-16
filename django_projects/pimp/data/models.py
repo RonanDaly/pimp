@@ -26,6 +26,9 @@ class Peak(models.Model):
     	
 		return percent_present > cutoff
 
+	def __unicode__(self):
+		return "Peak at mz: {}, rt: {}".format(self.mass,self.rt)
+
 
 # class DtMember(models.Model):
 # 	name = models.CharField(max_length=100)

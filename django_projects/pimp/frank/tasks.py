@@ -18,6 +18,11 @@ from frank.annotationTools import MassBankQueryTool, NISTQueryTool
 from urllib2 import URLError
 import datetime
 
+# PiMP objects
+from experiments.models import Analysis as PimpAnalysis
+from data.models import Peak as PimpPeak
+from data.models import Dataset
+
 
 @celery.task
 def runNetworkSampler(annotation_query_id):
@@ -505,3 +510,65 @@ def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
         fragmentation_set.status = 'Completed with Errors'
     fragmentation_set.save()
     return True
+
+@celery.task
+def simple_pimp_frank_linker(pimp_analysis_id,frank_fragmentation_set_id,mass_tolerance,rt_tolerance,link_id):
+    print "RUNNING PiMP <-> FrAnK LINKER"
+    pimp_analysis = PimpAnalysis.objects.get(id = pimp_analysis_id)
+    fragmentation_set = FragmentationSet.objects.get(id = frank_fragmentation_set_id)
+
+    
+
+    # Get the PiMP peaks
+    dataset = Dataset.objects.get(analysis = pimp_analysis)
+    peaks = PimpPeak.objects.filter(dataset = dataset)
+
+    # Delete any previous links for these peaks
+    for peak in peaks:
+        link = PimpFrankPeakLink.objects.filter(pimp_peak = peak)
+        for l in link:
+            l.delete()
+
+
+
+    # Get the frank peaks 
+    positive_frank_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,source_file__polarity = 'Positive')
+    negative_frank_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,source_file__polarity = 'Negative')
+
+    print "Extracted {} positive and {} negative peaks from Frank".format(len(positive_frank_peaks),len(negative_frank_peaks))
+
+    n_links = 0
+    for i,peak in enumerate(peaks):
+        if peak.polarity == 'positive':
+            in_range = [fp for fp in positive_frank_peaks if hit(peak,fp,mass_tolerance,rt_tolerance)]
+        else:
+            in_range = [fp for fp in negative_frank_peaks if hit(peak,fp,mass_tolerance,rt_tolerance)]
+        if len(in_range)>0:
+            if len(in_range) == 1:
+                top_hit = in_range[0]
+            else:
+                # Find the closest
+                top_hit = None
+                closest_mass_diff = 1e6
+                for p in in_range:
+                    mass_diff = abs(peak.mass-fp.mass)
+                    if mass_diff < closest_mass_diff:
+                        top_hit = p
+                        closest_mass_diff = mass_diff
+            print "Found link PiMP: {} <--> {} FrAnK ({} of {})".format(peak.mass,top_hit.mass,i,len(peaks))
+            n_links += 1
+            PimpFrankPeakLink.objects.create(frank_peak = top_hit,pimp_peak = peak)
+
+    print "Finished linking, found {} links".format(n_links)
+    link_object = PimpAnalysisFrankFs.objects.get(id = link_id)
+    link_object.status = 'Complete'
+    link_object.save()
+
+def hit(pimp_peak,frank_peak,masstol,rttol):
+    pimp_mass = float(pimp_peak.mass)
+    frank_mass = float(frank_peak.mass)
+    if abs(frank_peak.retention_time - pimp_peak.rt) < rttol:
+        if 1e6*abs(frank_mass - pimp_mass)/frank_mass < masstol:
+            return True
+        else:
+            return False

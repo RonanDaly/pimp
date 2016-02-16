@@ -595,8 +595,20 @@ class SelectFragmentationSetForm(forms.Form):
     fragmentation_sets = forms.ModelChoiceField(
         queryset=FragmentationSet.objects.all(),
         empty_label=None,
-        help_text='Select a fragmentation set to link'
     )
+
+    mass_tolerance = forms.DecimalField(
+        required = True,
+        min_value = 0,
+        initial = 5,
+        )
+
+    rt_tolerance = forms.DecimalField(
+        required = True,
+        min_value = 0,
+        initial = 10,
+        )
+
 
     def __init__(self,*args,**kwargs):
         if 'current_user' in kwargs:
@@ -606,7 +618,6 @@ class SelectFragmentationSetForm(forms.Form):
             self.fields['fragmentation_sets'] = forms.ModelChoiceField(
                 queryset=FragmentationSet.objects.filter(experiment__created_by = self.user),
                 empty_label=None,
-                help_text='Select a fragmentation set to link'
             )
 
     
