@@ -37,7 +37,7 @@
           <tbody>
             {% for item in metexplore_info %}
             <tr>
-              <td><a href="http://metexplore.toulouse.inra.fr/metexploreTest/?idMapping={{ item.MetexploreIdMapping }}" target="_blank">{{ item.orgName }}</a></td>
+              <td><a href="http://metexplore.toulouse.inra.fr/metexplore2/?idMapping={{ item.MetexploreIdMapping }}" target="_blank">{{ item.orgName }}</a></td>
               <td>{{ item.TotalNumInchi }}</td>
               <td>{{  item.MappedInchi }}</td>
               <td>{% with pourcentage=item.TotalNumInchi|get_pourcent:item.MappedInchi  %}{{ pourcentage }}%{% endwith %}</td>
