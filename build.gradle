@@ -124,12 +124,12 @@ task installPiMPDependencies(dependsOn: [installPiMPPythonDependencies, installP
 task synchroniseDatabase(type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties]) {
 	//println project.ext.props.PATH
 	environment 'PATH', project.ext.props['PATH']
-	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/manage.py', 'migrate'
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/manage.py', 'migrate'
 }
 
 task populatePiMP (type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties, synchroniseDatabase]) {
 	environment 'PATH', project.ext.props['PATH']
-	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'python', 'django_projects/pimp/populate_pimp.py'
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/populate_pimp.py'
 }
 
 task createSuperUser(dependsOn: [installPiMPPythonDependencies, setupProjectProperties, populatePiMP]) << {
