@@ -411,10 +411,10 @@ Requires: Biobase, BiocGenerics, ProtGenerics, Rcpp, zlibbioc
 
 Package: mzmatch.R
 Source: PuMP
-Version: 1.0-2
-Hash: 0d08297cc8b113e22b78d8eb0f93ab04
-Requires: R.utils, Rcpp, XML, bitops, caTools, gplots, mzR, ptw, rJava,
-    snow, xcms
+Version: 1.0-3
+Hash: 5e736e920c87423c9a195b844de44f67
+Requires: R.utils, Rcpp, XML, bitops, caTools, gplots, logging, mzR,
+    ptw, rJava, snow, xcms
 
 Package: nloptr
 Source: CRAN
