@@ -1,3 +1,3 @@
 #!/bin/sh
 . ../../venv/bin/activate
-exec python manage.py runserver
+exec python manage.py runserver --settings=pimp.settings_dev
