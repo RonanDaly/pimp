@@ -98,3 +98,5 @@ packrat/src/*
 !packrat/src/KEGGREST/
 *.Rout
 .Rproj.user
+.DS_Store
+.Rhistory
