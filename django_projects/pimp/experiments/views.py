@@ -48,7 +48,7 @@ from experiments import tasks
 import timeit
 import pickle
 from django.views.decorators.cache import cache_page
-# from pimp.profiler import profile
+# from pimp.profiler import profile
 
 def experiment(request, project_id):
     class RequiredComparisonFormSet(BaseFormSet):
