@@ -49,7 +49,7 @@ from experiments import tasks
 import timeit
 import pickle
 from django.views.decorators.cache import cache_page
-
+# from pimp.profiler import profile
 
 def experiment(request, project_id):
     class RequiredComparisonFormSet(BaseFormSet):
@@ -379,7 +379,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         pathway_name_dict = {}
         # Create dictionnary with pathway names for each compound
         for pathway_name in identified_compound_pathway_list:
-            # 
+            #
             if pathway_name[0] in pathway_name_dict:
                 if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
                     pathway_name_dict[pathway_name[0]][0] = " ".join([pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
@@ -473,7 +473,7 @@ def get_metabolites_table(request, project_id, analysis_id):
                     pathway_name_dict[pathway_name[0]] = ["None","None"]
                 else:
                     pathway_name_dict[pathway_name[0]] = [pathway_name[1],  superpathway_dict[pathway_name[1]]]
-        
+
         compound_name_dict = {}
         for compound_name in annotated_compound_name_list:
             compound_name_dict[compound_name[0]] = compound_name[2]
@@ -505,7 +505,7 @@ def get_metabolites_table(request, project_id, analysis_id):
                 compound_name = compound_name_dict[compound_id]
                 pathway_names = pathway_name_dict[current_compound][0]
                 super_pathway_names = pathway_name_dict[current_compound][1]
-                
+
             else:
                 if current_peak == test[i][1]:
                     if test[i][2] not in comparison_id_list:
@@ -626,6 +626,7 @@ def get_peak_table(request, project_id, analysis_id):
 
 # @cache_page(60 * 60 * 24 * 100)
 @login_required
+# @profile("analysis_result.prof")
 def analysis_result(request, project_id, analysis_id):
     if request.method == 'GET':
         try:
@@ -789,33 +790,38 @@ def analysis_result(request, project_id, analysis_id):
         identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
         # list(identified_peak)
         annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
-        # list(annotated_peak)
+        list(annotated_peak)
+
+        # for c in comparisons:
+        #
+        #     identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
+        #         peak__in=list(identified_peak)).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
+        #     # list(identified_peakdtcomparisonList)
+        #     annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
+        #         peak__in=list(annotated_peak)).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
+        #     # list(annotated_peakdtcomparisonList)
+        #
+        #     identified_info_list = []
+        #     for identified_compound in identified_peakdtcomparisonList:
+        #         compound_name = list(set(
+        #             RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
+        #                                               compound__identified="True").values_list('compound_name',
+        #                                                                                        flat=True)))
+        #         intensities = get_intensities_values(identified_compound)
+        #         identified_info_list.append([identified_compound, compound_name, intensities])
+        #
+        #     annotated_info_list = []
+        #     for annotated_compound in annotated_peakdtcomparisonList:
+        #         intensities = get_intensities_values(annotated_compound)
+        #         annotated_info_list.append([annotated_compound, intensities])
+        #
+        #     comparison_hits = [identified_info_list, annotated_info_list]
+        #     comparison_hits_list[c] = comparison_hits
+
         for c in comparisons:
+            comparison_hits_list[c] = []
 
-            identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
-                peak__in=list(identified_peak)).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
-            # list(identified_peakdtcomparisonList)
-            annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
-                peak__in=list(annotated_peak)).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
-            # list(annotated_peakdtcomparisonList)
-
-            identified_info_list = []
-            for identified_compound in identified_peakdtcomparisonList:
-                compound_name = list(set(
-                    RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
-                                                      compound__identified="True").values_list('compound_name',
-                                                                                               flat=True)))
-                intensities = get_intensities_values(identified_compound)
-                identified_info_list.append([identified_compound, compound_name, intensities])
-
-            annotated_info_list = []
-            for annotated_compound in annotated_peakdtcomparisonList:
-                intensities = get_intensities_values(annotated_compound)
-                annotated_info_list.append([annotated_compound, intensities])
-
-            comparison_hits = [identified_info_list, annotated_info_list]
-            comparison_hits_list[c] = comparison_hits
-        # print "comparison hits: ",comparison_hits_list
+        print "comparison hits: ",comparison_hits_list
 
         comp_stop = timeit.default_timer()
 
