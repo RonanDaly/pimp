@@ -1,0 +1,37 @@
+PROFILING QUICKSTART
+
+Is your view code running slow? Use the profiler to isolate the part causing the problem. Here’s how to do that:
+
+1. Configure in your environmental file the PROFILE_LOG_BASE variable. Here’s where we’ll put the profiling output, e.g.
+
+PROFILE_LOG_BASE=/Users/joewandy/git/pimp/django_projects/profiler_results
+
+2. Add the following import in your .py file
+
+from pimp.profiler import profile
+
+3. Add the following @profile decorator to the function to profile, specifying the output filename that you want e.g.
+
+@profile("analysis_result.prof")
+def analysis_result(request, project_id, analysis_id):
+    …
+
+4. Start the server as usual and run that function. It will run a lot slower now, but a profile result containing the name specified above will be generated at $PROFILE_LOG_BASE.
+
+5. Read more about how to analyse the results from here: https://code.djangoproject.com/wiki/ProfilingDjango. You can use the examine.py script in profiler_results (in your pimp project folder) to inspect the results, e.g.
+
+$ ./examine.py analysis_result-20160308T112044.prof
+
+If the .prof file is huge, it will take forever to load (and the output probably hard to read anyway). A better (GUI) way is to convert it into the call graph view format that can be read by kcachegrind. Use the hotshot2calltree.py in profiler_results to do this, e.g.
+
+$ ./hotshot2calltree.py -o cachegrind.out.0 analysis_result-20160308T112044.prof 
+
+Mac has a QT port of kcachegrind. Read more about it here: http://blog.jcmultimedia.com.au/2014/03/profiling-php-on-osx-with-xdebug-kcachegrind/. Install it via homebrew:
+
+$ brew install qcachegrind --with-graphviz
+
+And load the call tree file.
+
+$ /usr/local/bin/qcachegrind cachegrind.out.0 
+
+On the GUI, inspect the table on the left panel showing the cost of method calls and also the call tree on the right panel.
