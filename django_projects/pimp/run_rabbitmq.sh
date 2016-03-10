@@ -1,3 +1,3 @@
 #!/bin/sh
 . ../../venv/bin/activate
-exec /usr/local/sbin/rabbitmq-server
+exec ${RABBITMQ_SERVER}

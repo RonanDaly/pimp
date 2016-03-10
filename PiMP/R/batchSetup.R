@@ -86,6 +86,8 @@ createBatchInformation <- function(sequenceFiles, typeColumnName, fileColumnName
 }
 
 createBatchInformationFromGroups <- function(groups, files) {
+  logger = logging::getLogger('createBatchInformationFromGroups')
+
   longNames = c()
   longIds = c()
   batch = c()
@@ -110,6 +112,7 @@ createBatchInformationFromGroups <- function(groups, files) {
   reorderedTimes = c()
   for (id in row.names(df)) {
     index = match(id, shortFiles)
+    loginfo('files[%d]: %s', index, files[index], logger=logger)
     reorderedFiles = append(reorderedFiles, files[index])
     reorderedTimes = append(reorderedTimes, getMLFileCreatedTime(files[index]))
   }

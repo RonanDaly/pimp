@@ -9,79 +9,79 @@ Repos: PuMP=http://puma.ibls.gla.ac.uk/R,
     CRAN=http://cran.rstudio.com
 
 Package: AnnotationDbi
-Source: Bioconductor
+Source: PuMP
 Version: 1.32.0
 Hash: 8ed8b85d43aa4cd445f85e79a867af03
 Requires: Biobase, BiocGenerics, DBI, IRanges, RSQLite, S4Vectors
 
 Package: BH
-Source: CRAN
+Source: PuMP
 Version: 1.58.0-1
 Hash: 4f6db3b5311bb006f536a2e67278d058
 
 Package: Biobase
-Source: Bioconductor
+Source: PuMP
 Version: 2.30.0
 Hash: f58887338a297fdfd20d2cf1c2584f7d
 Requires: BiocGenerics
 
 Package: BiocGenerics
-Source: Bioconductor
+Source: PuMP
 Version: 0.16.1
 Hash: c66deb506ef217896ce7d2ee347c95ff
 
 Package: BiocInstaller
-Source: Bioconductor
+Source: PuMP
 Version: 1.20.1
 Hash: 05e58e37e4e2af35c9ba9eb4ee1839e4
 
 Package: Biostrings
-Source: Bioconductor
+Source: PuMP
 Version: 2.38.2
 Hash: 8b51b8a17528337be228824e581b250d
 Requires: BiocGenerics, IRanges, S4Vectors, XVector
 
 Package: DBI
-Source: CRAN
+Source: PuMP
 Version: 0.3.1
 Hash: 096699d1ac1cf530acfc646a0c90ee5d
 
 Package: Formula
-Source: CRAN
+Source: PuMP
 Version: 1.2-1
 Hash: 47ae34d89a8dd8fde36c9c0b5c587819
 
 Package: Hmisc
-Source: CRAN
+Source: PuMP
 Version: 3.17-0
 Hash: ee70795cccf7e407a94be4e0a96535c6
 Requires: Formula, acepack, cluster, foreign, ggplot2, gridExtra,
     gtable, lattice, latticeExtra, nnet, proto, rpart, scales, survival
 
 Package: IRanges
-Source: Bioconductor
+Source: PuMP
 Version: 2.4.4
 Hash: 4d3e9d4fd646c175032eee2bdd1e7603
 Requires: BiocGenerics, S4Vectors
 
 Package: KEGGREST
-Source: Bioconductor
+Source: PuMP
 Version: 1.10.0
 Hash: 5fe4a745476b798e25195fa62a69594f
 Requires: Biostrings, httr, png
 
 Package: KernSmooth
-Source: CRAN
+Source: PuMP
 Version: 2.23-15
 Hash: aa5fd163456721a62d34a98fddc510bf
 
 Package: MASS
-Source: CRAN
+Source: PuMP
 Version: 7.3-45
 Hash: 0650d5701aa7e369e77c9e2c8e1dc913
 
 Package: Matrix
-Source: CRAN
+Source: PuMP
 Version: 1.2-3
 Hash: dde12803d25fe30668ce7b640c9f7072
 Requires: lattice
@@ -103,450 +103,450 @@ Requires: DBI, RUnit, logging
 SourcePath: ./PiMPDB
 
 Package: ProtGenerics
-Source: Bioconductor
+Source: PuMP
 Version: 1.2.1
 Hash: 4e71a2d26d3f5439252c3050d45fde4f
 Requires: BiocGenerics
 
 Package: R.methodsS3
-Source: CRAN
+Source: PuMP
 Version: 1.7.0
 Hash: 18e488de0e3499493db5c7cdb7471e0c
 
 Package: R.oo
-Source: CRAN
+Source: PuMP
 Version: 1.19.0
 Hash: b59acd11664f31a5e4fc4c8df8c9d422
 Requires: R.methodsS3
 
 Package: R.utils
-Source: CRAN
+Source: PuMP
 Version: 2.1.0
 Hash: 7d40e3af9cd8e39062bb6f491b400fdd
 Requires: R.methodsS3, R.oo
 
 Package: R6
-Source: CRAN
+Source: PuMP
 Version: 2.1.1
 Hash: 20a88b2c9c84aecff2702789a4d102f5
 
 Package: RColorBrewer
-Source: CRAN
+Source: PuMP
 Version: 1.1-2
 Hash: c0d56cd15034f395874c870141870c25
 
 Package: RCurl
-Source: CRAN
+Source: PuMP
 Version: 1.95-4.7
 Hash: 7756ed9df5d79ca87bc9e93f85d89b87
 Requires: bitops
 
 Package: RJSONIO
-Source: CRAN
+Source: PuMP
 Version: 1.3-0
 Hash: fb672e20eb6f3010a3639f855d8ef6de
 
 Package: RMySQL
-Source: CRAN
+Source: PuMP
 Version: 0.10.7
 Hash: c9260e25690b07d02a298f75e5178e86
 Requires: DBI
 
 Package: RSQLite
-Source: CRAN
+Source: PuMP
 Version: 1.0.0
 Hash: 3df52a54766f420d257debad962146c0
 Requires: DBI
 
 Package: RUnit
-Source: CRAN
+Source: PuMP
 Version: 0.4.31
 Hash: 62eb28673740eb6984f134cb2c179c55
 
 Package: Rcpp
-Source: CRAN
+Source: PuMP
 Version: 0.12.2
 Hash: 1928c2b7372e3f033217335f3fad25a3
 
 Package: S4Vectors
-Source: Bioconductor
+Source: PuMP
 Version: 0.8.3
 Hash: b3ebf1353f8ef7f8a36cf61ac8f5ddb0
 Requires: BiocGenerics
 
 Package: XLConnect
-Source: CRAN
+Source: PuMP
 Version: 0.2-11
 Hash: 9671b8bb38db7af753ee09ad7bc7b546
 Requires: XLConnectJars, rJava
 
 Package: XLConnectJars
-Source: CRAN
+Source: PuMP
 Version: 0.2-9
 Hash: c3a7ea4d67acc15d861409bb55b753dc
 Requires: rJava
 
 Package: XML
-Source: CRAN
+Source: PuMP
 Version: 3.98-1.3
 Hash: 689166755239c3300769ca2d600381c6
 
 Package: XVector
-Source: Bioconductor
+Source: PuMP
 Version: 0.10.0
 Hash: 1402d1e4d1fcf1d0802a2f65c2520634
 Requires: BiocGenerics, IRanges, S4Vectors, zlibbioc
 
 Package: acepack
-Source: CRAN
+Source: PuMP
 Version: 1.3-3.3
 Hash: 98134fc49d89dcc4662712f3111e68e6
 
 Package: bitops
-Source: CRAN
+Source: PuMP
 Version: 1.0-6
 Hash: 67d0775189fd0041d95abca618c5c07e
 
 Package: brew
-Source: CRAN
+Source: PuMP
 Version: 1.0-6
 Hash: 931f9972deae0f205e1c78a51f33149b
 
 Package: caTools
-Source: CRAN
+Source: PuMP
 Version: 1.17.1
 Hash: 97cb6f6293cd18d17df77a6383cc6763
 Requires: bitops
 
 Package: cluster
-Source: CRAN
+Source: PuMP
 Version: 2.0.3
 Hash: 60b0f8a680f03558a8841bb26fdecdb8
 
 Package: codetools
-Source: CRAN
+Source: PuMP
 Version: 0.2-14
 Hash: 127e7e68dfa21d3f17c022df1e727d0a
 
 Package: colorspace
-Source: CRAN
+Source: PuMP
 Version: 1.2-6
 Hash: 00bb12245cd975c450cc4a960884fa15
 
 Package: curl
-Source: CRAN
+Source: PuMP
 Version: 0.9.4
 Hash: f0845d30266233da7d910ac687a5174b
 
 Package: devtools
-Source: CRAN
+Source: PuMP
 Version: 1.9.1
 Hash: 894e4e2f04fb749f786f15cf01181a0c
 Requires: curl, digest, evaluate, git2r, httr, jsonlite, memoise,
     roxygen2, rstudioapi, rversions, whisker
 
 Package: dichromat
-Source: CRAN
+Source: PuMP
 Version: 2.0-0
 Hash: 08eed0c80510af29bb15f840ccfe37ce
 
 Package: digest
-Source: CRAN
+Source: PuMP
 Version: 0.6.8
 Hash: de202f956596a476d09304e3a2ebf1e5
 
 Package: doParallel
-Source: CRAN
+Source: PuMP
 Version: 1.0.10
 Hash: df91a7abfa938c06ad87b9a2b9269adb
 Requires: foreach, iterators
 
 Package: evaluate
-Source: CRAN
+Source: PuMP
 Version: 0.8
 Hash: aac00bd789bac10970b50e3b7e0cab04
 Requires: stringr
 
 Package: fields
-Source: CRAN
+Source: PuMP
 Version: 8.3-5
 Hash: e7e7df8dd4a9d7321ec6fc335a9adee5
 Requires: maps, spam
 
 Package: foreach
-Source: CRAN
+Source: PuMP
 Version: 1.4.3
 Hash: cd53ef4cf29dc59ce3f8c5c1af735fd1
 Requires: codetools, iterators
 
 Package: foreign
-Source: CRAN
+Source: PuMP
 Version: 0.8-66
 Hash: 99a453ffeef7ff27060aed83cde5bae3
 
 Package: gdata
-Source: CRAN
+Source: PuMP
 Version: 2.17.0
 Hash: e7d520c2a9597b303f54499e3bd90644
 Requires: gtools
 
 Package: ggplot2
-Source: CRAN
+Source: PuMP
 Version: 1.0.1
 Hash: 4aff1b269135bd2cdea378f4f2f2895e
 Requires: MASS, digest, gtable, plyr, proto, reshape2, scales
 
 Package: git2r
-Source: CRAN
+Source: PuMP
 Version: 0.11.0
 Hash: 40e87f1c9cff181fe741a80646d081a5
 
 Package: gplots
-Source: CRAN
+Source: PuMP
 Version: 2.17.0
 Hash: ea8a8c502ae5e82f9978ddb93eb7cbd9
 Requires: KernSmooth, caTools, gdata, gtools
 
 Package: gptk
-Source: CRAN
+Source: PuMP
 Version: 1.08
 Hash: 7d026f782fc20c8d0f7b8fd63e189c23
 Requires: Matrix, fields
 
 Package: gridExtra
-Source: CRAN
+Source: PuMP
 Version: 2.0.0
 Hash: 9be37a2d3b6a427d8a3d2a42f2b0bc01
 Requires: gtable
 
 Package: gtable
-Source: CRAN
+Source: PuMP
 Version: 0.1.2
 Hash: 38a0f066373a60824cd3ade2362af363
 
 Package: gtools
-Source: CRAN
+Source: PuMP
 Version: 3.5.0
 Hash: 471b2e2452dfb30fdc1dd6f1b567925a
 
 Package: httr
-Source: CRAN
+Source: PuMP
 Version: 1.0.0
 Hash: 165c156aaf69073f9a1f8a4211c626d9
 Requires: R6, curl, digest, jsonlite, mime, stringr
 
 Package: impute
-Source: Bioconductor
+Source: PuMP
 Version: 1.44.0
 Hash: 7d643125a1c9c8fb45a949abe12eab16
 
 Package: iterators
-Source: CRAN
+Source: PuMP
 Version: 1.0.8
 Hash: 488b93c2a4166db0d15f1e8d882cb1d4
 
 Package: jsonlite
-Source: CRAN
+Source: PuMP
 Version: 0.9.17
 Hash: d44b8f8c89ff794d6ec8a07dde103d24
 
 Package: labeling
-Source: CRAN
+Source: PuMP
 Version: 0.3
 Hash: ecf589b42cd284b03a4beb9665482d3e
 
 Package: lattice
-Source: CRAN
+Source: PuMP
 Version: 0.20-33
 Hash: d7158cf4e63e8c12cb227738076b37d8
 
 Package: latticeExtra
-Source: CRAN
+Source: PuMP
 Version: 0.6-26
 Hash: 07a60e9d5b59ddac85b9c26cd81867ca
 Requires: RColorBrewer, lattice
 
 Package: limma
-Source: Bioconductor
+Source: PuMP
 Version: 3.26.3
 Hash: 27eba422acfc0b23025fa157881ba2d4
 
 Package: logging
-Source: CRAN
+Source: PuMP
 Version: 0.7-103
 Hash: 5a8f34bb531acdf5addcab0663239e04
 
 Package: magrittr
-Source: CRAN
+Source: PuMP
 Version: 1.5
 Hash: bdc4d48c3135e8f3b399536ddf160df4
 
 Package: maps
-Source: CRAN
+Source: PuMP
 Version: 3.0.1
 Hash: 14756dbe9c815658dfaa2f4fae5d69f3
 
 Package: memoise
-Source: CRAN
+Source: PuMP
 Version: 0.2.1
 Hash: 812e6a1dd77a0ca4da41f3239de8e447
 Requires: digest
 
 Package: mime
-Source: CRAN
+Source: PuMP
 Version: 0.4
 Hash: b08c52dae92a0a11e64a4deea032ec33
 
 Package: munsell
-Source: CRAN
+Source: PuMP
 Version: 0.4.2
 Hash: 72d343a6664778029f49a7ad36de1cab
 Requires: colorspace
 
 Package: mzR
-Source: Bioconductor
+Source: PuMP
 Version: 2.4.0
 Hash: bf430655fbca0e06b1f1847a80f2065a
 Requires: Biobase, BiocGenerics, ProtGenerics, Rcpp, zlibbioc
 
 Package: mzmatch.R
 Source: PuMP
-Version: 1.0-2
-Hash: 2ed1822a465fbb3fc91f1f326a3112a1
+Version: 1.0-3
+Hash: 5e736e920c87423c9a195b844de44f67
 Requires: R.utils, Rcpp, XML, bitops, caTools, gplots, logging, mzR,
     ptw, rJava, snow, xcms
 
 Package: nloptr
-Source: CRAN
+Source: PuMP
 Version: 1.0.4
 Hash: 8053df240a4635aeb54fc68c6de67709
 
 Package: nnet
-Source: CRAN
+Source: PuMP
 Version: 7.3-11
 Hash: 7ce468235b55bd6487a76d2093a6ce5d
 
 Package: outliers
-Source: CRAN
+Source: PuMP
 Version: 0.14
 Hash: 8807da915217180089cc7f5557137dda
 
 Package: packrat
-Source: CRAN
+Source: PuMP
 Version: 0.4.6-1
 Hash: 29eacc43b096c5b1a82c8d54a49b030b
 
 Package: plyr
-Source: CRAN
+Source: PuMP
 Version: 1.8.3
 Hash: 5cf4672c5940e265f2602d5d806d303d
 Requires: Rcpp
 
 Package: png
-Source: CRAN
+Source: PuMP
 Version: 0.1-7
 Hash: 421d7d6e0fb4bd885ecbd909b6456b8b
 
 Package: proto
-Source: CRAN
+Source: PuMP
 Version: 0.3-10
 Hash: 05d7ad64db29a39d1b02c4b9f1f4edb2
 
 Package: ptw
-Source: CRAN
+Source: PuMP
 Version: 1.9-11
 Hash: be1b62faeac070b0c533ecc9ff04c046
 Requires: nloptr
 
 Package: rJava
-Source: CRAN
-Version: 0.9-8
-Hash: 3e8627a2a5bd45c9bad6112acfc231d9
+Source: PuMP
+Version: 0.9-7
+Hash: bf541ef2ee8a6515eba35256566e64cf
 
 Package: reshape2
-Source: CRAN
+Source: PuMP
 Version: 1.4.1
 Hash: 193899598711fc9776f383bbdf266118
 Requires: Rcpp, plyr, stringr
 
 Package: roxygen2
-Source: CRAN
+Source: PuMP
 Version: 5.0.1
 Hash: 764de5dbf10bcd671fde95798bf96112
 Requires: Rcpp, brew, digest, stringi, stringr
 
 Package: rpart
-Source: CRAN
+Source: PuMP
 Version: 4.1-10
 Hash: 1eeecd328c5297c43e9d139944bb0775
 
 Package: rstudioapi
-Source: CRAN
+Source: PuMP
 Version: 0.3.1
 Hash: 88eea830c60277b858ce9334041b08bb
 
 Package: rversions
-Source: CRAN
+Source: PuMP
 Version: 1.0.2
 Hash: c006a9eaa80a091dcd87bb4003887b12
 Requires: curl, xml2
 
 Package: scales
-Source: CRAN
+Source: PuMP
 Version: 0.3.0
 Hash: 323f8f5a7f2823f19bd3fd3c15fc196a
 Requires: RColorBrewer, Rcpp, dichromat, labeling, munsell, plyr
 
 Package: snow
-Source: CRAN
+Source: PuMP
 Version: 0.4-1
 Hash: eece5c9075772f1029a417cb417390b5
 
 Package: spam
-Source: CRAN
+Source: PuMP
 Version: 1.3-0
 Hash: ba269fd8be712743828019a480e7ae96
 
 Package: stringi
-Source: CRAN
+Source: PuMP
 Version: 1.0-1
 Hash: cf342bc407bd5daec77ed1009d5244e1
 
 Package: stringr
-Source: CRAN
+Source: PuMP
 Version: 1.0.0
 Hash: 2676dd5f88890910962b733b0f9540e1
 Requires: magrittr, stringi
 
 Package: survival
-Source: CRAN
+Source: PuMP
 Version: 2.38-3
 Hash: 31d55260e9a6a6ecbc001e2dfafaad43
 
 Package: whisker
-Source: CRAN
+Source: PuMP
 Version: 0.3-2
 Hash: 803d662762e532705c2c066a82d066e7
 
 Package: xcms
-Source: Bioconductor
+Source: PuMP
 Version: 1.46.0
 Hash: 9633bd2532dd3fae90e43a72e61c756d
 Requires: Biobase, BiocGenerics, ProtGenerics, RColorBrewer, lattice,
     mzR
 
 Package: xml2
-Source: CRAN
+Source: PuMP
 Version: 0.1.2
 Hash: d3a4a61753f1ebf32548bdd9ab709c4b
 Requires: BH, Rcpp
 
 Package: yaml
-Source: CRAN
+Source: PuMP
 Version: 2.1.13
 Hash: 4854ccabebc225e8a7309fb4a74980de
 
 Package: zlibbioc
-Source: Bioconductor
+Source: PuMP
 Version: 1.16.0
 Hash: a62f7415c8f5f7330ef25f3490b75b6b

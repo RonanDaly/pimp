@@ -245,3 +245,5 @@ LOGGING = {
 }
 
 RSCRIPT_PATH = getNeededString('PIMP_RSCRIPT_PATH')
+
+PROFILE_LOG_BASE = getString('PROFILE_LOG_BASE', os.path.dirname(BASE_DIR))
