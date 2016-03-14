@@ -127,6 +127,11 @@ task synchroniseDatabase(type: Exec, dependsOn: [installPiMPPythonDependencies, 
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/manage.py', 'migrate'
 }
 
+task makeMigrateDatabase(type: Exec) {
+	environment 'PATH', project.ext.props['PATH']
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/manage.py', 'makemigrations'
+}
+
 task populatePiMP (type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties, synchroniseDatabase]) {
 	environment 'PATH', project.ext.props['PATH']
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/populate_pimp.py'
