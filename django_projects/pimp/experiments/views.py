@@ -532,6 +532,25 @@ def get_metabolites_table(request, project_id, analysis_id):
         # return Http404
         pass
 
+def get_frank_annotations(peak_ids):
+
+    p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id__in = peak_ids).select_related(
+                                'pimp_peak', 'frank_peak', 'frank_peak_preferred_candidate_annotation')
+    frank_annotations = {}
+    for p2f in p2fs:
+        fset = p2f.frank_peak.fragmentation_set.slug
+        pslug = p2f.frank_peak.slug
+        # TODO: shouldn't write the link inside here !!
+        if p2f.frank_peak.preferred_candidate_annotation:
+            ac = p2f.frank_peak.preferred_candidate_annotation
+            annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
+        else:
+            annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + 'Annotate in FrAnK' + '</a>'                
+        peak = p2f.pimp_peak
+        frank_annotations[peak.id] = annot_string
+
+    return frank_annotations
+
 def get_metabolite_info(request, project_id, analysis_id):
     """
     AJAX view to return information on a metabolite.
@@ -553,13 +572,21 @@ def get_metabolite_info(request, project_id, analysis_id):
         compound_id = int(request.GET['compound_id'])
         compound_secondary_id = Compound.objects.get(pk=compound_id).secondaryId
 
+        # added for frank annotation stuff
         peaks = Peak.objects.filter(dataset=dataset, compound__secondaryId=compound_secondary_id).order_by('secondaryId')
+        peak_ids = [peak.id for peak in peaks]
+        frank_annotations = get_frank_annotations(peak_ids)
 
         attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
         peaks_data = []
 
         for peak in peaks:
-            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type)])
+            rt_str = str(round(peak.rt, 2))
+            mass_str = str(round(peak.mass, 4))
+            polarity_str = str(peak.polarity)
+            type_str = str(peak.type)
+            frank_annot = frank_annotations[peak.id] if peak.id in frank_annotations else 'None'
+            peaks_data.append([peak.secondaryId, rt_str, mass_str, polarity_str, type_str, frank_annot])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
@@ -573,7 +600,6 @@ def get_metabolite_info(request, project_id, analysis_id):
         print peaks_data
         response = simplejson.dumps({'aaData': peaks_data})
         return HttpResponse(response, content_type='application/json')
-
 
 def get_peak_table(request, project_id, analysis_id):
     if request.is_ajax():
@@ -591,27 +617,41 @@ def get_peak_table(request, project_id, analysis_id):
                                                                                                   'sample__id'))
         pp = map(list, zip(*[iter(p)] * s.count()))
 
-
-
         # Simon's addition to fetch frank_annotations if the peak
         # has been linked to a frank peak and the frank_peak has
         # a preferred_candidate_annotation set
 
-        frank_annotations = {}
+#         start2 = timeit.default_timer()
+#         print "before slower"
+#         frank_annotations = {}
+#         for peakgroup in pp:
+#             p2f = PimpFrankPeakLink.objects.filter(pimp_peak = peakgroup[0].peak)
+#             if p2f:
+#                 if p2f[0].frank_peak.preferred_candidate_annotation:
+#                     ac = p2f[0].frank_peak.preferred_candidate_annotation
+#                     fset = p2f[0].frank_peak.fragmentation_set.slug
+#                     pslug = p2f[0].frank_peak.slug
+#                     annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
+#                     frank_annotations[peakgroup[0].peak] = annot_string
+#         stop2 = timeit.default_timer()
+#         print "after slower: ", str(stop2 - start2)
+
+        start2 = timeit.default_timer()
+        print "before faster"
+        first_peaks_ids = []
         for peakgroup in pp:
-            p2f = PimpFrankPeakLink.objects.filter(pimp_peak = peakgroup[0].peak)
-            if p2f:
-                if p2f[0].frank_peak.preferred_candidate_annotation:
-                    ac = p2f[0].frank_peak.preferred_candidate_annotation
-                    fset = p2f[0].frank_peak.fragmentation_set.slug
-                    pslug = p2f[0].frank_peak.slug
-                    annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
-                    frank_annotations[peakgroup[0].peak] = annot_string
+            peak = peakgroup[0].peak
+            first_peaks_ids.append(peak.id)
+        frank_annotations = get_frank_annotations(first_peaks_ids)
+        stop2 = timeit.default_timer()
+        print "after faster: ", str(stop2 - start2)
 
         data = [
-            [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [
-                round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
-                peakgroup] + [str(peakgroup[0].peak.polarity)] + [str(frank_annotations[peakgroup[0].peak]) if peakgroup[0].peak in frank_annotations else 'None'] for peakgroup in pp]
+            [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + 
+            [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
+                peakgroup] + 
+            [str(peakgroup[0].peak.polarity)] + 
+            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[0].peak.id in frank_annotations else 'None'] for peakgroup in pp]
 
         
 
