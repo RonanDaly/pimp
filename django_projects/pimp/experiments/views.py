@@ -21,6 +21,8 @@ from frank.models import PimpFrankPeakLink
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
 from django.db.models import Avg, Max, Q
+from __builtin__ import True
+from Carbon.Aliases import true
 
 try:
     from django.utils import simplejson
@@ -401,7 +403,8 @@ def get_metabolites_table(request, project_id, analysis_id):
         for i in range(len(test)):
             if test[i][0] != current_compound:
                 if not first:
-                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['identified']
+                    id_status = 'identified+fragment' if has_frank_annotation(current_peak) else 'identified'
+                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
                     data.append(c_data)
                 else:
                     first = False
@@ -428,7 +431,8 @@ def get_metabolites_table(request, project_id, analysis_id):
                         intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
                         sample_id_list.append(test[i][3])
 
-        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['identified']
+        id_status = 'identified+fragment' if has_frank_annotation(current_peak) else 'identified'
+        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
         data.append(c_data)
 
         new_test_stop = timeit.default_timer()
@@ -487,7 +491,8 @@ def get_metabolites_table(request, project_id, analysis_id):
         for i in range(len(test)):
             if test[i][0] != current_compound:
                 if not first:
-                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['annotated']
+                    id_status = 'annotated+fragment' if has_frank_annotation(current_peak) else 'annotated'
+                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
                     data.append(c_data)
                 else:
                     first = False
@@ -515,7 +520,8 @@ def get_metabolites_table(request, project_id, analysis_id):
                         intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
                         sample_id_list.append(test[i][3])
 
-        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['annotated']
+        id_status = 'annotated+fragment' if has_frank_annotation(current_peak) else 'annotated'
+        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
         data.append(c_data)
 
         new_test_ac_stop = timeit.default_timer()
@@ -550,6 +556,16 @@ def get_frank_annotations(peak_ids):
         frank_annotations[peak.id] = annot_string
 
     return frank_annotations
+
+def has_frank_annotation(peak_id):
+    p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id = peak_id).select_related(
+                                'frank_peak_preferred_candidate_annotation')
+    found = False
+    for p2f in p2fs:
+        if p2f.frank_peak.preferred_candidate_annotation:
+            found = True
+            break
+    return found
 
 def get_metabolite_info(request, project_id, analysis_id):
     """
