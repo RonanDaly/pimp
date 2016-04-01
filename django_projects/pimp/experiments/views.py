@@ -999,6 +999,8 @@ def analysis_result(request, project_id, analysis_id):
         for attribute in member_list:
             tics[attribute] = create_member_tic(attribute.id)
 
+        identification_type_list = ['annotated', 'annotated+fragment', 'identified', 'identified+fragment']
+
         c = {'member_list': member_list,
              'sample_list': sample_list,
              'pathway_list': pathway_list,
@@ -1018,6 +1020,7 @@ def analysis_result(request, project_id, analysis_id):
              'tics': tics,
              'super_pathways_list': super_pathways_list,
              'explained_variance':explained_variance,
+             'identification_type_list': identification_type_list
             }
 
         rendering_start = timeit.default_timer()

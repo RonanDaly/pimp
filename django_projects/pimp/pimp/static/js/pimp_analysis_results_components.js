@@ -55,10 +55,12 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 			//console.log("clicked on id tab");
 			$('#metabolites_table_super_pathway_selector_div').show();
 			$('#metabolites_table_pathway_selector_div').show();
+			$('#metabolites_table_identification_selector_div').show();
 		}
 		else {
 			$('#metabolites_table_super_pathway_selector_div').hide();
 			$('#metabolites_table_pathway_selector_div').hide();
+			$('#metabolites_table_identification_selector_div').hide();
 		}
 		$("#first-pathway").css("margin-top",25);
 		$('#right-summary-panel').css('display','block');

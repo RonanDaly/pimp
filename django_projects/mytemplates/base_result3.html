@@ -196,6 +196,14 @@
 
 		// console.log(super_pathway_list)
 
+		var identification_type_list = [
+			{% for id_type in identification_type_list %}{
+				id: "{{ id_type }}",
+        		text: "{{ id_type }}",
+			},
+			{% endfor %}
+		];
+
 		var comparisons = { {% for comparison in comparisons %}"{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}" : {{ comparison.id }} {% if not forloop.last %},{% endif %}{% endfor %} };
 		var memberList = [{% for member in member_list %}"{{ member.name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
 		var memberColumnIndex = { {% for member in member_list %}"{{ member.name }}" : {{ forloop.counter0 }} {% if not forloop.last %},{% endif %}{% endfor %} };
@@ -243,18 +251,25 @@
 			$('#metabolites_table_super_pathway_selector').select2({
 				placeholder: "Select super pathway",
 				allowClear: true,
-				data: super_pathway_list, 
+				data: super_pathway_list,
 			});
 
 			$('#metabolites_table_pathway_selector').select2({
 				placeholder: "Select pathway",
 				allowClear: true,
 				matcher: modelMatcher,
-				data: pathway_list, 
+				data: pathway_list,
+			});
+
+			$('#metabolites_table_identification_selector').select2({
+				placeholder: "Select identification type",
+				allowClear: true,
+				data: identification_type_list,
 			});
 
 			var $superPathwaySelect = $("#metabolites_table_super_pathway_selector");
 			var $pathwaySelect = $('#metabolites_table_pathway_selector');
+			var $identificationSelect = $('#metabolites_table_identification_selector');
 
 			// Select a super pathway function (logic explained)
 			$superPathwaySelect.on("select2:select", function (e) {
@@ -277,12 +292,12 @@
 					placeholder: "Select pathway",
   					allowClear: true,
   					matcher: modelMatcher,
-  					data: pathway_map[selectedSuperPathway], 
+  					data: pathway_map[selectedSuperPathway],
 				});
 				// $superPathwaySelect.select2({
 				// 	placeholder: "Select super pathway",
 				// 		allowClear: true,
-				// 		data: super_pathway_list, 
+				// 		data: super_pathway_list,
 				// });
 				// $superPathwaySelect.val(selectedSuperPathway).trigger("change");
 
@@ -303,11 +318,11 @@
 					placeholder: "Select pathway",
   					allowClear: true,
   					matcher: modelMatcher,
-  					data: pathway_list, 
+  					data: pathway_list,
 				});
 			});
 
-			
+
 
 			$pathwaySelect.on("select2:select", function (e) {
 				var selectedPathway = e.target.value;
@@ -323,6 +338,25 @@
 			});
 
             var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
+
+			var numSamples = samplesGroupsNum[0];
+			var numComparisons = samplesGroupsNum[1];
+			var identifiedColIdx = 5 + numSamples + numComparisons + 1;
+
+			function escapeRegExp(str) {
+			  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+			}
+
+			// http://stackoverflow.com/questions/8609577/jquery-datatables-filter-column-by-exact-match
+			$identificationSelect.on("select2:select", function (e) {
+				var idType = e.target.value;
+				metabolitesTable.column(identifiedColIdx)
+					.search("^" + escapeRegExp(idType) + "$", true, false, true)
+					.draw();
+			}).on("select2:unselect", function (e) {
+				var idType = e.target.value;
+				metabolitesTable.column(identifiedColIdx).search('').draw();
+			});
 
 			var metabolitesTable = set_metabolitestable(metabolites_table_url, samplesGroupsNum);
             $('#metabolites-table tbody').on('click', 'tr', function() {
@@ -799,16 +833,16 @@
 	                name: 'Adj. P-value > 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
-		                			{% if peak.2 > 0.05 %} 
-		                			{ 
+		                			{% if peak.2 > 0.05 %}
+		                			{
 		                				name: 'Peak {{ peak.0 }}',
 		                				x: {{ peak.1  }},
 		                				y: {{ peak.2|minuslogten }},
 		                			}{% if not forloop.last %},{% endif %}
-		                			{% endif %} 
+		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
-		                	] 
+		                	]
 		            },
 		            {
 	                name: 'Adj. P-value &lt; 0.05',
@@ -1919,6 +1953,9 @@
             			<span class="icon-bar"></span>
 					</a>
 					<a class="brand" href="{% url 'index' %}">PiMP</a>
+					<div class="span3" style="margin-top: 10px;">
+						<p style="float:left;">{{ user.first_name }} {{ user.last_name }}</p>
+					</div>
 					<div class="nav-collapse">
 						<ul class="nav">
 							{% if user.is_authenticated %}
@@ -1943,7 +1980,7 @@
 				<div class="row" style="height:65px;">
 					<div class="span3" style="margin-top: 14px;margin-bottom: 5px;">
 						<form class="navbar-search pull-left">
-	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;"> 
+	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;">
 							<img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;">
 						</form>
 					</div>
@@ -1961,8 +1998,12 @@
 							</select>
 						</div>
 					</div>
-					<div class="span3" style="margin-top: 15px;">
-						<p style="float:right;">{{ user.first_name }} {{ user.last_name }}</p>
+					<div class="span3" style="margin-top: 22px;">
+						<div id="metabolites_table_identification_selector_div" style="margin-top: -3px;margin-right: 15px;float: right;width: 200px;display: none;">
+							<select id="metabolites_table_identification_selector">
+								<option></option>
+							</select>
+						</div>
 					</div>
 				</div>
 			</div>
