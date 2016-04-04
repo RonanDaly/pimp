@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.db.models import Count
 # models
 from projects.models import Project
 from data.models import *
@@ -17,6 +18,7 @@ from compound.models import *
 from groups.models import Attribute
 from fileupload.models import Sample, CalibrationSample, Curve
 from frank.models import PimpFrankPeakLink
+from frank.models import Peak as FrankPeak
 # Add on
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
@@ -541,17 +543,25 @@ def get_metabolites_table(request, project_id, analysis_id):
 def get_frank_annotations(peak_ids):
 
     p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id__in = peak_ids).select_related(
-                                'pimp_peak', 'frank_peak', 'frank_peak_preferred_candidate_annotation')
+                                'pimp_peak', 'frank_peak', 
+                                'frank_peak__fragmentation_set', 
+                                'frank_peak__preferred_candidate_annotation')
     frank_annotations = {}
     for p2f in p2fs:
         fset = p2f.frank_peak.fragmentation_set.slug
+
+        # super slow
+        # ms2_peaks_count = FrankPeak.objects.filter(fragmentation_set=p2f.frank_peak.fragmentation_set, msn_level=2).count()
+
         pslug = p2f.frank_peak.slug
-        # TODO: shouldn't write the link inside here !!
-        if p2f.frank_peak.preferred_candidate_annotation:
+        if p2f.frank_peak.preferred_candidate_annotation is not None:
             ac = p2f.frank_peak.preferred_candidate_annotation
+            # TODO: shouldn't write the link inside here !!
             annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
+        # elif ms2_peaks_count > 0:
         else:
             annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + 'Annotate in FrAnK' + '</a>'                
+
         peak = p2f.pimp_peak
         frank_annotations[peak.id] = annot_string
 
@@ -559,7 +569,7 @@ def get_frank_annotations(peak_ids):
 
 def has_frank_annotation(peak_id):
     p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id = peak_id).select_related(
-                                'frank_peak_preferred_candidate_annotation')
+                                'frank_peak__preferred_candidate_annotation')
     found = False
     for p2f in p2fs:
         if p2f.frank_peak.preferred_candidate_annotation:
@@ -591,11 +601,14 @@ def get_metabolite_info(request, project_id, analysis_id):
         # added for frank annotation stuff
         peaks = Peak.objects.filter(dataset=dataset, compound__secondaryId=compound_secondary_id).order_by('secondaryId')
         peak_ids = [peak.id for peak in peaks]
+
+        print "*********** Here1 ***************"
         frank_annotations = get_frank_annotations(peak_ids)
 
         attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
         peaks_data = []
 
+        print "*********** Here2 ***************"
         for peak in peaks:
             rt_str = str(round(peak.rt, 2))
             mass_str = str(round(peak.mass, 4))
