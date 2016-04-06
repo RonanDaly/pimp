@@ -460,7 +460,7 @@ Requires: nloptr
 
 Package: rJava
 Source: PuMP
-Version: 0.9-7
+Version: 0.9-8
 Hash: bf541ef2ee8a6515eba35256566e64cf
 
 Package: reshape2
