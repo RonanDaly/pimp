@@ -558,7 +558,9 @@ def get_metabolite_info(request, project_id, analysis_id):
         peaks_data = []
 
         for peak in peaks:
-            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type)])
+            comp = peak.compound_set.get(secondaryId=compound_secondary_id)
+            # print comp.adduct," ",comp.ppm
+            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type), str(comp.adduct), str(round(comp.ppm, 4))])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
@@ -569,7 +571,7 @@ def get_metabolite_info(request, project_id, analysis_id):
             # peak_data += averages_by_group
             # peaks_data.append(peak_data)
 
-        print peaks_data
+        # print peaks_data
         response = simplejson.dumps({'aaData': peaks_data})
         return HttpResponse(response, content_type='application/json')
 
