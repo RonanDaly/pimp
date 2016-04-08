@@ -7,7 +7,8 @@ import re
 
 # Create your models here.
 class Compound(models.Model):
-    secondaryId = models.IntegerField(null=True, blank=True)
+    # All compounds with the same secondary id are the same compound in a single analysis
+    secondaryId = models.IntegerField(null=True, blank=True, db_index=True)
     peak = models.ForeignKey(Peak)
     formula = models.CharField(max_length=100)
     inchikey = models.CharField(max_length=27, null=True, blank=True)
@@ -48,10 +49,10 @@ class Pathway(models.Model):
         elif id_type == "annotated":
             identified_compounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset_id,
                                                            compoundpathway__pathway__pathway=self).distinct()
-
+            secondaryIdsList = list(identified_compounds.values_list("secondaryId", flat=True))
             compounds = Compound.objects.filter(identified='False', peak__dataset__id=dataset_id,
                                                 compoundpathway__pathway__pathway=self).exclude(
-                secondaryId__in=identified_compounds.values_list("secondaryId", flat=True)).distinct()
+                secondaryId__in=secondaryIdsList).distinct()
 
         else:
             compounds = Compound.objects.filter(peak__dataset__id=dataset_id,
