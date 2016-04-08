@@ -1215,6 +1215,9 @@ def peak_info_peak_id(request, project_id, analysis_id):
             elif len(intensities) == 1:
                 memberInfo = [str(member), intensities[0], None, member_hash[member]]
                 data.append(memberInfo)
+            else:
+                memberInfo = [str(member), 0, None, member_hash[member]]
+                data.append(memberInfo)
         print data
         # PeakQCSample objects for blank samples only
         peakblanksamples = PeakQCSample.objects.filter(peak=peak, sample__attribute__name="blank")
