@@ -585,9 +585,9 @@ def get_peak_table(request, project_id, analysis_id):
         s = Sample.objects.filter(
             attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
-        p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset).distinct().order_by('peak__id',
-                                                                                                  'sample__attribute__id',
-                                                                                                  'sample__id'))
+        p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset)       \
+                                                .select_related('peak', 'sample')   \
+                                                .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
         pp = map(list, zip(*[iter(p)] * s.count()))
         data = [
             [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [
@@ -769,31 +769,37 @@ def analysis_result(request, project_id, analysis_id):
         annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
         list(annotated_peak)
 
-        # for c in comparisons:
-        #
-        #     identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
-        #         peak__in=list(identified_peak)).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
-        #     # list(identified_peakdtcomparisonList)
-        #     annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05).filter(
-        #         peak__in=list(annotated_peak)).extra(select={"absLogFC": "abs(logFC)"}).order_by("-absLogFC").distinct()
-        #     # list(annotated_peakdtcomparisonList)
-        #
-        #     identified_info_list = []
-        #     for identified_compound in identified_peakdtcomparisonList:
-        #         compound_name = list(set(
-        #             RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
-        #                                               compound__identified="True").values_list('compound_name',
-        #                                                                                        flat=True)))
-        #         intensities = get_intensities_values(identified_compound)
-        #         identified_info_list.append([identified_compound, compound_name, intensities])
-        #
-        #     annotated_info_list = []
-        #     for annotated_compound in annotated_peakdtcomparisonList:
-        #         intensities = get_intensities_values(annotated_compound)
-        #         annotated_info_list.append([annotated_compound, intensities])
-        #
-        #     comparison_hits = [identified_info_list, annotated_info_list]
-        #     comparison_hits_list[c] = comparison_hits
+        for c in comparisons:
+        
+            identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)    \
+                                                .filter(peak__in=list(identified_peak))             \
+                                                .extra(select={"absLogFC": "abs(logFC)"})           \
+                                                .select_related('peak', 'comparison')               \
+                                                .order_by("-absLogFC").distinct()
+            # list(identified_peakdtcomparisonList)
+            annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
+                                                .filter(peak__in=list(annotated_peak))              \
+                                                .extra(select={"absLogFC": "abs(logFC)"})           \
+                                                .select_related('peak', 'comparison')               \
+                                                .order_by("-absLogFC").distinct()
+            # list(annotated_peakdtcomparisonList)
+        
+#             identified_info_list = []
+#             for identified_compound in identified_peakdtcomparisonList:
+#                 compound_name = list(set(
+#                     RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
+#                                                       compound__identified="True").values_list('compound_name',
+#                                                                                                flat=True)))
+#                 intensities = get_intensities_values(identified_compound)
+#                 identified_info_list.append([identified_compound, compound_name, intensities])
+#         
+#             annotated_info_list = []
+#             for annotated_compound in annotated_peakdtcomparisonList:
+#                 intensities = get_intensities_values(annotated_compound)
+#                 annotated_info_list.append([annotated_compound, intensities])
+#         
+#             comparison_hits = [identified_info_list, annotated_info_list]
+#             comparison_hits_list[c] = comparison_hits
 
         for c in comparisons:
             comparison_hits_list[c] = []
