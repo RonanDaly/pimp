@@ -43,24 +43,33 @@ class Pathway(models.Model):
     name = models.CharField(max_length=200)
 
     def get_pathway_compounds(self, dataset_id, id_type=None):
+        keggCompounds = RepositoryCompound.objects.filter(db_name='kegg')
         if id_type == "identified":
             compounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset_id,
-                                                compoundpathway__pathway__pathway=self).distinct()
+                                                compoundpathway__pathway__pathway=self).distinct().prefetch_related(
+                                                    models.Prefetch('repositorycompound_set', queryset=keggCompounds,
+                                                        to_attr='kegg_compounds')
+                                                )
         elif id_type == "annotated":
             identified_compounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset_id,
                                                            compoundpathway__pathway__pathway=self).distinct()
             secondaryIdsList = list(identified_compounds.values_list("secondaryId", flat=True))
             compounds = Compound.objects.filter(identified='False', peak__dataset__id=dataset_id,
                                                 compoundpathway__pathway__pathway=self).exclude(
-                secondaryId__in=secondaryIdsList).distinct()
+                secondaryId__in=secondaryIdsList).distinct().prefetch_related(
+                                                models.Prefetch('repositorycompound_set', queryset=keggCompounds,
+                                                        to_attr='kegg_compounds')
+                                                )
 
         else:
             compounds = Compound.objects.filter(peak__dataset__id=dataset_id,
-                                                compoundpathway_pathway_pathway=self).distinct()
+                                                compoundpathway_pathway_pathway=self).distinct().prefetch_related(
+                                                models.Prefetch('repositorycompound_set', queryset=keggCompounds,
+                                                        to_attr='kegg_compounds'))
 
         kegg_compounds = defaultdict(list)
         for compound in compounds:
-            repos_objs = compound.repositorycompound_set.filter(db_name="kegg")
+            repos_objs = compound.kegg_compounds
             if repos_objs:
                 for ro in repos_objs:
                     kegg_compounds[ro.identifier].append(compound.peak_id)
