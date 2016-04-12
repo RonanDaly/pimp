@@ -825,8 +825,12 @@ def analysis_result(request, project_id, analysis_id):
         # print "databases: ",databases
         pathway_start = timeit.default_timer()
 
+        identifiedCompounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset.id)
+
         pathways = Pathway.objects.filter(datasourcesuperpathway__data_source__name="kegg",
-                                          datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).distinct()
+                                          datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).\
+            distinct().prefetch_related(models.Prefetch('datasourcesuperpathway_set__compoundpathway_set__compound',
+                                                        queryset=identifiedCompounds))
         print "pathway : ", len(pathways)
         pathway_list = []
 
