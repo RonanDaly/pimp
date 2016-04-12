@@ -1,0 +1,4 @@
+# Also need to have Graphviz installed
+pygraphviz
+pyparsing==1.5.7
+pydot
