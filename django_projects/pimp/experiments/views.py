@@ -1,5 +1,7 @@
 # Create your views here.
 import itertools
+import logging
+
 from django.shortcuts import render_to_response
 from django.shortcuts import render
 from experiments.models import *
@@ -49,6 +51,7 @@ import timeit
 import pickle
 from django.views.decorators.cache import cache_page
 # from pimp.profiler import profile
+logger = logging.getLogger(__name__)
 
 def experiment(request, project_id):
     class RequiredComparisonFormSet(BaseFormSet):
@@ -437,15 +440,19 @@ def get_metabolites_table(request, project_id, analysis_id):
 
         ac_start = timeit.default_timer()
 
-        # Create a list of the compound objects that are annotated removing all identified
+        logger.info('Creating a list of the compound objects that are annotated removing all identified')
         annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(ic_secondary_ids))
-        # Get the list of secondary Ids of compounds that are annotated only
+        logger.info('Getting the list of secondary Ids of compounds that are annotated only')
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
         new_test_ac_start = timeit.default_timer()
+        logger.info('Getting comparisons')
         test = PeakDtComparison.objects.filter(peak__dataset=dataset, comparison__in=list(comparisons), peak__compound__secondaryId__in=list(ac_secondary_ids), peak__compound__in=list(annotated_compounds)).distinct().order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        logger.info('Getting annotated compound name list')
         annotated_compound_name_list = annotated_compounds.order_by("secondaryId").values_list("id","repositorycompound__db_name","repositorycompound__compound_name").distinct()
+        logger.info('Getting annotated compound pathway list')
         annotated_compound_pathway_list = annotated_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
+        logger.info('Getting super-pathway list')
         pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
 
         superpathway_dict = {}
@@ -519,12 +526,12 @@ def get_metabolites_table(request, project_id, analysis_id):
 
         new_test_ac_stop = timeit.default_timer()
 
-        print "Annotated metabolites processing time: ", str(new_test_ac_stop - new_test_ac_start)
+        logger.info("Annotated metabolites processing time: %s", str(new_test_ac_stop - new_test_ac_start))
 
         response = simplejson.dumps({'aaData': data})
 
         stop = timeit.default_timer()
-        print "metabolite table processing time: ", str(stop - start)
+        logger.info("metabolite table processing time: %s", str(stop - start))
         return HttpResponse(response, content_type='application/json')
 
     else:
@@ -827,8 +834,12 @@ def analysis_result(request, project_id, analysis_id):
         # print "databases: ",databases
         pathway_start = timeit.default_timer()
 
+        identifiedCompounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset.id)
+
         pathways = Pathway.objects.filter(datasourcesuperpathway__data_source__name="kegg",
-                                          datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).distinct()
+                                          datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).\
+            distinct().prefetch_related(models.Prefetch('datasourcesuperpathway_set__compoundpathway_set__compound',
+                                                        queryset=identifiedCompounds))
         print "pathway : ", len(pathways)
         pathway_list = []
 
@@ -1340,18 +1351,18 @@ def get_peaks_from_compound(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-def my_new_view(requet, project_id, analysis_id):
-    if request.is_ajax():
-        peak_id = int(request.GET['id'])
-        ppm = float(request.GET['ppm'])
-        rtWindow = float(request.GET['rtwindow'])
-
-        mass = float(peak.mass)
-        u = robjects.FloatVector([massLow, massUp])
-        mzrange = robjects.r['matrix'](u, ncol=2)
-        w = robjects.FloatVector([rtLow, rtUp])
-        rtrange = robjects.r['matrix'](w, ncol=2)
-        xcms = importr("xcms")
+#def my_new_view(requet, project_id, analysis_id):
+#    if request.is_ajax():
+#        peak_id = int(request.GET['id'])
+#        ppm = float(request.GET['ppm'])
+#        rtWindow = float(request.GET['rtwindow'])
+#
+#        mass = float(peak.mass)
+#        u = robjects.FloatVector([massLow, massUp])
+#        mzrange = robjects.r['matrix'](u, ncol=2)
+#        w = robjects.FloatVector([rtLow, rtUp])
+#        rtrange = robjects.r['matrix'](w, ncol=2)
+#        xcms = importr("xcms")
 
 
 def get_peaks_from_peak_id(request, project_id, analysis_id):
