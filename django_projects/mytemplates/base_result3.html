@@ -243,14 +243,14 @@
 			$('#metabolites_table_super_pathway_selector').select2({
 				placeholder: "Select super pathway",
 				allowClear: true,
-				data: super_pathway_list, 
+				data: super_pathway_list,
 			});
 
 			$('#metabolites_table_pathway_selector').select2({
 				placeholder: "Select pathway",
 				allowClear: true,
 				matcher: modelMatcher,
-				data: pathway_list, 
+				data: pathway_list,
 			});
 
 			var $superPathwaySelect = $("#metabolites_table_super_pathway_selector");
@@ -277,12 +277,12 @@
 					placeholder: "Select pathway",
   					allowClear: true,
   					matcher: modelMatcher,
-  					data: pathway_map[selectedSuperPathway], 
+  					data: pathway_map[selectedSuperPathway],
 				});
 				// $superPathwaySelect.select2({
 				// 	placeholder: "Select super pathway",
 				// 		allowClear: true,
-				// 		data: super_pathway_list, 
+				// 		data: super_pathway_list,
 				// });
 				// $superPathwaySelect.val(selectedSuperPathway).trigger("change");
 
@@ -303,11 +303,11 @@
 					placeholder: "Select pathway",
   					allowClear: true,
   					matcher: modelMatcher,
-  					data: pathway_list, 
+  					data: pathway_list,
 				});
 			});
 
-			
+
 
 			$pathwaySelect.on("select2:select", function (e) {
 				var selectedPathway = e.target.value;
@@ -799,16 +799,16 @@
 	                name: 'Adj. P-value > 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
-		                			{% if peak.2 > 0.05 %} 
-		                			{ 
+		                			{% if peak.2 > 0.05 %}
+		                			{
 		                				name: 'Peak {{ peak.0 }}',
 		                				x: {{ peak.1  }},
 		                				y: {{ peak.2|minuslogten }},
 		                			}{% if not forloop.last %},{% endif %}
-		                			{% endif %} 
+		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
-		                	] 
+		                	]
 		            },
 		            {
 	                name: 'Adj. P-value &lt; 0.05',
@@ -1942,7 +1942,7 @@
 				<div class="row" style="height:65px;">
 					<div class="span3" style="margin-top: 14px;margin-bottom: 5px;">
 						<form class="navbar-search pull-left">
-	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;"> 
+	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;">
 							<img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;">
 						</form>
 					</div>
@@ -2142,7 +2142,7 @@
 
 										{% if comparison_hits.0 and comparison_hits.1 %}
 											{% if comparison_hits.0|length > 10 %}
-												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
+												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing. The 10 most significant hits are displayed below.</p>
 											{% else %}
 												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
 											{% endif %}
@@ -2175,7 +2175,7 @@
 											    </tbody>
 											</table>
 											{% if comparison_hits.1|length > 10 %}
-												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
+												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing. The 10 most significant hits are displayed below. Click 'Show all' to see the 50 most significant hits.</p>
 												<div class="summary_table_container" id="summary_table_container-{{ forloop.counter }}">
 											{% else %}
 												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
@@ -2193,7 +2193,7 @@
 												        </tr>
 												    </thead>
 												    <tbody>
-												    	{% for compound in comparison_hits.1 %}
+												    	{% for compound in comparison_hits.1|slice:":50" %}
 												    	<tr>
 												    		<th class="peak_id" tooltip-append-to-body="true" data-toggle="tooltip" title="Click for compounds" data-container="body">{{ compound.0.peak.secondaryId }}</th>
 												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
