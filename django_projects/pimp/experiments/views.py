@@ -655,6 +655,13 @@ def analysis_result(request, project_id, analysis_id):
         print "sample member hash: ", sample_member_hash
         print "sample list: ", sample_list
 
+        peakdtsample_intensity = {}
+        for sample in s:
+            pdts = sample.peakdtsample_set.select_related('peak', 'sample').all()
+            for pdt in pdts:
+                key = (pdt.peak, pdt.sample)
+                peakdtsample_intensity[key] = pdt.intensity 
+
         # print "Before PPPP2222222"
         # pp = map(list, zip(*[iter(p)]*s.count()))
         # print "After PPPPP222222"
@@ -782,34 +789,36 @@ def analysis_result(request, project_id, analysis_id):
                                                 .filter(peak__in=list(identified_peak))             \
                                                 .extra(select={"absLogFC": "abs(logFC)"})           \
                                                 .select_related('peak', 'comparison')               \
+                                                .prefetch_related('comparison__attribute')       \
                                                 .order_by("-absLogFC").distinct()
             # list(identified_peakdtcomparisonList)
             annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
                                                 .filter(peak__in=list(annotated_peak))              \
                                                 .extra(select={"absLogFC": "abs(logFC)"})           \
                                                 .select_related('peak', 'comparison')               \
+                                                .prefetch_related('comparison__attribute')       \
                                                 .order_by("-absLogFC").distinct()
             # list(annotated_peakdtcomparisonList)
         
-#             identified_info_list = []
-#             for identified_compound in identified_peakdtcomparisonList:
-#                 compound_name = list(set(
-#                     RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
-#                                                       compound__identified="True").values_list('compound_name',
-#                                                                                                flat=True)))
-#                 intensities = get_intensities_values(identified_compound)
-#                 identified_info_list.append([identified_compound, compound_name, intensities])
-#         
-#             annotated_info_list = []
-#             for annotated_compound in annotated_peakdtcomparisonList:
-#                 intensities = get_intensities_values(annotated_compound)
-#                 annotated_info_list.append([annotated_compound, intensities])
-#         
-#             comparison_hits = [identified_info_list, annotated_info_list]
-#             comparison_hits_list[c] = comparison_hits
+            identified_info_list = []
+            for identified_compound in identified_peakdtcomparisonList:
+                compound_name = list(set(
+                    RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
+                                                      compound__identified="True").values_list('compound_name',
+                                                                                               flat=True)))
+                intensities = get_intensities_values(identified_compound, peakdtsample_intensity)
+                identified_info_list.append([identified_compound, compound_name, intensities])
+         
+            annotated_info_list = []
+            for annotated_compound in annotated_peakdtcomparisonList:
+                intensities = get_intensities_values(annotated_compound, peakdtsample_intensity)
+                annotated_info_list.append([annotated_compound, intensities])
+         
+            comparison_hits = [identified_info_list, annotated_info_list]
+            comparison_hits_list[c] = comparison_hits
 
-        for c in comparisons:
-            comparison_hits_list[c] = []
+#         for c in comparisons:
+#             comparison_hits_list[c] = []
 
         print "comparison hits: ",comparison_hits_list
 
@@ -944,20 +953,18 @@ def get_pathway_url(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-def get_intensities_values(peakdtcomparison):
+def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
+
     peak = peakdtcomparison.peak
     comparison = peakdtcomparison.comparison
-
-    member_set = set()
-    member_set = member_set.union(set(comparison.attribute.all()))
-
-    member_list = list(member_set)
+    member_list = list(set(comparison.attribute.all()))
     member_hash = {}
     for member in member_list:
         intensity_list = []
         for sample in member.sample.all():
-            peak_intensity = sample.peakdtsample_set.get(peak=peak)
-            intensity_list.append(peak_intensity.intensity)
+            key = (peak, sample)
+            peak_intensity = peakdtsample_intensity[key]
+            intensity_list.append(peak_intensity)
 
         # print sample.name
         # print peak_intensity.intensity
