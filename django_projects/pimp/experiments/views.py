@@ -824,52 +824,7 @@ def analysis_result(request, project_id, analysis_id):
         databases = map(str, databases)
         # print "databases: ",databases
         pathway_start = timeit.default_timer()
-
-        identifiedCompounds = Compound.objects.filter(identified='True', peak__dataset__id=dataset.id)
-
-        pathways = Pathway.objects.filter(datasourcesuperpathway__data_source__name="kegg",
-                                          datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).\
-            distinct().prefetch_related(models.Prefetch('datasourcesuperpathway_set__compoundpathway_set__compound',
-                                                        queryset=identifiedCompounds))
-        print "pathway : ", len(pathways)
-        pathway_list = []
-
-        for pathway in pathways:
-            identified = pathway.get_pathway_compounds(dataset_id=dataset.id, id_type="identified")
-            annotated = pathway.get_pathway_compounds(dataset_id=dataset.id, id_type="annotated")
-            info = [pathway, len(identified), len(annotated),
-                    round(((len(identified) + len(annotated)) / float(DataSourceSuperPathway.objects.filter(pathway=pathway, data_source__name='kegg').first().compound_number)) * 100, 2),
-                    [identified.keys(), annotated.keys()]]
-
-            # secId = pathway.compound.filter(identified=True).values_list('secondaryId', flat=True).distinct()
-            # secIdannot = pathway.compound.filter(identified=False).exclude(secondaryId__in=secId).values_list('secondaryId', flat=True).distinct()
-            # da = pathway.compound.filter(identified=True, repositorycompound__db_name='kegg').values_list('repositorycompound__identifier',flat=True).distinct()
-            # d = pathway.compound.filter(identified=False, repositorycompound__db_name='kegg').exclude(secondaryId__in=secId).values_list('repositorycompound__identifier',flat=True).distinct()
-            # info = [pathway, len(da), len(secIdannot), round(((len(secId)+len(secIdannot))*100)/float(pathway.compoundNumber),2),[da,d]]
-            pathway_list.append(info)
-
-        # for pathway in pathways[:100]:
-        # 	all_compounds = pathway.compound.all()
-        # 	identified = 0
-        # 	annotated = 0
-        # 	identified_kegg_id = []
-        # 	annotated_kegg_id = []
-        # 	distinct_compound = set([c.secondaryId for c in all_compounds])
-        # 	for secondary_compound_id in distinct_compound:
-        # 		if "True" in pathway.compound.filter(secondaryId=secondary_compound_id).values_list('identified', flat=True):
-        # 			identified += 1
-        # 			compounds_list = pathway.compound.filter(secondaryId=secondary_compound_id)
-        # 			tmp_id_list = RepositoryCompound.objects.filter(compound=compounds_list).filter(db_name='kegg').values_list('identifier',flat=True)
-        # 			identified_kegg_id = identified_kegg_id + list(tmp_id_list)
-        # 		else:
-        # 			annotated += 1
-        # 			compounds_list = pathway.compound.filter(secondaryId=secondary_compound_id)
-        # 			tmp_id_list = RepositoryCompound.objects.filter(compound=compounds_list).filter(db_name='kegg').values_list('identifier',flat=True)
-        # 			annotated_kegg_id = annotated_kegg_id + list(tmp_id_list)
-        # 	coverage = round(((annotated+identified)*100)/float(pathway.compoundNumber),2)
-        # 	info = [pathway,identified,annotated,coverage,[list(set(identified_kegg_id)),list(set(annotated_kegg_id))]]
-        # 	pathway_list.append(info)
-        # print "pathway len ",len(pathway_list)
+        pathway_list = Pathway.get_pathway_compounds_for_dataset(dataset)
         pathway_stop = timeit.default_timer()
         # print "pathway list ",pathway_list[0]
         # print "compound number ",pathway_list[0][0].compoundNumber
