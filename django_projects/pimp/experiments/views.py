@@ -845,16 +845,16 @@ def analysis_result(request, project_id, analysis_id):
         comparison_info = []
         for comparison in comparisons:
             peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
-            print peak_comparison_info.count()
+            logger.info('peak_comparison_info: %d', peak_comparison_info.count())
             comparison_info.append([comparison,peak_comparison_info])
         new_query_stop = timeit.default_timer()
-        print "new comparison info list : ", str(new_query_stop - new_query_start)
+        logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
 
         new_comp_query_start = timeit.default_timer()
         all_comparison_info_query = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list).values_list('peak__secondaryId','logFC','adjPvalue').order_by('peak__secondaryId','comparison__id').distinct()
         all_comparison_info = zip(*[iter(all_comparison_info_query)]*comparisons.count())
         new_comp_query_stop = timeit.default_timer()
-        print "all comparison info list : ", str(new_comp_query_stop - new_comp_query_start)
+        logger.info("all comparison info list : %s", str(new_comp_query_stop - new_comp_query_start))
 
         ##potetial hits that can't do statistics on.
         potential_hits = []
@@ -868,31 +868,28 @@ def analysis_result(request, project_id, analysis_id):
         #  			if peak._minimum_intensities_present(groups[0].sample.all()) or peak._minimum_intensities_present(groups[1].sample.all()):
         # 				potential_hits.append([peak.id, peak.mass, peak.rt, groups[0].name + " / " + groups[1].name])
 
-        super_pathways = DataSourceSuperPathway.objects.all().values_list('super_pathway', flat=True).distinct()
-
+        super_pathways = SuperPathway.objects.all().prefetch_related('datasourcesuperpathway_set__pathway')
         super_pathways_list = []
         for i in super_pathways:
             single_super_pathway_list = []
             pathway_name_list = []
-            if i is None:
-                single_super_pathway_list.append(None)
-            else:
-                single_super_pathway_list.append(SuperPathway.objects.get(pk=i).name)
-
-            for i2 in DataSourceSuperPathway.objects.filter(super_pathway=i):
+            single_super_pathway_list.append(i.name)
+            for i2 in i.datasourcesuperpathway_set.all():
                 pathway_name_list.append(i2.pathway.name)
-                # print "\t", i2.pathway.name
             single_super_pathway_list.append(pathway_name_list)
             super_pathways_list.append(single_super_pathway_list)
+        pathway_name_list = []
+        for i in DataSourceSuperPathway.objects.filter(super_pathway=None).prefetch_related('pathway'):
+            pathway_name_list.append(i.pathway.name)
+        super_pathways_list.append([None, pathway_name_list])
 
-
-        print "apres comparison peak machin chose"
+        logger.info("apres comparison peak machin chose")
         stop = timeit.default_timer()
 
-        print "processing time : ", str(stop - start)
-        print "pca generation : ", str(pca_stop - pca_start)
-        print "comp time: ", str(comp_stop - comp_start)
-        print "pathway time", str(pathway_stop - pathway_start)
+        logger.info("processing time : %s", str(stop - start))
+        logger.info("pca generation : %s", str(pca_stop - pca_start))
+        logger.info("comp time: %s", str(comp_stop - comp_start))
+        logger.info("pathway time: %s", str(pathway_stop - pathway_start))
         # print intensity_list
         # print intensity_list[0]
 
@@ -925,7 +922,7 @@ def analysis_result(request, project_id, analysis_id):
         rendering_start = timeit.default_timer()
         rendering = render(request, 'base_result3.html', c)
         rendering_stop = timeit.default_timer()
-        print "rendering time", str(rendering_stop - rendering_start)
+        logger.info("rendering time: %s", str(rendering_stop - rendering_start))
         return rendering
 
 
