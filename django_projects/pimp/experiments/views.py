@@ -137,15 +137,15 @@ def experiment(request, project_id):
         ################### DEBUG ############################################
         # print "something"
         # if experiment_form.is_valid():
-        # 	print "experiment form is valid"
+        #     print "experiment form is valid"
         # if parameter_formset.is_valid():
-        # 	print "parameter form is valid"
+        #     print "parameter form is valid"
         # if comparison_formset.is_valid():
-        # 	print "comparison form is valid"
+        #     print "comparison form is valid"
 
         # for form in comparison_formset.forms:
-        # 	for field in form:
-        # 		print field.errors
+        #     for field in form:
+        #         print field.errors
         print "experiment form"
         print experiment_form.is_valid()
         print "parameter "
@@ -165,12 +165,12 @@ def experiment(request, project_id):
                 dictio = form.cleaned_data
                 ################ DEBUG ##################
                 # if len(dictio.keys()) == 0 :
-                # 	print "HHHHHHHHHHHHHHHH"
-                # 	# print form.cleaned_data['value']
+                #     print "HHHHHHHHHHHHHHHH"
+                #     # print form.cleaned_data['value']
                 # else :
-                # 	print "value = ",form.cleaned_data['value']
-                # 	print "state = ",form.cleaned_data['state']
-                # 	print "name = ",form.cleaned_data['name']
+                #     print "value = ",form.cleaned_data['value']
+                #     print "state = ",form.cleaned_data['state']
+                #     print "name = ",form.cleaned_data['name']
                 ############### END DEBUG ################
                 value = form.cleaned_data['value']
                 state = form.cleaned_data['state']
@@ -195,15 +195,15 @@ def experiment(request, project_id):
             # if form.cleaned_data['state']:
             # print form.cleaned_data['state']
             # else:
-            # 	print "parameter form is NOT valid!"
-            # 	print "errors : ",form.errors
+            #     print "parameter form is NOT valid!"
+            #     print "errors : ",form.errors
             # print
             # print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
             # print "parameter formset : ",parameter_formset
             # print
             databases_ids = database_form.cleaned_data['databases']
             for db_id in databases_ids:
-            	params.databases.add(db_id)
+                params.databases.add(db_id)
 
             print "after databases added"
 
@@ -252,28 +252,28 @@ def experiment(request, project_id):
 
 
 # def create_dataset(request, project_id, experiment_id):
-# 	if request.method == 'GET':
-# 		experiment = Experiment.objects.get(pk=experiment_id)
-# 		print experiment.dataset_set.all()
-# 		project = Project.objects.get(pk=project_id)
-# 		print "PROUTi prouta"
-# 		sourceFile = '/Users/yoanngloaguen/Documents/ideomWebSite/static/temp.xlsx'
-# 		book = xlrd.open_workbook(sourceFile)
-# 		print "sheet number : ",book.nsheets
-# 		rawData = book.sheet_by_index(0)
-# 		sampleNb = rawData.ncols-23
-# 		dtSamples = []
-# 		for i in range(3,3+sampleNb):
-# 			print rawData.cell_value(rowx=0,colx=i)
-# 			dt_sample_name = rawData.cell_value(rowx=0,colx=i)
-# 			sample = Sample.objects.filter(project__id=project.id,name=dt_sample_name+str(".mzXML"))[0]
-# 			print Sample.objects.filter(project__id=project.id,name=dt_sample_name+str(".mzXML"))[0]
-# 		return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+#     if request.method == 'GET':
+#         experiment = Experiment.objects.get(pk=experiment_id)
+#         print experiment.dataset_set.all()
+#         project = Project.objects.get(pk=project_id)
+#         print "PROUTi prouta"
+#         sourceFile = '/Users/yoanngloaguen/Documents/ideomWebSite/static/temp.xlsx'
+#         book = xlrd.open_workbook(sourceFile)
+#         print "sheet number : ",book.nsheets
+#         rawData = book.sheet_by_index(0)
+#         sampleNb = rawData.ncols-23
+#         dtSamples = []
+#         for i in range(3,3+sampleNb):
+#             print rawData.cell_value(rowx=0,colx=i)
+#             dt_sample_name = rawData.cell_value(rowx=0,colx=i)
+#             sample = Sample.objects.filter(project__id=project.id,name=dt_sample_name+str(".mzXML"))[0]
+#             print Sample.objects.filter(project__id=project.id,name=dt_sample_name+str(".mzXML"))[0]
+#         return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
 
 # def createdataset(request, file_path):
-# 	pimpXmlFile = file_path
-# 	xmltree = Xmltree(pimpXmlFile)
-# 	print len(xmltree.allPeaks())
+#     pimpXmlFile = file_path
+#     xmltree = Xmltree(pimpXmlFile)
+#     print len(xmltree.allPeaks())
 
 def start_analysis(request, project_id):
     # base = importr('base')
@@ -612,297 +612,85 @@ def get_peak_table(request, project_id, analysis_id):
 @login_required
 # @profile("analysis_result.prof")
 def analysis_result(request, project_id, analysis_id):
+    
     if request.method == 'GET':
+
         try:
             project = Project.objects.get(pk=project_id)
             analysis = Analysis.objects.get(pk=analysis_id)
-            user = request.user
-            permission = project.userproject_set.get(user=user).permission
         except Project.DoesNotExist:
             raise Http404
+
         start = timeit.default_timer()
+        
         comparisons = analysis.experiment.comparison_set.all().order_by('id')
         list(comparisons)
-        # print comparisons
         dataset = analysis.dataset_set.all()[0]
-        print "dataset id: ",dataset.id
-        compounds = Compound.objects.filter(peak__dataset=dataset)
-        print dataset
-        ######## Old query for members ########
-        # member_set = set()
-        # for comparison in comparisons:
-        # 	member_set = member_set.union(set(comparison.attribute.all()))
-        # member_list = list(member_set)
-        ######## New query for members ########
-        print "before SSSSSSSSS"
-        s = Sample.objects.filter(
-            attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
-            'attribute__id', 'id')
-        print "After SSSSSS before PPPPPPPP"
-        # p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset).distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
-        # print "len p:"
-        # print len(p) #154368
-        # print "After PPPPPPPP"
-        member_list = list(Attribute.objects.filter(comparison=comparisons).distinct().order_by('id'))
+        logger.info('dataset id: %d', dataset.id)
+        logger.info('dataset %s', dataset)
 
-        print "member list: ", member_list
-        sample_member_hash = {}
-        sample_list = []
-        for member in member_list:
-            sample_list.append(list(member.sample.all().order_by('id')))
-            for sample in member.sample.all():
-                sample_member_hash[sample] = member_list.index(member)
-        print "sample member hash: ", sample_member_hash
-        print "sample list: ", sample_list
+        ############################# Samples & attributes ##############################
+        logger.info("Samples -- START")
+        s, member_list, sample_list = get_samples_and_attributes(comparisons)
+        logger.info("Samples -- END")
 
-        peakdtsample_intensity = {}
-        for sample in s:
-            pdts = sample.peakdtsample_set.select_related('peak', 'sample').all()
-            for pdt in pdts:
-                key = (pdt.peak, pdt.sample)
-                peakdtsample_intensity[key] = pdt.intensity 
-
-        # print "Before PPPP2222222"
-        # pp = map(list, zip(*[iter(p)]*s.count()))
-        # print "After PPPPP222222"
-        # peak_set = dataset.peak_set.all()
-        # peak_table = {}
-        # databases = []
-        # pca_table = []
-        # for peak in peak_set:
-        # 	intensity_list = [[None]*len(samples) for samples in sample_list]#len(member_list)
-        # 	for peak_dt_sample in peak.peakdtsample_set.all():
-        # 		i = sample_member_hash[peak_dt_sample.sample]
-        # 		print i
-        # 		# print sample_list[i]
-        # 		# print type(sample_list[i])
-        # 		j = sample_list[i].index(peak_dt_sample.sample)
-        # 		intensity_list[i][j] = peak_dt_sample
-        # 	peak_table[peak] = intensity_list
-        # 	pca_table.append([item.intensity for sublist in intensity_list for item in sublist])
-        # if peak.secondaryId == 100:
-        # 	break
-
-
-        databases = RepositoryCompound.objects.filter(compound__peak__dataset=dataset).values_list('db_name',
-                                                                                                   flat=True).distinct()
-
-        print ("hah avant pca")
-
-        ############################################################################
         ############################# PCA calculation ##############################
-        ############################################################################
+        logger.info("PCA -- START")
         pca_start = timeit.default_timer()
-        pca_table = []
-        for sample in s:
-            pca_table.append(
-                PeakDTSample.objects.filter(sample=sample, peak__dataset__analysis=analysis).distinct().order_by(
-                    'peak__id').values_list('intensity', flat=True))
-
-        pca_matrix = np.array(pca_table)
-        # pca_table = np.array(pca_table)
-        # pca_matrix = pca_table.T
-        # print "pca_table :",pca_matrix
-        index_of_zero = np.where(pca_matrix == 0)[1]
-        # print "len pca matrix 1 :", len(pca_matrix[0])
-        # print "index_of_zero : ",index_of_zero
-        pca_matrix = np.delete(pca_matrix, index_of_zero, 1)
-        # print "after delete : ",np.where(pca_matrix == 0)[1]
-        log_pca_matrix = np.log2(pca_matrix)
-
-
-        pca_obj = PCA(n_components=2,whiten=False)
-        pca_obj.fit(log_pca_matrix)
-        projected_data = pca_obj.transform(log_pca_matrix)
-        explained_variance = []
-        for i in range(2):
-            explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
-
-        # print "len pca matrix 1 :", pca_matrix[0][0]
-        # print "len log pca matrix 1 :", log_pca_matrix[0][0]
-        # for yty in log_pca_matrix[0]:
-        # 	print yty
-        # pcan = mdp.nodes.PCANode(output_dim=3, svd=True)
-        # pcar = pcan.execute(log_pca_matrix)
-
-
-        # print "pcar ",pcar
-        # print "pcan ",pcan.d[0],"  ",pcan.d[1]
-        # print "pcan again",pcan.d
-        # print "explained variance : ",pcan.explained_variance
-        # nr, nc = log_pca_matrix.shape
-        # xvec = robjects.FloatVector(log_pca_matrix.transpose().reshape((log_pca_matrix.size)))
-        # xr = robjects.r.matrix(xvec, nrow=nr, ncol=nc)
-        # stats = importr('stats', robject_translations={'format_perc': '_format_perc'})
-        # pca = stats.prcomp(xr)
-
-        # first_dim = list(pca.rx2['x'].rx(True, 1))
-        # second_dim = list(pca.rx2['x'].rx(True, 2))
-
-        # pca_info = [pcan.d[0],pcan.d[1]]
-        pca_info = [None, None]
-        pca_data_point = []
-        i = 0
-        j = 0
-
-
-        for member in sample_list:
-            pca_serie = [member_list[j].name]
-            for sample in member:
-                dic = []
-                dic.append(sample.name)
-                # dic.append(pcar[i][0])
-                # dic.append(first_dim[i])
-                # dic.append(second_dim[i])
-                # dic.append(pca_obj.components_[0,i])
-                # dic.append(pca_obj.components_[1,i])
-                dic.append(projected_data[i,0])
-                dic.append(projected_data[i,1])
-                # dic.append(pcar[i][1])
-                pca_serie.append(dic)
-                i += 1
-            pca_data_point.append(pca_serie)
-            j += 1
-        pca_info.append(pca_data_point)
-
-        print "after pca"
+        pca_info, explained_variance = get_pca(analysis, s, sample_list, member_list)
         pca_stop = timeit.default_timer()
-
-        print "pca_series: ",pca_data_point
-        ############################################################################
-        ########################## End PCA calculation #############################
-        ############################################################################
-
-        ############################################################################
+        logger.info("PCA -- END")
+        
         ########################## Best hits comparison ############################
-        ############################################################################
+        logger.info("Best hits comparison -- START")
         comp_start = timeit.default_timer()
-        comparison_hits_list = {}
-        identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
-        # list(identified_peak)
-        annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
-        list(annotated_peak)
-
-        for c in comparisons:
-        
-            identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)    \
-                                                .filter(peak__in=list(identified_peak))             \
-                                                .extra(select={"absLogFC": "abs(logFC)"})           \
-                                                .select_related('peak', 'comparison')               \
-                                                .prefetch_related('comparison__attribute')       \
-                                                .order_by("-absLogFC").distinct()
-            # list(identified_peakdtcomparisonList)
-            annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
-                                                .filter(peak__in=list(annotated_peak))              \
-                                                .extra(select={"absLogFC": "abs(logFC)"})           \
-                                                .select_related('peak', 'comparison')               \
-                                                .prefetch_related('comparison__attribute')       \
-                                                .order_by("-absLogFC").distinct()
-            # list(annotated_peakdtcomparisonList)
-        
-            identified_info_list = []
-            for identified_compound in identified_peakdtcomparisonList:
-                compound_name = list(set(
-                    RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
-                                                      compound__identified="True").values_list('compound_name',
-                                                                                               flat=True)))
-                intensities = get_intensities_values(identified_compound, peakdtsample_intensity)
-                identified_info_list.append([identified_compound, compound_name, intensities])
-         
-            annotated_info_list = []
-            for annotated_compound in annotated_peakdtcomparisonList:
-                intensities = get_intensities_values(annotated_compound, peakdtsample_intensity)
-                annotated_info_list.append([annotated_compound, intensities])
-         
-            comparison_hits = [identified_info_list, annotated_info_list]
-            comparison_hits_list[c] = comparison_hits
-
-#         for c in comparisons:
-#             comparison_hits_list[c] = []
-
-        print "comparison hits: ",comparison_hits_list
-
+        comparison_hits_list = get_best_hits_comparison(dataset, comparisons, s)
         comp_stop = timeit.default_timer()
+        logger.info("comparison hits", comparison_hits_list)
+        logger.info("Best hits comparison -- END")
 
-        ############################################################################
-        ######################## End Best hits comparison ##########################
-        ############################################################################
-
-
-        # databases.sort()
+        ############################# Databases ##############################
+        logger.info("Databases -- START")
+        databases = RepositoryCompound.objects.filter(compound__peak__dataset=dataset) \
+                        .values_list('db_name', flat=True).distinct()
         databases = map(str, databases)
-        # print "databases: ",databases
+        logger.info("Databases -- END")
+
+        ############################# Pathway ##############################
+        logger.info("Pathway -- START")
         pathway_start = timeit.default_timer()
         pathway_list = Pathway.get_pathway_compounds_for_dataset(dataset)
         pathway_stop = timeit.default_timer()
-        # print "pathway list ",pathway_list[0]
-        # print "compound number ",pathway_list[0][0].compoundNumber
+        logger.info("Pathway -- STOP")
 
-        peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison__in=list(comparisons),
-                                                   dataset=dataset).distinct()
+        ############################# Comparison info list ##############################
+        logger.info("Comparison info list -- START")
+        peak_comparison_list, comparison_info, all_comparison_info = get_comparison_info_list(dataset, comparisons)
+        logger.info("Comparison info list -- END")
 
-        new_query_start = timeit.default_timer()
-        comparison_info = []
-        for comparison in comparisons:
-            peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
-            logger.info('peak_comparison_info: %d', peak_comparison_info.count())
-            comparison_info.append([comparison,peak_comparison_info])
-        new_query_stop = timeit.default_timer()
-        logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
+        ############################# Potential hits ##############################
+        logger.info("Potential hits -- START")
+        potential_hits = get_potential_hits(analysis, comparisons) # potetial hits that can't do statistics on.
+        logger.info("Potential hits -- END")
 
-        new_comp_query_start = timeit.default_timer()
-        all_comparison_info_query = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list).values_list('peak__secondaryId','logFC','adjPvalue').order_by('peak__secondaryId','comparison__id').distinct()
-        all_comparison_info = zip(*[iter(all_comparison_info_query)]*comparisons.count())
-        new_comp_query_stop = timeit.default_timer()
-        logger.info("all comparison info list : %s", str(new_comp_query_stop - new_comp_query_start))
+        ############################# Super Pathway ##############################
+        logger.info("Super Pathway -- START")
+        super_pathways_list = get_superpathway()
+        logger.info("Super Pathway -- START")
 
-        ##potetial hits that can't do statistics on.
-        potential_hits = []
-        # peaks = Peak.objects.filter(dataset__analysis=analysis)
-        # for peak in peaks:
-        #  	peak_comparisons = peak.peakdtcomparison_set.all()
-        #  	if len(peak_comparisons) < len(comparisons): ##number of comparisons
-        #  		missing_comparisons = comparisons.exclude(id__in=peak.peakdtcomparison_set.values_list("comparison_id"))
-        #  		for comparison in missing_comparisons:
-        #  			groups = comparison.attribute.all()
-        #  			if peak._minimum_intensities_present(groups[0].sample.all()) or peak._minimum_intensities_present(groups[1].sample.all()):
-        # 				potential_hits.append([peak.id, peak.mass, peak.rt, groups[0].name + " / " + groups[1].name])
-
-        super_pathways = SuperPathway.objects.all().prefetch_related('datasourcesuperpathway_set__pathway')
-        super_pathways_list = []
-        for i in super_pathways:
-            single_super_pathway_list = []
-            pathway_name_list = []
-            single_super_pathway_list.append(i.name)
-            for i2 in i.datasourcesuperpathway_set.all():
-                pathway_name_list.append(i2.pathway.name)
-            single_super_pathway_list.append(pathway_name_list)
-            super_pathways_list.append(single_super_pathway_list)
-        pathway_name_list = []
-        for i in DataSourceSuperPathway.objects.filter(super_pathway=None).prefetch_related('pathway'):
-            pathway_name_list.append(i.pathway.name)
-        super_pathways_list.append([None, pathway_name_list])
-
-        logger.info("apres comparison peak machin chose")
         stop = timeit.default_timer()
-
         logger.info("processing time : %s", str(stop - start))
         logger.info("pca generation : %s", str(pca_stop - pca_start))
         logger.info("comp time: %s", str(comp_stop - comp_start))
         logger.info("pathway time: %s", str(pathway_stop - pathway_start))
-        # print intensity_list
-        # print intensity_list[0]
 
         logger.info('Starting TIC creation')
         tic_start = timeit.default_timer()
         tics = create_member_tics(comparisons)
         tic_stop = timeit.default_timer()
         logger.info('TIC creation time: %.2f', tic_stop - tic_start)
-        # Get the TICs
-        #tics = {}
-        #for attribute in member_list:
-        #    tics[attribute] = create_member_tic(attribute.id)
 
+        # populate in the request context
         c = {'member_list': member_list,
              'sample_list': sample_list,
              'pathway_list': pathway_list,
@@ -910,8 +698,6 @@ def analysis_result(request, project_id, analysis_id):
              'dataset': dataset,
              'comparison_info': comparison_info,
              'all_comparison_info': all_comparison_info,
-             # 'peak_table': pp,
-             # 'compounds': compounds,
              'project': project,
              'analysis': analysis,
              'peak_comparison_list': peak_comparison_list,
@@ -930,7 +716,6 @@ def analysis_result(request, project_id, analysis_id):
         rendering_stop = timeit.default_timer()
         logger.info("rendering time: %s", str(rendering_stop - rendering_start))
         return rendering
-
 
 def get_pathway_url(request, project_id, analysis_id):
     if request.is_ajax():
@@ -955,6 +740,125 @@ def get_pathway_url(request, project_id, analysis_id):
 
         return HttpResponse(response, content_type='application/json')
 
+def get_samples_and_attributes(comparisons):
+    
+    ######## Old query for members ########
+    # member_set = set()
+    # for comparison in comparisons:
+    #     member_set = member_set.union(set(comparison.attribute.all()))
+    # member_list = list(member_set)    
+    
+    ######## New query for members ########
+    logger.info('Query Samples -- START')
+    s = Sample.objects.filter(
+        attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
+        'attribute__id', 'id')
+    logger.info('Query Samples -- END')
+
+    member_list = list(Attribute.objects.filter(comparison=comparisons).distinct().order_by('id'))
+    logger.info('Member list: %s' % member_list)
+    
+    sample_member_hash = {}
+    sample_list = []
+    for member in member_list:
+        sample_list.append(list(member.sample.all().order_by('id')))
+        for sample in member.sample.all():
+            sample_member_hash[sample] = member_list.index(member)
+    logger.info("sample member hash: %s", sample_member_hash)
+    logger.info("sample list: %s", sample_list)
+    
+    return s, member_list, sample_list
+
+def get_pca(analysis, s, sample_list, member_list):
+    
+    pca_table = []
+    for sample in s:
+        pca_table.append(
+            PeakDTSample.objects.filter(sample=sample, peak__dataset__analysis=analysis).distinct().order_by(
+                'peak__id').values_list('intensity', flat=True))
+
+    pca_matrix = np.array(pca_table)
+    index_of_zero = np.where(pca_matrix == 0)[1]
+    pca_matrix = np.delete(pca_matrix, index_of_zero, 1)
+    log_pca_matrix = np.log2(pca_matrix)
+
+    pca_obj = PCA(n_components=2,whiten=False)
+    pca_obj.fit(log_pca_matrix)
+    projected_data = pca_obj.transform(log_pca_matrix)
+    explained_variance = []
+    for i in range(2):
+        explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
+
+    pca_info = [None, None]
+    pca_data_point = []
+    i = 0
+    j = 0
+
+    for member in sample_list:
+        pca_serie = [member_list[j].name]
+        for sample in member:
+            dic = []
+            dic.append(sample.name)
+            dic.append(projected_data[i,0])
+            dic.append(projected_data[i,1])
+            pca_serie.append(dic)
+            i += 1
+        pca_data_point.append(pca_serie)
+        j += 1
+    pca_info.append(pca_data_point)
+    logger.info("pca_series: %s", pca_data_point)    
+    
+    return pca_info, explained_variance
+
+def get_best_hits_comparison(dataset, comparisons, s):
+    
+    # cache peakdt sample intensity values for use later
+    peakdtsample_intensity = {}
+    for sample in s:
+        pdts = sample.peakdtsample_set.select_related('peak', 'sample').all()
+        for pdt in pdts:
+            key = (pdt.peak, pdt.sample)
+            peakdtsample_intensity[key] = pdt.intensity 
+    logger.info("len(peakdtsample_intensity): %d", len(peakdtsample_intensity))    
+    
+    comparison_hits_list = {}
+    identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
+    annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
+    list(annotated_peak)
+
+    for c in comparisons:
+    
+        identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)    \
+                                            .filter(peak__in=list(identified_peak))             \
+                                            .extra(select={"absLogFC": "abs(logFC)"})           \
+                                            .select_related('peak', 'comparison')               \
+                                            .prefetch_related('comparison__attribute')          \
+                                            .order_by("-absLogFC").distinct()
+        annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
+                                            .filter(peak__in=list(annotated_peak))              \
+                                            .extra(select={"absLogFC": "abs(logFC)"})           \
+                                            .select_related('peak', 'comparison')               \
+                                            .prefetch_related('comparison__attribute')          \
+                                            .order_by("-absLogFC").distinct()
+    
+        identified_info_list = []
+        for identified_compound in identified_peakdtcomparisonList:
+            compound_name = list(set(
+                RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
+                                                  compound__identified="True").values_list('compound_name',
+                                                                                           flat=True)))
+            intensities = get_intensities_values(identified_compound, peakdtsample_intensity)
+            identified_info_list.append([identified_compound, compound_name, intensities])
+     
+        annotated_info_list = []
+        for annotated_compound in annotated_peakdtcomparisonList:
+            intensities = get_intensities_values(annotated_compound, peakdtsample_intensity)
+            annotated_info_list.append([annotated_compound, intensities])
+     
+        comparison_hits = [identified_info_list, annotated_info_list]
+        comparison_hits_list[c] = comparison_hits
+        
+    return comparison_hits_list
 
 def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
 
@@ -987,6 +891,58 @@ def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
     # print "data : ",data
     return data
 
+def get_comparison_info_list(dataset, comparisons):
+    
+    peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison__in=list(comparisons),
+                                               dataset=dataset).distinct()
+    new_query_start = timeit.default_timer()
+    comparison_info = []
+    for comparison in comparisons:
+        peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
+        logger.info('peak_comparison_info: %d', peak_comparison_info.count())
+        comparison_info.append([comparison,peak_comparison_info])
+    new_query_stop = timeit.default_timer()
+    logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
+
+    new_comp_query_start = timeit.default_timer()
+    all_comparison_info_query = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list).values_list('peak__secondaryId','logFC','adjPvalue').order_by('peak__secondaryId','comparison__id').distinct()
+    all_comparison_info = zip(*[iter(all_comparison_info_query)]*comparisons.count())
+    new_comp_query_stop = timeit.default_timer()
+    logger.info("all comparison info list : %s", str(new_comp_query_stop - new_comp_query_start))
+
+    return peak_comparison_list, comparison_info, all_comparison_info
+
+def get_potential_hits(analysis, comparisons):
+    
+    potential_hits = []
+#     peaks = Peak.objects.filter(dataset__analysis=analysis)
+#     for peak in peaks:
+#          peak_comparisons = peak.peakdtcomparison_set.all()
+#          if len(peak_comparisons) < len(comparisons): ##number of comparisons
+#              missing_comparisons = comparisons.exclude(id__in=peak.peakdtcomparison_set.values_list("comparison_id"))
+#              for comparison in missing_comparisons:
+#                  groups = comparison.attribute.all()
+#                  if peak._minimum_intensities_present(groups[0].sample.all()) or peak._minimum_intensities_present(groups[1].sample.all()):
+#                     potential_hits.append([peak.id, peak.mass, peak.rt, groups[0].name + " / " + groups[1].name])
+    return potential_hits
+
+def get_superpathway():
+    
+    super_pathways = SuperPathway.objects.all().prefetch_related('datasourcesuperpathway_set__pathway')
+    super_pathways_list = []
+    for i in super_pathways:
+        single_super_pathway_list = []
+        pathway_name_list = []
+        single_super_pathway_list.append(i.name)
+        for i2 in i.datasourcesuperpathway_set.all():
+            pathway_name_list.append(i2.pathway.name)
+        single_super_pathway_list.append(pathway_name_list)
+        super_pathways_list.append(single_super_pathway_list)
+    pathway_name_list = []
+    for i in DataSourceSuperPathway.objects.filter(super_pathway=None).prefetch_related('pathway'):
+        pathway_name_list.append(i.pathway.name)
+    super_pathways_list.append([None, pathway_name_list])
+    return super_pathways_list
 
 def get_metexplore_info(request, project_id, analysis_id):
     if request.is_ajax():
@@ -1534,14 +1490,14 @@ def create_member_tics(comparisons):
         # print attributeResponse
         # ++++++++++++++++++++++++++++++++++++++ Previous version of group tic creation ++++++++++++++++++++++++++++++++++++++
         # if not Attribute.objects.get(id=attribute_id).ticgroup.postic :
-        # 	posticfile = "None"
+        #     posticfile = "None"
         # else:
-        # 	posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
-        # 	# print posticfile
+        #     posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
+        #     # print posticfile
         # if not Attribute.objects.get(id=attribute_id).ticgroup.negtic :
-        # 	negticfile = "None"
+        #     negticfile = "None"
         # else:
-        # 	negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
+        #     negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
         # fileList = [attribute_name,posticfile,negticfile]
         # attributeResponse = [attribute_name, sampleCurveList]
         tics[attribute] = sampleCurveList
@@ -1639,14 +1595,14 @@ def create_member_tic(attribute_id):
     # print attributeResponse
     # ++++++++++++++++++++++++++++++++++++++ Previous version of group tic creation ++++++++++++++++++++++++++++++++++++++
     # if not Attribute.objects.get(id=attribute_id).ticgroup.postic :
-    # 	posticfile = "None"
+    #     posticfile = "None"
     # else:
-    # 	posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
-    # 	# print posticfile
+    #     posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
+    #     # print posticfile
     # if not Attribute.objects.get(id=attribute_id).ticgroup.negtic :
-    # 	negticfile = "None"
+    #     negticfile = "None"
     # else:
-    # 	negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
+    #     negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
     # fileList = [attribute_name,posticfile,negticfile]
     # attributeResponse = [attribute_name, sampleCurveList]
     return sampleCurveList
