@@ -661,7 +661,7 @@ def analysis_result(request, project_id, analysis_id):
         pathway_start = timeit.default_timer()
         pathway_list = Pathway.get_pathway_compounds_for_dataset(dataset)
         pathway_stop = timeit.default_timer()
-        logger.info("Pathway -- STOP")
+        logger.info("Pathway -- END")
 
         ############################# Comparison info list ##############################
         logger.info("Comparison info list -- START")
@@ -676,7 +676,7 @@ def analysis_result(request, project_id, analysis_id):
         ############################# Super Pathway ##############################
         logger.info("Super Pathway -- START")
         super_pathways_list = get_superpathway()
-        logger.info("Super Pathway -- START")
+        logger.info("Super Pathway -- END")
 
         stop = timeit.default_timer()
         logger.info("processing time : %s", str(stop - start))
@@ -749,11 +749,9 @@ def get_samples_and_attributes(comparisons):
     # member_list = list(member_set)    
     
     ######## New query for members ########
-    logger.info('Query Samples -- START')
     s = Sample.objects.filter(
         attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
         'attribute__id', 'id')
-    logger.info('Query Samples -- END')
 
     member_list = list(Attribute.objects.filter(comparison=comparisons).distinct().order_by('id'))
     logger.info('Member list: %s' % member_list)
@@ -815,10 +813,10 @@ def get_best_hits_comparison(dataset, comparisons, s):
     # cache peakdt sample intensity values for use later
     peakdtsample_intensity = {}
     for sample in s:
-        pdts = sample.peakdtsample_set.select_related('peak', 'sample').all()
+        pdts = sample.peakdtsample_set.all().values()
         for pdt in pdts:
-            key = (pdt.peak, pdt.sample)
-            peakdtsample_intensity[key] = pdt.intensity 
+            key = (pdt['peak_id'], pdt['sample_id'])
+            peakdtsample_intensity[key] = pdt['intensity'] 
     logger.info("len(peakdtsample_intensity): %d", len(peakdtsample_intensity))    
     
     comparison_hits_list = {}
@@ -832,13 +830,13 @@ def get_best_hits_comparison(dataset, comparisons, s):
                                             .filter(peak__in=list(identified_peak))             \
                                             .extra(select={"absLogFC": "abs(logFC)"})           \
                                             .select_related('peak', 'comparison')               \
-                                            .prefetch_related('comparison__attribute')          \
+                                            .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
                                             .order_by("-absLogFC").distinct()
         annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
                                             .filter(peak__in=list(annotated_peak))              \
                                             .extra(select={"absLogFC": "abs(logFC)"})           \
                                             .select_related('peak', 'comparison')               \
-                                            .prefetch_related('comparison__attribute')          \
+                                            .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
                                             .order_by("-absLogFC").distinct()
     
         identified_info_list = []
@@ -869,7 +867,7 @@ def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
     for member in member_list:
         intensity_list = []
         for sample in member.sample.all():
-            key = (peak, sample)
+            key = (peak.id, sample.id)
             peak_intensity = peakdtsample_intensity[key]
             intensity_list.append(peak_intensity)
 
