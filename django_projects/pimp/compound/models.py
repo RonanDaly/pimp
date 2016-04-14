@@ -46,8 +46,7 @@ class Pathway(models.Model):
     @staticmethod
     def get_pathway_compounds_for_dataset(dataset):
 
-        filterSet = RepositoryCompound.objects.filter(db_name="kegg",
-                                          compound__peak__dataset=dataset)
+        filterSet = RepositoryCompound.objects.filter(db_name="kegg")
         pathways = Pathway.objects.filter(datasourcesuperpathway__data_source__name="kegg",
                                           datasourcesuperpathway__compoundpathway__compound__peak__dataset=dataset).\
             distinct().prefetch_related(
