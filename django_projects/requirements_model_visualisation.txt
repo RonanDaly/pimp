@@ -1,4 +1,4 @@
-# Also need to have Graphviz installed
+# GraphViz needs to be installed before these dependencies are installed
 pygraphviz
 pyparsing==1.5.7
 pydot
