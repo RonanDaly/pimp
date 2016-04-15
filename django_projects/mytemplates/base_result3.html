@@ -2367,7 +2367,7 @@
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
 						              		<td>{{ pathway.0.id }}</td>
-						              		<td>{{ pathway.0.datasourcesuperpathway_set.first.compound_number }}</td>
+						              		<td>{{ pathway.5 }}</td>
 						              		<td>{{ pathway.2 }}</td>
 						              		<td>{{ pathway.1 }}</td>
 						              		<td>{{ pathway.3 }}</td></tr>
