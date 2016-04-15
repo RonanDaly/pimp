@@ -72,7 +72,8 @@ class Pathway(models.Model):
                             annotated_compounds[ro.identifier].append(compound.peak_id)
             info = [pathway, len(identified_compounds), len(annotated_compounds),
                     round(((len(identified_compounds) + len(annotated_compounds)) / float(pathway.datasourcesuperpathway_set.all()[0].compound_number)) * 100, 2),
-                    [identified_compounds.keys(), annotated_compounds.keys()]]
+                    [identified_compounds.keys(), annotated_compounds.keys()],
+                    pathway.datasourcesuperpathway_set.all()[0].compound_number]
             pathway_list.append(info)
         logger.debug('Returning pathway_list')
         return pathway_list

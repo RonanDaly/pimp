@@ -400,6 +400,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         comparison_id_list = None
         sample_id_list = None
         first = True
+
         for i in range(len(test)):
             if test[i][0] != current_compound:
                 if not first:
