@@ -810,7 +810,7 @@ def get_pca(analysis, s, sample_list, member_list):
 
 def get_best_hits_comparison(dataset, comparisons, s):
     
-    # cache peakdt sample intensity values for use later
+    # cache peakdt' intensity values from all samples for use later
     peakdtsample_intensity = {}
     for sample in s:
         pdts = sample.peakdtsample_set.all().values()
@@ -839,15 +839,33 @@ def get_best_hits_comparison(dataset, comparisons, s):
                                             .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
                                             .order_by("-absLogFC").distinct()
     
+        # fetch identified repository compounds for all items in identified_peakdtcomparisonList
+        peakdtcomparison_compound_name = {}
+        identified_repo_compounds = RepositoryCompound.objects                                  \
+                                        .filter(compound__peak__peakdtcomparison__in=identified_peakdtcomparisonList, 
+                                                compound__identified="True")                    \
+                                        .prefetch_related('compound__peak__peakdtcomparison_set')
+        # put them into dictionary to use later
+        for rc in identified_repo_compounds:
+            pdts = rc.compound.peak.peakdtcomparison_set.all()
+            val = rc.compound_name
+            for key in pdts:
+                try:
+                    # append if not already there
+                    if val not in peakdtcomparison_compound_name[key]:
+                        peakdtcomparison_compound_name[key].append(val)
+                except KeyError:
+                    # new entry
+                    peakdtcomparison_compound_name[key] = [val]
+
+        # build the comparison table for identified compounds        
         identified_info_list = []
         for identified_compound in identified_peakdtcomparisonList:
-            compound_name = list(set(
-                RepositoryCompound.objects.filter(compound__peak__peakdtcomparison=identified_compound,
-                                                  compound__identified="True").values_list('compound_name',
-                                                                                           flat=True)))
+            compound_name = peakdtcomparison_compound_name[identified_compound]
             intensities = get_intensities_values(identified_compound, peakdtsample_intensity)
             identified_info_list.append([identified_compound, compound_name, intensities])
      
+        # build the comparison table for annotated compounds
         annotated_info_list = []
         for annotated_compound in annotated_peakdtcomparisonList:
             intensities = get_intensities_values(annotated_compound, peakdtsample_intensity)
