@@ -165,6 +165,7 @@ WSGI_APPLICATION = 'pimp.wsgi.application'
 
 TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(BASE_DIR), 'mytemplates'),
+    os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'python_support'), 
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

@@ -442,7 +442,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         ac_start = timeit.default_timer()
 
         logger.info('Creating a list of the compound objects that are annotated removing all identified')
-        annotated_compounds = Compound.objects.filter(identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(ic_secondary_ids))
+        annotated_compounds = Compound.objects.filter(Q(adduct="M+H") | Q(adduct="M-H"),identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(ic_secondary_ids))
         logger.info('Getting the list of secondary Ids of compounds that are annotated only')
         ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
@@ -566,7 +566,9 @@ def get_metabolite_info(request, project_id, analysis_id):
         peaks_data = []
 
         for peak in peaks:
-            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type)])
+            comp = peak.compound_set.get(secondaryId=compound_secondary_id)
+            # print comp.adduct," ",comp.ppm
+            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type), str(comp.adduct), str(round(comp.ppm, 4))])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
@@ -577,7 +579,7 @@ def get_metabolite_info(request, project_id, analysis_id):
             # peak_data += averages_by_group
             # peaks_data.append(peak_data)
 
-        print peaks_data
+        # print peaks_data
         response = simplejson.dumps({'aaData': peaks_data})
         return HttpResponse(response, content_type='application/json')
 
@@ -1142,6 +1144,9 @@ def peak_info_peak_id(request, project_id, analysis_id):
                 data.append(memberInfo)
             elif len(intensities) == 1:
                 memberInfo = [str(member), intensities[0], None, member_hash[member]]
+                data.append(memberInfo)
+            else:
+                memberInfo = [str(member), 0, None, member_hash[member]]
                 data.append(memberInfo)
         print data
         # PeakQCSample objects for blank samples only
