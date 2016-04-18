@@ -796,6 +796,7 @@
 		            }
 	            },
 	            series: [{
+					{% with comparison|timer_start as time %}
 	                name: 'Adj. P-value > 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
@@ -808,9 +809,12 @@
 		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
+//					{{ time|timer_end:'Non-significant peaks' }}
+					{% endwith %}
 		                	]
 		            },
 		            {
+					{% with comparison|timer_start as time %}
 	                name: 'Adj. P-value &lt; 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
@@ -823,6 +827,8 @@
 		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
+//					{{ time|timer_end:'Significant peaks' }}
+					{% endwith %}
 		                	]
 		            },
             	]
@@ -2388,6 +2394,7 @@
 						</div>
 					</div>
 				</div>
+				{% with comparison|timer_start as time %}
 				<div id="comparison" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
@@ -2430,6 +2437,10 @@
 						</div>
 					</div>
 				</div>
+				<!-- {{ time|timer_end:'Comparison Table' }} -->
+				{% endwith %}
+
+				{% with comparison|timer_start as time %}
 				<div id="peaks" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
@@ -2467,6 +2478,10 @@
 						</div>
 					</div>
 				</div>
+				<!-- {{ time|timer_end:'Peak Table' }} -->
+				{% endwith %}
+
+				{% with comparison|timer_start as time %}
 				{% for comparison in comparison_info %}
     			<div id="comparison{{ comparison.0.id }}" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
@@ -2515,6 +2530,8 @@
 					</div>
 				</div>
 				{% endfor %}
+				<!-- {{ time|timer_end:'Single Comparison Table' }} -->
+				{% endwith %}
 			</div>
 		</div>
 		<div id="full-width" class="modal container hide fade" tabindex="-1" style="top: 10%">
