@@ -18,7 +18,7 @@ class Compound(models.Model):
     # dbId = models.CharField(max_length=100)
     # dbLink = models.CharField(max_length=250)
     ppm = models.FloatField(null=True, blank=True)
-    adduct = models.CharField(max_length=100)
+    adduct = models.CharField(max_length=100, db_index=True)
     identified = models.CharField(max_length=10)
 
     # pathways = models.ManyToManyField(Pathway, through='CompoundPathway')

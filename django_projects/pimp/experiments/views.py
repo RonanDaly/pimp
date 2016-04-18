@@ -358,11 +358,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         sample_map = [sample.id for sample in samples]
         new_test_start = timeit.default_timer()
 
-
-
-
-
-        test = PeakDtComparison.objects.filter(peak__dataset=dataset, comparison__in=list(comparisons), peak__compound__secondaryId__in=list(ic_secondary_ids), peak__compound__in=list(identified_compounds)).distinct().order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
         identified_compound_pathway_list = identified_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
         pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
 
@@ -444,11 +440,10 @@ def get_metabolites_table(request, project_id, analysis_id):
         logger.info('Creating a list of the compound objects that are annotated removing all identified')
         annotated_compounds = Compound.objects.filter(Q(adduct="M+H") | Q(adduct="M-H"),identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(ic_secondary_ids))
         logger.info('Getting the list of secondary Ids of compounds that are annotated only')
-        ac_secondary_ids = annotated_compounds.values_list('secondaryId', flat=True).distinct()
 
         new_test_ac_start = timeit.default_timer()
         logger.info('Getting comparisons')
-        test = PeakDtComparison.objects.filter(peak__dataset=dataset, comparison__in=list(comparisons), peak__compound__secondaryId__in=list(ac_secondary_ids), peak__compound__in=list(annotated_compounds)).distinct().order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        test = PeakDtComparison.objects.filter(peak__compound__in=list(annotated_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
         logger.info('Getting annotated compound name list')
         annotated_compound_name_list = annotated_compounds.order_by("secondaryId").values_list("id","repositorycompound__db_name","repositorycompound__compound_name").distinct()
         logger.info('Getting annotated compound pathway list')
