@@ -902,6 +902,9 @@ def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
         elif len(intensities) == 1:
             memberInfo = [str(member), intensities[0], None]
             data.append(memberInfo)
+        else: # len is 0
+            memberInfo = [str(member), 0, None]
+            data.append(memberInfo)
     # print "data : ",data
     return data
 
