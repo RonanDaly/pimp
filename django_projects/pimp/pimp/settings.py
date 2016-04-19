@@ -33,6 +33,9 @@ TEMPLATE_DEBUG = DEBUG
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.environ['PIMP_BASE_DIR'] = BASE_DIR
 
+DJANGO_LOG_LEVEL = getString('PIMP_LOG_LEVEL', 'WARNING')
+os.environ['DJANGO_LOG_LEVEL'] = DJANGO_LOG_LEVEL
+
 # Set to True to enable registration
 REGISTRATION_OPEN = False
 
@@ -221,6 +224,14 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d | %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
@@ -229,7 +240,8 @@ LOGGING = {
         },
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'WARNING'),
+            'formatter': 'verbose', 
         }
     },
     'loggers': {
