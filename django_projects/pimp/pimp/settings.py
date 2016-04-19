@@ -229,7 +229,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d | %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(levelname)s %(filename)s:%(lineno)d | %(message)s'
         },
     },
     'handlers': {
