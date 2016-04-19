@@ -1024,6 +1024,51 @@
 
 			{% for comparison in comparisons %}
 				var comparisonTable{{ comparison.id }} = $('#comparison{{ comparison.id }}-table').dataTable( {
+                    "sAjaxSource": "{% url 'get_single_comparison_table' project.id analysis.id comparison.id %}",
+                    "aoColumnDefs": [{
+                            "aTargets": [1],
+                            "sType": "formatted-lfc",
+                            "mRender": function(lfc, type, full) {
+                                var value = Number((lfc).toFixed(2))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [2],
+                            "sType": "formatted-pv",
+                            "mRender": function(pv, type, full) {
+                                var value = Number((pv).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [3],
+                            "sType": "formatted-lfc",
+                            "mRender": function(apv, type, full) {
+                                var value = Number((apv).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [4],
+                            "sType": "formatted-lfc",
+                            "mRender": function(lo, type, full) {
+                                var value = Number((lo).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        }],
 					"sDom": '<"comparison-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
@@ -1073,7 +1118,8 @@
 			{% endfor %}
 
 			{% for comparison in comparisons %}
-			comparisonTable{{ comparison.id }}.$('tr').click( function () {
+            $('#comparison{{ comparison.id }}-table').on('click', 'tr', function() {
+			// comparisonTable{{ comparison.id }}.$('tr').click( function () {
 				// get data from the row clicked as an array
 			    var data = comparisonTable{{ comparison.id }}.fnGetData( this );
 
@@ -2505,18 +2551,6 @@
 						                  <th>Log Odds</th>
 						                 </tr>
 						              </thead>
-						              <tbody>
-						              	{% for peak in comparison.1 %}
-						              	<tr><td>{{ peak.0 }}</td>
-{#						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
-						              		<td>{{ peak.1|floatformat:"-2" }}</td>
-						              		<td>{{ peak.3|stringformat:".2g" }}</td>
-						              		<td>{{ peak.2|stringformat:".2g" }}</td>
-						              		<td>{{ peak.4|floatformat:"-2" }}</td>
-{#						              		{% endwith %} #}
-						              	</tr>
-						                {% endfor %}
-						              </tbody>
 						            </table>
 								</div>
 							</div>

@@ -606,6 +606,45 @@ def get_peak_table(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
+def get_single_comparison_table(request, project_id, analysis_id, comparison_id):
+
+    if request.is_ajax():
+        print "single comparison table requested - comparison id: ",comparison_id
+        start = timeit.default_timer()
+        analysis = Analysis.objects.get(pk=analysis_id)
+        project = Project.objects.get(pk=project_id)
+        comparison = Comparison.objects.get(pk=comparison_id)
+        dataset = analysis.dataset_set.all()[0]
+
+        peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison=comparison,
+                                               dataset=dataset).distinct()
+
+        new_query_start = timeit.default_timer()
+        peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison).values_list('peak__secondaryId','logFC', 'pValue','adjPvalue', 'logOdds').distinct()
+        new_query_stop = timeit.default_timer()
+
+
+        list(peak_comparison_info)
+
+        data = [list(elem) for elem in peak_comparison_info]
+        # s = Sample.objects.filter(
+        #     attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
+        #     'attribute__id', 'id')
+        # p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset)       \
+        #                                         .select_related('peak', 'sample')   \
+        #                                         .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
+        # pp = map(list, zip(*[iter(p)] * s.count()))
+        # data = [
+        #     [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [
+        #         round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
+        #         peakgroup] + [str(peakgroup[0].peak.polarity)] for peakgroup in pp]
+
+        response = simplejson.dumps({"aaData": data})
+        logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
+
+        return HttpResponse(response, content_type='application/json')
+
+
 # @cache_page(60 * 60 * 24 * 100)
 @login_required
 # @profile("analysis_result.prof")
@@ -917,6 +956,7 @@ def get_comparison_info_list(dataset, comparisons):
     for comparison in comparisons:
         peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
         logger.info('peak_comparison_info: %d', peak_comparison_info.count())
+        logger.info(peak_comparison_info)
         comparison_info.append([comparison,peak_comparison_info])
     new_query_stop = timeit.default_timer()
     logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
