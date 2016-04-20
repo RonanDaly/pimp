@@ -830,6 +830,7 @@
 		            }
 	            },
 	            series: [{
+					{% with comparison|timer_start as time %}
 	                name: 'Adj. P-value > 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
@@ -842,9 +843,12 @@
 		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
+//					{{ time|timer_end:'Non-significant peaks' }}
+					{% endwith %}
 		                	]
 		            },
 		            {
+					{% with comparison|timer_start as time %}
 	                name: 'Adj. P-value &lt; 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
@@ -857,6 +861,8 @@
 		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
+//					{{ time|timer_end:'Significant peaks' }}
+					{% endwith %}
 		                	]
 		            },
             	]
@@ -1052,6 +1058,51 @@
 
 			{% for comparison in comparisons %}
 				var comparisonTable{{ comparison.id }} = $('#comparison{{ comparison.id }}-table').dataTable( {
+                    "sAjaxSource": "{% url 'get_single_comparison_table' project.id analysis.id comparison.id %}",
+                    "aoColumnDefs": [{
+                            "aTargets": [1],
+                            "sType": "formatted-lfc",
+                            "mRender": function(lfc, type, full) {
+                                var value = Number((lfc).toFixed(2))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [2],
+                            "sType": "formatted-pv",
+                            "mRender": function(pv, type, full) {
+                                var value = Number((pv).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [3],
+                            "sType": "formatted-lfc",
+                            "mRender": function(apv, type, full) {
+                                var value = Number((apv).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [4],
+                            "sType": "formatted-lfc",
+                            "mRender": function(lo, type, full) {
+                                var value = Number((lo).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        }],
 					"sDom": '<"comparison-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
@@ -1101,7 +1152,8 @@
 			{% endfor %}
 
 			{% for comparison in comparisons %}
-			comparisonTable{{ comparison.id }}.$('tr').click( function () {
+            $('#comparison{{ comparison.id }}-table').on('click', 'tr', function() {
+			// comparisonTable{{ comparison.id }}.$('tr').click( function () {
 				// get data from the row clicked as an array
 			    var data = comparisonTable{{ comparison.id }}.fnGetData( this );
 
@@ -1464,7 +1516,9 @@
 							peakDiv.append('<li><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</li>');
                             peakDiv.append('<li><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</li>');
                             peakDiv.append('<li><strong>Type</strong>: '+peaksData[peakDataId][4]+'</li>');
-							peakDiv.append('<li><strong>FrAnK Annotation</strong>: '+peaksData[peakDataId][5]+'</li>');
+                            peakDiv.append('<li><strong>Ion</strong>: '+peaksData[peakDataId][5]+'</li>');
+                            peakDiv.append('<li><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</li>');
+							peakDiv.append('<li><strong>FrAnK Annotation</strong>: '+peaksData[peakDataId][7]+'</li>');
                             peakDiv.append('</ul>');
 
                             // Create and add divs and buttons to allow the user to load the peak chromatogram and average intensity plots
@@ -2184,7 +2238,7 @@
 
 										{% if comparison_hits.0 and comparison_hits.1 %}
 											{% if comparison_hits.0|length > 10 %}
-												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
+												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing. The 10 most significant hits are displayed below.</p>
 											{% else %}
 												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
 											{% endif %}
@@ -2217,7 +2271,7 @@
 											    </tbody>
 											</table>
 											{% if comparison_hits.1|length > 10 %}
-												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
+												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing. The 10 most significant hits are displayed below. Click 'Show all' to see the 50 most significant hits.</p>
 												<div class="summary_table_container" id="summary_table_container-{{ forloop.counter }}">
 											{% else %}
 												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
@@ -2235,7 +2289,7 @@
 												        </tr>
 												    </thead>
 												    <tbody>
-												    	{% for compound in comparison_hits.1 %}
+												    	{% for compound in comparison_hits.1|slice:":50" %}
 												    	<tr>
 												    		<th class="peak_id" tooltip-append-to-body="true" data-toggle="tooltip" title="Click for compounds" data-container="body">{{ compound.0.peak.secondaryId }}</th>
 												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
@@ -2409,7 +2463,7 @@
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
 						              		<td>{{ pathway.0.id }}</td>
-						              		<td>{{ pathway.0.datasourcesuperpathway_set.first.compound_number }}</td>
+						              		<td>{{ pathway.5 }}</td>
 						              		<td>{{ pathway.2 }}</td>
 						              		<td>{{ pathway.1 }}</td>
 						              		<td>{{ pathway.3 }}</td></tr>
@@ -2428,6 +2482,7 @@
 						</div>
 					</div>
 				</div>
+				{% with comparison|timer_start as time %}
 				<div id="comparison" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
@@ -2470,6 +2525,10 @@
 						</div>
 					</div>
 				</div>
+				<!-- {{ time|timer_end:'Comparison Table' }} -->
+				{% endwith %}
+
+				{% with comparison|timer_start as time %}
 				<div id="peaks" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
@@ -2508,6 +2567,10 @@
 						</div>
 					</div>
 				</div>
+				<!-- {{ time|timer_end:'Peak Table' }} -->
+				{% endwith %}
+
+				{% with comparison|timer_start as time %}
 				{% for comparison in comparison_info %}
     			<div id="comparison{{ comparison.0.id }}" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
@@ -2531,18 +2594,6 @@
 						                  <th>Log Odds</th>
 						                 </tr>
 						              </thead>
-						              <tbody>
-						              	{% for peak in comparison.1 %}
-						              	<tr><td>{{ peak.0 }}</td>
-{#						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
-						              		<td>{{ peak.1|floatformat:"-2" }}</td>
-						              		<td>{{ peak.3|stringformat:".2g" }}</td>
-						              		<td>{{ peak.2|stringformat:".2g" }}</td>
-						              		<td>{{ peak.4|floatformat:"-2" }}</td>
-{#						              		{% endwith %} #}
-						              	</tr>
-						                {% endfor %}
-						              </tbody>
 						            </table>
 								</div>
 							</div>
@@ -2556,6 +2607,8 @@
 					</div>
 				</div>
 				{% endfor %}
+				<!-- {{ time|timer_end:'Single Comparison Table' }} -->
+				{% endwith %}
 			</div>
 		</div>
 		<div id="full-width" class="modal container hide fade" tabindex="-1" style="top: 10%">

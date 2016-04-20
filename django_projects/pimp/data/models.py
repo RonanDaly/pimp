@@ -10,7 +10,8 @@ class Dataset(models.Model):
 
 class Peak(models.Model):
 	dataset = models.ForeignKey(Dataset)
-	secondaryId = models.IntegerField(null=True, blank=True)
+	# This is used for display purposes -- each peak in a analysis has an id from 1 to n
+	secondaryId = models.IntegerField(null=True, blank=True, db_index=True)
 	mass = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
 	rt = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
 	polarity = models.CharField(max_length=8, blank=True, null=True)

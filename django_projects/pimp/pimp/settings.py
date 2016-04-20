@@ -33,6 +33,9 @@ TEMPLATE_DEBUG = DEBUG
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.environ['PIMP_BASE_DIR'] = BASE_DIR
 
+DJANGO_LOG_LEVEL = getString('PIMP_LOG_LEVEL', 'WARNING')
+os.environ['DJANGO_LOG_LEVEL'] = DJANGO_LOG_LEVEL
+
 # Set to True to enable registration
 REGISTRATION_OPEN = False
 
@@ -165,6 +168,7 @@ WSGI_APPLICATION = 'pimp.wsgi.application'
 
 TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(BASE_DIR), 'mytemplates'),
+    os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'python_support'), 
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -201,15 +205,7 @@ INSTALLED_APPS = (
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
-    'django_spaghetti',
 )
-
-SPAGHETTI_SAUCE = {
-  'apps':['auth','polls','frank','data','fileupload','projects','experiments','groups','compound'],
-  'show_fields':False,
-  'exclude':{'auth':['user']}
-}
-
 
 ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.
 
@@ -228,6 +224,14 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d | %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(filename)s:%(lineno)d | %(message)s'
+        },
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
@@ -235,10 +239,10 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'console': {
-            # logging handler that outputs log messages to terminal
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG', # message level to be written to console
-        }                 
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'WARNING'),
+            'formatter': 'verbose', 
+        }
     },
     'loggers': {
         'django.request': {
@@ -247,17 +251,10 @@ LOGGING = {
             'propagate': True,
         },
         '': {
-            # this sets root level logger to log debug and higher level
-            # logs to console. All other loggers inherit settings from
-            # root level logger.
             'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': False, # this tells logger to send logging message
-                                # to its parent (will send if set to True)
+            'propagate': False,
         },
-        'django.db': {
-            # django also has database level logging
-        },                
     }
 }
 
