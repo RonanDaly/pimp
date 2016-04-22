@@ -426,9 +426,9 @@ def get_metabolites_table(request, project_id, analysis_id):
                     if test[i][3] not in sample_id_list:
                         intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
                         sample_id_list.append(test[i][3])
-
-        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['identified']
-        data.append(c_data)
+        if not first:
+            c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['identified']
+            data.append(c_data)
 
         new_test_stop = timeit.default_timer()
 
@@ -516,9 +516,9 @@ def get_metabolites_table(request, project_id, analysis_id):
                     if test[i][3] not in sample_id_list:
                         intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
                         sample_id_list.append(test[i][3])
-
-        c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['annotated']
-        data.append(c_data)
+        if not first:
+            c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + ['annotated']
+            data.append(c_data)
 
         new_test_ac_stop = timeit.default_timer()
 
