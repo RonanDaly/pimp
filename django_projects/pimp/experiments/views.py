@@ -798,8 +798,8 @@ def get_samples_and_attributes(comparisons):
         sample_list.append(list(member.sample.all().order_by('id')))
         for sample in member.sample.all():
             sample_member_hash[sample] = member_list.index(member)
-    logger.info("sample member hash: %s", sample_member_hash)
-    logger.info("sample list: %s", sample_list)
+    logger.debug("sample member hash: %s", sample_member_hash)
+    logger.debug("sample list: %s", sample_list)
     
     return s, member_list, sample_list
 
@@ -840,7 +840,7 @@ def get_pca(analysis, s, sample_list, member_list):
         pca_data_point.append(pca_serie)
         j += 1
     pca_info.append(pca_data_point)
-    logger.info("pca_series: %s", pca_data_point)    
+    logger.debug("pca_series: %s", pca_data_point)
     
     return pca_info, explained_variance
 
@@ -955,7 +955,7 @@ def get_comparison_info_list(dataset, comparisons):
     for comparison in comparisons:
         peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
         logger.info('peak_comparison_info: %d', peak_comparison_info.count())
-        logger.info(peak_comparison_info)
+        logger.debug(peak_comparison_info)
         comparison_info.append([comparison,peak_comparison_info])
     new_query_stop = timeit.default_timer()
     logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
