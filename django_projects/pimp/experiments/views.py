@@ -127,7 +127,7 @@ def experiment(request, project_id):
     else:
         no_standard = True
 
-    print "I am here!"
+    logger.info("I am here!")
     if request.method == 'POST':
         experiment_form = ExperimentForm(request.POST)
         parameter_formset = ParametersFormSet(request.POST, request.FILES, prefix='parameters')
@@ -146,14 +146,14 @@ def experiment(request, project_id):
         # for form in comparison_formset.forms:
         #     for field in form:
         #         print field.errors
-        print "experiment form"
-        print experiment_form.is_valid()
-        print "parameter "
-        print parameter_formset.is_valid()
-        print "comparison"
-        print comparison_formset.is_valid()
-        print "databases form"
-        print database_form.is_valid()
+        logger.info("experiment form")
+        logger.info(experiment_form.is_valid())
+        logger.info("parameter ")
+        logger.info(parameter_formset.is_valid())
+        logger.info("comparison")
+        logger.info(comparison_formset.is_valid())
+        logger.info("databases form")
+        logger.info(database_form.is_valid())
 
         if experiment_form.is_valid() and parameter_formset.is_valid() and comparison_formset.is_valid() and database_form.is_valid():
             experiment = experiment_form.save()
@@ -205,7 +205,7 @@ def experiment(request, project_id):
             for db_id in databases_ids:
                 params.databases.add(db_id)
 
-            print "after databases added"
+            logger.info("after databases added")
 
             params.save()
             user = request.user
@@ -216,13 +216,12 @@ def experiment(request, project_id):
                 name = form.cleaned_data['name']
                 comparison = Comparison(name=name, experiment=experiment)
                 comparison.save()
-                "comparison saved"
-                print name
+                logger.info(name)
                 # print name
                 id_attribute_1 = form.cleaned_data['attribute1']
-                print "attribute id : ", id_attribute_1
+                logger.info("attribute id : %s", id_attribute_1)
                 attribute_1 = Attribute.objects.get(id=id_attribute_1)
-                print "attribute found : ", attribute_1
+                logger.info("attribute found : %s", attribute_1)
                 attribute_comp = AttributeComparison(control=False, attribute=attribute_1, comparison=comparison)
                 attribute_comp.save()
 
@@ -432,8 +431,8 @@ def get_metabolites_table(request, project_id, analysis_id):
 
         new_test_stop = timeit.default_timer()
 
-        print "Identified metabolites processing time: ", str(new_test_stop - new_test_start)
-        print "--------------------------------------------------------"
+        logger.info("Identified metabolites processing time: ", str(new_test_stop - new_test_start))
+        logger.info("--------------------------------------------------------")
 
         ac_start = timeit.default_timer()
 
@@ -581,7 +580,7 @@ def get_metabolite_info(request, project_id, analysis_id):
 
 def get_peak_table(request, project_id, analysis_id):
     if request.is_ajax():
-        print "peak table requested"
+        logger.info("peak table requested")
         start = timeit.default_timer()
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
@@ -602,14 +601,14 @@ def get_peak_table(request, project_id, analysis_id):
         response = simplejson.dumps({"aaData": data})
 
         stop = timeit.default_timer()
-        print "peak table processing time: ", str(stop - start)
+        logger.info("peak table processing time: ", str(stop - start))
         return HttpResponse(response, content_type='application/json')
 
 
 def get_single_comparison_table(request, project_id, analysis_id, comparison_id):
 
     if request.is_ajax():
-        print "single comparison table requested - comparison id: ",comparison_id
+        logger.info("single comparison table requested - comparison id: ",comparison_id)
         start = timeit.default_timer()
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
@@ -767,11 +766,11 @@ def get_pathway_url(request, project_id, analysis_id):
         # print "comparison ",requested_comparison
         except:
             requested_comparison_id = None
-            print "no comparison specified"
+            logger.info("no comparison specified")
 
         pathway_map = pathway.get_pathway_url(dataset_id, requested_comparison_id)
 
-        print pathway_map
+        logger.info(pathway_map)
 
         response = simplejson.dumps({'pathway_map': pathway_map})
 
@@ -1024,7 +1023,7 @@ def get_metexplore_info(request, project_id, analysis_id):
                                                                      db_name='stds_db')
 
             if str(compounds_identified[0].compound_name) not in nameIn:
-                print compounds_identified[:1]
+                logger.debug(compounds_identified[:1])
                 for compound in compounds_identified[:1]:
                     member_hash = {}
                     for member in member_list:
@@ -1082,7 +1081,7 @@ def peak_info(request, project_id, analysis_id):
         for comparison in comparisons:
             member_set = member_set.union(set(comparison.attribute.all()))
         member_list = list(member_set)
-        print member_list
+        logger.debug(member_list)
         member_hash = {}
         for member in member_list:
             intensity_list = []
@@ -1094,12 +1093,12 @@ def peak_info(request, project_id, analysis_id):
             # print sample.name
             # print peak_intensity.intensity
             member_hash[member.name] = [intensity_list, sample_list]
-        print member_hash
+        logger.debug(member_hash)
         data = []
         for member in member_hash.iterkeys():
             intensities = filter(lambda a: a != 0, member_hash[member][0])
-            print "intensities :"
-            print intensities
+            logger.debug("intensities :")
+            logger.debug(intensities)
             if len(intensities) > 1:
                 array = np.array(intensities)
                 mean = np.mean(array)
@@ -1109,13 +1108,13 @@ def peak_info(request, project_id, analysis_id):
             elif len(intensities) == 1:
                 memberInfo = [str(member), intensities[0], None, member_hash[member]]
                 data.append(memberInfo)
-        print "BBBbbbbbBBBBBBBBBBBBBBBBBBB"
-        print data
+        logger.debug("BBBbbbbbBBBBBBBBBBBBBBBBBBB")
+        logger.debug(data)
         # PeakQCSample objects for blank samples only
         peakblanksamples = PeakQCSample.objects.filter(peak=peak, sample__attribute__name="blank")
         if peakblanksamples:
-            print "here peak blank samples:"
-            print peakblanksamples
+            logger.debug("here peak blank samples:")
+            logger.debug(peakblanksamples)
             blank_intensity_list = []
             blank_list = []
             for blank_sample in peakblanksamples:
@@ -1124,8 +1123,8 @@ def peak_info(request, project_id, analysis_id):
             blank_info = [blank_intensity_list, blank_list]
 
             blank_intensities = filter(lambda a: a != 0, blank_info[0])
-            print "blank intensities :"
-            print blank_intensities
+            logger.debug("blank intensities :")
+            logger.debug(blank_intensities)
             blankInfo = []
             if len(blank_intensities) > 1:
                 array = np.array(blank_intensities)
@@ -1139,9 +1138,9 @@ def peak_info(request, project_id, analysis_id):
         else:
             blankInfo = None
 
-        print blankInfo
+        logger.info(blankInfo)
         data_hash = {"samples": data, "blanks": blankInfo}
-        print data_hash
+        logger.info(data_hash)
 
         message = "got somthing on the server!!!"
         response = simplejson.dumps(data_hash)
@@ -1159,10 +1158,10 @@ def peak_info_peak_id(request, project_id, analysis_id):
         try:
             requested_comparison_id = int(request.GET['comparison'])
             requested_comparison = Comparison.objects.get(pk=requested_comparison_id)
-            print "comparison ", requested_comparison
+            logger.info("comparison %s", requested_comparison)
         except:
             requested_comparison = None
-            print "no comparison specified"
+            logger.info("no comparison specified")
 
         project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
@@ -1176,7 +1175,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
             for comparison in comparisons:
                 member_set = member_set.union(set(comparison.attribute.all()))
         member_list = list(member_set)
-        print member_list
+        logger.info(member_list)
         member_hash = {}
         for member in member_list:
             intensity_list = []
@@ -1188,7 +1187,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
             # print sample.name
             # print peak_intensity.intensity
             member_hash[member.name] = [intensity_list, sample_list]
-        print member_hash
+        logger.info(member_hash)
         data = []
         for member in member_hash.iterkeys():
             intensities = filter(lambda a: a != 0, member_hash[member][0])
@@ -1204,12 +1203,12 @@ def peak_info_peak_id(request, project_id, analysis_id):
             else:
                 memberInfo = [str(member), 0, None, member_hash[member]]
                 data.append(memberInfo)
-        print data
+        logger.debug(data)
         # PeakQCSample objects for blank samples only
         peakblanksamples = PeakQCSample.objects.filter(peak=peak, sample__attribute__name="blank")
         if peakblanksamples:
-            print "here peak blank samples:"
-            print peakblanksamples
+            logger.info("here peak blank samples:")
+            logger.debug(peakblanksamples)
             blank_intensity_list = []
             blank_list = []
             for blank_sample in peakblanksamples:
@@ -1218,8 +1217,8 @@ def peak_info_peak_id(request, project_id, analysis_id):
             blank_info = [blank_intensity_list, blank_list]
 
             blank_intensities = filter(lambda a: a != 0, blank_info[0])
-            print "blank intensities :"
-            print blank_intensities
+            logger.info("blank intensities :")
+            logger.debug(blank_intensities)
             blankInfo = []
             if len(blank_intensities) > 1:
                 array = np.array(blank_intensities)
@@ -1233,9 +1232,9 @@ def peak_info_peak_id(request, project_id, analysis_id):
         else:
             blankInfo = None
 
-        print blankInfo
+        logger.info(blankInfo)
         data_hash = {"samples": data, "blanks": blankInfo}
-        print data_hash
+        logger.info(data_hash)
 
         message = "got somthing on the server!!!"
         response = simplejson.dumps(data_hash)
@@ -1266,25 +1265,25 @@ def get_peaks_from_compound(request, project_id, analysis_id):
         for comparison in comparisons:
             member_set = member_set.union(set(comparison.attribute.all()))
         member_list = list(member_set)
-        print member_list
+        logger.info(member_list)
 
         sample_list = []
         for member in member_list:
             sample_list.append(list(member.sample.all()))
-        print sample_list
+        logger.info(sample_list)
 
-        print "peak id", peak.id
-        print polarity
-        print rt
-        print mass
+        logger.info("peak id %s", peak.id)
+        logger.info(polarity)
+        logger.info(rt)
+        logger.info(mass)
 
         massWindow = mass * ppm * 0.000001
-        print "after mass window"
+        logger.info("after mass window")
         massUp = mass + massWindow
         massLow = mass - massWindow
         rtUp = rt + rtWindow / 2
         rtLow = rt - rtWindow / 2
-        print "after rtLow"
+        logger.info("after rtLow")
         u = robjects.FloatVector([massLow, massUp])
         mzrange = robjects.r['matrix'](u, ncol=2)
         w = robjects.FloatVector([rtLow, rtUp])
@@ -1316,7 +1315,7 @@ def get_peaks_from_compound(request, project_id, analysis_id):
                         lineList.append([float(time[i]), round(float(intensity[i]), 3)])
                 except:
                     lineList = None
-                    print "EXCEPTION TRIGGERED!!!!!"
+                    logger.error("EXCEPTION TRIGGERED!!!!!")
                 # print lineList
                 data.append([name, lineList])
             # print data
@@ -1357,25 +1356,25 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
         for comparison in comparisons:
             member_set = member_set.union(set(comparison.attribute.all()))
         member_list = list(member_set)
-        print member_list
+        logger.info(member_list)
 
         sample_list = []
         for member in member_list:
             sample_list.append(list(member.sample.all()))
-        print sample_list
+        logger.info(sample_list)
 
-        print "peak id", peak.id
-        print polarity
-        print rt
-        print mass
+        logger.info("peak id %s", peak.id)
+        logger.info(polarity)
+        logger.info(rt)
+        logger.info(mass)
 
         massWindow = mass * ppm * 0.000001
-        print "after mass window"
+        logger.info("after mass window")
         massUp = mass + massWindow
         massLow = mass - massWindow
         rtUp = rt + rtWindow / 2
         rtLow = rt - rtWindow / 2
-        print "after rtLow"
+        logger.info("after rtLow")
         u = robjects.FloatVector([massLow, massUp])
         mzrange = robjects.r['matrix'](u, ncol=2)
         w = robjects.FloatVector([rtLow, rtUp])
@@ -1387,15 +1386,15 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
         for member in sample_list:
             for sample in member:
                 name = sample.name.split(".")[0]
-                print "name: ", name
+                logger.info("name: ", name)
                 if polarity == "negative":
                     mzxmlfile = sample.samplefile.negdata
                 else:
                     mzxmlfile = sample.samplefile.posdata
                 file = xcms.xcmsRaw(mzxmlfile.file.path)
-                print "file opened"
-                print "mzrange: ", mzrange
-                print "rtrange: ", rtrange
+                logger.info("file opened")
+                logger.debug("mzrange: %s", mzrange)
+                logger.debug("rtrange: %s", rtrange)
                 y = xcms.rawMat(file, mzrange, rtrange)
                 # print "Y : ",y
                 lineList = []
@@ -1407,10 +1406,10 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
                         lineList.append([float(time[i]), round(float(intensity[i]), 3)])
                 except:
                     lineList = None
-                    print "EXCEPTION TRIGGERED!!!!!"
+                    logger.error("EXCEPTION TRIGGERED!!!!!")
                 # print lineList
                 data.append([name, lineList])
-                print data
+                logger.debug(data)
         message = "got somthing on the server for peaks chromatogram!!!"
         response = simplejson.dumps(data)
         return HttpResponse(response, content_type='application/json')
@@ -1445,13 +1444,12 @@ def get_compounds_from_peak_id(request, project_id, analysis_id):
         for compound in peak.compound_set.all():
             # print "blblblblblbl"
             names = compound.repositorycompound_set.all().values_list('compound_name', flat=True).distinct()
-            print "names lalalalalalala ", names
+            logger.debug("names lalalalalalala %s", names)
             distinct_names = list(set([x.lower() for x in names]))
             compoundsList.append(distinct_names)
 
-        print "compoundList herererererere", compoundsList
+        logger.debug("compoundList herererererere %s", compoundsList)
 
-        message = "Blaaaaaaa got somthing on the server!!!"
         response = simplejson.dumps(compoundsList)
         return HttpResponse(response, content_type='application/json')
 
@@ -1495,7 +1493,7 @@ def create_member_tics(comparisons):
                     posmzxmlfile.tic = curve
                     posmzxmlfile.save()
 
-                    print posmzxmlfile.tic.x_axis
+                    logger.debug('%s', posmzxmlfile.tic.x_axis)
                 # posintensity = posdata[0]
                 # postime = posdata[1]
                 else:
@@ -1600,7 +1598,7 @@ def create_member_tic(attribute_id):
                 posmzxmlfile.tic = curve
                 posmzxmlfile.save()
 
-                print posmzxmlfile.tic.x_axis
+                logger.debug('%s', posmzxmlfile.tic.x_axis)
             # posintensity = posdata[0]
             # postime = posdata[1]
             else:
@@ -1672,10 +1670,10 @@ def getIntensity(mzxmlFile):
     xcms = importr("xcms")
     intensity = []
     file = xcms.xcmsRaw(mzxmlFile.file.path)
-    print "file opened"
+    logger.info("file opened")
     intensity = [int(i) for i in list(file.do_slot("tic"))]
     time = [str(i) for i in list(file.do_slot("scantime"))]
-    print "intensity list created"
+    logger.info("intensity list created")
     # scan = xcms.getScan(file, 1)
     # print "scan : ",scan
     # print intensity
