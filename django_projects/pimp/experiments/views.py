@@ -431,7 +431,7 @@ def get_metabolites_table(request, project_id, analysis_id):
 
         new_test_stop = timeit.default_timer()
 
-        logger.info("Identified metabolites processing time: ", str(new_test_stop - new_test_start))
+        logger.info("Identified metabolites processing time: %s", str(new_test_stop - new_test_start))
         logger.info("--------------------------------------------------------")
 
         ac_start = timeit.default_timer()
@@ -601,14 +601,14 @@ def get_peak_table(request, project_id, analysis_id):
         response = simplejson.dumps({"aaData": data})
 
         stop = timeit.default_timer()
-        logger.info("peak table processing time: ", str(stop - start))
+        logger.info("peak table processing time: %s", str(stop - start))
         return HttpResponse(response, content_type='application/json')
 
 
 def get_single_comparison_table(request, project_id, analysis_id, comparison_id):
 
     if request.is_ajax():
-        logger.info("single comparison table requested - comparison id: ",comparison_id)
+        logger.info("single comparison table requested - comparison id: %s",comparison_id)
         start = timeit.default_timer()
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
