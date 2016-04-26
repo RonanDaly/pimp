@@ -1187,7 +1187,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
             # print sample.name
             # print peak_intensity.intensity
             member_hash[member.name] = [intensity_list, sample_list]
-        logger.info(member_hash)
+        logger.debug(member_hash)
         data = []
         for member in member_hash.iterkeys():
             intensities = filter(lambda a: a != 0, member_hash[member][0])
@@ -1232,9 +1232,9 @@ def peak_info_peak_id(request, project_id, analysis_id):
         else:
             blankInfo = None
 
-        logger.info(blankInfo)
+        logger.debug(blankInfo)
         data_hash = {"samples": data, "blanks": blankInfo}
-        logger.info(data_hash)
+        logger.debug(data_hash)
 
         message = "got somthing on the server!!!"
         response = simplejson.dumps(data_hash)
@@ -1386,7 +1386,7 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
         for member in sample_list:
             for sample in member:
                 name = sample.name.split(".")[0]
-                logger.info("name: ", name)
+                logger.info("name: %s", name)
                 if polarity == "negative":
                     mzxmlfile = sample.samplefile.negdata
                 else:
