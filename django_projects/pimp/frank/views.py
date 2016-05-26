@@ -668,6 +668,8 @@ def fragmentation_set(request, fragmentation_set_name_slug):
             # annotation tool and may vary according to the experimental protocol used
             if user_tool_choice == 'MassBank':
                 annotation_query_form = MassBankQueryForm(experiment_object=experiment)
+            elif user_tool_choice == 'SIRIUS':
+                annotation_query_form = SIRIUSQueryForm(experiment_object=experiment)
             elif user_tool_choice == 'NIST':
                 annotation_query_form = NISTQueryForm(experiment_object=experiment)
             elif user_tool_choice == 'LCMS DDA Network Sampler':
@@ -740,6 +742,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
         # Extract the form, depending on the AnnotationTool specified
         if annotation_tool.name == 'MassBank':
             annotation_query_form = MassBankQueryForm(request.POST, experiment_object=experiment)
+        elif annotation_tool.name == 'SIRIUS':
+            annotation_query_form = SIRIUSQueryForm(request.POST, experiment_object=experiment)
         elif annotation_tool.name == 'NIST':
             annotation_query_form = NISTQueryForm(request.POST, experiment_object=experiment)
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
@@ -794,6 +798,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
         # tool and render the page.
         if annotation_tool.name == 'MassBank':
             annotation_query_form = MassBankQueryForm(experiment_object=experiment)
+        elif annotation_tool.name == 'SIRIUS':
+            annotation_query_form = SIRIUSQueryForm(experiment_object=experiment)
         elif annotation_tool.name == 'NIST':
             annotation_query_form = NISTQueryForm(experiment_object=experiment)
         elif annotation_tool.name == 'LCMS DDA Network Sampler':
@@ -907,6 +913,9 @@ def generate_annotations(annotation_query_object,user = None):
     if annotation_tool.name == 'MassBank':
         # If MassBank is to be queried, run the batch search as a background process
         tasks.massbank_batch_search.delay(annotation_query_object.id)
+    elif annotation_tool.name == 'SIRIUS':
+        #If Sirius is to be queried, run the batch service as a background process
+        tasks.sirius_batch_search.delay(annotation_query_object.id)
     elif annotation_tool.name == 'NIST':
         # If NIST is to be queried, run the batch service as a background process
         tasks.nist_batch_search.delay(annotation_query_object.id)
@@ -990,6 +999,52 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         # Pickle the parameters and add them to the annotation_query_object
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
+
+    # Else, the annotation query could correspond to SIRIUS
+    elif isinstance(annotation_query_form, SIRIUSQueryForm):
+        # Populate the annotation tool into the query object
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='SIRIUS')
+
+        """
+        Parameters for SIRIUS are...
+        max ppm - (selected by user). The allowed mass deviation of the fragment peaks in ppm. By default,
+            Q-TOF instruments use 10 ppm and Orbitrap instruments use 5 ppm. #KmcL: add these defaults??
+
+        number of hits - (selected by user).  The number of candidates in the output. By default, SIRIUS will
+        only write the five best candidates.
+
+
+        profile type - (selected by the user) The used analysis profile to be used. User chooses either **qtof**,
+            **orbitrap** or **fticr**. By default, **qtof** is selected. #KMcL: check this default.
+
+        output format -    Specify the format of the output of the fragmentation trees. This
+            can be either json (machine readable) or dot (visualizable). #KmcL: Is this used?
+
+        """
+        # Determine the maximum number of hits the user wishes to be returned
+        maximum_number_of_hits = annotation_query_form.cleaned_data['maximum_number_of_hits']
+        max_ppm = annotation_query_form.cleaned_data['max_ppm']
+
+        # Determine which profile type the user wishes to perform and the format of the output file.
+        profile_type = str(annotation_query_form.cleaned_data['profile_type'])
+
+        output_format =str(annotation_query_form.cleaned_data['output_format'])
+
+
+        #Sirius specific parameters passed from the form
+        parameters = {
+            'max_hits': maximum_number_of_hits,
+            'profile_type': profile_type,
+            'max_ppm': max_ppm,
+            'output_format': output_format,
+        }
+
+        # Pickle the parameters and add them to the annotation_query_object
+        annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
+        print ('About to return annotation object with parameters')
+        return annotation_query_object
+
+    
     # Simon contribution
     elif isinstance(annotation_query_form, PrecursorMassFilterForm):
         parameters = {}

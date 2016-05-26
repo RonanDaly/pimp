@@ -14,7 +14,7 @@ import frank.network_sampler as ns
 from pimp.settings_dev import BASE_DIR
 import jsonpickle
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
-from frank.annotationTools import MassBankQueryTool, NISTQueryTool
+from frank.annotationTools import MassBankQueryTool, NISTQueryTool,  SIRIUSQueryTool
 from urllib2 import URLError
 import datetime
 
@@ -287,6 +287,57 @@ def nist_batch_search(annotation_query_id):
         annotation_query.status = 'Completed with Errors'
     annotation_query.save()
 
+"""
+SIRIUS details added by Karen
+"""
+@celery.task
+def sirius_batch_search(annotation_query_id):
+
+    print 'In batch search'
+
+    """
+    Method to retrieve candidate annotations from the NIST spectral reference library
+    :param annotation_query_id: Integer id of the annotation query to be performed
+    :return: True:  Boolean indicating the completion of the task
+    """
+
+    # Get the annotation object to be performed and update the process status for the user
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    annotation_query.status = 'Processing'
+    annotation_query.save()
+    # Derive the associated fragmentation set from the annotation query
+    fragmentation_set = annotation_query.fragmentation_set
+
+    try:
+        print ('Print anything in tasks')
+        # A SIRIUS query tool, is used to write the query files to a temporary file, which
+        # SIRIUS uses to generate candidate annotations which are written to a temporary file
+        # The SIRIUS query tool updates the database from the SIRIUS output file.
+        sirius_annotation_tool = SIRIUSQueryTool(annotation_query_id, fragmentation_set.id)
+        sirius_annotation_tool.get_sirius_annotations
+        annotation_query.status = 'Completed Successfully'
+        # As before, to prevent to maintain the celery workers, any errors which cannot be resolved
+        # by the SIRIUSQueryTool are raised and the status of the task is updated.
+    except IOError as io_error:
+        print io_error
+        annotation_query.status = 'Completed with Errors'
+    except OSError as os_error:
+        print os_error.message
+        annotation_query.status = 'Completed with Errors'
+    except ValueError as value_error:
+        print value_error.message
+        annotation_query.status = 'Completed with Errors'
+    except MultipleObjectsReturned as multiple_error:
+        print multiple_error.message
+        annotation_query.status = 'Completed with Errors'
+    except ObjectDoesNotExist as object_err:
+        print object_err.message
+        annotation_query.status = 'Completed with Errors'
+    except Warning as warning:
+        print warning.message
+        annotation_query.status = 'Completed with Errors'
+    annotation_query.save()
+    return True
 
 """
 The following are additions by Simon Rogers

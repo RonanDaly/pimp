@@ -7,6 +7,23 @@ from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
+# From SIRIUS documentation:
+# Specify the used analysis profile. Choose either **qtof**,
+# **orbitrap** or **fticr**. By default, **qtof** is selected.
+#
+SIRIUS_PROFILE_TYPES = (
+    ('qtof', 'Quadrupole-time-of-flight'), #should be default choice
+    ('orbitrap', 'Ion trap mass analyzer'),
+    ('fticr', 'Fourier transform ion cyclotron resonance'),
+)
+
+# From SIRIUS documentation
+# Specify the format of the output of the fragmentation trees. This
+#    can be either json (machine readable) or dot (visualizable)
+SIRIUS_OUTPUT_FORMAT = (
+    ('json', 'Machine readable (json)'),
+    ('dot', 'Visualizable (dot)')
+)
 
 # The following are the GCMS instrument types supported by Massbank
 MASS_BANK_GCMS_INSTRUMENT_TYPES = (
@@ -512,6 +529,58 @@ class NISTQueryForm(AnnotationQueryForm):
                 help_text="Please specify which library you wish to query.",
             )
 
+#Add Sirius query form - any queries that are not defined are commented out
+class SIRIUSQueryForm(AnnotationQueryForm):
+    """
+    Form class for the querying to SIRIUS API
+    """
+    #Check the ppm requirements and fix this KMcL - should have default of 5 for OrbiTrap and 10 for Q-TOF
+    profile_type = forms.ChoiceField(
+        choices=SIRIUS_PROFILE_TYPES,
+        help_text="Please select the required profile type."
+    )
+
+    max_ppm = forms.IntegerField(
+        max_value =15,
+        min_value =5,
+        initial= 10,
+        required = True,
+        help_text="Please specify the allowed mass deviation of the fragment peaks in ppm"
+    )
+    maximum_number_of_hits = forms.IntegerField(
+        max_value=20,
+        min_value=1,
+        initial=5,
+        required=True,
+        help_text="Please specify the maximum number of candidate annotations"
+    )
+
+    output_format = forms.ChoiceField(
+        choices=SIRIUS_OUTPUT_FORMAT,
+        help_text="Please select the required output format."
+    )
+    #
+    def clean(self):
+        #         """
+        #         Overridden method to ensure at least one profile and output format has been selected
+        #         """
+        # #       #Don't think error checking is required as not tick box - but leave at moment.
+        cleaned_data = super(SIRIUSQueryForm, self).clean()
+
+    #
+    def __init__(self, *args, **kwargs):
+        #         """
+        #         Override the constructor for the form to ensure the choices
+        #         of libraries and search parameters are suitable for the user's
+        #         experimental protocol.
+        #         """
+        print "form _init_"
+        self.experiment = None
+        #         # derive the experiment object from the keyword arguments
+        if 'experiment_object' in kwargs:
+            self.experiment = kwargs.pop('experiment_object')
+        super(SIRIUSQueryForm, self).__init__(*args, **kwargs)
+        
 
 class MassBankQueryForm(AnnotationQueryForm):
     """

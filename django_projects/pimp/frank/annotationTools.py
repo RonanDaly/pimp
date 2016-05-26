@@ -13,6 +13,15 @@ import os
 from django.db.models import Max
 from urllib2 import URLError
 
+#Sirius specific imports
+import tempfile
+import platform
+import subprocess
+import shutil
+import json
+import pprint
+
+
 
 MASS_OF_AN_PROTON = 1.00727645199076
 
@@ -323,6 +332,376 @@ class MassBankQueryTool:
                     pass
         return True
 
+class SIRIUSQueryTool:
+    """
+    Class to query SIRIUS
+    """
+    print 'We at least got to here'
+    def __init__(self, annotation_query_id,fragmentation_set_id):
+
+
+        print 'In querytool constructor'
+        try:
+            # Check to ensure the annotation query, associated fragmentation set and annotation tool exist
+            self.annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+            self.fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
+            self.annotation_tool = self.annotation_query.annotation_tool
+
+        except ObjectDoesNotExist:
+            raise
+        except MultipleObjectsReturned:
+            raise
+        except TypeError:
+            raise
+        # Determine suitable names for both the query file and sirius output files
+        self.query_file_name = os.path.join(
+            os.path.dirname(BASE_DIR),
+            'pimp',
+            'frank',
+            'SIRIUSQueryFiles',
+            str(self.annotation_query.id)+'.mgf'
+        )
+        self.sirius_output_file_name = os.path.join(
+            os.path.dirname(BASE_DIR),
+            'pimp',
+            'frank',
+            'SIRIUSQueryFiles',
+            str(self.annotation_query.id)+'_sirius_out.txt'
+        )
+
+
+    @property
+    def get_sirius_annotations(self):
+
+        sirius_parameters = jsonpickle.decode(self.annotation_query.annotation_tool_params)
+
+        # Retrieve all peak associated with this fragmentation set
+        all_peaks = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+
+        #Parents have msn level of 1.
+        all_parents = all_peaks.filter(msn_level=1)
+        total_number_of_parents = len(all_parents)
+
+
+        #Annotation parameters that can be used throughout - but perhaps not listed here?
+        max_number_of_hits = sirius_parameters['max_hits']
+        profile = sirius_parameters['profile_type']
+        max_ppm = sirius_parameters['max_ppm']
+        output_f = sirius_parameters['output_format']
+
+        #current_script_dir = os.path.dirname(os.path.realpath(__file__))
+
+
+        """
+        Method to retrieve candidate annotations from SIRIUS
+        :return True:   Boolean denoting the successfull completion of a query for annotations
+        """
+        print 'total number of parents', total_number_of_parents
+        i = 0
+
+        #This is the children of the parent peaks and we are going to pass it to the write_mgf file.
+
+        # Send the parent and associated children to Sirius.
+        #This while loop lets us go through the method 10 times for testing.
+
+        try:
+
+            for parent in all_parents:
+
+
+
+                fragmented_peaks = all_peaks.filter(parent_peak=parent)
+                polarity = parent.source_file.polarity
+                #Just an interger to check that all parents are looped through
+
+                print 'Writing MGF File...'
+
+                # get the mgf file for use in SIRIUS from the parent and associated children
+                mgf = self._write_sirius_mgf_file(parent, fragmented_peaks, polarity)
+                print mgf
+
+
+                # Call Sirius on the temporary mgf file.
+                data =self._query_sirius(mgf, polarity, max_ppm, output_f, profile, max_number_of_hits)
+                if data is not None:
+                    print
+                    print "JSON OUTPUT"
+                    pp = pprint.PrettyPrinter(depth=4)
+                    pp.pprint(data)
+                    # Generate the subprocess call, ensuring that the user-specified parameters are included
+                    # Read in the Sirius output file and populate the database
+                    print 'Populating List'
+                    self._populate_sirius_annotation_list(data, parent, fragmented_peaks)
+                    print 'Annotations Completed'
+                    i=i+1
+                    print 'i=',i
+                    #if i >1:
+                    #    break
+                        # # Finally upon completion, delete both the temporary files for NIST
+                        # os.remove(self.nist_output_file_name)
+                        # os.remove(self.query_file_name)
+        except IOError:#
+
+            raise
+        except OSError:
+            raise
+        except ValueError:
+            raise
+        except MultipleObjectsReturned:
+            raise
+        except ObjectDoesNotExist:
+            raise
+        except Warning:
+            raise
+
+        return True
+
+
+    def _write_sirius_mgf_file(self, parent, fragmented_peaks, polarity):
+
+        """
+        Method to write the fragmentation spectra to a MGF file format for querying of SIRIUS
+        :return: String (mgf-styled)
+
+        This will send one parent and its child to Sirius.
+
+        MGF file format for SIRIUS queries is as follows
+        Each spectrum can contain many spectra starting with "BEGIN IONS" and ending with "END IONS"
+        Peak_pairs: m/z intensity
+        PEPMASS: parent peak
+        CHARGE: 1+ OR 1-
+        MSLEVEL: 1 for MS spectra and 2 for MS/MS
+
+        """
+        #Most likely don't need these here - just used to print and check parameters
+        parent_identifier = parent.slug
+        parent_mass = parent.mass
+        parent_intensity = parent.intensity
+
+        # Number of fragments associated with the parent peak.
+
+        numb_frags = len(fragmented_peaks)
+        print 'number of fragments are', numb_frags
+
+        #Print out a list of parameters to make sure that we are on the right track
+        #print " ",parent_identifier, parent_mass, parent_intensity, numb_frags
+
+        print "pID %4s m/z %5.5f int %.4e n_frags %2d\t" %(parent_identifier, parent_mass, parent_intensity, numb_frags )
+
+        # create temp mgf file, start by initailising mgf.
+
+        mgf=""
+        mgf += "BEGIN IONS\n"
+        mgf += "PEPMASS=" + str(parent_mass) + "\n"
+        mgf += "MSLEVEL=1\n"
+        if polarity == "Positive":
+            mgf += "CHARGE=1+\n"
+        elif polarity == "Negative":
+            mgf += "CHARGE=1-\n"
+        mgf += str(parent_mass) + " " + str(parent_intensity) + "\n"
+        mgf += "END IONS\n"
+        mgf += "\n"
+        mgf += "BEGIN IONS\n"
+        mgf += "PEPMASS=" + str(parent_mass) + "\n"
+        mgf += "MSLEVEL=2\n"
+        if polarity == "Positive":
+            mgf += "CHARGE=1+\n"
+        elif polarity == "Negative":
+            mgf += "CHARGE=1-\n"
+
+        #If there are fragments associated with the parent peak.
+        if numb_frags > 0:
+            #For each fragment in the list of fragment peaks
+            for fragment in fragmented_peaks:
+                frag_mass = fragment.mass
+                frag_intensity = fragment.intensity
+                mgf += str(frag_mass) + " " + str(frag_intensity) + "\n"
+            mgf += "END IONS\n"
+            mgf += "\n"
+        return mgf
+
+
+    def _query_sirius(self,mgf, polarity, max_ppm, output_f, profile, max_number_of_hits):
+
+        """
+        Send the .mgf file to query Sirius and return the results.
+        :rtype : Sirius_results, the results returned by Sirius.
+         """
+        # run sirius on the temp mgf file
+        print 'In Sirius query'
+        starting_dir = os.getcwd()
+
+        try:
+            #Generate a temporary file and directory for the .mgf file
+            temp_dir = tempfile.mkdtemp()
+            fd, temp_filename = tempfile.mkstemp(suffix=".mgf", text=True)
+            current_script_dir = os.path.dirname(os.path.realpath(__file__))
+            with open(temp_filename, "w") as text_file:
+                text_file.write(mgf)
+            # detect OS and pick the right executable for SIRIUS
+            system = platform.system()
+            arch = platform.architecture()[0]
+
+            print 'system, arch. current_dir=',system, arch, current_script_dir
+
+            #Karen's mac specific parameters
+            valid_platform = False
+            if system == 'Darwin': #Might be able to put this together with linux.
+                if arch == '64bit':
+                    valid_platform = True
+                    sirius_dir = 'sirius_3_0_3_linux64'
+                    sirius_exec= 'sirius'
+            elif system == 'Linux':
+                if arch == '64bit':
+                    valid_platform = True
+                    sirius_dir = 'linux64'
+                    sirius_exec = 'sirius'
+            elif system == 'Windows':
+                if arch == '32bit':
+                    valid_platform = True
+                    sirius_dir = 'win32'
+                    sirius_exec = 'sirius.exe'
+            elif arch == '64bit':
+                valid_platform = True
+                sirius_dir = 'win64'
+                sirius_exec = 'sirius.exe'
+
+            if not valid_platform:
+                raise ValueError(system + " " + arch + " is not supported")
+            print 'found valid dir and executable', sirius_dir, sirius_exec
+            # Send the information to Sirius
+
+            full_exec_dir = os.path.join(current_script_dir, sirius_dir)
+            full_exec_path = os.path.join(full_exec_dir, sirius_exec)
+            os.chdir(full_exec_dir)
+            if polarity == "Positive":
+                adduct = "[M+H]+"
+            elif polarity == "Negative":
+                adduct = "[M-H]-"
+
+            sirius_args = [full_exec_path,
+                           '-p', profile,
+                           '-s', 'omit', #Q. Should this be a user choice??
+                           '-c', str(max_number_of_hits),
+                           '--ppm-max ',str(max_ppm),
+                           '-i', adduct,
+                           '-O', output_f,
+                           '-o', temp_dir,
+                           temp_filename]
+            print 'Sirius Args are', sirius_args
+
+            #Run Sirius command with the defined sirius arguements
+
+            subprocess.check_call(sirius_args)
+
+            # read the first file produced by sirius
+            files = sorted(os.listdir(temp_dir))
+
+
+
+            #List error - ask about this code.
+            #KmcL this needs fixed if the data is not of the format json
+            print
+            first_filename = os.path.join(temp_dir, files[0])
+            sirius_data = open(first_filename).read()
+            data = json.loads(sirius_data)
+
+        except subprocess.CalledProcessError, e:
+            print
+            print "SIRIUS produced error: " + str(e)
+            data = None
+
+            #break # stop the loop
+        except IndexError, e:
+            print "SIRIUS returned nothing: " + str(e)
+            data = None
+
+
+        finally:
+            # close temp input file and remove it
+            os.close(fd)
+            os.remove(temp_filename)
+            # delete all the temp output files produced by sirius
+            shutil.rmtree(temp_dir)
+            # restore current directory
+            os.chdir(starting_dir)
+
+        return data
+
+
+    # Passing in fargmented_peaks as children into this method
+    # A method to populate the annotation table.
+    def _populate_sirius_annotation_list(self, sirius_data, parent, children):
+
+
+        min_score=0.01 #Hardwired minimum acceptable score - should this be somewhere else? as a final?
+
+        overall_score = sirius_data['annotations']['score']['total']
+        fragment_annotations = sirius_data['fragments']
+
+        if overall_score > min_score:
+
+            # loop over all annotations and find matching entry
+            for f_annotation in fragment_annotations:
+
+
+                formula_annot = f_annotation['molecularFormula']
+                annot_mass = Decimal(f_annotation['mz'])
+                #Find which peak object fragment corresponds to, if any.
+
+                correct_peak = parent
+                mass_error = (Decimal(1e6)*abs(correct_peak.mass-annot_mass)/annot_mass) #ppm mass error
+
+                for child in children:
+                    #If the difference in the child peak < diff in the parent peak, correct peak is child peak
+                    child_mass_error = (Decimal(1e6)*abs(child.mass-annot_mass)/annot_mass)
+                    if child_mass_error < mass_error:
+                        mass_error = child_mass_error
+                        correct_peak = child
+
+                #Store if error difference less than 5 ppm.
+                if mass_error < 5:
+
+                    #Create a compound in the database if one does not already exist
+                    compound_object_list = Compound.objects.get_or_create(formula=formula_annot, exact_mass=annot_mass, name=formula_annot)
+                    compound_object = compound_object_list[0]
+
+
+                    # And add the compound to the CompoundAnnotationTool table
+                    CompoundAnnotationTool.objects.get_or_create(
+                        compound=compound_object,
+                        annotation_tool=self.annotation_tool,
+                        annotation_tool_identifier='na',
+                    )
+
+                    # Finally add the candidate annotation to the database
+                    new_candidate_annotation = CandidateAnnotation.objects.create(
+                        compound=compound_object,
+                        peak=correct_peak,
+                        confidence=f_annotation['score'],
+                        annotation_query=self.annotation_query,
+                        difference_from_peak_mass=correct_peak.mass-annot_mass,
+                        mass_match=True
+                    )
+
+                    #Set the preferred anootation for the child peak as the one with the greatest confidence.
+                    if correct_peak in children:
+                        #If a preferred canditate annotation is set
+                        if correct_peak.preferred_candidate_annotation:
+                            #Check if the confidence of this peak is greater.
+                            if new_candidate_annotation.confidence > correct_peak.preferred_candidate_annotation.confidence:
+                                correct_peak.preferred_candidate_annotation=new_candidate_annotation
+                                correct_peak.save()
+                        #Else not set, set the preferred annotation
+                        else:
+                            correct_peak.preferred_candidate_annotation=new_candidate_annotation
+                            correct_peak.save()
+
+                return True
+
+#A method to collect the annotations for both MS1 and MS2 peaks.
+def _collect_sirius_annotations(self):
+    return True
 
 class NISTQueryTool:
 

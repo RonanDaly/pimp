@@ -97,6 +97,11 @@ def populate():
             'library_path': 'C:\\NIST14\\MSSEARCH',
         }
     )
+    
+    SIRIUS_annotation_tool = add_annotation_tool(
+        name = 'SIRIUS',
+        default_params = {},
+    )    
 
     network_sampler_annotation_tool = add_annotation_tool(
         name = 'Network Sampler',
@@ -135,6 +140,11 @@ def populate():
         [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
         NIST_annotation_tool
     )
+    
+    SIRIUS_protocols = add_annotation_tool_protocols(
+        [lcms_dda_experimental_protocol],
+        SIRIUS_annotation_tool
+    )    
 
     network_sampler_annotation_tool = add_annotation_tool_protocols(
         [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
