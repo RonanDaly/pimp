@@ -529,12 +529,12 @@ def detail(request, project_id):
 		print "no session"
 	if request.method == 'GET':
 		print "detail project view"
-			try:
-				project = Project.objects.get(pk=project_id)
-				user = request.user
-				permission = project.userproject_set.get(user=user).permission
-			except Project.DoesNotExist:
-				raise Http404
+		try:
+			project = Project.objects.get(pk=project_id)
+			user = request.user
+			permission = project.userproject_set.get(user=user).permission
+		except Project.DoesNotExist:
+			raise Http404
 		groups = []
 		attributes = []
 		files = project.picture_set.all()
