@@ -1,5 +1,7 @@
 library(logging)
 logging::basicConfig()
+logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
+setLevel(logLevel, getHandler())
 logger <- logging::getLogger('Pimp.runPimp')
 
 getNeededString = function(name) {

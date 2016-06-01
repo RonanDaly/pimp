@@ -109,11 +109,16 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	
 	#Data are returned in data.frame with checksum as peak id.  Row bind if two polarities
 	if(exists("raw.data.pos") && exists("raw.data.neg")) {
-	
+		loginfo('Two polarities exist', logger=logger)
+
+		logdebug('Positive rownames: %s', rownames(raw.data.pos), logger=logger)
+		logdebug('Negative rownames: %s', rownames(raw.data.neg), logger=logger)
 		if(length(intersect(rownames(raw.data.pos), rownames(raw.data.neg)))!=0) {
 			stop(paste("None unique rownames across negative and positive metabolites."))
 		}
 
+		logdebug('Positive names: %s', names(raw.data.pos), logger=logger)
+		logdebug('Negative names: %s', names(raw.data.neg), logger=logger)
 		if(!all.equal(names(raw.data.pos), names(raw.data.neg))) {
 			stop(paste("Columns for positive and negative data do not match."))
 		}
