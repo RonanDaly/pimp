@@ -4,5 +4,5 @@
 	print('Turning on logging')
 	logging::basicConfig()
 	logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
-	setLevel(logLevel, getHandler())
+	setLevel(logLevel, getLogger()[['handlers']][1])
 }
