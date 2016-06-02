@@ -117,9 +117,13 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 			stop(paste("None unique rownames across negative and positive metabolites."))
 		}
 
-		logdebug('Positive names: %s', names(raw.data.pos), logger=logger)
-		logdebug('Negative names: %s', names(raw.data.neg), logger=logger)
-		if(!all.equal(names(raw.data.pos), names(raw.data.neg))) {
+		raw.data.pos.names = names(raw.data.pos)
+		raw.data.neg.names = names(raw.data.neg)
+		logdebug('Positive names: %s', raw.data.pos.names, logger=logger)
+		logdebug('Negative names: %s', raw.data.neg.names, logger=logger)
+		isEqualNames = all.equal(raw.data.pos.names, raw.data.neg.names)
+		loginfo('isEqualNames: %s', isEqualNames, logger=logger)
+		if(!isTRUE(isEqualNames)) {
 			stop(paste("Columns for positive and negative data do not match."))
 		}
 
