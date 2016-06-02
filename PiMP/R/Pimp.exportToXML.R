@@ -1,5 +1,5 @@
 Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), ...) {
-    logger <- getLogger('Pimp.exportToXML')
+    logger <- getPiMPLogger('Pimp.exportToXML')
 
     if(is.null(id)) {
         stop("No analysis id found.")

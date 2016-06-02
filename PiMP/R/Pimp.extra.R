@@ -51,3 +51,8 @@ getJavaHeapSize <- function(default=2048) {
 dir.create.ifNotExist = function(path, showWarnings = TRUE, recursive = FALSE, mode = "0777") {
   ifelse(!dir.exists(path), dir.create(path, showWarnings, recursive, mode), FALSE)
 }
+
+getPiMPLogger = function(name) {
+	logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
+	return(getLogger(name, level=loglevels[logLevel]))
+}

@@ -1,5 +1,5 @@
 Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
-	logger <- getLogger('Pimp.processRawData')	
+	logger <- getPiMPLogger('Pimp.processRawData')
 	loginfo('files: %s', files, logger=logger)
 	loginfo('groups: %s', groups, logger=logger)
 	loginfo('mzmatch.outputs: %s', mzmatch.outputs, logger=logger)
