@@ -1,4 +1,4 @@
-Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=NULL, mzmatch.filters=list(), mzmatch.outputs=list(), nSlaves=0) {
+Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=NULL, mzmatch.filters=list(), mzmatch.outputs=list(), mzmatch.params=list(), nSlaves=0) {
 
 	#Create RSD directories if required
 	if(mzmatch.filters$rsd)	{ 

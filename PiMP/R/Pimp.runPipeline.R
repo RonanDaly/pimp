@@ -17,6 +17,9 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	if("analysis.id" %in% names(args)) {
 		analysis.id <- args$analysis.id
 	}
+	if ("mzmatch.params" %in% names(args)) {
+		mzmatch.params = args$mzmatch.params
+	}
 
 	#Check that all files exist
 	if(any(!file.exists(unlist(files))))
