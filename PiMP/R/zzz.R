@@ -5,7 +5,7 @@
 	logging::basicConfig()
 	logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
 	print(paste('Log level set to', logLevel))
-	setLevel(logLevel, getLogger()[['handlers']][1])
+	setLevel(logLevel, getHandler('basic.stdout'))
 	logger <- getLogger('zzz')
 	logerror('Logging at ERROR level', logger=logger)
 	logwarn('Logging at WARNING level', logger=logger)
