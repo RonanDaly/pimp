@@ -19,7 +19,15 @@ getInteger = function(name, default) {
 	return(as.numeric(value))
 }
 
-print('Start of script')
+args <- commandArgs(trailingOnly=TRUE)
+analysis.id <- as.integer(args[1])
+handler = getHandler('basic.stdout')
+handler$formatter = function (record) {
+	text <- paste(record$timestamp, paste(analysis.id, record$levelname, record$logger,
+		record$msg, sep = ":"))
+}
+
+loginfo('Start of script', logger=logger)
 
 packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
 message(paste('Setting library path to:', packratLibPath))
@@ -35,10 +43,7 @@ message(paste('Setting library path to:', packratLibPath))
 options(java.parameters=getString('PIMP_JAVA_PARAMETERS', paste("-Xmx",1024*8,"m",sep="")))
 
 ##need to setwd
-args <- commandArgs(trailingOnly=TRUE)
-analysis.id <- as.integer(args[1])
-print(analysis.id)
-
+loginfo('Analysis ID: %s', analysis.id, logger=logger)
 if(is.na(analysis.id)) {
 	stop("Analysis ID must be an integer.")
 }
@@ -141,19 +146,15 @@ for ( i in 1:length(fetchedContrasts) ) {
 }
 loginfo('Number of contrasts: %d', length(contrasts), logger=logger)
 loginfo('contrasts: %s', contrasts, logger=logger)
-print(contrasts)
 databases <- getAnnotationDatabases(db, analysis.id)
-print(databases)
+loginfo('databases: %s', databases, logger=logger)
 param.idx <- which(analysis.params$state==1)
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
-	print('Setting params')
+	loginfo('Setting params', logger=logger)
 
 	for(i in 1:nrow(params)) {
-		print('Name')
-		print(params$name[i])
-		print('Value')
-		print(params$value[i])
+		logdebug('Name: %s Value: %s', params$name[i], params$value[i], logger=logger)
 
 		if(params$name[i]=="ppm") {
 			xcms.params$ppm <- params$value[i]
@@ -183,7 +184,7 @@ if(length(param.idx) > 0) {
 #stop()
 
 #message('Analysis parameters')
-print(mzmatch.params)
+logdebug(mzmatch.params, logger=logger)
 #print(stds)
 
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))

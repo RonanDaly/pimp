@@ -1,5 +1,6 @@
 Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
 	logger <- getPiMPLogger('Pimp.runPipeline')
+	setPiMPLoggerAnalysisID(analysis.id)
 
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)

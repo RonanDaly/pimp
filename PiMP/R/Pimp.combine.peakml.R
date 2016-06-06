@@ -21,6 +21,8 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	#	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .export=c(".combinePeakmlFiles", ".mzmatch.ipeak.filter.RSDFilter", "mzmatch.ipeak.Combine", "files", "mzmatch.params", "mzmatch.init", "mzmatch.filters", "heapsize"), .combine='c', .verbose=TRUE) %dopar%
 	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .combine='c') %dopar%
 	{
+		logger <- getPiMPLogger('Pimp.combine.peakml.grouped.peakml.files')
+
 		mzmatch.init(version.1=FALSE)
 		##get peakml files by group
 		group.files.idx <- which(basename(files) %in% paste0(groups[[group]], ".peakml"))
@@ -36,7 +38,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
  		# dir.create(group.dir, recursive=TRUE)
  		
 		combined.file <- file.path(combined.dir, paste(group, ".peakml", sep=""))
-		print(paste('Group', group))
+		loginfo('Group %s', group, logger=logger)
 		combined.group.file <- .combinePeakmlFiles(files=group.files, outfile=combined.file, label=group, mzmatch.params=mzmatch.params)
 
 		##RSD filter if required
@@ -44,7 +46,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 		{
 	    	filtered.file <- file.path(mzmatch.outputs$combined.rsd.filtered.folder, basename(combined.file))
     		rejected.file <- file.path(mzmatch.outputs$combined.rsd.rejected.folder, basename(combined.file))
-    		print(paste('Groupa', group))
+    		loginfo('Groupa %s', group, logger=logger)
     		.mzmatch.ipeak.filter.RSDFilter(i=combined.group.file, o=filtered.file, rejected=rejected.file, rsd=mzmatch.params$rsd, v=T, JHeapSize=heapsize)
     		#check file exists
     		if(!file.exists(filtered.file)) stop(paste(filtered.file, "does not exist!\n"))
@@ -61,7 +63,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	if(length(grouped.peakml.files) > 1) {
 		##test whether peaksets in file have peaks.  If not remove.  Samples included as zero when data read in.  Workaround for PeakML.Read.
 		valid <- validatePeaksets(files=grouped.peakml.files)
-		print(paste0("VALID", valid))
+		loginfo("VALID %s", valid, logger=logger)
 		return(.combinePeakmlFiles(files=grouped.peakml.files[valid], outfile=mzmatch.outputs$final.combined.peakml.file, mzmatch.params=mzmatch.params, heapsize=heapsize))
 	} 
 	else {

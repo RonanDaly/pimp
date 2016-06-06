@@ -162,9 +162,11 @@ Pimp.exportToExcel <- function(file=NULL, databases=character(), stds.db=NULL, r
 }
 
 .createContrastSheets <- function(workbook=workbook(), toptables=list(), identification=data.frame()) {
+	logger <- getPiMPLogger('Pimp.exportToExcel.createContrastSheets')
+
 	#contrast.sheets <-list()
 	for(i in 1:length(names(toptables))) {
-		print(paste(i,"\n"))
+		logdebug('%d\n', i, logger=logger)
 		#contrast.sheet <- createSheet(workbook, sheetName=names(toptables)[i])
 		sheet <- createSheet(workbook, name=names(toptables)[i])
 		#createName(workbook, name = names(toptables)[i], formula = paste(names(toptables)[i],"!$A$1",sep=""))
@@ -302,6 +304,7 @@ Pimp.exportToExcel <- function(file=NULL, databases=character(), stds.db=NULL, r
 }
 
 get.excel.hyperlink <- function(url, name) {
+	logger <- getPiMPLogger('Pimp.exportToExcel.get.excel.hyperlink')
 	if(is.numeric(name)) {
 		return(sprintf('HYPERLINK("%s",%d)', url, name))
 	}

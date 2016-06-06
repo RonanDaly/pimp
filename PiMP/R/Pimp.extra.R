@@ -56,3 +56,14 @@ getPiMPLogger = function(name) {
 	logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
 	return(getLogger(name, level=loglevels[logLevel]))
 }
+
+setPiMPLoggerAnalysisID = function(analysis.id) {
+	logger <- getPiMPLogger('Pimp.extra.setPiMPLoggerAnalysisID')
+	loginfo('Setting analysis ID in logger to %s', analysis.id, logger=logger)
+	handler = getHandler('basic.stdout')
+	handler$formatter = function (record) {
+    	text <- paste(record$timestamp, paste(analysis.id, record$levelname, record$logger,
+        	record$msg, sep = ":"))
+	}
+	loginfo('Analysis id set', logger=logger)
+}

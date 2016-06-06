@@ -55,6 +55,8 @@ tGradSum = function(params, models) gradSum(tpGradient, params, models)
 # It uses an iterated Grubb's test. The return value specifies which
 # values to keep.
 removeOutliers <- function(y, p.value=0.05) {
+    logger <- getPiMPLogger('Pimp.gpModel.removeOutliers')
+
 	retval = rep(TRUE, length(y))
 	testY = y
 	
@@ -62,9 +64,19 @@ removeOutliers <- function(y, p.value=0.05) {
 		return(retval)
 	}
 	while ( TRUE ) {
-		o = tryCatch(outlier(testY), warning=function(w) { print(w); stop()}, error=function(e) { print(e); print(testY); print(y) })
+		o = tryCatch(outlier(testY),    warning=function(w) {
+		                                    logwarn(w, logger=logger); stop()
+		                                },
+		                                error=function(e) {
+		                                    logerror(e, logger=logger);
+		                                    logerror(testY, logger=logger);
+		                                    logerror(y, logger=logger)
+		                                }
+		)
 		pos = which(y == o)
-		testResult = tryCatch(grubbs.test(testY), warning=function(w) { print(w); print(testY); stop() })
+		testResult = tryCatch(grubbs.test(testY), warning=function(w) { logwarn(w, logger=logger);
+		                                                                logwarn(testY, logger=logger);
+		                                                                stop() })
 		if ( testResult$p.value < p.value && length(testY) > 5 ) {
 			retval[pos] = FALSE
 		} else {
@@ -255,6 +267,8 @@ predictFromModels <- function(meanVarFunction, output, group, peak, times, inten
 # the inter- and intra-batch effects. The data is the 'raw' data,
 # from the peakML files.
 correctPeaks <- function(meanVarFunction, output, data, batchInformation, types) {
+    logger <- getPiMPLogger('Pimp.gpModel.correctPeaks')
+
     batches = unique(batchInformation$batch)
     mNames = colnames(data$peakDataMtx)
     dataMtx = data$peakDataMtx
@@ -267,7 +281,7 @@ correctPeaks <- function(meanVarFunction, output, data, batchInformation, types)
     wantedIds = getWantedIds(batchInformation, types)
 
     for (peak in allPeaks) {
-		print(peak)
+		logdebug(peak, logger=logger)
         for (batch in batches) {
 			# For each peak and batch, find which samples we are interested in and get the peaks out
             batchFiles = intersect(wantedIds, rownames(batchInformation[batchInformation$batch == batch,]))
