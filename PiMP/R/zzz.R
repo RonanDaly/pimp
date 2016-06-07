@@ -1,16 +1,5 @@
 .onLoad <- function(libname = find.package("mzmatch.R"), pkgname = "mzmatch.R") {
 	heapsize <- getJavaHeapSize()
 	mzmatch.init(memorysize=heapsize, version.1=FALSE)
-	print('Turning on logging')
-	logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
-	print(paste('Log level set to', logLevel))
-	logging::basicConfig(logLevel)
-	logger <- getPiMPLogger('zzz')
-	logerror('Logging at ERROR level', logger=logger)
-	logwarn('Logging at WARNING level', logger=logger)
-	loginfo('Logging at INFO level', logger=logger)
-	logdebug('Logging at DEBUG level', logger=logger)
-	logfine('Logging at FINE level', logger=logger)
-	logfiner('Logging at FINER level', logger=logger)
-	logfinest('Logging at FINEST level', logger=logger)
+	initialisePiMPLogging()
 }
