@@ -115,8 +115,8 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	if(exists("raw.data.pos") && exists("raw.data.neg")) {
 		loginfo('Two polarities exist', logger=logger)
 
-		logdebug('Positive rownames: %s', rownames(raw.data.pos), logger=logger)
-		logdebug('Negative rownames: %s', rownames(raw.data.neg), logger=logger)
+		logfine('Positive rownames: %s', rownames(raw.data.pos), logger=logger)
+		logfine('Negative rownames: %s', rownames(raw.data.neg), logger=logger)
 		if(length(intersect(rownames(raw.data.pos), rownames(raw.data.neg)))!=0) {
 			stop(paste("None unique rownames across negative and positive metabolites."))
 		}

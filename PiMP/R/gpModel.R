@@ -28,9 +28,10 @@ scaleSingle <- function(vec) {
 # This function gives the objective over _all_ batches and peaks that are
 # being used to optimise. It is simply the sum over the individual objectives
 objectiveSum <- function(objectiveFunction, params, models) {
+  logger <- getPiMPLogger('gpModel.objectiveSum')
   objectives = lapply(models, function(model) if (is.null(model)) { 0 } else { objectiveFunction(params, model)})
   retval = sum(unlist(objectives))
-  cat('Objective at ', params, ': ', retval, '\n')
+  logdebug('Objective at %s: %s', params, retval, logger=logger)
   retval
 }
 
@@ -40,11 +41,12 @@ tObjectiveSum = function(params, models) objectiveSum(tpObjective, params, model
 # This function gives the gradient over _all_ batches and peaks that are
 # being used to optimise. It is simply the sum over the individual gradients
 gradSum <- function(gradFunction, params, models) {
+  logger <- getPiMPLogger('gpModel.gradSum')
   #cat('params: ', params, '\n')
   gradients = lapply(models, function(model) if (is.null(model)) { rep(0, length(params)) } else { gradFunction(params, model)})
   #print(t(data.frame(gradients)))
   retval = apply(do.call(cbind, gradients), 1, sum)
-  cat('Gradient at: ', params, ': ', retval, '\n')
+  logdebug('Gradient at %s: %s', params, retval, logger=logger)
   retval
 }
 
@@ -118,6 +120,8 @@ buildModel = function(processCreate, peakData, removeOutliers, options) {
 }
 
 getOptimalParameters = function(models, objectiveFun, gradFun, startingPoint=c(0,0,0)) {
+  logger <- getPiMPLogger('gpModel.getOptimalParameters')
+
   initialValues = startingPoint
   optOptions = optimiDefaultOptions()
   optOptions$maxit = 100
@@ -129,10 +133,10 @@ getOptimalParameters = function(models, objectiveFun, gradFun, startingPoint=c(0
     optModels = models
   }
   
-  cat('Initial Params: ', initialValues, '\n')
+  loginfo('Initial Params: %s', initialValues, logger=logger)
   optimisedParams = SCGoptim(initialValues, objectiveFun, gradFun, optOptions, optModels)
   hyperParameters = unlist(optimisedParams)
-  cat('optimisedParams: ', hyperParameters, '\n')
+  loginfo('optimisedParams: %s', hyperParameters, logger=logger)
   hyperParameters
 }
 
@@ -143,7 +147,8 @@ getOptimalParameters = function(models, objectiveFun, gradFun, startingPoint=c(0
 # indexed by batch and peak columns. Each model consists of a Gaussian Process
 # regression on the max intensity data, using the time the sample was run, and
 # a mean of the data values.
-gpRegress <- function(processCreate, objectiveFun, gradFun, expandParamFun, data, batchInformation, hyperParameters=NULL, debugMessages=FALSE, removeOutliers=FALSE) {
+gpRegress <- function(processCreate, objectiveFun, gradFun, expandParamFun, data, batchInformation, hyperParameters=NULL, removeOutliers=FALSE) {
+    logger <- getPiMPLogger('gpModel.gpRegress')
     uniqueGroups = unique(batchInformation$batch)
     peaks = unique(data$peak)
 
@@ -151,7 +156,7 @@ gpRegress <- function(processCreate, objectiveFun, gradFun, expandParamFun, data
     options$kern$comp = list("rbf","white")
     models = list()
     numModels = length(uniqueGroups) * length(peaks)
-	cat('Num models', numModels, '\n')
+	loginfo('Num models: %s', numModels, logger=logger)
 	
 	peakMeans = list()
 	for (peak in peaks) {
@@ -166,17 +171,15 @@ gpRegress <- function(processCreate, objectiveFun, gradFun, expandParamFun, data
 
 	for ( i in 1:length(uniqueGroups) ) {
 		batch = uniqueGroups[i]
-		cat('Batch', batch, '\n')
+		loginfo('Batch %s', batch, logger=logger)
         batchData = data[data$group == batch,]
 		for ( j in 1:length(peaks) ) {
 			peak = peaks[j]
 			#cat('Peak', peak, '\n')
             peakData = batchData[batchData$peak == peak,]
 			modelNum = (i - 1) * length(peaks) + j
-			if ( debugMessages ) {
-				cat('Batch ', batch, ' peak ', peak, ' numSamples ',
-					dim(peakData)[1], 'modelNum', modelNum, length(outputGroup), length(outputPeak), length(models), '\n')
-			}
+			logdebug('Batch %s peak %s numSamples %s modelNum %s %s %s %s', batch, peak,
+				dim(peakData)[1], modelNum, length(outputGroup), length(outputPeak), length(models), logger=logger)
       model = buildModel(processCreate, peakData, removeOutliers, options)
 			outputGroup[modelNum] = as.character(batch)
 			outputPeak[modelNum] = peak

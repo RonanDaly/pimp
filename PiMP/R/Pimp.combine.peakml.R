@@ -76,13 +76,13 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 }
 
 .combinePeakmlFiles <- function(files=NULL, outfile=NULL, label=NULL, mzmatch.params=list(), heapsize=2048, verbose=TRUE) {
+	logger <- getPiMPLogger('Pimp.combine.peakml.combinePeakmlFiles')
 	if(length(files) == 0) stop("No data files specified.")
 	if(any(!file.exists(files))) stop(cat("The following files were not found:", files[which(!file.exists(files))], sep="\n"))
 
 	if(verbose)
 	{
-		cat("Files to be combined:\n")
-		cat(paste(files, collapse="\n"))
+		loginfo("Files to be combined: %s", files, logger=logger)
 	}
 
     mzmatch.ipeak.Combine(

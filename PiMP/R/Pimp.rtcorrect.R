@@ -1,5 +1,5 @@
 Pimp.rtcorrect <- function(xset=xcmsSet(), method=c("obiwarp", "loess", "none"), peakml.params=list(), mzmatch.outputs=list(), nSlaves=0, verbose=TRUE) {
-
+	logger <- getPiMPLogger('Pimp.rtcorrect')
 	##RT Correct using xcms alignment algorithm.
 	xset.aln <- switch(
 		method,
@@ -24,7 +24,7 @@ Pimp.rtcorrect <- function(xset=xcmsSet(), method=c("obiwarp", "loess", "none"),
 	#peakml.files <- sub("\\.mzxml", "\\.peakml", basename(filepaths(xset.aln)), ignore.case=TRUE)
 	#peakml.files <- file.path(mzmatch.outputs$polarity.folder, sub("\\.mzxml", "\\.peakml", basename(filepaths(xset.aln)), ignore.case=TRUE))
 	peakml.files <- file.path(mzmatch.outputs$polarity.folder, sub("\\.mzxml|\\.mzml|\\.mzdata", "\\.peakml", basename(names(xseto)), ignore.case=TRUE))
-	cat(peakml.files)
+	loginfo(peakml.files, logger=logger)
 	#Need to get specified Java heapsize here. Barfs if called by function within foreach loop
 	heapsize <- getJavaHeapSize()
 

@@ -110,7 +110,7 @@ Pimp.report.generatePDF <- function(peakml=NULL, xlsx=NULL, databases=character(
             ## mzmatch.pipeline.plot.plotRelatedPeaks(
             dev.off()
         } else{
-            cat("\tNo peaks found with mass:", annotations[["peakMass"]] ," and its isotopes\n")
+            loginfo("No peaks found with mass: %s and its isotopes", annotations[["peakMass"]], logger=logger)
         }
     }
 }
