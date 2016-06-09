@@ -54,7 +54,10 @@ dir.create.ifNotExist = function(path, showWarnings = TRUE, recursive = FALSE, m
 
 initialisePiMPLogging = function() {
 	print('Initialising PiMP logging')
-	logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
+	if ( is.na(Sys.getenv('PIMP_LOG_LEVEL', unset=NA)) ) {
+		Sys.setenv(PIMP_LOG_LEVEL='WARNING')
+	}
+	logLevel = Sys.getenv('PIMP_LOG_LEVEL')
 	print(paste('PiMP log level set to', logLevel))
 	if ( is.na(Sys.getenv('PUMP_LOG_LEVEL', unset=NA)) ) {
 		Sys.setenv(PUMP_LOG_LEVEL=logLevel)
