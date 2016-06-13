@@ -1,5 +1,6 @@
 Pimp.report.generatePDF <- function(peakml=NULL, xlsx=NULL, databases=character(), outDirectory="chromatograms", sampleGroups = NULL, layoutMtx = NULL, ppm = 3, trendPlots = NULL, useArea = FALSE, peakRTWindow = 30, excludeFromPlots = NULL) {
-	##Read PeakML data 
+    logger <- getPiMPLogger('Pimp.processRawData.report.generatePDF')
+	##Read PeakML data
 	PeakMLData <- PeakML.Read(peakml, ionisation = "neutral", NULL)
 
 	##Read from report
@@ -78,7 +79,7 @@ Pimp.report.generatePDF <- function(peakml=NULL, xlsx=NULL, databases=character(
         id.formula <- unique(idData$Formula)
         id.adducts <- unique(idData$Adduct)
         #id.pathways <- unique(unlist(strsplit(as.character(idData$Pathways), ",")))
-        print(paste(i, raw.peakid, "....."))
+        loginfo('%d %s .....', i, raw.peakid, logger=logger)
         annotations <- list("peakID"=raw.peakid, "peakMass"=raw.peakmass, "peakRT"=raw.peakrt,
                             "peakName"=id.name, "formula"=id.formula, "relationID"=raw.relationid,
                             "relationShip"=raw.relationship, "charge"=raw.charge)
@@ -109,7 +110,7 @@ Pimp.report.generatePDF <- function(peakml=NULL, xlsx=NULL, databases=character(
             ## mzmatch.pipeline.plot.plotRelatedPeaks(
             dev.off()
         } else{
-            cat("\tNo peaks found with mass:", annotations[["peakMass"]] ," and its isotopes\n")
+            loginfo("No peaks found with mass: %s and its isotopes", annotations[["peakMass"]], logger=logger)
         }
     }
 }

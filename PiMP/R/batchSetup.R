@@ -6,7 +6,9 @@ getFileCreatedTime <- function(f) {
 }
 
 getMLFileCreatedTime <- function(f) {
-  print(f)
+  logger <- getPiMPLogger('Pimp.batchSetup.getMLFileCreatedTime')
+
+  loginfo(f, logger=logger)
   tree = xmlTreeParse(f)
   r = xmlRoot(tree)
   time = xmlGetAttr(r[['mzML']][['run']], 'startTimeStamp')

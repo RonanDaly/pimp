@@ -1,5 +1,6 @@
 Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
-	logger <- getLogger('Pimp.runPipeline')
+	logger <- getPiMPLogger('Pimp.runPipeline')
+	setPiMPLoggerAnalysisID(analysis.id)
 
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)
@@ -16,6 +17,9 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	analysis.id <- NULL
 	if("analysis.id" %in% names(args)) {
 		analysis.id <- args$analysis.id
+	}
+	if ("mzmatch.params" %in% names(args)) {
+		mzmatch.params = args$mzmatch.params
 	}
 
 	#Check that all files exist
@@ -109,12 +113,21 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	
 	#Data are returned in data.frame with checksum as peak id.  Row bind if two polarities
 	if(exists("raw.data.pos") && exists("raw.data.neg")) {
-	
+		loginfo('Two polarities exist', logger=logger)
+
+		logfine('Positive rownames: %s', rownames(raw.data.pos), logger=logger)
+		logfine('Negative rownames: %s', rownames(raw.data.neg), logger=logger)
 		if(length(intersect(rownames(raw.data.pos), rownames(raw.data.neg)))!=0) {
 			stop(paste("None unique rownames across negative and positive metabolites."))
 		}
 
-		if(!all.equal(names(raw.data.pos), names(raw.data.neg))) {
+		raw.data.pos.names = names(raw.data.pos)
+		raw.data.neg.names = names(raw.data.neg)
+		logdebug('Positive names: %s', raw.data.pos.names, logger=logger)
+		logdebug('Negative names: %s', raw.data.neg.names, logger=logger)
+		isEqualNames = all.equal(raw.data.pos.names, raw.data.neg.names)
+		loginfo('isEqualNames: %s', isEqualNames, logger=logger)
+		if(!isTRUE(isEqualNames)) {
 			stop(paste("Columns for positive and negative data do not match."))
 		}
 

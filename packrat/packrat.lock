@@ -1,11 +1,11 @@
 PackratFormat: 1.4
-PackratVersion: 0.4.6.1
-RVersion: 3.2.2
+PackratVersion: 0.4.7.1
+RVersion: 3.2.1
 Repos: PuMP=http://puma.ibls.gla.ac.uk/R,
-    BioCsoft=https://bioconductor.org/packages/3.2/bioc,
-    BioCann=https://bioconductor.org/packages/3.2/data/annotation,
-    BioCexp=https://bioconductor.org/packages/3.2/data/experiment,
-    BioCextra=https://bioconductor.org/packages/3.2/extra,
+    BioCsoft=http://bioconductor.org/packages/3.2/bioc,
+    BioCann=http://bioconductor.org/packages/3.2/data/annotation,
+    BioCexp=http://bioconductor.org/packages/3.2/data/experiment,
+    BioCextra=http://bioconductor.org/packages/3.2/extra,
     CRAN=http://cran.rstudio.com
 
 Package: AnnotationDbi
@@ -411,8 +411,8 @@ Requires: Biobase, BiocGenerics, ProtGenerics, Rcpp, zlibbioc
 
 Package: mzmatch.R
 Source: PuMP
-Version: 1.0-3
-Hash: 5e736e920c87423c9a195b844de44f67
+Version: 1.0-4
+Hash: 2e4fa71554bd111e48e73fbeb7fc67c0
 Requires: R.utils, Rcpp, XML, bitops, caTools, gplots, logging, mzR,
     ptw, rJava, snow, xcms
 
@@ -433,8 +433,8 @@ Hash: 8807da915217180089cc7f5557137dda
 
 Package: packrat
 Source: PuMP
-Version: 0.4.6-1
-Hash: 29eacc43b096c5b1a82c8d54a49b030b
+Version: 0.4.7-1
+Hash: 16ca16d36eb18d1d16113606ecc5c400
 
 Package: plyr
 Source: PuMP
@@ -461,7 +461,7 @@ Requires: nloptr
 Package: rJava
 Source: PuMP
 Version: 0.9-8
-Hash: bf541ef2ee8a6515eba35256566e64cf
+Hash: 3e8627a2a5bd45c9bad6112acfc231d9
 
 Package: reshape2
 Source: PuMP
