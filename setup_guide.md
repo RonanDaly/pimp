@@ -42,7 +42,8 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 3. **(OSX)** Install the `XCode` command line tools and various libraries.
 
         $ xcode-select --install
-        $ brew install mysql
+        $ brew install mysql netcdf gcc48 xquartz openssl
+        $ brew link openssl
 
 4. **(Ubuntu)** Install various libraries.
 
