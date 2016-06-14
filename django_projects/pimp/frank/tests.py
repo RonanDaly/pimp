@@ -33,7 +33,7 @@ def run_population_script():
     Method to run the population script
     """
 
-    population_script.populate()
+    population_script.populate(testing=True)
 
 
 def create_test_user():
