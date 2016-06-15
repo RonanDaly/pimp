@@ -1,7 +1,7 @@
 
 
 // Register every of the result page component for click actions
-
+var metexplore_init = false;
 
 function set_click_actions(staticUrl, metexploreInfoUrl){
 
@@ -286,93 +286,297 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	});
 
 	$('#metexplore').click(function (e) {
-		var list_identified_metabolites = [];
-		var $modal = $("#full-width");
-		var modalBody = $modal.find('.modal-body');
-		var modalHeader = $modal.find('.modal-header');
-		var modalFooter = $modal.find('.modal-footer');
+        var list_identified_metabolites = [];
+        var $modal = $("#full-width");
+        var modalBody = $modal.find('.modal-body');
+        var modalHeader = $modal.find('.modal-header');
+        var modalFooter = $modal.find('.modal-footer');
 
-		$(modalBody).empty();
-		$(modalFooter).empty();
-		$(modalHeader).empty();
+        $(modalBody).empty();
+        $(modalFooter).empty();
+        $(modalHeader).empty();
 
-		var url = metexploreInfoUrl;
+        // var url = metexploreInfoUrl;
 
+        var biosourceUrl = metexploreBiosourceUrl;
+
+        // ****************************************************************************
+        // ****************************************************************************
+        // ****************************************************************************
         $.ajax({
-			type: "GET",
-			traditional : true,
-            url: url,
+            type: "GET",
+            traditional : true,
+            url: biosourceUrl,
             success: function(response){
-            	var mydatastring = "";
-            	for (var i=0;i<response.length;i++){
-            		var stringName = response[i]["name"]+"\t";
-            		mydatastring = mydatastring + stringName;
-            		for (var j=0;j<response[i]["conditions"].length;j++){
-            			var stringCondition = response[i]["conditions"][j]+(j==response[i]["conditions"].length-1 ? '': '\t');
-            			mydatastring = mydatastring + stringCondition;
-            		}
-            		mydatastring = mydatastring+ "\n";
-            	}
-            	$('<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>').appendTo($(modalFooter));
-				$('<button class="btn btn-primary" data-dismiss="modal" id="launch_metexplore">Launch</button>').appendTo($(modalFooter));
+                // var mydatastring = "";
+                // for (var i=0;i<response.length;i++){
+                //  var stringName = response[i]["name"]+"\t";
+                //  mydatastring = mydatastring + stringName;
+                //  for (var j=0;j<response[i]["conditions"].length;j++){
+                //      var stringCondition = response[i]["conditions"][j]+(j==response[i]["conditions"].length-1 ? '': '\t');
+                //      mydatastring = mydatastring + stringCondition;
+                //  }
+                //  mydatastring = mydatastring+ "\n";
+                // }
+                $('<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>').appendTo($(modalFooter));
+                $('<button class="btn btn-primary" id="launch_metexplore">Launch</button>').appendTo($(modalFooter));
 
-				$('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="'+staticUrl+'img/Logo_Metexplore_40px.png" alt="tools" style="margin-bottom: 3px;"> MetExplore</h3>').appendTo($(modalHeader));
+                $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="'+staticUrl+'img/Logo_Metexplore_40px.png" alt="tools" style="margin-bottom: 3px;"> Network analysis with MetExplore Viz</h3>').appendTo($(modalHeader));
 
-				var rightPanelPreferencesContent = $('<div class="row" style="margin-left:0px;margin-bottom: 15px;"><iframe id="receiver" src="http://metexplore.toulouse.inra.fr/metexploreTest/index_frame.html" style="display:none;"><p>Your browser does not support iframes.</p></iframe><div class="span6"><h3 style="margin-left:10px;">Select MetExplore Biosource</h3><select name="Select Biosource" id="biosource_selector"><option disabled>Select Biosource</option></select></div><div class="span6"><h3 style="margin-left:10px;">What is MetExplore</h3><p style="margin-left:10px;">Met­Ex­plore is a web server ded­i­cated to the analy­sis of genome scale meta­bolic networks</p><p style="margin-left:10px;">For more information, please visit <a href="http://metexplore.toulouse.inra.fr/joomla3/"  target="_blank">MetExplore website</a></div></div></div>');
+                var rightPanelPreferencesContent = $('<div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6"><h3 style="margin-left:10px;margin-bottom: 0px;">MetExplore Viz parameters</h3><div id="biosource-info" style="height:27px"></div><select name="Select MetExplore Biosource" id="biosource_selector"><option disabled>Select MetExplore Biosource</option></select><div id="pathway-info" style="height:27px"></div><select name="Select MetExplore Pathway" multiple="multiple" id="met_pathway_selector"><option disabled>Select MetExplore Pathway</option></select></div><div class="span6"><h3 style="margin-left:10px;">What is MetExplore</h3><p style="margin-left:10px;">Met­Ex­plore is a web server ded­i­cated to the analy­sis of genome scale meta­bolic networks</p><p style="margin-left:10px;">For more information, please visit <a href="http://metexplore.toulouse.inra.fr/joomla3/"  target="_blank">MetExplore website</a></div></div></div>');
 
-				$.getJSON(staticUrl+"jsoncallbacktest.json")
-				  .done(function(data) {
-				    $.each(data, function(i, item) {
-    					$('<option value="'+item.id+'">'+item.NomComplet+'</option>').appendTo($('#biosource_selector'));
-					})
-				  })
-				  .fail(function() {
-				    console.log( "error" );
-				  })
-				  .always(function() {
-				    console.log( "complete" );
-				  });
+                console.log(response.length);
 
-				$(rightPanelPreferencesContent).appendTo($(modalBody));
+                for (var i=0;i<response.length;i++){
+                    $('<option value="'+response[i]['id']+'">'+response[i]['NomComplet']+'</option>').appendTo($(rightPanelPreferencesContent).find('#biosource_selector'));
+                }
 
-				$modal.modal();
+                $(rightPanelPreferencesContent).appendTo($(modalBody));
+
+                $modal.modal();
+
+                $('#biosource_selector').select2({
+                    placeholder: "Select MetExplore biosource",
+                    allowClear: false,
+                });
+
+                $('#met_pathway_selector').select2({
+                    placeholder: "Select MetExplore pathway",
+                    allowClear: false,
+                });
+
+                var $eventSelectBiosource = $("#biosource_selector");
+
+                var $eventSelectPathway = $("#met_pathway_selector");
+
+                $eventSelectPathway.on("select2:select", function (e) { handle_error("select2:select", e); });
+                $eventSelectPathway.on("select2:unselect", function (e) { handle_unselect("select2:unselect", e); });
+
+                function handle_error (name, evt) {
+                    $('#pathway-info').html("");
+                }
+
+                function handle_unselect (name, evt) {
+                    if (!evt) {
+                    var args = "{}";
+                  } else {
+                    // console.log(evt.params);
+                    var id = evt.params['data']['id']
+                    console.log(id);
+                  }
+                  var idsPathway = $('#met_pathway_selector').val();
+
+                  console.log(idsPathway);
+
+                  if (!idsPathway){
+                    $('#pathway-info').html("<p style='font-size:12px;padding-top:3px;'>Please select a minimum of one pathway</p>").css('color','red');
+                  }
+                }
+
+                $eventSelectBiosource.on("select2:select", function (e) { get_pathway("select2:select", e); });
+
+                function get_pathway (name, evt) {
+                  if (!evt) {
+                    var args = "{}";
+                  } else {
+                    // console.log(evt.params);
+                    var id = evt.params['data']['id']
+                    console.log(id)
+                  }
+                  $('#biosource-info').html('');
+                  // var $e = $("<li>" + name + " -> " + args + "</li>");
+                  console.log("selected biousource");
+                  var ajax_data = {"id": id};
+                  $.ajax({
+                        type: "GET",
+                        traditional : true,
+                        url: metPathwayUrl,
+                        data: ajax_data,
+                        success: function(response){
+                            console.log(response);
+                            if (response == "empty"){
+                                // Change this to display message to user
+                                console.log("No pathway");
+                                var $selectPathway = $("#met_pathway_selector");
+                                // save current config. options
+                                var options = $selectPathway.data('select2').options.options;
+                                // delete all items of the native select element
+                                $selectPathway.html('');
+
+                                // add new items
+                                $selectPathway.select2(options);
+                            }
+                            else{
+                                var $selectPathway = $("#met_pathway_selector");
+                                // save current config. options
+                                var options = $selectPathway.data('select2').options.options;
+                                // delete all items of the native select element
+                                $selectPathway.html('');
+
+                                // build new options
+                                for (var i=0;i<response.length;i++) {
+                                    $selectPathway.append('<option value="'+response[i]['id']+'">'+response[i]['text']+'</option>');
+                                }
+                                // add new items
+                                options.data = response;
+                                $selectPathway.select2(options);
+                            }
+
+                        },
+                        error: function(){
+                            console.log("error");
+                        }
+                    });
+
+                }
+
+                $('#launch_metexplore').click(function (e) {
+
+                    var idBioSource = $('#biosource_selector').val();
+                    var idsPathway = $('#met_pathway_selector').val();
+
+                    if (!idsPathway){
+                        console.log(idsPathway);
+                        console.log("ya pas de pathway selectionné!");
+                        console.log(idBioSource);
+                        $('#pathway-info').html("<p style='font-size:12px;padding-top:3px;'>Please select a minimum of one pathway</p>").css('color','red');
+                        if (idBioSource == "Select MetExplore Biosource"){
+                            $('#biosource-info').html("<p style='font-size:12px;padding-top:3px;'>Please select a biosource</p>").css('color','red');
+                        }
+                    }
+                    else{
+                        $modal.modal('hide');
+
+                        var ajax_data = {"biousourceid": idBioSource, "pathwayids": idsPathway };
+
+                        // var url = networkUrl + "?id='" + idBioSource + "'";
+                        // console.log(url);
+                        $.ajax({
+                            type: "GET",
+                            traditional : true,
+                            url: networkUrl,
+                            data: ajax_data,
+                            success: function(response){
+                                if (response == "error"){
+                                    console.log("ERROR returned");
+                                    var $modal = $("#small-window");
+                                    var modalBody = $modal.find('.modal-body');
+                                    var modalHeader = $modal.find('.modal-header');
+                                    var modalFooter = $modal.find('.modal-footer');
+                                    $(modalBody).empty();
+                                    $(modalFooter).empty();
+                                    $(modalHeader).empty();
 
 
-				var iframe = $("#receiver")[0].contentWindow;
-				$('#launch_metexplore').click(function (e) {
-					var idBioSource = $('#biosource_selector').val();
-					iframe.postMessage({metexplore_idBioSource:idBioSource,
-						 metexplore_nbActions:1,
-						 metexplore_actions:[
-						 	{name:'map',
-								params:['Metabolite','name'],
-	   							datas:[mydatastring]
-							}
-						]},'http://metexplore.toulouse.inra.fr/metexploreTest/index_frame.html');
-					window.open('http://metexplore.toulouse.inra.fr/metexploreTest/index.html?autoload','_blank');
-				});
+                                    $('<button class="btn" data-dismiss="modal" aria-hidden="true">Ok</button>').appendTo($(modalFooter));
+                                    $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="'+staticUrl+'img/Logo_Metexplore_40px.png" alt="tools" style="margin-bottom: 3px;"> Network analysis</h3>').appendTo($(modalHeader));
+                                    $('<p style="margin-top: 20px;margin-bottom: 20px;text-align:center;">The server is temporarily unavailable, please try again later.</p>').appendTo($(modalBody));
 
+                                    $modal.modal();
+                                }
+                                else if (response == "empty"){
+                                    console.log("No pathway returned returned");
+                                    var $modal = $("#small-window");
+                                    var modalBody = $modal.find('.modal-body');
+                                    var modalHeader = $modal.find('.modal-header');
+                                    var modalFooter = $modal.find('.modal-footer');
+                                    $(modalBody).empty();
+                                    $(modalFooter).empty();
+                                    $(modalHeader).empty();
+                                    $('<button class="btn" data-dismiss="modal" aria-hidden="true">Ok</button>').appendTo($(modalFooter));
+                                    $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="'+staticUrl+'img/Logo_Metexplore_40px.png" alt="tools" style="margin-bottom: 3px;"> Network analysis</h3>').appendTo($(modalHeader));
+                                    $('<p style="margin-top: 20px;margin-bottom: 20px;text-align:center;">No metabolite could be mapped on the selected biosource</p>').appendTo($(modalBody));
+
+                                    $modal.modal();
+                                }
+                                else {
+                                    $('.tab-pane.active').removeClass('active');
+                                    $('#tabnav').find('.active').removeClass('active');
+                                    $('#metexplore-li').removeClass('hidden-tab').addClass('active');
+                                    $('#metexplore-viz').removeClass('hidden-tab').addClass('active');
+                                    if (!metexplore_init) {
+                                        MetExploreViz.initFrame("metexplore-container");
+                                        metexplore_init = true;
+                                        console.log("Initialisation MetExplore viz");
+                                    }
+                                    MetExploreViz.onloadMetExploreViz(function(){
+                                        //Set mapping style
+                                        // metExploreViz.GraphMapping.onloadMapping("Global Mapping", function(){
+                                        //     metExploreViz.GraphMapping.removeMappingData({"title": "Global Mapping"});
+                                        // });
+
+                                        // Extract mapping info only and stringify 
+                                        var mappingJSON = response['mappingdata'];
+                                        var mapping=JSON.stringify(mappingJSON[0]);
+
+                                        if(typeof response != 'string')
+                                            var mapJSON=JSON.stringify(response);
+
+
+                                        var generalStyle = metExploreViz.getGeneralStyle();
+                                        var colorMax = generalStyle.getColorMaxMappingContinuous();
+                                        metExploreViz.getGeneralStyle().setMaxColorMappingContinuous('red');
+                                        metExploreViz.getGeneralStyle().setMinColorMappingContinuous('blue');
+                                        
+                                        //Run graph
+                                        metExploreViz.GraphPanel.refreshPanel(mapJSON, function(){
+                                            metExploreViz.onloadSession(function(){
+
+
+
+                                                // var mapping = metExploreViz.GraphUtils.parseWebServiceMapping(mapJSON);
+
+                                                //Load mapping
+                                                metExploreViz.GraphMapping.loadDataFromJSON(mapping);
+                                                //Highlight
+                                                metExploreViz.GraphMapping.mapNodes("Global Mapping");
+                                                //Color nodes
+                                                // metExploreViz.GraphMapping.graphMappingContinuousData("mapping1", "conditionName1");
+                                            }); 
+                                        }); 
+                                    });
+                                }
+                            },
+                            error: function(){
+                                $(modalBody).empty();
+                                $(modalFooter).empty();
+                                $(modalHeader).empty();
+
+                                $('<button class="btn" data-dismiss="modal" aria-hidden="true">Ok</button>').appendTo($(modalFooter));
+                                $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="'+staticUrl+'img/Logo_Metexplore_40px.png" alt="tools" style="margin-bottom: 3px;"> Network analysis with MetExplore Viz</h3>').appendTo($(modalHeader));
+                                $('<p style="margin-top: 20px;margin-bottom: 20px;text-align:center;">The server is temporarily unavailable, please try again later.</p>').appendTo($(modalBody));
+
+                                $modal.modal();
+                            }
+                        });
+                    }
+                });
             },
             error: function(){
-        		alert("Error");
-        	}
-        });
-	});
+                $('<button class="btn" data-dismiss="modal" aria-hidden="true">Ok</button>').appendTo($(modalFooter));
+                $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel"><img src="'+staticUrl+'img/Logo_Metexplore_40px.png" alt="tools" style="margin-bottom: 3px;"> Network analysis with MetExplore Viz</h3>').appendTo($(modalHeader));
+                $('<p style="margin-top: 20px;margin-bottom: 20px;text-align:center;">The server is temporarily unavailable, please try again later.</p>').appendTo($(modalBody));
 
-	$(".summary_table_expand_button").click(function() {
-		if ($(this).hasClass("active")){
-			var summary_table_id_clicked = "#summary_table_container-" + $(this).attr("id").split("-")[1];
-    		$(this).removeClass("active");
-    		$(this).text("Show more");
-    		$(summary_table_id_clicked).removeClass("active");
-		}
-		else {
-    		var summary_table_id_clicked = "#summary_table_container-" + $(this).attr("id").split("-")[1];
-    		$(this).addClass("active");
-    		$(this).text("Show less");
-    		$(summary_table_id_clicked).addClass("active");
-		}
-	});
+                $modal.modal();
+            }
+        });
+
+    });
+
+    $(".summary_table_expand_button").click(function() {
+        if ($(this).hasClass("active")){
+            var summary_table_id_clicked = "#summary_table_container-" + $(this).attr("id").split("-")[1];
+            $(this).removeClass("active");
+            $(this).text("Show more");
+            $(summary_table_id_clicked).removeClass("active");
+        }
+        else {
+            var summary_table_id_clicked = "#summary_table_container-" + $(this).attr("id").split("-")[1];
+            $(this).addClass("active");
+            $(this).text("Show less");
+            $(summary_table_id_clicked).addClass("active");
+        }
+    });
 
 }
 

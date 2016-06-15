@@ -49,6 +49,9 @@ from experiments import tasks
 # debug libraries
 import timeit
 import pickle
+import urllib2
+import requests
+import jsonpickle
 from django.views.decorators.cache import cache_page
 # from pimp.profiler import profile
 logger = logging.getLogger(__name__)
@@ -1015,11 +1018,178 @@ def get_intensities_values(peakdtcomparison):
     return data
 
 
+def get_metexplore_biosource(request, project_id, analysis_id):
+    if request.is_ajax():
+        # Get the list of biosources from metexplore webservice
+        url = 'http://metexplore.toulouse.inra.fr:8080/metExploreWebService/biosources'
+        try:
+            resp = urllib2.urlopen(url)
+            contents = resp.read()
+            print "------------ Biosource connection status: WORK ----------"
+        except urllib2.HTTPError, error:
+            error = error.read()
+            print "------------ Biosource connection status: ERROR ----------"
+            contents = "error"
+        return HttpResponse(contents, content_type='application/json')
+
+
+def get_metexplore_pathways(request, project_id, analysis_id):
+    # To limit the size of the network, we only display the pathways with metabolite match (at least 1),
+    # the first call to MetExplore returns the list of pathways which will be then used to filter the network in the second call
+    if request.is_ajax():
+        project = Project.objects.get(pk=project_id)
+        analysis = Analysis.objects.get(pk=analysis_id)
+        # This token is temporary, a permanent one will be provided, this will have to move to the environment viriables and kept secret
+        # token = "eb0fd4bd183a4dbf0db6ca2b240495bb"
+        # Current site isn't used, legacy code, to be removed after all tests have passed
+        # current_site = Site.objects.get_current()
+        # Get the selected biosource
+        biosource_id = str(request.GET['id'])
+        # Create list of inchikey and put it in json
+        inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
+        # data = simplejson.dumps({"Content": inchikey_list, "token": token})
+        data = simplejson.dumps({"Content": inchikey_list})
+        # Get pathway list from MetExplore
+        # Creation of the url to call MetExplore webservice with the selected biosource
+        url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/aspathways/')
+        r = requests.post(url, data = data)
+        print "apres req"
+        # Check if MetExplore server returns a server error response
+        # If so, return error response to PiMP user "MetExplore server is not available"
+        if r.raise_for_status():
+            response = "error"
+            response = simplejson.dumps(contents)
+            print "------------ Pathway connection status: ERROR ----------"
+            return HttpResponse(response, content_type='application/json')
+        print "------------ Pathway connection status: WORK ----------"
+        print "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+        print "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+        print "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+        # If MetExplore returns code 200, we start parsing the response
+        content = jsonpickle.decode(r.text)
+        pathway_list = []
+        pathway_selection_list = []
+
+        print content
+        # Extract the IDs of pathways with more than 1 metabolite mapped
+        if "pathwayList" in content[0].keys():
+            for pathway in content[0]['pathwayList']:
+                if pathway['mappedMetabolite'] > 0 and "Transport" not in pathway['name'] and "Exchange" not in pathway['name']:
+                    pathway_list.append(pathway['mysqlId'])
+                    pathway_selection_list.append({'id': str(pathway['mysqlId']),'text':str(pathway['name'] + ' ' + str(pathway['numberOfMetabolite']) + ' (' + str(pathway['mappedMetabolite']) + ')')})
+        print "before len pathway"
+        # If pathway list is empty (no metabolite mapped), return response to PiMP user "No metabolite could be found in the selected organism"
+        if len(pathway_list) == 0:
+            contents = "empty"
+            response = simplejson.dumps(contents)
+            print "------------ Pathway list is empty ----------"
+            return HttpResponse(response, content_type='application/json')
+        else:
+            response = simplejson.dumps(pathway_selection_list)
+            print "------------ Send pathway selection list -------------"
+            print pathway_selection_list
+            return HttpResponse(response, content_type='application/json')
+
+
+def get_metexplore_network(request, project_id, analysis_id):
+    if request.is_ajax():
+        project = Project.objects.get(pk=project_id)
+        analysis = Analysis.objects.get(pk=analysis_id)
+
+        biosource_id = str(request.GET['biousourceid'])
+        pathway_list = request.GET.getlist('pathwayids')
+
+        print "Pathway list IIIIIICCCCCCCIIIIII"
+        print pathway_list
+
+        inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
+        # Create json data to send to MetExplore webservice
+        # data = simplejson.dumps({"token": token, "Content": inchikey_list, "pathways": pathway_string})
+        data = simplejson.dumps({"Content": inchikey_list, "pathways": pathway_list})
+        # Create the url with the right biosource
+        url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/filteredbypathways/')
+        # Request the data
+        r = requests.post(url, data = data)
+        # Catch error if one
+        if r.raise_for_status():
+            response = "error"
+            response = simplejson.dumps(contents)
+            print "------------ Pathway connection status: ERROR ----------"
+            return HttpResponse(response, content_type='application/json')
+
+        # print r.text
+        # Check if network isn't empty (node count)
+        if len(jsonpickle.decode(r.text)['nodes']) == 0:
+            response = "empty"
+            response = simplejson.dumps(contents)
+            print "------------ Pathway list is empty ----------"
+            return HttpResponse(response, content_type='application/json')
+        # Modify the network to add abundance values for each metabolite and condition
+        mapping = jsonpickle.decode(r.text)
+
+
+        inchikey_nodeId_map = {}
+        for node in mapping['mappingdata'][0]['mappings'][0]['data']:
+            if node['inchikey'] in inchikey_nodeId_map.keys():
+                inchikey_nodeId_map[node['inchikey']].append(node['node'])
+            else:
+                inchikey_nodeId_map[node['inchikey']] = [node['node']]
+
+
+        inchikey_list = [(inchikey[0].encode("utf8"),inchikey[1]) for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', 'peak__id').distinct()]
+
+        comparisons = analysis.experiment.comparison_set.all()
+
+        member_set = set()
+        for comparison in comparisons:
+            member_set = member_set.union(set(comparison.attribute.all()))
+
+        member_list = list(member_set)
+        mapping_data = []
+        for member in member_list:
+            # Temporary fix cause some standard are attached to many base peaks! Problem coming from R backend
+            # We only take the values for the first bp
+            debug_inchi = []
+            member_hash = {}
+            metabolite_list = []
+            for metabolite in inchikey_list:
+                if metabolite[0] not in debug_inchi:
+                    debug_inchi.append(metabolite[0]) 
+                    if metabolite[0] in inchikey_nodeId_map.keys():
+                        intensity_list = []
+                        # sample_list = []
+                        for sample in member.sample.all():
+                            peak_intensity = sample.peakdtsample_set.get(peak=metabolite[1])
+                            intensity_list.append(peak_intensity.intensity)
+                            # sample_list.append(str(sample.name).split(".")[0])
+                        if len(intensity_list) > 1:
+                            for node in inchikey_nodeId_map[metabolite[0]]:
+                                metabolite_list.append({"node": node, "value":str(int(np.mean(np.array(intensity_list))))})
+                        else:
+                            for node in inchikey_nodeId_map[metabolite[0]]:
+                                metabolite_list.append({"node": inchikey_nodeId_map[metabolite[0]], "value":str(int(intensity_list[0]))})
+                        # metabolite_list[metabolite[0]] = intensity_list
+                    # print sample.name
+                    # print peak_intensity.intensity
+                    # member_hash[member.name] = [intensity_list, sample_list]
+            member_hash["name"] = member.name
+            member_hash["data"] = metabolite_list
+            mapping_data.append(member_hash)
+
+        mapping['mappingdata'][0]['mappings'] = mapping_data
+        # print mapping
+        response = simplejson.dumps(mapping)
+        # content = jsonpickle.decode(r.text)
+        # response = simplejson.dumps(content)
+        return HttpResponse(response, content_type='application/json')
+
+
 def get_metexplore_info(request, project_id, analysis_id):
     if request.is_ajax():
         project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
         identified_peak = Peak.objects.filter(dataset__analysis=analysis_id, compound__identified='True')
+        print identified_peak.count()
 
         comparisons = analysis.experiment.comparison_set.all()
 
@@ -1038,7 +1208,8 @@ def get_metexplore_info(request, project_id, analysis_id):
                                                                      db_name='stds_db')
 
             if str(compounds_identified[0].compound_name) not in nameIn:
-                print compounds_identified[:1]
+                # print compounds_identified[:1]
+                print compounds_identified
                 for compound in compounds_identified[:1]:
                     member_hash = {}
                     for member in member_list:
@@ -1070,10 +1241,14 @@ def get_metexplore_info(request, project_id, analysis_id):
                     nameIn.append(str(compound.compound_name))
                     compound_data_list.append({"name": str(compound.compound_name), "conditions": data})
                     testdata.append({compound.compound_name: hash_data})
+            else:
+                print compounds_identified[0].compound_name
 
         # print "COMPOUND DATA"
         # print compound_data_list
         # print testdata
+        print compound_data_list
+        print len(compound_data_list)
         message = "got somthing on the server!!!"
         response = simplejson.dumps(compound_data_list)
 

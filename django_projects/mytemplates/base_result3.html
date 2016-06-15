@@ -50,6 +50,7 @@
 		<script type="text/javascript" src="{{ STATIC_URL }}js/pimp_analysis_results_components.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/gp_chart.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}select2-4.0.1/select2.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}metExploreViz/metexploreviz.js" charset="utf-8">  </script>
 
 		<audio id="marseillaise" src="{{ STATIC_URL }}other/marseillaise.wav" preload="auto"></audio>
     	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
@@ -106,6 +107,9 @@
 		var right_panel = true;
 		var staticUrl = "{{ STATIC_URL }}";
 		var metexploreInfoUrl = "{% url 'get_metexplore_info' project.id analysis.id %}";
+        var metexploreBiosourceUrl = "{% url 'get_metexplore_biosource' project.id analysis.id %}";
+        var networkUrl = "{% url 'get_metexplore_network' project.id analysis.id %}";
+        var metPathwayUrl = "{% url 'get_metexplore_pathways' project.id analysis.id %}";
 		var metabolites_table_url = "{% url 'get_metabolites_table' project.id analysis.id %}";
 		var peak_table_url = "{% url 'get_peak_table' project.id analysis.id %}";
 		var averageChartType = 'column';
@@ -230,6 +234,9 @@
 
 
 		$(document).ready(function() {
+
+            // $('#metexplore-li').hide();
+            // $('#metexplore-viz').hide();
 
 			// ***********************************************************************************************
 			// ********************************** Sparkline plot generation **********************************
@@ -1972,6 +1979,7 @@
 				<div id="tool_button"><img src="{{ STATIC_URL }}img/tool_icon.png" alt="tools"><span id="tool_button_text">Tools</span><img src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
 				<ul id="tabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
 					<li id="summary-li" class="active" style="float:left;margin:0px;height:37px;"><a href="#summary" style="float:left;margin:0px;">Summary</a></li>
+                    <li id="metexplore-li" style="float:left;margin:0px;height:37px;margin-left:20px;" class="hidden-tab"><a href="#metexplore-viz" style="float:left;margin:0px;">Network</a></li>
 					<li id="metabolites-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#metabolites" style="float:left;">Metabolites</a></li>
 					<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Metabolic Maps</a></li>
 					<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
@@ -2006,6 +2014,8 @@
 				</div> -->
 				<!-- <div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">MetExplore</span></div>
 				</div> -->
+                <div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">Network analysis</span></div>
+                </div>
 				<div class="side_footer">
 					<!-- <span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span> -->
 				</div>
@@ -2304,6 +2314,14 @@
 						</div>
 					</div>
 				</div>
+                <div id="metexplore-viz" class="tab-pane hidden-tab">
+                    <div class="row" style="margin:0px;height:100%;overflow: auto;margin-bottom:0px;">
+                        <div class="span12" style="width:100%;margin:0px;height:100%;">
+                            <div id="metexplore-container" style="height: 100%;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 				<div id="metabolites" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
