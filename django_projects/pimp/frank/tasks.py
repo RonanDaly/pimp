@@ -23,6 +23,7 @@ from experiments.models import Analysis as PimpAnalysis
 from data.models import Peak as PimpPeak
 from data.models import Dataset
 
+from MS2LDA.lda_for_fragments import Ms2Lda
 
 @celery.task
 def runNetworkSampler(annotation_query_id):
@@ -98,7 +99,7 @@ def runNetworkSampler(annotation_query_id):
             #     peakset.annotations.append(ns.Annotation(annotation.compound.formula,short_name,annotation.compound.id,annotation.id))
             #     newmeasurement.annotations[peakset.annotations[-1]] = float(annotation.confidence)
             # else:
-            #     # check if this measurement has had this compound in its annotation before 
+            #     # check if this measurement has had this compound in its annotation before
             #     # (to remove duplicates with different collision energies - highest confidence is used)
             #     this_annotation = previous_annotations[0]
             #     current_confidence = newmeasurement.annotations[this_annotation]
@@ -122,7 +123,7 @@ def runNetworkSampler(annotation_query_id):
         peak = Peak.objects.get(id=m.id)
         for annotation in m.annotations:
             compound = Compound.objects.get(id=annotation.compound.id)
-            parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid) 
+            parent_annotation = CandidateAnnotation.objects.get(id=annotation.parentid)
             add_info_string = "Prior: {:5.4f}, Edges: {:5.2f}".format(peakset.prior_probability[m][annotation],peakset.posterior_edges[m][annotation])
             an = CandidateAnnotation.objects.create(compound=compound, peak=peak, confidence=peakset.posterior_probability[m][annotation],
                 annotation_query=new_annotation_query, difference_from_peak_mass=parent_annotation.difference_from_peak_mass,
@@ -379,7 +380,7 @@ NEGATIVE_TRANSFORMATIONS = {
 
 @celery.task
 def precursor_mass_filter(annotation_query_id):
-    # Runs a filter on the annotations 
+    # Runs a filter on the annotations
     import math
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
@@ -403,7 +404,7 @@ def precursor_mass_filter(annotation_query_id):
                 if mass_error < mass_tol:
                     new_annotation = CandidateAnnotation(peak = peak,
                         annotation_query = annotation_query,compound = a.compound,
-                        mass_match = True, confidence = a.confidence, 
+                        mass_match = True, confidence = a.confidence,
                         difference_from_peak_mass = peak.mass - a.compound.exact_mass , adduct = t,
                         instrument_type = a.instrument_type, collision_energy = a.collision_energy,
                         additional_information = a.additional_information)
@@ -420,7 +421,7 @@ def precursor_mass_filter(annotation_query_id):
                 if mass_error < mass_tol:
                     new_annotation = CandidateAnnotation(peak = peak,
                         annotation_query = annotation_query,compound = a.compound,
-                        mass_match = True, confidence = a.confidence, 
+                        mass_match = True, confidence = a.confidence,
                         difference_from_peak_mass = peak.mass - a.compound.exact_mass , adduct = t,
                         instrument_type = a.instrument_type, collision_energy = a.collision_energy,
                         additional_information = a.additional_information)
@@ -454,7 +455,7 @@ def clean_filter(annotation_query_id,user):
 
     # Following is true if we should collapse multiple instances of the same compound
     collapse_multiple = parameters['collapse_multiple']
-    
+
     fragmentation_set = annotation_query.fragmentation_set
     peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,
         msn_level = 1)
@@ -478,7 +479,7 @@ def clean_filter(annotation_query_id,user):
                 if annotation.confidence > preferred_threshold:
                     new_annotation = CandidateAnnotation(peak = peak,
                         annotation_query = annotation_query,compound = annotation.compound,
-                        mass_match = annotation.mass_match , confidence = annotation.confidence, 
+                        mass_match = annotation.mass_match , confidence = annotation.confidence,
                         difference_from_peak_mass = peak.mass - annotation.compound.exact_mass , adduct = annotation.adduct,
                         instrument_type = annotation.instrument_type, collision_energy = annotation.collision_energy)
                     new_annotation.save()
@@ -563,12 +564,187 @@ def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
     return True
 
 @celery.task
+def run_mass2lda_analysis (annotation_query_id):
+    """
+    Method to run a Mass2LDA analysis.
+        - read MS1 peaks from database
+        - read MS2 peaks from database
+        - create MS2 Intensity Matrix
+        - save data into ms2lda object
+        - run an LDA analysis on the data
+        - run thresholding on the data
+	- save the project file so that visualisation can be done at a later stage
+          for this annotation query
+    """
+
+    # get the parameters specified on the mass2lda form (saved in the annotation query object)
+    annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
+    parameters=jsonpickle.decode(annotation_query.annotation_tool_params)
+
+    minimal_ms1_intensity    = parameters['minimal_ms1_intensity']
+    minimal_ms2_intensity    = parameters['minimal_ms2_intensity']
+    min_ms1_retention_time   = parameters['min_ms1_retention_time']
+    max_ms1_retention_time   = parameters['max_ms1_retention_time']
+    grouping_tol             = parameters['grouping_tol']
+    scaling_factor           = parameters['scaling_factor']
+    polarity                 = parameters['polarity']
+    alpha_model_parameter    = parameters['alpha_model_parameter']
+    beta_model_parameter     = parameters['beta_model_parameter']
+    gibbs_sampling_number    = parameters['gibbs_sampling_number']
+    mass2motif_count         = parameters['maximum_num_of_mass2motif']
+
+    mass2lda_dir=os.environ['HOME']+"/mass2lda_data/"		# directory to hold mass2lda project files
+
+    annotation_query.status = 'Processing'
+    annotation_query.save()
+
+    # extract the fragmentation set details (as specified in the annotation query) from the database
+    frag_set=annotation_query.fragmentation_set
+
+    # extract the ms1 peak objects
+    print "Extracting ms1_peaks and inserting into dataframe ..."
+    ms1_peaks = Peak.objects.filter(fragmentation_set = frag_set, msn_level=1, source_file__polarity=polarity)
+
+    # place ms1 data into a dataframe
+    col_names=['peakID','MSnParentPeakID','msLevel','rt','mz','intensity']
+    row_names=[]
+    ms1_peakdata=[]
+    for peak in ms1_peaks:
+        ms1_peakdata.append({'peakID':peak.id,'MSnParentPeakID':0,\
+                             'msLevel':peak.msn_level,'rt':peak.retention_time,\
+                             'mz':peak.mass,'intensity':peak.intensity})
+        row_names.append(peak.id)
+    ms1_df=pd.DataFrame(ms1_peakdata,index=row_names,columns=col_names,dtype='float')
+    print "\tms1_df.shape = ",ms1_df.shape
+
+    # extract the ms2 peak objects
+    print "Extracting ms2_peaks and inserting into dataframe ..."
+    ms2_peaks = Peak.objects.filter(fragmentation_set = frag_set, msn_level=2)
+
+    # place ms2 data into a dataframe
+    col_names=['peakID','MSnParentPeakID','msLevel','rt','mz','intensity']
+    row_names=[]
+    ms2_peakdata=[]
+    for peak in ms2_peaks:
+        ms2_peakdata.append({'peakID':peak.id,'MSnParentPeakID':peak.parent_peak.id,\
+                             'msLevel':peak.msn_level,'rt':peak.retention_time,\
+                             'mz':peak.mass,'intensity':peak.intensity})
+        #(Note: MSnParentPeakID is the object of the parent peak)
+        row_names.append(peak.id)
+    ms2_df=pd.DataFrame(ms2_peakdata,index=row_names,columns=col_names,dtype='float')
+    print "\tms2_df.shape = ",ms2_df.shape
+
+    # Now need to generate the MS2 Intensity matrix.
+    # Matrix column will be the MS1 peak value (i.e. Documents)
+    # Matrix rows will be to MS2 masses/fragments (i.e. Words)
+
+    # first need to order the MS2 dataframe by intensities into descending order
+    print "Sorting MS2 data ..."
+    sorted_ms2_df=ms2_df.copy(deep=True)
+    sorted_ms2_df.sort(['intensity'],ascending=False,inplace=True)
+
+    # calculate MS2 fragment(Word) values
+    print "Calculating MS2 fragment values ..."
+    unique_masses = []
+    mass_id = []
+    mass=sorted_ms2_df['mz'].tolist()
+    for m in mass:
+        # check for previous
+        previous_pos = [i for i,a in enumerate(unique_masses) if (abs(m-a)/m)*1e6 < grouping_tol]
+        if len(previous_pos) == 0:
+            # it's a new one
+            unique_masses.append(m)
+            mass_id.append(len(unique_masses)-1)
+        else:
+            # it's an old one
+            mass_id.append(previous_pos[0])
+
+    # add an extra column to the MS2 peak dataframe - will hold the MS2 fragment(word)
+    # that the MS2 peak should be stored in
+    n_peaks=len(mass)
+    frag_col=[]
+    for n in range (n_peaks):
+        frag_col.append (unique_masses[mass_id[n]]) # held as a float
+    sorted_ms2_df['fragment_bin_id']=frag_col       # add the new column
+    sorted_ms2_df['loss_bin_id']=0      	    # add a placeholder for loss column
+						    # otherwise plot method will fail
+
+    # populate the ms2 intensity matrix
+    print "Populating the ms2 intensity matrix ..."
+    intensity_dmat=np.zeros((len(unique_masses),len(ms1_df.index)))
+    unique_masses.sort()    # sort the fragments into ascending order
+    for i,ms1 in enumerate(ms1_df.index.tolist()):
+        ms2_rows=sorted_ms2_df.loc[sorted_ms2_df['MSnParentPeakID']==ms1]   \
+								#all ms2 children for the ms1
+        ms2_intensities=np.array(ms2_rows['intensity'].tolist()) \
+							        #all ms2 intensities for this ms1
+        ms2_fragments=np.array(ms2_rows['fragment_bin_id'].tolist()) \
+								#.. and the fragment bins they go in
+
+        # add each ms2 intensity associated with this ms1 to the dmat
+        # (normalise and floor first ...)
+
+        word_counts=ms2_intensities / max(ms2_intensities)*scaling_factor
+        word_counts=np.floor(word_counts)
+
+        for j,ms2 in enumerate (word_counts):
+            intensity_dmat[unique_masses.index(ms2_fragments[j]),i]=ms2
+
+    # create a dataframe holding intensity of ms2 peaks for a given ms1 peak
+    # column - ms1 peaks, label=mz_rt_peakID
+    # rows - ms2 fragment, label=fragment_<frag>
+    print "Creating intensity_df ..."
+    row_names=['fragment_'+str(round(x,5)) for x in unique_masses]
+    col_names=[]
+    for i,row in ms1_df.iterrows():
+        mz=str(round(row['mz'],5))
+        rt=str(row['rt'])
+        peak_ID=str(int(row['peakID']))
+        col_names.append(mz+'_'+rt+'_'+peak_ID)
+    # copy the data into pandas dataframe
+    intensity_df=pd.DataFrame(intensity_dmat,index=row_names,columns=col_names)
+    intensity_df=intensity_df.transpose()
+    print "\tintensity_df.shape = ",intensity_df.shape
+
+    # saving off project data in ms2lda object
+    vocab=intensity_df.columns.values
+    input_filenames=[]
+    mass2lda = Ms2Lda(intensity_df,vocab,ms1_df,sorted_ms2_df,input_filenames,mass2motif_count,2)
+
+    #run lda analysis
+    # n_topics = 300		** now uses mass2motif_count parameter
+    n_samples = 3
+    n_burn = 0
+    n_thin = 1
+    # alpha = 50.0/n_topics      **now uses parameter entered on the screen**
+    # beta = 0.1                 **now uses parameter entered on the screen**
+    print "Running LDA anaylysis ..."
+    mass2lda.run_lda(mass2motif_count, n_samples, n_burn, n_thin, float(alpha_model_parameter), float(beta_model_parameter))
+
+    print "\nRunning thresholding ..."
+    mass2lda.do_thresholding(th_doc_topic=0.05,th_topic_word=0.01)
+
+    # need to convert following columns to str
+    mass2lda.ms2['fragment_bin_id']=mass2lda.ms2['fragment_bin_id'].round(5)
+    mass2lda.ms2['fragment_bin_id']=mass2lda.ms2['fragment_bin_id'].astype(str)	#covert to str
+    mass2lda.ms2['loss_bin_id']=mass2lda.ms2['loss_bin_id'].astype(str)		#covert to str
+
+    # save the project off to the relevant directory so that it can be read from the visualisation
+    # first check if relevant directory exists - if not then create it.
+    if not os.path.isdir(mass2lda_dir) :
+        os.makedirs(mass2lda_dir)
+    mass2lda.save_project(mass2lda_dir+"mass2lda_"+str(annotation_query_id)+".project")
+
+    annotation_query.status = 'Completed Successfully'
+    annotation_query.save()
+
+@celery.task
 def simple_pimp_frank_linker(pimp_analysis_id,frank_fragmentation_set_id,mass_tolerance,rt_tolerance,link_id):
     print "RUNNING PiMP <-> FrAnK LINKER"
     pimp_analysis = PimpAnalysis.objects.get(id = pimp_analysis_id)
     fragmentation_set = FragmentationSet.objects.get(id = frank_fragmentation_set_id)
 
-    
+
 
     # Get the PiMP peaks
     dataset = Dataset.objects.get(analysis = pimp_analysis)
@@ -582,7 +758,7 @@ def simple_pimp_frank_linker(pimp_analysis_id,frank_fragmentation_set_id,mass_to
 
 
 
-    # Get the frank peaks 
+    # Get the frank peaks
     positive_frank_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,source_file__polarity = 'Positive')
     negative_frank_peaks = Peak.objects.filter(fragmentation_set = fragmentation_set,source_file__polarity = 'Negative')
 

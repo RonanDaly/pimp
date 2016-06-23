@@ -6,6 +6,7 @@ from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol
     IONISATION_PROTOCOLS, FILE_TYPES, PimpAnalysisFrankFs
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe 
 
 # From SIRIUS documentation:
 # Specify the used analysis profile. Choose either **qtof**,
@@ -580,7 +581,7 @@ class SIRIUSQueryForm(AnnotationQueryForm):
         if 'experiment_object' in kwargs:
             self.experiment = kwargs.pop('experiment_object')
         super(SIRIUSQueryForm, self).__init__(*args, **kwargs)
-        
+
 
 class MassBankQueryForm(AnnotationQueryForm):
     """
@@ -689,4 +690,90 @@ class SelectFragmentationSetForm(forms.Form):
                 empty_label=None,
             )
 
-    
+class Mass2LDAQueryForm(AnnotationQueryForm):
+    """
+    A form for the specification of the parameters for Mass2LDA
+    """
+
+    # Matrix pre-filtering parameters
+    minimal_ms1_intensity = forms.IntegerField(
+        max_value = 300000,
+        min_value = 0,
+        initial = 0,
+        required = True,
+        help_text = mark_safe("<br /><strong><span style='color:blue'>Please specify the matrix pre-filtering parameters.</strong><br />")
+    )
+
+    minimal_ms2_intensity = forms.IntegerField(
+        max_value = 300000,
+        min_value = 0,
+        initial = 0,
+        required = True
+    )
+
+    min_ms1_retention_time = forms.IntegerField(
+        max_value = 50,
+        min_value = 1,
+        initial = 1,
+        required = True
+    )
+
+    max_ms1_retention_time = forms.IntegerField(
+        max_value = 2000,
+        min_value = 1,
+        initial = 2000,
+        required = True
+    )
+
+    grouping_tol = forms.IntegerField(
+        max_value = 10,
+        min_value = 1,
+        initial = 7,
+        required = True
+    )
+
+    scaling_factor = forms.IntegerField(
+        max_value = 100,
+        min_value = 0,
+        initial = 100,
+        required = True
+    )
+
+    polarity = forms.ChoiceField(
+        choices=FILE_TYPES
+    )
+
+    # LDA Analysis parameters
+    alpha_model_parameter = forms.DecimalField(
+        max_value = 50.0,
+        min_value = 0.0,
+        initial = 0.1,
+        decimal_places = 3,
+        required = True,
+        help_text = mark_safe("<br /><strong><span style='color:blue'>Please specify LDA analysis parameters.</strong><br />")
+    )
+
+    beta_model_parameter = forms.DecimalField(
+        max_value = 50.0,
+        min_value = 0.0,
+        initial = 0.01,
+        decimal_places = 3,
+        required = True
+    )
+
+    gibbs_sampling_number = forms.IntegerField(
+        max_value = 1000,
+        min_value = 1,
+        initial = 3,
+        required = True
+    )
+
+    mass2motif_count = forms.IntegerField(
+        max_value = 10000,
+        min_value = 1,
+        initial = 300,
+        required = True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(Mass2LDAQueryForm,self).__init__(*args, **kwargs)

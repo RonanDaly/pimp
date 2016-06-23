@@ -25,6 +25,8 @@ import csv
 from experiments.models import Analysis
 from projects.models import Project
 
+from MS2LDA.visualisation.networkx import lda_visualisation
+
 
 """
 To reduce code repetition, add a method for the context_dict
@@ -46,6 +48,192 @@ def get_my_experiments_context_dict(user):
     }
     return context_dict
 
+# returns the plot data for the mass2lda visualisation graphs -
+#  - topic_peaks: list MS1 peaks for each topic
+#  - topic_fragments: fragmentation peaks for topic/ms1
+#  - fragmentation_spectra: fragmentation spectra for each MS1 peak
+
+def get_topic_graph_data (docdf, topicdf, ms2, mass2motif_count):
+
+    topic_peaks = {}
+    topic_fragments = {}
+    fragmentation_spectra = {}
+    max_topics=mass2motif_count
+
+    for topic in range(0,max_topics):
+
+        print ("   Mass2Motif "+str(topic)+" : building MS1 peak, MS2 Spectra and topic fragment data")
+        ms2_rel_intensity = {}  #holds the relative intensity for each MS2 - used to populate the peaks in topic frags
+        # get the peak ids for this topic
+        column_values=np.array(docdf.columns.values)
+        doc_dist = docdf.iloc[[topic]].as_matrix().flatten()
+        # argsort in ascending order
+        idx = np.argsort(doc_dist)[::-1]
+        topic_d = np.array(column_values)[idx]
+        topic_p = np.array(doc_dist)[idx]
+        # pick the documents with non-zero values
+        nnz_idx = topic_p > 0
+        top_n_docs = topic_d[nnz_idx]
+        parent_ids_mz=[]
+        parent_ids=[]
+        parent_frag_spectra=[]   #fragment spectra for each parent
+        for peak in top_n_docs:
+            #split the mz_rt_peakid string into tokens
+            tokens = peak.split('_')
+            peakid = int(tokens[2])
+            parent_ids.append(peakid)
+            mz = float(tokens[0])
+            #rt = float(tokens[1])
+            parent_peak=[]
+            parent_peak.append([mz,100,peakid])
+            parent_ids_mz.append(parent_peak)
+            # get the fragmentation spectra for this ms1
+            ms2_rows = ms2.loc[ms2['MSnParentPeakID']==peakid]
+            peakids = ms2_rows[['peakID']]
+            mzs = ms2_rows[['mz']]
+            intensities = ms2_rows[['intensity']]
+            parentids = ms2_rows[['MSnParentPeakID']]
+            # convert from pandas dataframes to list
+            peakids = peakids.values.ravel().tolist()
+            mzs = mzs.values.ravel().tolist()
+            intensities = intensities.values.ravel().tolist()
+            max_intensity = max(intensities)
+            relative_intensities = [100.0*i/max_intensity for i in intensities]
+            parentids = parentids.values.ravel().tolist()
+            # save the data into list
+            items=[]
+            for n in range(len(peakids)):
+                mz = mzs[n]
+                intensity = relative_intensities[n]
+                peakid=peakids[n]
+                item = (mz, intensity,peakid)
+                ms2_rel_intensity[peakid]=intensity
+                items.append(item)
+            parent_frag_spectra.append(items)
+        topic_peaks[topic]=parent_ids_mz
+        fragmentation_spectra[topic]=parent_frag_spectra
+
+        # get the fragment data for this topic
+        column_values=np.array(topicdf.transpose().columns.values)
+        word_dist = topicdf.transpose().iloc[[topic]].as_matrix().flatten()
+        # argsort in ascending order
+        idx = np.argsort(word_dist)[::-1]
+        topic_w = np.array(column_values)[idx]
+        topic_p = np.array(word_dist)[idx]
+        # pick the words with non-zero values
+        nnz_idx = topic_p > 0
+        topic_w = topic_w[nnz_idx]
+        topic_p = topic_p[nnz_idx]
+        # split the words into fragment word tokens
+        fragments = []
+        fragments_p= []
+        for w,p in zip (topic_w, topic_p):
+            if w.startswith('fragment'):
+                fragments.append(w)
+                fragments_p.append(p)
+        parent_topic_fragments = {}
+        for t in zip(fragments, fragments_p):
+            fragment = t[0]
+            tokens = fragment.split('_')
+            bin_id = tokens[1]
+            bin_prob = t[1]
+            ms2_rows = ms2.loc[ms2['fragment_bin_id']==bin_id]
+
+            ms2_rows = ms2_rows.loc[ms2_rows['MSnParentPeakID'].isin(parent_ids)]
+
+            peakids = ms2_rows[['peakID']]
+            mzs = ms2_rows[['mz']]
+            intensities = ms2_rows[['intensity']]
+            parentids = ms2_rows[['MSnParentPeakID']]
+
+            # convert from pandas dataframes to list
+            peakids = peakids.values.ravel().tolist()
+            mzs = mzs.values.ravel().tolist()
+            intensities = intensities.values.ravel().tolist()
+            parentids = parentids.values.ravel().tolist()
+
+            for n in range(len(parentids)):
+                parentid = parentids[n]
+                mz = mzs[n]
+                intensity = intensities[n]
+                peakid = peakids[n]
+                word = fragment
+                item = (mz, ms2_rel_intensity[peakid],peakid)
+                if parentid in parent_topic_fragments:
+                    existing_list = parent_topic_fragments[parentid]
+                    existing_list.append(item)
+                else:
+                    new_list = [item]
+                    parent_topic_fragments[parentid] = new_list
+
+        #covert from dict to list
+        parent_topic_fragments_list = []
+        for j,k in enumerate(topic_peaks[topic]):
+            parentid=k[0][2]
+            if parentid in parent_topic_fragments:
+                parent_topic_fragments_list.append(parent_topic_fragments[parentid])
+            else:
+                parent_topic_fragments_list.append([])
+
+        topic_fragments[topic]=parent_topic_fragments_list
+
+    return topic_peaks, topic_fragments, fragmentation_spectra
+
+
+def get_mass2lda_vis_context_dict(fragmentation_set_name_slug, annotation_id):
+    """
+    Method to generate the context dictionary for the Mass2LDA visualisation page
+    :param fragmentation_set_name_slug: String containing the unique slug of the fragmentation set
+    :param annotation_id:  number containing the unique slug of the annotatio
+    :return: context_dict:  The context dictionary for the page
+    """
+
+    # resume project from file for this annotation
+    print "Reading mass2lda project file ..."
+    mass2lda_dir=os.environ['HOME']+"/mass2lda_data/"  # directory holding mass2lda project files
+    mass2lda=tasks.Ms2Lda.resume_from(mass2lda_dir+"mass2lda_"+str(annotation_id)+".project")
+
+    # get the data needed for the graphs -
+    #   - ms1 peak data for each topic (for MS2 Spectra graph and Parent Ion graph)
+    #   - fragment peaks associated with a topic/ms1 (for Parent Ion graph)
+    #   - fragment spectra or each MS1 peak (for MS2 Spectra graph)
+    print "Extracting data from mass2lda object for mass2lda graphs..."
+    topic_peaks, topic_fragments, fragmentation_spectra = \
+                     get_topic_graph_data (mass2lda.docdf, mass2lda.topicdf, mass2lda.ms2, mass2lda.mass2motif_count)
+
+
+    topic_data=[]    # holds the parent peak, fragment spectra and topic fragments for each topic
+    max_topics=mass2lda.mass2motif_count
+    for i in range(max_topics):
+        topic_data.append(0)
+
+    for topic,topic_peaks_content in topic_peaks.iteritems():
+
+        # Convert topic_fragments[topic] from dict to list
+        # extract the peaks & associated fragments that are in this topic
+        topic_data[topic]=[fragmentation_spectra[topic],topic_peaks[topic],topic_fragments[topic]]
+
+    # get the annotation name
+    annotation_query=AnnotationQuery.objects.get(id=annotation_id)
+
+    # build json data needed for graph html
+    to_highlight=None   # default to this.
+    degree=20		# default to this.
+    json_data,G = lda_visualisation.get_json_from_docdf(mass2lda.docdf.transpose(),to_highlight,degree)
+
+    #DEBUG - Need to fix this. Currently when passing graph directly via contect dict there are
+    #DEBUG   issues. Instead, will pass the data via file which is read in on the javascript
+    json_outfile = '../static/graph.json'
+    with open(json_outfile, 'w') as f:
+       json.dump(json_data, f, sort_keys=True, indent=4, ensure_ascii=False)
+
+    context_dict = {
+        'fragment_slug': fragmentation_set_name_slug,
+        'annotation_name': annotation_query.name,
+	'graph' : json.dumps(json_data),
+        'topic_data' : json.dumps(topic_data)
+    }
+    return context_dict
 
 def get_add_experiment_context_dict(form):
     """
@@ -680,6 +868,9 @@ def fragmentation_set(request, fragmentation_set_name_slug):
                 annotation_query_form = CleanFilterForm(fragmentation_set_name_slug)
             elif user_tool_choice == 'Network Sampler':
                 annotation_query_form = NetworkSamplerForm(fragmentation_set_name_slug)
+            elif user_tool_choice == 'Mass2LDA':
+                annotation_query_form = Mass2LDAQueryForm()
+
             # For the context dictionary, the annotation tool slug is required to render the page
             annotation_tool_slug = AnnotationTool.objects.get(name=user_tool_choice).slug
             # redirect the user to the 'define_annotation_query' page which displays the form
@@ -720,6 +911,17 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
     context_dict = get_peak_summary_context_dict(fragmentation_set_name_slug, peak_name_slug)
     return render(request, 'frank/peak_summary.html', context_dict)
 
+@login_required
+def mass2lda_vis(request, fragmentation_set_name_slug,annotation_id):
+    """
+    View to display the mass2lda visualisation screen.
+    :param request: A Get request for the 'mass2lda annotation' page
+    :param fragmentation_set_name_slug: A string containing the unique slug of the fragmentation set
+    :param annotation_id: id of the annotation where the vis data was created
+    :return: render(request, 'frank/mass2lda_vis.html', context_dict)
+    """
+    context_dict = get_mass2lda_vis_context_dict(fragmentation_set_name_slug,annotation_id)
+    return render(request, 'frank/mass2lda_vis.html', context_dict)
 
 @login_required
 def define_annotation_query(request, fragmentation_set_name_slug, annotation_tool_slug):
@@ -754,6 +956,9 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = CleanFilterForm(fragmentation_set_name_slug,request.POST)
         elif annotation_tool.name == 'Network Sampler':
             annotation_query_form = NetworkSamplerForm(fragmentation_set_name_slug,request.POST)
+       	elif annotation_tool.name == 'Mass2LDA':
+            annotation_query_form = Mass2LDAQueryForm(request.POST)
+
         # Check that the form is valid
         if annotation_query_form.is_valid():
             # Check that the form is valid
@@ -925,6 +1130,8 @@ def generate_annotations(annotation_query_object,user = None):
         tasks.precursor_mass_filter(annotation_query_object.id)
     elif annotation_tool.name == 'Clean Annotations':
         tasks.clean_filter(annotation_query_object.id,user)
+    elif annotation_tool.name == 'Mass2LDA':
+        tasks.run_mass2lda_analysis(annotation_query_object.id)
 
 
 def set_annotation_query_parameters(annotation_query_object, annotation_query_form, current_user):
@@ -1044,7 +1251,7 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         print ('About to return annotation object with parameters')
         return annotation_query_object
 
-    
+
     # Simon contribution
     elif isinstance(annotation_query_form, PrecursorMassFilterForm):
         parameters = {}
@@ -1072,7 +1279,22 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     # End of Simon contribution
-
+    elif isinstance(annotation_query_form, Mass2LDAQueryForm):
+        parameters = {}
+        parameters['minimal_ms1_intensity']     = annotation_query_form.cleaned_data['minimal_ms1_intensity']
+        parameters['minimal_ms2_intensity']     = annotation_query_form.cleaned_data['minimal_ms2_intensity']
+        parameters['min_ms1_retention_time']    = annotation_query_form.cleaned_data['min_ms1_retention_time']
+        parameters['max_ms1_retention_time']    = annotation_query_form.cleaned_data['max_ms1_retention_time']
+        parameters['grouping_tol']              = annotation_query_form.cleaned_data['grouping_tol']
+        parameters['scaling_factor']            = annotation_query_form.cleaned_data['scaling_factor']
+        parameters['polarity']                  = annotation_query_form.cleaned_data['polarity']
+        parameters['alpha_model_parameter']     = annotation_query_form.cleaned_data['alpha_model_parameter']
+        parameters['beta_model_parameter']      = annotation_query_form.cleaned_data['beta_model_parameter']
+        parameters['gibbs_sampling_number']     = annotation_query_form.cleaned_data['gibbs_sampling_number']
+        parameters['mass2motif_count'] = annotation_query_form.cleaned_data['mass2motif_count']
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Mass2LDA')
+        annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
+        return annotation_query_object
 
 def delete_annotation_query(request,fragmentation_set_name_slug,annotation_query_slug):
     annotation_query = AnnotationQuery.objects.get(slug = annotation_query_slug)
@@ -1282,7 +1504,7 @@ def connect(request,pimp_project_id,pimp_analysis_id):
             tasks.simple_pimp_frank_linker.delay(pimp_analysis_id,chosen_frag_set.id,mass_tol,rt_tol,link.id)
         url = '/accounts/project/{}'.format(project.id)
         return redirect(url)
-        
+
     else:
         fs_form = SelectFragmentationSetForm(current_user = request.user)
         context_dict['fs_form'] = fs_form
