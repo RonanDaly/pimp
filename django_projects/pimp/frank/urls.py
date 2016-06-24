@@ -40,6 +40,6 @@ urlpatterns = patterns(
     url(r'^connect/(?P<pimp_project_id>[\w\-]+)/(?P<pimp_analysis_id>[\w\-]+)/$',views.connect,name='connect'),
     url(r'^get_fragments_as_text/(?P<peak_name_slug>[\w\-]+)/(?P<format_type>[\w\-]+)/$',views.get_fragments_as_text, name='get_fragments_as_text'),
     # Mass2lda URL added by Claire.
-    url(r'^mass2lda_visualisation/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<annotation_id>[\w\-]+)/$',
-        views.mass2lda_vis, name='mass2lda_vis'),    
+    url(r'^ms2lda_visualisation/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<annotation_id>[\w\-]+)/$',
+        views.mass2lda_vis, name='ms2lda_vis'),    
 )

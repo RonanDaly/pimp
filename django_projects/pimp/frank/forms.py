@@ -690,9 +690,9 @@ class SelectFragmentationSetForm(forms.Form):
                 empty_label=None,
             )
 
-class Mass2LDAQueryForm(AnnotationQueryForm):
+class MS2LDAQueryForm(AnnotationQueryForm):
     """
-    A form for the specification of the parameters for Mass2LDA
+    A form for the specification of the parameters for MS2LDA
     """
 
     # Matrix pre-filtering parameters
@@ -776,4 +776,4 @@ class Mass2LDAQueryForm(AnnotationQueryForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(Mass2LDAQueryForm,self).__init__(*args, **kwargs)
+        super(MS2LDAQueryForm,self).__init__(*args, **kwargs)

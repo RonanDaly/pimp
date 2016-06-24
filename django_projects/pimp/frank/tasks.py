@@ -17,6 +17,8 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from frank.annotationTools import MassBankQueryTool, NISTQueryTool,  SIRIUSQueryTool
 from urllib2 import URLError
 import datetime
+import pandas as pd
+import numpy as np
 
 # PiMP objects
 from experiments.models import Analysis as PimpAnalysis
@@ -564,7 +566,7 @@ def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
     return True
 
 @celery.task
-def run_mass2lda_analysis (annotation_query_id):
+def run_ms2lda_analysis (annotation_query_id):
     """
     Method to run a Mass2LDA analysis.
         - read MS1 peaks from database
@@ -591,9 +593,9 @@ def run_mass2lda_analysis (annotation_query_id):
     alpha_model_parameter    = parameters['alpha_model_parameter']
     beta_model_parameter     = parameters['beta_model_parameter']
     gibbs_sampling_number    = parameters['gibbs_sampling_number']
-    mass2motif_count         = parameters['maximum_num_of_mass2motif']
+    mass2motif_count         = parameters['mass2motif_count']
 
-    mass2lda_dir=os.environ['HOME']+"/mass2lda_data/"		# directory to hold mass2lda project files
+    ms2lda_dir=os.environ['HOME']+"/ms2lda_data/"		# directory to hold mass2lda project files
 
     annotation_query.status = 'Processing'
     annotation_query.save()
@@ -709,7 +711,7 @@ def run_mass2lda_analysis (annotation_query_id):
     # saving off project data in ms2lda object
     vocab=intensity_df.columns.values
     input_filenames=[]
-    mass2lda = Ms2Lda(intensity_df,vocab,ms1_df,sorted_ms2_df,input_filenames,mass2motif_count,2)
+    ms2lda = Ms2Lda(intensity_df,vocab,ms1_df,sorted_ms2_df,input_filenames,mass2motif_count,2)
 
     #run lda analysis
     # n_topics = 300		** now uses mass2motif_count parameter
@@ -719,21 +721,21 @@ def run_mass2lda_analysis (annotation_query_id):
     # alpha = 50.0/n_topics      **now uses parameter entered on the screen**
     # beta = 0.1                 **now uses parameter entered on the screen**
     print "Running LDA anaylysis ..."
-    mass2lda.run_lda(mass2motif_count, n_samples, n_burn, n_thin, float(alpha_model_parameter), float(beta_model_parameter))
+    ms2lda.run_lda(mass2motif_count, n_samples, n_burn, n_thin, float(alpha_model_parameter), float(beta_model_parameter))
 
     print "\nRunning thresholding ..."
-    mass2lda.do_thresholding(th_doc_topic=0.05,th_topic_word=0.01)
+    ms2lda.do_thresholding(th_doc_topic=0.05,th_topic_word=0.01)
 
     # need to convert following columns to str
-    mass2lda.ms2['fragment_bin_id']=mass2lda.ms2['fragment_bin_id'].round(5)
-    mass2lda.ms2['fragment_bin_id']=mass2lda.ms2['fragment_bin_id'].astype(str)	#covert to str
-    mass2lda.ms2['loss_bin_id']=mass2lda.ms2['loss_bin_id'].astype(str)		#covert to str
+    ms2lda.ms2['fragment_bin_id']=ms2lda.ms2['fragment_bin_id'].round(5)
+    ms2lda.ms2['fragment_bin_id']=ms2lda.ms2['fragment_bin_id'].astype(str)	#covert to str
+    ms2lda.ms2['loss_bin_id']=ms2lda.ms2['loss_bin_id'].astype(str)		#covert to str
 
     # save the project off to the relevant directory so that it can be read from the visualisation
     # first check if relevant directory exists - if not then create it.
-    if not os.path.isdir(mass2lda_dir) :
-        os.makedirs(mass2lda_dir)
-    mass2lda.save_project(mass2lda_dir+"mass2lda_"+str(annotation_query_id)+".project")
+    if not os.path.isdir(ms2lda_dir) :
+        os.makedirs(ms2lda_dir)
+    ms2lda.save_project(ms2lda_dir+"ms2lda_"+str(annotation_query_id)+".project")
 
     annotation_query.status = 'Completed Successfully'
     annotation_query.save()

@@ -71,9 +71,9 @@
 					<a href="{% url 'delete_annotation_query' fragment_set.slug annotation.slug %}">delete</a>&nbsp&nbsp&nbsp
 					 </td>
 					<td>
-					{% if annotation.annotation_tool|stringformat:"s" == 'Mass2LDA' %}
-                                        	<a href="{% url 'mass2lda_vis' fragment_set.slug annotation.id %}" target="_blank">
-						<input type="button" class="btn btn-small btn-primary" value ="Mass2LDA visualisation">
+					{% if annotation.annotation_tool|stringformat:"s" == 'MS2LDA' %}
+                                        	<a href="{% url 'ms2lda_vis' fragment_set.slug annotation.id %}" target="_blank">
+						<input type="button" class="btn btn-small btn-primary" value ="MS2LDA visualisation">
 						</input></a>
                                         {% endif %}
 					 </td>

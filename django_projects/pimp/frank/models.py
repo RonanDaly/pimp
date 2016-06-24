@@ -261,7 +261,7 @@ class AnnotationQuery(models.Model):
     annotation_tool = models.ForeignKey('AnnotationTool')
     # The annotation_tool_params are a jsonpickle dict of any additional search parameters required
     # by the AnnotationTool itself
-    annotation_tool_params = models.CharField(max_length=500, null=True)
+    annotation_tool_params = models.CharField(max_length=1000, null=True)
     # Some AnnotationTools may subquery an existing set of CandidateAnnotations
     source_annotation_queries = models.ManyToManyField('self', through='AnnotationQueryHierarchy', symmetrical=False)
 

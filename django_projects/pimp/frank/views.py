@@ -21,6 +21,11 @@ from django.http import HttpResponse
 from django.db import transaction
 import json
 import csv
+import numpy as np
+from matplotlib import patches as mpatches
+from matplotlib import pyplot as plt
+from matplotlib import pylab
+import PIL
 
 from experiments.models import Analysis
 from projects.models import Project
@@ -48,7 +53,7 @@ def get_my_experiments_context_dict(user):
     }
     return context_dict
 
-# returns the plot data for the mass2lda visualisation graphs -
+# returns the plot data for the MS2LDA visualisation graphs -
 #  - topic_peaks: list MS1 peaks for each topic
 #  - topic_fragments: fragmentation peaks for topic/ms1
 #  - fragmentation_spectra: fragmentation spectra for each MS1 peak
@@ -180,30 +185,30 @@ def get_topic_graph_data (docdf, topicdf, ms2, mass2motif_count):
     return topic_peaks, topic_fragments, fragmentation_spectra
 
 
-def get_mass2lda_vis_context_dict(fragmentation_set_name_slug, annotation_id):
+def get_ms2lda_vis_context_dict(fragmentation_set_name_slug, annotation_id):
     """
-    Method to generate the context dictionary for the Mass2LDA visualisation page
+    Method to generate the context dictionary for the MS2LDA visualisation page
     :param fragmentation_set_name_slug: String containing the unique slug of the fragmentation set
     :param annotation_id:  number containing the unique slug of the annotatio
     :return: context_dict:  The context dictionary for the page
     """
 
     # resume project from file for this annotation
-    print "Reading mass2lda project file ..."
-    mass2lda_dir=os.environ['HOME']+"/mass2lda_data/"  # directory holding mass2lda project files
-    mass2lda=tasks.Ms2Lda.resume_from(mass2lda_dir+"mass2lda_"+str(annotation_id)+".project")
+    print "Reading MS2LDA project file ..."
+    ms2lda_dir=os.environ['HOME']+"/ms2lda_data/"  # directory holding MS2LDA project files
+    ms2lda=tasks.Ms2Lda.resume_from(ms2lda_dir+"ms2lda_"+str(annotation_id)+".project")
 
     # get the data needed for the graphs -
     #   - ms1 peak data for each topic (for MS2 Spectra graph and Parent Ion graph)
     #   - fragment peaks associated with a topic/ms1 (for Parent Ion graph)
     #   - fragment spectra or each MS1 peak (for MS2 Spectra graph)
-    print "Extracting data from mass2lda object for mass2lda graphs..."
+    print "Extracting data from MS2LDA object for MS2LDA graphs..."
     topic_peaks, topic_fragments, fragmentation_spectra = \
-                     get_topic_graph_data (mass2lda.docdf, mass2lda.topicdf, mass2lda.ms2, mass2lda.mass2motif_count)
+                     get_topic_graph_data (ms2lda.docdf, ms2lda.topicdf, ms2lda.ms2, ms2lda.mass2motif_count)
 
 
     topic_data=[]    # holds the parent peak, fragment spectra and topic fragments for each topic
-    max_topics=mass2lda.mass2motif_count
+    max_topics=ms2lda.mass2motif_count
     for i in range(max_topics):
         topic_data.append(0)
 
@@ -219,13 +224,13 @@ def get_mass2lda_vis_context_dict(fragmentation_set_name_slug, annotation_id):
     # build json data needed for graph html
     to_highlight=None   # default to this.
     degree=20		# default to this.
-    json_data,G = lda_visualisation.get_json_from_docdf(mass2lda.docdf.transpose(),to_highlight,degree)
+    json_data,G = lda_visualisation.get_json_from_docdf(ms2lda.docdf.transpose(),to_highlight,degree)
 
     #DEBUG - Need to fix this. Currently when passing graph directly via contect dict there are
     #DEBUG   issues. Instead, will pass the data via file which is read in on the javascript
-    json_outfile = '../static/graph.json'
+    json_outfile = ms2lda_dir+"graph.json"    
     with open(json_outfile, 'w') as f:
-       json.dump(json_data, f, sort_keys=True, indent=4, ensure_ascii=False)
+        json.dump(json_data, f, sort_keys=True, indent=4, ensure_ascii=False)
 
     context_dict = {
         'fragment_slug': fragmentation_set_name_slug,
@@ -868,8 +873,8 @@ def fragmentation_set(request, fragmentation_set_name_slug):
                 annotation_query_form = CleanFilterForm(fragmentation_set_name_slug)
             elif user_tool_choice == 'Network Sampler':
                 annotation_query_form = NetworkSamplerForm(fragmentation_set_name_slug)
-            elif user_tool_choice == 'Mass2LDA':
-                annotation_query_form = Mass2LDAQueryForm()
+            elif user_tool_choice == 'MS2LDA':
+                annotation_query_form = MS2LDAQueryForm()
 
             # For the context dictionary, the annotation tool slug is required to render the page
             annotation_tool_slug = AnnotationTool.objects.get(name=user_tool_choice).slug
@@ -914,14 +919,14 @@ def peak_summary(request, fragmentation_set_name_slug, peak_name_slug):
 @login_required
 def mass2lda_vis(request, fragmentation_set_name_slug,annotation_id):
     """
-    View to display the mass2lda visualisation screen.
-    :param request: A Get request for the 'mass2lda annotation' page
+    View to display the MS2LDA visualisation screen.
+    :param request: A Get request for the 'MS2LDA annotation' page
     :param fragmentation_set_name_slug: A string containing the unique slug of the fragmentation set
     :param annotation_id: id of the annotation where the vis data was created
-    :return: render(request, 'frank/mass2lda_vis.html', context_dict)
+    :return: render(request, 'frank/ms2lda_vis.html', context_dict)
     """
-    context_dict = get_mass2lda_vis_context_dict(fragmentation_set_name_slug,annotation_id)
-    return render(request, 'frank/mass2lda_vis.html', context_dict)
+    context_dict = get_ms2lda_vis_context_dict(fragmentation_set_name_slug,annotation_id)
+    return render(request, 'frank/ms2lda_vis.html', context_dict)
 
 @login_required
 def define_annotation_query(request, fragmentation_set_name_slug, annotation_tool_slug):
@@ -956,8 +961,8 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = CleanFilterForm(fragmentation_set_name_slug,request.POST)
         elif annotation_tool.name == 'Network Sampler':
             annotation_query_form = NetworkSamplerForm(fragmentation_set_name_slug,request.POST)
-       	elif annotation_tool.name == 'Mass2LDA':
-            annotation_query_form = Mass2LDAQueryForm(request.POST)
+       	elif annotation_tool.name == 'MS2LDA':
+            annotation_query_form = MS2LDAQueryForm(request.POST)
 
         # Check that the form is valid
         if annotation_query_form.is_valid():
@@ -1015,6 +1020,9 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = CleanFilterForm(fragmentation_set_name_slug)
         elif annotation_tool.name == 'Network Sampler':
             annotation_query_form = NetworkSamplerForm(fragmentation_set_name_slug)
+        elif annotation_tool.name == 'MS2LDA':
+            annotation_query_form = MS2LDAQueryForm()
+
         context_dict = get_define_annotation_query_context_dict(
             fragmentation_set_name_slug,
             annotation_query_form,
@@ -1130,8 +1138,8 @@ def generate_annotations(annotation_query_object,user = None):
         tasks.precursor_mass_filter(annotation_query_object.id)
     elif annotation_tool.name == 'Clean Annotations':
         tasks.clean_filter(annotation_query_object.id,user)
-    elif annotation_tool.name == 'Mass2LDA':
-        tasks.run_mass2lda_analysis(annotation_query_object.id)
+    elif annotation_tool.name == 'MS2LDA':
+        tasks.run_ms2lda_analysis(annotation_query_object.id)
 
 
 def set_annotation_query_parameters(annotation_query_object, annotation_query_form, current_user):
@@ -1279,7 +1287,7 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
     # End of Simon contribution
-    elif isinstance(annotation_query_form, Mass2LDAQueryForm):
+    elif isinstance(annotation_query_form, MS2LDAQueryForm):
         parameters = {}
         parameters['minimal_ms1_intensity']     = annotation_query_form.cleaned_data['minimal_ms1_intensity']
         parameters['minimal_ms2_intensity']     = annotation_query_form.cleaned_data['minimal_ms2_intensity']
@@ -1292,7 +1300,7 @@ def set_annotation_query_parameters(annotation_query_object, annotation_query_fo
         parameters['beta_model_parameter']      = annotation_query_form.cleaned_data['beta_model_parameter']
         parameters['gibbs_sampling_number']     = annotation_query_form.cleaned_data['gibbs_sampling_number']
         parameters['mass2motif_count'] = annotation_query_form.cleaned_data['mass2motif_count']
-        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='Mass2LDA')
+        annotation_query_object.annotation_tool = AnnotationTool.objects.get(name='MS2LDA')
         annotation_query_object.annotation_tool_params = jsonpickle.encode(parameters)
         return annotation_query_object
 
