@@ -11,7 +11,7 @@ from experiments.models import DefaultParameter, Database
 from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
 from compound.models import Pathway, SuperPathway, DataSource, DataSourceSuperPathway
 
-def populate(testing=False):
+def populate(superpathway_filename=None):
     iqr_parameter = add_default_parameter(
         name = "iqr",
         value = 0.5,
@@ -157,10 +157,9 @@ def populate(testing=False):
     )
     header_row = True
 
-    # Not the best solution at all ...
-    superpathway_filename = './django_projects/pimp/kegg_pathway_superPathway.csv'
-    if testing: # during test, this method will be called from a different location
-        superpathway_filename = 'kegg_pathway_superPathway.csv'
+    # if no filename is provided for the superpathway, then use this as the default
+    if superpathway_filename is None:
+        superpathway_filename = './django_projects/pimp/kegg_pathway_superPathway.csv'
 
     with open(superpathway_filename, 'rb') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
