@@ -1,6 +1,17 @@
 # Setup guide
 
-This is a setup guide for the qPiMP pipeline. It contains instructions for Linux (tested on Ubuntu 15.04 & Fedora 21) and Mac OS X Yosemite.
+This is a setup guide for the PiMP pipeline. It contains instructions for Linux (tested on Ubuntu 15.04 & Fedora 21) and Mac OS X Yosemite.
+
+## 0. git Setup
+
+To work with large binary files in the repository install git-lfs
+
+  $ brew install git-lfs
+
+In the repository, run these commands
+
+  $ git config --add lfs.url "http://poisson.tcrc.gla.ac.uk/polyomics/pimp.git/info/lfs"
+  $ git lfs install
 
 ## 1. System Setup
 
