@@ -32,8 +32,8 @@ Hash: c66deb506ef217896ce7d2ee347c95ff
 
 Package: BiocInstaller
 Source: PuMP
-Version: 1.20.1
-Hash: 05e58e37e4e2af35c9ba9eb4ee1839e4
+Version: 1.20.3
+Hash: 1f223f995c19c765704ad18d2ebd01c9
 
 Package: Biostrings
 Source: PuMP
@@ -145,6 +145,11 @@ Package: RJSONIO
 Source: PuMP
 Version: 1.3-0
 Hash: fb672e20eb6f3010a3639f855d8ef6de
+
+Package: RMassBank
+Source: PuMP
+Version: 1.12.1
+Requires: Rcpp, XML, yaml, RCurl, mzR, rcdk, rjson
 
 Package: RMySQL
 Source: PuMP
@@ -272,6 +277,10 @@ Source: PuMP
 Version: 8.3-5
 Hash: e7e7df8dd4a9d7321ec6fc335a9adee5
 Requires: maps, spam
+
+Package: fingerprint
+Source: PuMP
+Version: 3.5.2
 
 Package: foreach
 Source: PuMP
@@ -407,7 +416,7 @@ Package: mzR
 Source: PuMP
 Version: 2.4.0
 Hash: bf430655fbca0e06b1f1847a80f2065a
-Requires: Biobase, BiocGenerics, ProtGenerics, Rcpp, zlibbioc
+Requires: BiocGenerics, Rcpp, zlibbioc, Biobase, ProtGenerics
 
 Package: mzmatch.R
 Source: PuMP
@@ -463,11 +472,25 @@ Source: PuMP
 Version: 0.9-8
 Hash: 3e8627a2a5bd45c9bad6112acfc231d9
 
+Package: rcdk
+Source: PuMP
+Version: 3.3.2
+Requires: iterators, png, rJava, fingerprint, rcdklibs
+
+Package: rcdklibs
+Source: PuMP
+Version: 1.5.13
+Requires: rJava
+
 Package: reshape2
 Source: PuMP
 Version: 1.4.1
 Hash: 193899598711fc9776f383bbdf266118
 Requires: Rcpp, plyr, stringr
+
+Package: rjson
+Source: PuMP
+Version: 0.2.15
 
 Package: roxygen2
 Source: PuMP
