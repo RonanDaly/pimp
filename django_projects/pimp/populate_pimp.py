@@ -11,7 +11,7 @@ from experiments.models import DefaultParameter, Database
 from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
 from compound.models import Pathway, SuperPathway, DataSource, DataSourceSuperPathway
 
-def populate():
+def populate(superpathway_filename=None):
     iqr_parameter = add_default_parameter(
         name = "iqr",
         value = 0.5,
@@ -176,7 +176,12 @@ def populate():
         name = "kegg"
     )
     header_row = True
-    with open('./django_projects/pimp/kegg_pathway_superPathway.csv', 'rb') as csvfile:
+
+    # if no filename is provided for the superpathway, then use this as the default
+    if superpathway_filename is None:
+        superpathway_filename = './django_projects/pimp/kegg_pathway_superPathway.csv'
+
+    with open(superpathway_filename, 'rb') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         for row in spamreader:
             if header_row:
@@ -203,7 +208,7 @@ def add_datasource(name):
     datasource = DataSource.objects.get_or_create(
         name = name,
     )[0]
-    print 'Creating datasource - '+name+'...'
+    # print 'Creating datasource - '+name+'...'
     datasource.save()
     return datasource
 
@@ -211,7 +216,7 @@ def add_superpathway(name):
     superpathway = SuperPathway.objects.get_or_create(
         name = name,
     )[0]
-    print 'Creating super pathway - '+name+'...'
+    # print 'Creating super pathway - '+name+'...'
     superpathway.save()
     return superpathway
 
@@ -219,7 +224,7 @@ def add_pathway(name):
     pathway = Pathway.objects.get_or_create(
         name = name,
     )[0]
-    print 'Creating pathway - '+name+'...'
+    # print 'Creating pathway - '+name+'...'
     pathway.save()
     return pathway
 
@@ -231,7 +236,7 @@ def add_datasource_super_pathway(superpathway, pathway, datasource, compound_num
         compound_number = compound_number,
         identifier = identifier,
     )[0]
-    print 'Creating datasource super pathway - '+datasource.name+' - '+identifier+'...'
+    # print 'Creating datasource super pathway - '+datasource.name+' - '+identifier+'...'
     datasource_super_pathway.save()
     return datasource_super_pathway
 
@@ -241,7 +246,7 @@ def add_default_parameter(name, value, state):
         value = value,
         state = state,
     )[0]
-    print 'Creating default parameter - '+name+'...'
+    # print 'Creating default parameter - '+name+'...'
     parameter.save()
     return parameter
 
@@ -249,7 +254,7 @@ def add_database(name):
     database = Database.objects.get_or_create(
        name = name,
     )[0]
-    print 'Creating default database - '+name+'...'
+    # print 'Creating default database - '+name+'...'
     database.save()
     return database
 
@@ -259,7 +264,7 @@ def add_annotation_tool(name, default_params):
         name = name,
         default_params = default_params,
     )[0]
-    print 'Creating default annotation tool - '+name+'...'
+    # print 'Creating default annotation tool - '+name+'...'
     annotation_tool.save()
     return annotation_tool
 
@@ -267,13 +272,13 @@ def add_experimental_protocol(name):
     experimental_protocol = ExperimentalProtocol.objects.get_or_create(
        name = name,
     )[0]
-    print 'Creating experimental protocol - '+name+'...'
+    # print 'Creating experimental protocol - '+name+'...'
     experimental_protocol.save()
     return experimental_protocol
 
 def add_annotation_tool_protocols(protocols_list, annotation_tool):
     for protocol in protocols_list:
-        print 'Adding '+protocol.name+' to Annotation Tool '+annotation_tool.name
+        # print 'Adding '+protocol.name+' to Annotation Tool '+annotation_tool.name
         annotation_tool_protocol = AnnotationToolProtocol.objects.get_or_create(
             annotation_tool = annotation_tool,
             experimental_protocol = protocol

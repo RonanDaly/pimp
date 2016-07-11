@@ -3,6 +3,8 @@ logLevel = Sys.getenv('PIMP_LOG_LEVEL', unset='WARNING')
 logging::basicConfig(logLevel)
 logger <- logging::getLogger('Pimp.runPimp', level=loglevels[logLevel])
 
+loginfo('START OF R PIPELINE SCRIPT', logger=logger)
+
 getNeededString = function(name) {
 	Sys.getenv(name, unset=NA)
 }
@@ -26,8 +28,6 @@ handler$formatter = function (record) {
 	text <- paste(record$timestamp, paste(analysis.id, record$levelname, record$logger,
 		record$msg, sep = ":"))
 }
-
-loginfo('Start of script', logger=logger)
 
 packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
 message(paste('Setting library path to:', packratLibPath))
@@ -83,10 +83,15 @@ db <- new("PiMPDB",
 experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
 
+loginfo('experiment.id: %s', experiment.id, logger=logger)
+loginfo('project.id: %s', project.id, logger=logger)
 
+loginfo('Database name: %s', DATABASE_NAME, logger=logger)
 DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', 'pimp_data')), 'projects')
+loginfo('Data dir: %s', DATA_DIR, logger=logger)
+
 PROJECT_DIR = file.path(DATA_DIR, project.id)
-print(PROJECT_DIR)
+loginfo('Project dir: %s', PROJECT_DIR, logger=logger)
 setwd(PROJECT_DIR)
 
 experiment.samples <- getExperimentSamples(db, experiment.id)
@@ -177,16 +182,25 @@ if(length(param.idx) > 0) {
 	}
 }
 
-#print(groups)
-#print(contrasts)
-#print(names)
-#print(analysis.id)
-#stop()
-
-#message('Analysis parameters')
-logdebug(mzmatch.params, logger=logger)
-#print(stds)
-
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
 
-Pimp.runPipeline(files=files, groups=groups, standards=stds, comparisonNames=names, contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml", analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)
+message('---------------------------------------------------')
+message('Analysis parameters')
+message('---------------------------------------------------')
+loginfo('files: %s', files, logger=logger)
+loginfo('groups: %s', groups, logger=logger)
+loginfo('stds: %s', stds, logger=logger)
+loginfo('names: %s', names, logger=logger)
+loginfo('contrasts: %s', contrasts, logger=logger)
+loginfo('databases: %s', databases, logger=logger)
+loginfo('nSlaves: %s', nSlaves, logger=logger)
+loginfo('analysis.id: %d', analysis.id, logger=logger)
+loginfo('mzmatch.params: %s', mzmatch.params, logger=logger)
+loginfo('xcms.params: %s', xcms.params, logger=logger)
+
+Pimp.runPipeline(files=files, groups=groups, standards=stds, comparisonNames=names,
+	contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml",
+	analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)
+
+loginfo('END OF R PIPELINE SCRIPT', logger=logger)
+quit(save = "default", status = 0, runLast = TRUE)

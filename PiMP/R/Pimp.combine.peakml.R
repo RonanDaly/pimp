@@ -63,6 +63,10 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	if(length(grouped.peakml.files) > 1) {
 		##test whether peaksets in file have peaks.  If not remove.  Samples included as zero when data read in.  Workaround for PeakML.Read.
 		valid <- validatePeaksets(files=grouped.peakml.files)
+		if ( !all(valid) ) {
+			logwarn("Some files have no peaks. They will be discarded. This will probably cause errors later when combining across modes", logger=logger)
+			logwarn("Files are %s", grouped.peakml.files[!valid], logger=logger)
+		}
 		loginfo("VALID %s", valid, logger=logger)
 		return(.combinePeakmlFiles(files=grouped.peakml.files[valid], outfile=mzmatch.outputs$final.combined.peakml.file, mzmatch.params=mzmatch.params, heapsize=heapsize))
 	} 
