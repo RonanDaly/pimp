@@ -149,7 +149,7 @@ Hash: fb672e20eb6f3010a3639f855d8ef6de
 Package: RMassBank
 Source: PuMP
 Version: 1.12.1
-Requires: Rcpp, XML, yaml, RCurl, mzR, rcdk, rjson
+Requires: Rcpp, XML, rjson, yaml, RCurl, mzR, rcdk
 
 Package: RMySQL
 Source: PuMP
@@ -414,9 +414,9 @@ Requires: colorspace
 
 Package: mzR
 Source: PuMP
-Version: 2.4.0
+Version: 2.6.2
 Hash: bf430655fbca0e06b1f1847a80f2065a
-Requires: BiocGenerics, Rcpp, zlibbioc, Biobase, ProtGenerics
+Requires: Biobase, BiocGenerics, Rcpp, zlibbioc, ProtGenerics
 
 Package: mzmatch.R
 Source: PuMP
@@ -475,7 +475,7 @@ Hash: 3e8627a2a5bd45c9bad6112acfc231d9
 Package: rcdk
 Source: PuMP
 Version: 3.3.2
-Requires: iterators, png, rJava, fingerprint, rcdklibs
+Requires: fingerprint, iterators, png, rJava, rcdklibs
 
 Package: rcdklibs
 Source: PuMP
