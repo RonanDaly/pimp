@@ -1,4 +1,4 @@
-![alt text](django_projects/static/img/PiMP_logo.png) Welcome to PiMP!
+![alt text](django_projects/pimp/pimp/static/img/PiMP_logo.png) Welcome to PiMP!
 ===================
 
 PiMP is an integrated, web-enabled tool for LC-MS data analysis and visualization.
@@ -18,7 +18,7 @@ PiMP follows a regulated collaborative development method, which means not every
 You won't be able to pull or push project code via SSH until you [add an SSH key](http://newtcrc-panda.ibls.gla.ac.uk/profile/keys/new) to your profile. You need help setting up your key? Take a look at [this tutorial](http://newtcrc-panda.ibls.gla.ac.uk/help/ssh/README). 
 
 
-![alt text](django_projects/static/img/tool_icon.png) Installation
+![alt text](django_projects/pimp/pimp/static/img/tool_icon.png) Installation
 -------------
 
 #### <i class="icon-cog"></i> Python & Django Installation
