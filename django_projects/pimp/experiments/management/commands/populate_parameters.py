@@ -1,17 +1,18 @@
-#!/usr/bin/env python
 import os
 import csv
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings')
-
-import django
-django.setup()
-
 import jsonpickle
+import logging
+
+from django.core.management.base import BaseCommand
+from django.conf import settings
+
 from experiments.models import DefaultParameter, Database
 from frank.models import AnnotationTool, ExperimentalProtocol, AnnotationToolProtocol
 from compound.models import Pathway, SuperPathway, DataSource, DataSourceSuperPathway
 
-def populate(superpathway_filename=None):
+logger = logging.getLogger('experiments.management.commands.populate_parameters')
+
+def populate(apps, schema_editor, superpathway_filename=None):
     iqr_parameter = add_default_parameter(
         name = "iqr",
         value = 0.5,
@@ -159,7 +160,7 @@ def populate(superpathway_filename=None):
 
     # if no filename is provided for the superpathway, then use this as the default
     if superpathway_filename is None:
-        superpathway_filename = './django_projects/pimp/kegg_pathway_superPathway.csv'
+        superpathway_filename = os.path.join(settings.BASE_DIR, 'fixtures', 'kegg_pathway_superPathway.csv')
 
     with open(superpathway_filename, 'rb') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
@@ -264,7 +265,11 @@ def add_annotation_tool_protocols(protocols_list, annotation_tool):
             experimental_protocol = protocol
         )
 
-# Execution starts here
-if __name__=='__main__':
-    print "Populating default parameters..."
-    populate()
+class Command(BaseCommand):
+    help = 'Initialises Database with Parameters'
+
+    def handle(self, *args, **options):
+        logger.info('Starting initial database parameter population')
+        populate(None, None)
+        logger.info('Initial database parameter population done')
+
