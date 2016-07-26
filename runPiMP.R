@@ -4,6 +4,7 @@ logging::basicConfig(logLevel)
 logger <- logging::getLogger('Pimp.runPimp', level=loglevels[logLevel])
 
 loginfo('START OF R PIPELINE SCRIPT', logger=logger)
+logger$info('Currently in %s', getwd())
 
 getNeededString = function(name) {
 	Sys.getenv(name, unset=NA)
@@ -23,6 +24,7 @@ getInteger = function(name, default) {
 
 args <- commandArgs(trailingOnly=TRUE)
 analysis.id <- as.integer(args[1])
+saveFixtures <- as.logical(args[2])
 handler = getHandler('basic.stdout')
 handler$formatter = function (record) {
 	text <- paste(record$timestamp, paste(analysis.id, record$levelname, record$logger,
@@ -30,7 +32,7 @@ handler$formatter = function (record) {
 }
 
 packratLibPath = file.path(getNeededString('PIMP_BASE_DIR'), '..', '..', 'packrat', 'lib', R.Version()$platform, paste(R.Version()$major, R.Version()$minor, sep="."))
-message(paste('Setting library path to:', packratLibPath))
+logger$info('Setting library path to: %s', packratLibPath)
 .libPaths(packratLibPath)
 
 #envVariablesNames = c('PIMP_JAVA_PARAMETERS', 'PIMP_DATABASE_ENGINE', 'PIMP_DATABASE_NAME',
@@ -79,6 +81,10 @@ db <- new("PiMPDB",
 
 #db <- new("PiMPDB", dbname="~/Downloads/sqlite3.db", dbtype="sqlite")
 #db <- new("PiMPDB", dbuser=db.settings$user, dbpassword=db.settings$password, dbname="pimp_prod", dbhost=db.settings$host, dbtype=db.settings$type)
+
+logger$info('DATABASE_FILENAME: %s', DATABASE_FILENAME)
+logger$info('DATABASE_NAME: %s', DATABASE_NAME)
+logger$info('DATABASE_TYPE: %s', DATABASE_TYPE)
 
 experiment.id <- getExperimentID(db, analysis.id)
 project.id <- getProjectID(db, analysis.id)
@@ -200,7 +206,8 @@ loginfo('xcms.params: %s', xcms.params, logger=logger)
 
 Pimp.runPipeline(files=files, groups=groups, standards=stds, comparisonNames=names,
 	contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml",
-	analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params)
+	analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params,
+	saveFixtures=saveFixtures)
 
 loginfo('END OF R PIPELINE SCRIPT', logger=logger)
 quit(save = "default", status = 0, runLast = TRUE)

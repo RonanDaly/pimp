@@ -1,4 +1,4 @@
-Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, ...) {
+Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, saveFixtures=FALSE, ...) {
 	logger <- getPiMPLogger('Pimp.runPipeline')
 	setPiMPLoggerAnalysisID(analysis.id)
 
@@ -210,6 +210,12 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 			warning("No analysis ID.  Unable to generate XML file.")	
 		}
 		else {
+			if ( saveFixtures ) {
+				logger$info('Saving Pimp.exportToXML_fixture.Robj')
+				dir.create(file.path('tests', 'fixtures'), recursive=TRUE)
+				save(analysis.id, raw.data, identification, toptables, pathway.stats,
+					 identified.compounds.by.pathway, db, file=file.path('tests', 'fixtures', 'Pimp.exportToXML_fixture.Robj'))
+			}
 			Pimp.exportToXML(id=analysis.id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, db=db)
 		}
 	}
