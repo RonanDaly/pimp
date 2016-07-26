@@ -1,0 +1,5 @@
+# ---> ExtJs
+.architect
+build/
+ext/
+
