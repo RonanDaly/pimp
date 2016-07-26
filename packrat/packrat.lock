@@ -565,7 +565,7 @@ Requires: Biobase, BiocGenerics, ProtGenerics, RColorBrewer, lattice,
 
 Package: xml2
 Source: PuMP
-Version: 0.1.2
+Version: 1.0.0
 Hash: d3a4a61753f1ebf32548bdd9ab709c4b
 Requires: BH, Rcpp
 
