@@ -1,5 +1,8 @@
 # Django settings for pimp project.
 import os
+import sys
+import uuid
+
 import djcelery
 import distutils.util as du
 
@@ -56,11 +59,22 @@ DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
 
 MANAGERS = ADMINS
 
+TESTING = 'test' in sys.argv
+randomUUID = str(uuid.uuid4())
+
 DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', None)
 if DATABASE_FILENAME is None:
     DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
+    TEST_DATABASE_NAME = 'TESTDB_' + randomUUID
 else:
     DATABASE_NAME = os.path.join(BASE_DIR, DATABASE_FILENAME)
+    TEST_DATABASE_NAME = os.path.join(BASE_DIR, 'TESTDB_' + randomUUID + '.db')
+
+if TESTING:
+    os.environ['PIMP_DATABASE_NAME'] = TEST_DATABASE_NAME
+else:
+    os.environ['PIMP_DATABASE_NAME'] = DATABASE_NAME
+os.environ['PIMP_DATABASE_FILENAME'] = ''
 
 DATABASES = {
     'default': {
@@ -72,6 +86,9 @@ DATABASES = {
         'PASSWORD': getString('PIMP_DATABASE_PASSWORD', ''),                  # Not used with sqlite3.
         'HOST': getString('PIMP_DATABASE_HOST', ''),                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': getString('PIMP_DATABASE_PORT', ''),                      # Set to empty string for default. Not used with sqlite3.
+        'TEST' : {
+            'NAME' : TEST_DATABASE_NAME
+        },
     }
 }
 
@@ -103,7 +120,13 @@ USE_TZ = False
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
-MEDIA_ROOT = getString('PIMP_MEDIA_ROOT',os.path.join(os.path.dirname(BASE_DIR), 'pimp_data'))
+TEST_MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'TESTDATA_' + randomUUID)
+NORMAL_MEDIA_ROOT = getString('PIMP_MEDIA_ROOT',os.path.join(os.path.dirname(BASE_DIR), 'pimp_data'))
+if TESTING:
+    MEDIA_ROOT = TEST_MEDIA_ROOT
+else:
+    MEDIA_ROOT = NORMAL_MEDIA_ROOT
+os.environ['PIMP_MEDIA_ROOT'] = MEDIA_ROOT
 
 
 #MEDIA_ROOT = '/opt/django/data/pimp_data/'
