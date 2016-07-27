@@ -1,0 +1,4 @@
+*.mzXML filter=lfs diff=lfs merge=lfs -text
+*.Robj_fixture filter=lfs diff=lfs merge=lfs -text
+*.db_fixture filter=lfs diff=lfs merge=lfs -text
+*.json_fixture filter=lfs diff=lfs merge=lfs -text
