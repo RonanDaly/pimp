@@ -211,10 +211,10 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 		}
 		else {
 			if ( saveFixtures ) {
-				logger$info('Saving Pimp.exportToXML_fixture.Robj')
+				logger$info('Saving Pimp.exportToXML.Robj_fixture')
 				dir.create(file.path('tests', 'fixtures'), recursive=TRUE)
 				save(analysis.id, raw.data, identification, toptables, pathway.stats,
-					 identified.compounds.by.pathway, db, file=file.path('tests', 'fixtures', 'Pimp.exportToXML_fixture.Robj'))
+					 identified.compounds.by.pathway, db, file=file.path('tests', 'fixtures', 'Pimp.exportToXML.Robj_fixture'))
 			}
 			Pimp.exportToXML(id=analysis.id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, db=db)
 		}
