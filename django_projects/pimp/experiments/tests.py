@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 from test.test_support import EnvironmentVarGuard
+import logging
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -19,8 +20,9 @@ from experiments.tasks import start_pimp_pipeline
 from fileupload.models import ProjFile, Picture, SampleFileGroup, Sample, \
     StandardFileGroup, CalibrationSample
 from groups.models import Group, Attribute, ProjfileAttribute, SampleAttribute
-import populate_pimp as population_script
 from projects.models import Project
+
+logger = logging.getLogger(__name__)
     
 def create_test_user():
     try:
@@ -167,6 +169,144 @@ def create_analysis(experiment_title, user):
     analysis.save()
     return experiment, analysis
 
+def create_database(fixture_dir, env):
+    #######################################################
+    # 1. create user and project
+    #######################################################
+
+    user = create_test_user()
+    project = Project.objects.create(
+        title='test_project',
+        user_owner = user,
+        description = 'test',
+        created = datetime.now(),
+        modified = datetime.now()
+    )
+
+    #######################################################
+    # 2. create calibration, blank and std samples
+    #######################################################
+
+    samp_names = ['Beer_PoolB_full_f', 'Beer_PoolB_full_g', 'Beer_PoolB_full_h', 'Beer_PoolB_full_i']
+    qc_list = []
+    for name in samp_names:
+            qc_list.append(create_calibration_sample(project, fixture_dir, name))
+
+    # commented for now as it seems that the blanks are not picked up from the web front end?
+    # if this were set, the assert that the peaks are the same will fail ..
+    samp_names = ['blank1', 'blank2', 'blank3', 'blank4']
+    blank_list = []
+#         for name in samp_names:
+#             blank_list.append(create_calibration_sample(project, self.fixture_dir, name))
+
+    samp_names = ['Std1_1_20150422_150810', 'Std2_1_20150422_150711', 'Std3_1_20150422_150553']
+    std_list = []
+    for name in samp_names:
+        std_list.append(create_standard_csv(project, fixture_dir, name))
+
+    #######################################################
+    # 3. group the calibration samples by their attributes
+    #######################################################
+
+    group_calibration_samples(qc_list, blank_list, std_list)
+
+    #######################################################
+    # 4. create samples
+    #######################################################
+
+    beer1_1 = create_sample(project, fixture_dir, 'Beer_1_full1')
+    beer1_2 = create_sample(project, fixture_dir, 'Beer_1_full2')
+    beer1_3 = create_sample(project, fixture_dir, 'Beer_1_full3')
+
+    beer2_1 = create_sample(project, fixture_dir, 'Beer_2_full1')
+    beer2_2 = create_sample(project, fixture_dir, 'Beer_2_full2')
+    beer2_3 = create_sample(project, fixture_dir, 'Beer_2_full3')
+
+    beer3_1 = create_sample(project, fixture_dir, 'Beer_3_full1')
+    beer3_2 = create_sample(project, fixture_dir, 'Beer_3_full2')
+    beer3_3 = create_sample(project, fixture_dir, 'Beer_3_full3')
+
+    beer4_1 = create_sample(project, fixture_dir, 'Beer_4_full1')
+    beer4_2 = create_sample(project, fixture_dir, 'Beer_4_full2')
+    beer4_3 = create_sample(project, fixture_dir, 'Beer_4_full3')
+
+    #######################################################
+    # 5. group the samples into conditions
+    #######################################################
+
+    group_name = 'test_experiment'
+    attribute_names = ['beer1', 'beer2', 'beer3', 'beer4']
+    conditions = create_grouping(group_name, attribute_names)
+
+    beer1_attr = conditions['beer1']
+    SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_1)
+    SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_2)
+    SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_3)
+
+    beer2_attr = conditions['beer2']
+    SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_1)
+    SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_2)
+    SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_3)
+
+    beer3_attr = conditions['beer3']
+    SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_1)
+    SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_2)
+    SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_3)
+
+    beer4_attr = conditions['beer4']
+    SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_1)
+    SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_2)
+    SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_3)
+
+    #######################################################
+    # 6. create a new experiment and analysis
+    #######################################################
+
+    experiment, analysis = create_analysis('test_analysis', user)
+    logger.info('experiment.id: %s',  experiment.id)
+    logger.info('analysis.id: %s',  analysis.id)
+    #print experiment.id
+    #print analysis.id
+    experiment.save()
+    analysis.save()
+
+    #######################################################
+    # 7. set up comparisons
+    #######################################################
+
+    compare('comparison_1', experiment, beer1_attr, beer2_attr)
+    compare('comparison_2', experiment, beer3_attr, beer4_attr)
+
+    #######################################################
+    # 8. Run the R analysis pipeline
+    #######################################################
+
+    transaction.commit() # commit to the test db so it can be picked up by R
+    success = False
+    with env:
+        logger.info('Using %s as database', env['PIMP_DATABASE_NAME'])
+        #print 'Using %s as database' % env['PIMP_DATABASE_NAME']
+        success = start_pimp_pipeline(analysis, project, user, True)
+    return success, project, experiment, analysis
+
+def initialise_database():
+    basedir = settings.BASE_DIR
+
+    # path to find the fixture data
+    fixture_dir = os.path.join(basedir, 'fixtures/projects/1')
+
+    # set the paths to upload and process the test data
+    test_media_root = settings.TEST_MEDIA_ROOT # + '_test'
+    #settings.MEDIA_ROOT = test_media_root
+
+    # for use in the R pipeline
+    env = EnvironmentVarGuard()
+    #env.set('PIMP_DATABASE_NAME', os.environ['PIMP_TEST_DATABASE_NAME'])
+    #env.set('PIMP_DATABASE_FILENAME', '')
+    #env.set('PIMP_MEDIA_ROOT', test_media_root)
+    return fixture_dir, test_media_root, env
+
+
 def compare(comparison_name, experiment, case, control):
     
     comparison = Comparison(name=comparison_name, experiment=experiment)
@@ -185,140 +325,17 @@ def compare(comparison_name, experiment, case, control):
 class ExperimentTestCase(TransactionTestCase):
 
     def setUp(self):
-
-        basedir = settings.BASE_DIR
-        population_script.populate(superpathway_filename=os.path.join(basedir, 'kegg_pathway_superPathway.csv'))
-
-        # path to find the fixture data
-        self.fixture_dir = os.path.join(basedir, 'fixtures/projects/1')                           
-
-        # set the paths to upload and process the test data
-        self.test_media_root = settings.MEDIA_ROOT + '_test'
-        settings.MEDIA_ROOT = self.test_media_root 
-
-        # for use in the R pipeline
-        self.env = EnvironmentVarGuard() 
-        self.env.set('PIMP_DATABASE_NAME', 'test_' + os.environ['PIMP_DATABASE_NAME'])
-        self.env.set('PIMP_MEDIA_ROOT', self.test_media_root)
+        fixture_dir, test_media_root, env = initialise_database()
+        self.fixture_dir = fixture_dir
+        self.test_media_root = test_media_root
+        self.env = env
         
     @patch('experiments.tasks.send_email')
     def test_analysis(self, mock_send_email):
         """test that R analysis pipeline can run"""
-        
-        #######################################################
-        # 1. create user and project
-        #######################################################
 
-        user = create_test_user()
-        project = Project.objects.create(
-            title='test_project', 
-            user_owner = user,
-            description = 'test',
-            created = datetime.now(),
-            modified = datetime.now()
-        )
+        success, project, experiment, analysis = create_database(self.fixture_dir, self.env)
 
-        #######################################################
-        # 2. create calibration, blank and std samples
-        #######################################################
-
-        samp_names = ['Beer_PoolB_full_f', 'Beer_PoolB_full_g', 'Beer_PoolB_full_h', 'Beer_PoolB_full_i']
-        qc_list = []
-        for name in samp_names:
-            qc_list.append(create_calibration_sample(project, self.fixture_dir, name))
-
-        # commented for now as it seems that the blanks are not picked up from the web front end?
-        # if this were set, the assert that the peaks are the same will fail ..
-        samp_names = ['blank1', 'blank2', 'blank3', 'blank4']
-        blank_list = []
-#         for name in samp_names:
-#             blank_list.append(create_calibration_sample(project, self.fixture_dir, name))
-
-        samp_names = ['Std1_1_20150422_150810', 'Std2_1_20150422_150711', 'Std3_1_20150422_150553']
-        std_list = []
-        for name in samp_names:
-            std_list.append(create_standard_csv(project, self.fixture_dir, name))
-        
-        #######################################################
-        # 3. group the calibration samples by their attributes   
-        #######################################################             
-
-        group_calibration_samples(qc_list, blank_list, std_list)
-        
-        #######################################################
-        # 4. create samples
-        #######################################################
-        
-        beer1_1 = create_sample(project, self.fixture_dir, 'Beer_1_full1')
-        beer1_2 = create_sample(project, self.fixture_dir, 'Beer_1_full2')
-        beer1_3 = create_sample(project, self.fixture_dir, 'Beer_1_full3')
-
-        beer2_1 = create_sample(project, self.fixture_dir, 'Beer_2_full1')
-        beer2_2 = create_sample(project, self.fixture_dir, 'Beer_2_full2')
-        beer2_3 = create_sample(project, self.fixture_dir, 'Beer_2_full3')
-
-        beer3_1 = create_sample(project, self.fixture_dir, 'Beer_3_full1')
-        beer3_2 = create_sample(project, self.fixture_dir, 'Beer_3_full2')
-        beer3_3 = create_sample(project, self.fixture_dir, 'Beer_3_full3')
- 
-        beer4_1 = create_sample(project, self.fixture_dir, 'Beer_4_full1')
-        beer4_2 = create_sample(project, self.fixture_dir, 'Beer_4_full2')
-        beer4_3 = create_sample(project, self.fixture_dir, 'Beer_4_full3')
-
-        #######################################################
-        # 5. group the samples into conditions
-        #######################################################
-        
-        group_name = 'test_experiment'
-        attribute_names = ['beer1', 'beer2', 'beer3', 'beer4']
-        conditions = create_grouping(group_name, attribute_names)
-        
-        beer1_attr = conditions['beer1']
-        SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_1)        
-        SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_2)        
-        SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_3)        
-
-        beer2_attr = conditions['beer2']
-        SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_1)        
-        SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_2)        
-        SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_3)        
-        
-        beer3_attr = conditions['beer3']
-        SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_1)        
-        SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_2)        
-        SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_3)        
-  
-        beer4_attr = conditions['beer4']
-        SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_1)        
-        SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_2)        
-        SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_3)                
-
-        #######################################################        
-        # 6. create a new experiment and analysis
-        #######################################################
-        
-        experiment, analysis = create_analysis('test_analysis', user)
-        print experiment.id
-        print analysis.id
-        experiment.save()
-        analysis.save()
-                
-        #######################################################                
-        # 7. set up comparisons
-        #######################################################
-
-        compare('comparison_1', experiment, beer1_attr, beer2_attr)
-        compare('comparison_2', experiment, beer3_attr, beer4_attr)
-
-        #######################################################
-        # 8. Run the R analysis pipeline
-        #######################################################
-
-        transaction.commit() # commit to the test db so it can be picked up by R
-        success = False
-        with self.env:
-            print 'Using %s as database' % self.env['PIMP_DATABASE_NAME']
-            success = start_pimp_pipeline(analysis, project, user)
 
         #######################################################
         # 9. Check the results from the R pipeline
@@ -335,7 +352,7 @@ class ExperimentTestCase(TransactionTestCase):
         self.assertTrue(mock_send_email.called)
         
         # assert that the resulting peaks from this test analysis are identical to the fixture
-        dump_path = os.path.join(self.test_media_root, 'projects', 
+        dump_path = os.path.join(self.test_media_root, 'projects',
                                  str(project.id), 'test_peaks.json')
         with open(dump_path, 'w') as f:
             call_command('dumpdata', 'data.peak', indent=4, stdout=f)        
