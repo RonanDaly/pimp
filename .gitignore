@@ -78,6 +78,7 @@ local.properties
 django_projects/pimp/sqlite3.db
 django_projects/pimp_data/
 django_projects/pimp_data_test/
+django_projects/TESTDATA*
 # Ignore database files
 *.db
 # Ignore any temp files
@@ -97,7 +98,11 @@ packrat/src/*
 !packrat/src/limma/
 !packrat/src/Biostrings/
 !packrat/src/KEGGREST/
+
+# R Development Files
 *.Rout
 .Rproj.user
 .DS_Store
 .Rhistory
+.Rprofile
+.RData
