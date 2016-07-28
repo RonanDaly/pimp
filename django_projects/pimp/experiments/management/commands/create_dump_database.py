@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import connection
 
-from experiments.tests import initialise_database, create_database
+from experiments.tests.tests import initialise_database, create_database
 
 
 class Command(BaseCommand):
@@ -23,7 +23,7 @@ class Command(BaseCommand):
         with env:
             create_database(fixture_dir, env)
         dump_path = os.path.join(settings.BASE_DIR, 'fixtures',
-                                 'test_database.json')
+                                 'test_database.fixture.json')
         with open(dump_path, 'w') as f:
             call_command('dumpdata', indent=4, stdout=f)
 
