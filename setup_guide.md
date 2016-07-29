@@ -6,13 +6,21 @@ This is a setup guide for the PiMP pipeline. It contains instructions for Linux 
 
 To work with large binary files in the repository install git-lfs
 
-  $ brew install git-lfs
+    $ brew install git-lfs
 
 In the repository, run these commands
 
-  $ git config --add lfs.url "http://poisson.tcrc.gla.ac.uk/polyomics/pimp.git/info/lfs"
-  $ git lfs install
+    $ git config --add lfs.url "http://poisson.tcrc.gla.ac.uk/polyomics/pimp.git/info/lfs"
+    $ git lfs install
 
+**(Linux)**
+
+    $ git config --global credential.helper 'cache --timeout=36000'
+
+**(OS X)**
+
+    $ git config --global credential.helper osxkeychain
+    
 ## 1. System Setup
 
 ### Java
