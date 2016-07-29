@@ -856,24 +856,22 @@ def get_best_hits_comparison(dataset, comparisons, s):
     logger.info("len(peakdtsample_intensity): %d", len(peakdtsample_intensity))    
     
     comparison_hits_list = {}
-    identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
-    annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
-    list(annotated_peak)
+    #identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
+    #annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
+    #list(annotated_peak)
 
     for c in comparisons:
-    
+        #                                            .select_related('peak', 'comparison')               \
+        #                                        .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
         identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)    \
-                                            .filter(peak__in=list(identified_peak))             \
+                                            .filter(peak__compound__identified='True', peak__dataset=dataset)             \
                                             .extra(select={"absLogFC": "abs(logFC)"})           \
-                                            .select_related('peak', 'comparison')               \
-                                            .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
                                             .order_by("-absLogFC").distinct()
-        annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
-                                            .filter(peak__in=list(annotated_peak))              \
+        peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
+                                            .filter(peak__dataset=dataset)              \
                                             .extra(select={"absLogFC": "abs(logFC)"})           \
-                                            .select_related('peak', 'comparison')               \
-                                            .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
                                             .order_by("-absLogFC").distinct()
+        annotated_peakdtcomparisonList = list(set(peakdtcomparisonList) - set(identified_peakdtcomparisonList))
     
         # fetch identified repository compounds for all items in identified_peakdtcomparisonList
         peakdtcomparison_compound_name = {}
