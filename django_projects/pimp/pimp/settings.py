@@ -288,3 +288,5 @@ PROFILE_LOG_BASE = getString('PROFILE_LOG_BASE', os.path.dirname(BASE_DIR))
 FIXTURE_DIRS = (
     os.path.join(BASE_DIR, 'fixtures'),
 )
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
