@@ -1,6 +1,7 @@
 # Create your views here.
 import itertools
 import logging
+from collections import OrderedDict
 
 from django.shortcuts import render_to_response
 from django.shortcuts import render
@@ -856,55 +857,47 @@ def get_best_hits_comparison(dataset, comparisons, s):
     logger.info("len(peakdtsample_intensity): %d", len(peakdtsample_intensity))    
     
     comparison_hits_list = {}
-    identified_peak = Peak.objects.filter(dataset=dataset, compound__identified='True').distinct()
-    annotated_peak = Peak.objects.filter(dataset=dataset).exclude(compound__identified='True').distinct()
-    list(annotated_peak)
 
     for c in comparisons:
-    
         identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)    \
-                                            .filter(peak__in=list(identified_peak))             \
-                                            .extra(select={"absLogFC": "abs(logFC)"})           \
-                                            .select_related('peak', 'comparison')               \
-                                            .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
+                                            .filter(peak__compound__identified='True', peak__dataset=dataset)             \
+                                            .extra(select={"absLogFC": "abs(logFC)",
+                                                           'compound_name':'compound_repositorycompound.compound_name'},
+                                                   tables=['compound_repositorycompound'],
+                                                   where=['compound_repositorycompound.compound_id = compound_compound.id'])           \
                                             .order_by("-absLogFC").distinct()
-        annotated_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
-                                            .filter(peak__in=list(annotated_peak))              \
+        peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
+                                            .filter(peak__dataset=dataset)              \
                                             .extra(select={"absLogFC": "abs(logFC)"})           \
-                                            .select_related('peak', 'comparison')               \
-                                            .prefetch_related('comparison__attribute', 'comparison__attribute__sample') \
                                             .order_by("-absLogFC").distinct()
-    
-        # fetch identified repository compounds for all items in identified_peakdtcomparisonList
-        peakdtcomparison_compound_name = {}
-        identified_repo_compounds = RepositoryCompound.objects                                  \
-                                        .filter(compound__peak__peakdtcomparison__in=identified_peakdtcomparisonList, 
-                                                compound__identified="True")                    \
-                                        .prefetch_related('compound__peak__peakdtcomparison_set')
-        # put them into dictionary to use later
-        for rc in identified_repo_compounds:
-            pdts = rc.compound.peak.peakdtcomparison_set.all()
-            val = rc.compound_name
-            for key in pdts:
-                try:
-                    # append if not already there
-                    if val not in peakdtcomparison_compound_name[key]:
-                        peakdtcomparison_compound_name[key].append(val)
-                except KeyError:
-                    # new entry
-                    peakdtcomparison_compound_name[key] = [val]
+        annotated_peakdtcomparisonList = list(set(peakdtcomparisonList) - set(identified_peakdtcomparisonList))
+
+        peakdtcomparison_compound_name = OrderedDict()
+        for pdtc in identified_peakdtcomparisonList:
+            if not peakdtcomparison_compound_name.has_key(pdtc):
+                peakdtcomparison_compound_name[pdtc] = (pdtc, [pdtc.compound_name])
+            else:
+                peakdtcomparison_compound_name[pdtc][1].append(pdtc.compound_name)
 
         # build the comparison table for identified compounds        
         identified_info_list = []
-        for identified_compound in identified_peakdtcomparisonList:
-            compound_name = peakdtcomparison_compound_name[identified_compound]
-            intensities = get_intensities_values(identified_compound, peakdtsample_intensity)
+        member_list = list(set(c.attribute.all()))
+        member_list_map = dict()
+        for member in member_list:
+            member_list_map[member] = []
+            for sample in member.sample.all():
+                member_list_map[member].append(sample)
+
+        for value in peakdtcomparison_compound_name.itervalues():
+            identified_compound = value[0]
+            compound_name = value[1]
+            intensities = get_intensities_values(identified_compound, peakdtsample_intensity, member_list_map)
             identified_info_list.append([identified_compound, compound_name, intensities])
      
         # build the comparison table for annotated compounds
         annotated_info_list = []
         for annotated_compound in annotated_peakdtcomparisonList:
-            intensities = get_intensities_values(annotated_compound, peakdtsample_intensity)
+            intensities = get_intensities_values(annotated_compound, peakdtsample_intensity, member_list_map)
             annotated_info_list.append([annotated_compound, intensities])
      
         comparison_hits = [identified_info_list, annotated_info_list]
@@ -912,21 +905,16 @@ def get_best_hits_comparison(dataset, comparisons, s):
         
     return comparison_hits_list
 
-def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
-
-    peak = peakdtcomparison.peak
-    comparison = peakdtcomparison.comparison
-    member_list = list(set(comparison.attribute.all()))
+def get_intensities_values(peakdtcomparison, peakdtsample_intensity, member_list_map):
+    peak = peakdtcomparison.peak_id
     member_hash = {}
-    for member in member_list:
+
+    for member, samples in member_list_map.iteritems():
         intensity_list = []
-        for sample in member.sample.all():
-            key = (peak.id, sample.id)
+        for sample in samples:
+            key = (peak, sample.id)
             peak_intensity = peakdtsample_intensity[key]
             intensity_list.append(peak_intensity)
-
-        # print sample.name
-        # print peak_intensity.intensity
         member_hash[member.name] = intensity_list
     data = []
     for member in member_hash.iterkeys():
@@ -943,7 +931,7 @@ def get_intensities_values(peakdtcomparison, peakdtsample_intensity):
         else: # len is 0
             memberInfo = [str(member), 0, None]
             data.append(memberInfo)
-    # print "data : ",data
+    # print "data : ",datadata
     return data
 
 def get_comparison_info_list(dataset, comparisons):
