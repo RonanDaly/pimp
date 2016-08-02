@@ -1,0 +1,201 @@
+# Getting started
+
+**Please Note**
+
+*For space and portability reasons, PiMP relies on centroided single polarity data in the MzXML format. If you are unable to convert your data into MzXML, please look at this guide (click here).*
+
+## Logging in to PiMP:
+
+To log in to PiMP, go to: [PiMP Homepage](http://polyomics.mvls.gla.ac.uk/accounts/login/, "PiMP")
+
+Once there, please input your username and password.
+If you have not been provided with a username and password, please contact the PiMP administrator. Once you hit enter, or click XXXX, you should find yourself in the project management page. From here you can see some general information about your projects, collaborators and the amount of storage you have used.
+
+![Project Management Page][project_management]
+
+From here, you can click on 'My Projects' to create a new project and start your analysis.
+
+![My Projects Page][my_projects]
+
+Prerequisites
+-------------
+
+To analyse your data, you first need:
+1. Your data in MzXML format
+2. Three retention time standards files in the appropriate format (click here for downloadable examples ([Standards 1](./stds1.csv), [Standards 2](./stds2.csv), [Standards 3](./stds3.csv))).
+3. Your experimental design
+
+Once you have these things available, please click on ‘Create Project’.
+
+![Create Project][create_project]
+
+## Create Project:
+
+To create your project, first give it a title, then a description. The description is useful as it allows you to tag your projects so they are easily browsable. Then click 'Create project'.
+
+![Project Dialog][project_dialog]
+
+## Project Administration:
+
+In ‘Project Administration’, you can add users to your project (via the ‘add users’ button), edit the title of your project or change the description (via the ‘edit title’ and ‘edit’ buttons respectively.
+
+![Project Administration][project_administration]
+
+  Once you have performed any desired administration in this page, enter calibration samples by clicking on the ‘Calibration Samples’ tab.
+
+## Calibration Samples:
+
+To successfully enter a metabolomics experiment, you must first provide a group of supporting data files. These consist of blanks, standards files and pooled/QC files. The blanks and pooled/QCs must be in MzXML format and the standards files must be in CSV format using the default Polyomics standards mixes. MzXML files must be uploaded in pairs: both a positive ionization mode and negative ionization mode version of each file. The pair of files must have the same name. Once a pair is uploaded, this is denoted by + - symbols next to the filename.
+
+![Calibration Samples][calibration_samples]
+
+To upload any of the files, click on the blue button with an up arrow in the Available Samples box. A new window will appear allowing you to drag and drop your files for upload.
+
+## Upload File (calibration data):
+
+Simply drag and drop the blanks and pooled/QC MzXML files and standards files in csv format into the box below, then click the green ‘start upload’ button.
+
+![Upload Files Dialog][upload_files]
+
+MzXML files must be uploaded in pairs: both a positive ionization mode and negative ionization mode version of each file. The pair of files must have the same name. Once a pair is uploaded, this is denoted by + - symbols next to the filename.
+
+Once your samples are uploaded, assign them to their appropriate categories (either standards, blank or QC).
+
+![Assign Calibration Samples][assign_calibration_samples]
+
+To assign your samples to groups, highlight the samples in that group and then click the '+' symbol next to the appropriate group title.
+
+![Assign to QC Group][assign_qc]
+
+You can use the 'search' box to free text filter the file list.
+
+![Search Calibrations][search_calib]
+
+Once all of the files have been uploaded and assigned, click the ‘Sample Management’ tab.
+
+## Sample Management:
+
+To begin uploading files, click the blue ‘upload files’ button in the ‘Samples’ box.  Once your samples are uploaded, you can apply an experimental design by clicking on the ‘Create’ button.
+
+## Experimental Design:
+
+Currently, PiMP supports experiments defined by discrete categories. Thus experiments must be defined in terms of conditions: wild type, mutant, time 0, time 30, no drug, low dose, high dose, etc. You can have as many conditions as you like, although bear in mind that a large number of conditions in a single experiment are hard to visualize effectively – you might be better to create multiple experiments. Once you have defined your conditions, click ‘Next’.
+
+![Experiment Definition][experiment_definition]
+
+## Assign Samples:
+
+You can now drag and drop the files into the conditions you have specified. Once you have completed your assignment, click ‘Submit’, and click on the ‘Analysis’ tab.
+
+## Analysis:
+Once you have defined a project and set up the calibration and experimental samples, you can create a new analysis to be submitted to the server, you must click on the ‘+ Create’ button.
+
+![Analysis List][analysis_list]
+
+You may provide an experiment name, and define the comparisons to be made. A comparison is simply a statistical comparison between two experimental groups, e.g. wild type vs mutant, or time 90 vs time 0. You can create as many comparisons as you like: click ‘Add Comparison’ to add another to the list for this experiment. When you have created the comparisons that you are interested in, click ‘Save'.
+
+![Analysis Definition][analysis_definition]
+
+ You are returned to the ‘Analysis’ tab. Your newly created analysis will be at the bottom of the list of current analyses. Simply click ‘Submit analysis’ to submit the analysis to the server. A lot of computational analysis is now performed on the data – please refer to this paper for a description of the analytical process. When the analysis is finished, you can click on the ‘access result’ button, which will bring you to the data exploration environment.
+
+
+
+## Upload File (samples):
+Simply drag and drop the sample MzXML files into the box below, then click the green ‘start upload’ button. MzXML files must be uploaded in pairs: both a positive ionization mode and negative ionization mode version of each file. The pair of files must have the same name. Once a pair is uploaded, this is denoted by + - symbols next to the filename.
+
+# Results
+
+Once your analysis is completed, it will appear in your 'My Projects' page with a green 'Finished' label in your project card.
+
+![Project Card][project_card]
+
+Click on 'Access Result' to load the data into your browser. A loading screen will appear (please be patient, many projects are quite large!).
+
+![Loading Screen][loading_screen]
+
+## Data Environment:
+
+The first page that loads once you select a completed analysis is the Summary Report.
+
+The PiMP Summary Report displays a summary of the key information from the study. ‘Study’ describes the experimental design that has been chosen, the table shows the groups and number of replicates for each group.
+
+![Summary Page][summary_page]
+
+### Data Processing
+
+Data Processing describes the algorithms applied to the data, with references.
+
+### Quality control
+
+Quality control provides a number of standard methods for assessing the quality of the data: a principal component analysis and the total ion chromatograms for the datasets.
+
+#### Principal Component Analysis
+
+PCA, or principal component analysis is a multivariate statistical method for visualizing large datasets. A good experiment is usually characterized by clear separation between groups. The graph is interactive, and datapoints may be hidden or zoomed in on.
+
+![PCA][pca]
+
+#### Total Ion Chromatograms
+
+Total ion chromatograms give an overview of the total detected masses from the instrument. In a good experiment, samples should overlay to a large extent in the same group, as in the example below. Often a large broad peak is visible towards the end of the chromatogram: this is usually a consequence of salty samples using HILIC chromatography.
+
+![TIC][tic]
+
+# Results
+
+## Summary Page
+
+Results provides a summary of the key findings from the data for each comparison selected by the user. Data from identified (matched by retention time and mass to a standard) compounds are shown separately from annotated (assigned putatively on the basis of mass) compounds. Only significantly changing compounds are listed here for each group.
+
+![Result Histgrams][results]
+
+### Volcano Plots
+
+Next, a volcano plot graphs fold change vs significance, such that the most significant and highest magnitude changes are in the top left and right of the graph. This graph is also interactive and the points can be clicked on to obtain more information about each peak.
+
+![Volcano Plot][volcano]
+
+## Metabolites Tab
+
+Most researchers in metabolomics are more interested in metabolites than peaks, per se. For this reason, we decided to provide any metabolite that evidence existed for in the data. The metabolites tab summarises all the information about detected compounds, allowing the researcher to explore metabolites, pathways and their levels in different sample sets.
+
+![Metabolites Tab][metabolites]
+
+There is a free text search in the top bar that allows the researcher to narrow down on a particular compound or pathway. Additionally, there are drop-down menus to filter the detected metabolites by pathway or superpathway.
+
+Each experimental comparison is listed in the table next to the name and formula of each metabolite. Levels of the metabolite relative to the control condition are shown as log2 fold changes and colour coded red for upregulated and blue for downregulated. Finally, each metabolite is listed as 'annotated' or 'identified' based on the Metabolite Standards Initiative guidelines.
+
+The 'Evidence' panel on the right of the table, activated by selecting a metabolite, provides all the evidence available for that compound, including the reference database the metabolite was found in (including the standards databases uploaded as part of the calibration samples), the structure of the compound, and any peak data associated with the compound. Simply click on the 'chromatogram' button to see an interactive plot of the data.
+
+![Metabolite Peak][metabolite_peak]
+
+Additionally, interactive histograms of the peak can be checked below, by clicking the 'intensities' button.
+
+![Metabolite intensities][metabolite_int]
+
+
+
+
+
+[project_management]:./img/project_management.png
+[my_projects]:./img/my_projects.png
+[create_project]:./img/create_project_button.png
+[project_dialog]:./img/create_project_dialog.png
+[project_administration]:./img/project_administration.png
+[calibration_samples]:./img/calibration_samples.png
+[assign_calibration_samples]:./img/assign_calibration_samples.png
+[assign_qc]:./img/assign_qc.png
+[search_calib]:./img/search_calib.png
+[upload_files]:./img/upload_files.png
+[experiment_definition]:./img/experiment_definition.png
+[analysis_definition]:./img/analysis_definition.png
+[analysis_list]:./img/analysis_list.png
+[loading_screen]:./img/loading_screen.png
+[summary_page]:./img/summary_page.png
+[pca]:./img/pca.png
+[tic]:./img/tic.png
+[results]:./img/results.png
+[volcano]:./img/volcano.png
+[metabolites]:./img/metabolites.png
+[metabolite_peak]:./img/metabolite_peak.png
+[metabolite_int]:./img/metabolite_int.png
