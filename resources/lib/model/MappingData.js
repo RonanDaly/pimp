@@ -24,5 +24,8 @@ MappingData.prototype = {
 	
 	getMapValue : function(){
 		return this.mapValue;
+	},
+	setMapValue : function(val){
+		this.mapValue = val;
 	}
 };

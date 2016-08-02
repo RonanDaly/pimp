@@ -1,0 +1,59 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+    <head>
+        <title>MetExplore Visualization Tests</title>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <link href="resources/icons/favicon.ico" type="image/x-icon" rel="shortcut icon">
+        <!-- <link rel="shortcut icon" type="image/png" href="lib/jasmine-2.4.1/jasmine_favicon.png"> -->
+       
+
+        <script src="resources/lib/d3.js/d3.min.js"></script>
+
+       <link rel="stylesheet" href="tests/lib/jasmine-2.4.1/jasmine.css">
+        <script src="tests/lib/jasmine-2.4.1/jasmine.js"></script>
+        <script src="tests/lib/jasmine-2.4.1/jasmine-html.js"></script>
+        <script src="tests/lib/jasmine-2.4.1/boot.js"></script>
+
+        <script type="text/javascript" src="tests/lib/jasmine-reporters/jasmine.phantomjs-reporter.js"></script>
+        
+        <script type="text/javascript" src="metexplorevizTests.js" charset="utf-8">  </script>
+        
+        <script src="tests/spec/MapNetwork.js"></script>
+    <!-- 
+    <script src="specMetExploreViz/D3Spec.js"></script>
+    <script src="specMetExploreViz/RefreshNetwork.js"></script>
+    <script src="specMetExploreViz/SideCompoundsNetwork.js"></script>
+     -->
+
+
+        </head>
+        <body>
+
+    </head>
+
+    <body>
+        <!-- phantomjs C:\wamp\www\MetExplore\lib\javascript\metExploreViz\tests\lib\phantomjs_jasminexml_runner.js http://localhost/MetExplore/lib/javascript/metExploreViz/SpecRunner.html C:\wamp\www\MetExplore\lib\javascript\metExploreViz\tests\result -->
+        <script type="text/javascript">
+            var vara =new jasmine.PhantomJSReporter();
+            jasmine.getEnv().addReporter(vara);
+          // // jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
+          // jasmine.getEnv().execute();
+        </script>
+        
+        <!-- Proposer un fichier json et un fichier mapping -->
+<!-- 
+        
+        <div id ="visu" style="height:600px; width:100%;">
+        </div>
+ -->
+        <div id ="visu" style="height:600px; width:100%; display:none;">
+        </div>
+    </body>
+
+ 
+
+
+</html>

@@ -28,9 +28,9 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 				me.removeMapping(mapping);
 			},
 			change : function(that, newMapping, old){
-				if(view.getStore().getCount()>0){
+				// if(view.getStore().getCount()>0){
 					var component = Ext.getCmp("selectConditionForm");
-
+					
 			        if(component!= undefined){
 			        	_metExploreViz.getSessionById('viz').setActiveMapping(newMapping);
 			            component.fireEvent("closeMapping", newMapping);
@@ -46,7 +46,7 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 							}
 						}
 			        }
-				}	
+				// }	
 			},
 			collapse : function(field, eOpts){
 				var mappings = _metExploreViz.getMappingsSet();
@@ -62,8 +62,7 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 	},
 
 	initMapping:function(mappingJSON){
-		
-		 if(_metExploreViz.getMappingsLength()!=0 ){
+		if(_metExploreViz.getMappingsLength()!=0 ){
 	    	
 	    	var component = Ext.getCmp('comparisonSidePanel');
 	        if(component!= undefined){
@@ -71,13 +70,14 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 	           		component.setHidden(false);
 				component.expand();
 				var comboMapping = Ext.getCmp('selectMappingVisu');
+				comboMapping.setValue(mappingJSON.getName());
+				
 				var store = comboMapping.getStore();
 	            //take an array to store the object that we will get from the ajax response
 				var records = [];
 
 				// comboMapping.bindStore(store);
-				            	
-				
+				     
 				records.push(new Ext.data.Record({
                     name: mappingJSON.getName()
                 }));
@@ -87,7 +87,7 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 	                    name: mappingName.getData().name
 	                }));
 				});
-
+				_metExploreViz.getSessionById('viz').setActiveMapping(mappingJSON.getName());
 				store.loadData(records, false);
                 
                 if(store.getCount()==1)
@@ -124,55 +124,6 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 	        }
 	},
 
-	
-		
-	// /*******************************************
-	// * Removing of mapping
-	// * @param {} newMapping : boolean to know if a new mapping is launched
-	// */
-	// closeMapping : function(newMapping){
-
-	//     var sessionsStore = Ext.getStore('S_NetworkVizSession');
-	// 	var session = sessionsStore.getById('viz');
-		
-	// 	if(session && session.isMapped()!='false')	
-	// 	{
-	// 		var container = Ext.getCmp(session.isMapped()+'Panel');
-
-	// 		var addCondition = Ext.getCmp('addCondition'); 
-	// 		if(addCondition!=undefined){	
-	// 			addCondition.setDisabled(false);
-	// 			addCondition.setTooltip('The condition will be add to the network');						
-	// 		}
-	// 		// Remove mapping caption
-	// 		var storeCond = Ext.getStore('S_Condition');
-	// 		var cmp = session.isMapped();
-	// 		var condition = storeCond.getStoreByCondName(cmp);
-	// 		var condInMetabolite = condition.getCondInMetabolite();
-	// 		if(newMapping!=undefined)
-	// 			this.removeGraphMapping(condInMetabolite);
-	// 		container.close();
-	// 		var colorStore = Ext.getStore('S_ColorMapping');
-	// 		colorStore.each(function(color){
-	// 			var newId = color.getName();
-	// 			Ext.getCmp('mappingCaptionForm'+newId).close();
-	// 		});
-
-	// 		if(session.getMappingDataType()=="Continuous"){
-	// 			var colorStore = Ext.getStore('S_ColorMapping');
-				        
-	// 	        var newColor = colorStore.getCount()==0;
-		        
-	// 	        if(!newColor){
-	// 	        	colorStore.loadData([],false);
-	// 	        }
-	// 	    }
-		    
-	// 		var networkVizSessionStore = Ext.getStore('S_NetworkVizSession');
-	// 		networkVizSession = networkVizSessionStore.getById("viz");
-	// 		networkVizSession.setMapped('false');
-	// 	}
-	// },
 	/*******************************************
 	* Affect selected mapping conditions to the comboBox: SelectCondition 
 	* @param {} that 
@@ -203,15 +154,12 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 
         comboCond.setValue(storeCond[0]);
 
-		var addCondition = Ext.getCmp('addCondition');
 		var selectConditionType = Ext.getCmp('selectConditionType');
 		
-		if(addCondition!=undefined && selectCondition!=undefined && selectConditionType!=undefined){
+		if(selectCondition!=undefined && selectConditionType!=undefined){
 
 			if(nbCond<1  || (nbCond==1 && conditions[0]=="undefined")){
- 				addCondition.setDisabled(true);
- 				addCondition.setTooltip('You must choose a condition to add it');
-						
+ 			
  				comboCond.clearValue();
  				comboCond.setDisabled(true);
  				selectConditionType.setDisabled(true);
@@ -221,92 +169,9 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 				selectConditionType.setValue(selectConditionType.getStore().first()); 
 				comboCond.setValue(storeCond.first());   
  				
- 				addCondition.setDisabled(false);
-				addCondition.setTooltip('The condition will be add to the network');	
-				
  				comboCond.setDisabled(false);
  				selectConditionType.setDisabled(false);
  			}
-		}	
-
-	
+		}
 	}	
-
-	/*******************************************
-	// * Affect selected mapping conditions to the comboBox: SelectCondition 
-	// * @param {} that 
-	// * @param {} newMapping : id of new mapping
-	// * @param {} old 
-	// */
-	// fillComboSelectCondition : function(that, newMapping, old) {
-	// 	var mappingInfoStore = _metExploreViz.getMappingsSet();
-			
-	// 	var conditions = newMapping.getConditions();
-
-	// 	for(var indCond=0;indCond<conditions.length;indCond++){
-	// 		storeCond.add({
-	// 			'condName' : theMapping.get('id')+"_"+conditions[indCond],
-	// 			'condInMetabolite' : theMapping.get('id') + 'map' + indCond
-	// 		});
-	// 	}	
-		
-
-	// 	var addCondition = Ext.getCmp('addCondition');
-	// 	var selectCondition = Ext.getCmp('selectCondition');
-	// 	var selectConditionType = Ext.getCmp('selectConditionType');
-	// 	if(addCondition!=undefined && selectCondition!=undefined && selectConditionType!=undefined){					
- // 			if(storeCond.getCount()==0){
- // 				addCondition.setDisabled(true);
- // 				addCondition.setTooltip('You must choose a condition to add it');
-						
- // 				selectCondition.clearValue();
- // 				selectCondition.setDisabled(true);
- // 				selectConditionType.setDisabled(true);
- // 			}
- // 			else
- // 			{
- // 				selectCondition.setDisabled(false);
- // 				selectConditionType.setDisabled(false);
- // 			}
-	// 	}	
-
-	// 	selectCondition.setValue(storeCond.first().getCondName());   
-	
-	// }	
-	/*init : function() {
-		this.getStore('S_MappingInfo')
-			.addListener('datachanged',
-				function(store){
-					var selectMapping = Ext.getCmp('selectMapping');
-					// If the MappingInfo store is empty we disable the button else enable
-					if(selectMapping!=undefined)
-					{
-						if(store.getCount()==0)
-						{
-							selectMapping.setDisabled(true);
-						}
-						else
-						{	
-							selectMapping.setDisabled(false);
-						}
-					}
-					
-
-				    selectMapping = Ext.getCmp('selectMappingVisu');
-					// If the MappingInfo store is empty we disable the button else enable
-					if(selectMapping!=undefined)
-					{
-						if(store.getCount()==0)
-						{
-							selectMapping.setDisabled(true);
-						}
-						else
-						{	
-							selectMapping.setDisabled(false);
-						}
-					}
-				}
-					
-		, this);
-	},*/
 });

@@ -70,7 +70,7 @@ Ext.define('metExploreViz.view.menu.viz_CaptionMenu.Viz_CaptionMenuController', 
 		
 		s_GeneralStyle.setDisplayCaption(component);
 		if(component=="Pathways"){
-			metExploreD3.GraphCaption.colorPathwayLegend(140);
+			metExploreD3.GraphCaption.colorPathwayLegend(175);
 			d3.select("#viz").select("#D3viz")
 					.select('#captionComparment')
 					.classed('hide', true);

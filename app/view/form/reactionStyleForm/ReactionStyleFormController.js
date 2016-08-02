@@ -178,6 +178,7 @@ Ext.define('metExploreViz.view.form.reactionStyleForm.ReactionStyleFormControlle
 					// // Call of jscolor library
 					var e = document.createElement('script'); 
 					e.setAttribute('src', document.location.href.split("index.html")[0] + 'resources/lib/jscolor/jscolor.js'); 
+					e.setAttribute('src', document.location.href.split("SpecRunner.html")[0] + 'resources/lib/jscolor/jscolor.js'); 
 					document.body.appendChild(e); 
 
 				 	var picker = new Ext.Panel({

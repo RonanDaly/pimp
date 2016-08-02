@@ -1,4 +1,4 @@
-.x-form-checkbox-default {
+x-form-checkbox-default {
     display: inline-block;
 }
 
@@ -388,6 +388,12 @@ p {
 }
 .exportPng {
     background-image: url(../icons/exportPng.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
+.exportComparePng {
+    background-image: url(../icons/exportComparePng.png);
     background-size: 100% 100%;
   background-position: 0% 0%;
   background-repeat: no-repeat;

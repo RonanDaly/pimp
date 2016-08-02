@@ -6,6 +6,13 @@
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <link href="resources/icons/favicon.ico" type="image/x-icon" rel="shortcut icon">
+        <script src="./resources/lib/MetExplore_Components/bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+   
+        <link rel="import" href="./resources/lib/MetExplore_Components/elements/MetX-CompareBar.html">
+        <link rel="import" href="./resources/lib/MetExplore_Components/elements/MetX-BubblePlot.html">
+        <link rel="import" href="./resources/lib/MetExplore_Components/elements/MetX-WordCloud.html">
+
+        <script id="microloader" type="text/javascript" data-app="c2a09d62-4072-4cd8-93fd-00718ff8a8f2" src="bootstrap.js"></script> <!-- The line below must be kept intact for Sencha Cmd to build your application -->
     </head>
 
     <body>
@@ -17,20 +24,8 @@
 
 <!-- The line below must be kept intact for Sencha Cmd to build your application -->
 <!-- <script id="microloader" data-app="c2a09d62-4072-4cd8-93fd-00718ff8a8f2" type="text/javascript" src="bootstrap.js"></script> <!-- The line below must be kept intact for Sencha Cmd to build your application -->
-<script id="microloader" type="text/javascript" src="bootstrap.js"></script> <!-- The line below must be kept intact for Sencha Cmd to build your application -->
 <script type="text/javascript"> 
-    // Fix panel size to iframe size
-    function reloadMetexploreViz(func) {
-        
-        if (document.getElementById('networkPanel') == null) {            
-            // the variable is defined
-            func();
-            var that = this;
-            setTimeout(function(){that.reloadMetexploreViz(func);}, 5000);
-        }
-        return;
-    };
-
+  
     function whileMetExploreVizNotLoading(func){
         this.reloadMetexploreViz(func);
     };
@@ -43,6 +38,9 @@
     }
     
     // Launch metExploreViz after microloader loading 
+    if(Ext.Microloader.manifest==undefined)
+        window.location.reload();
+
     Ext.Microloader.onAllUpdatedAssetsReady = function(){
         Ext.onReady(function() {
             var visu = new metExploreViz('visualisation', parent);
@@ -50,22 +48,7 @@
             // Create metExploreViz variable in parent DOM
             parent.metExploreViz = metExploreD3;
         });
-    };
-    setTimeout(function(){
-        if(parent==window)
-        {
-            this.whileMetExploreVizNotLoading(function(){
-                window.location.reload();
-            });
-        }
-        else
-        {
-            this.whileMetExploreVizNotLoading(function(){
-                parent.document.getElementById('iFrameMetExploreViz').contentWindow.location.reload();
-            });
-        }
-    }, 5000);
-    
+    };    
 
 </script>
 <!-- WAY TO USE METEXPLOREVIZ 
