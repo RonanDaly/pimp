@@ -161,7 +161,7 @@ Most researchers in metabolomics are more interested in metabolites than peaks, 
 
 ![Metabolites Tab][metabolites]
 
-There is a free text search in the top bar that allows the researcher to narrow down on a particular compound or pathway. Additionally, there are drop-down menus to filter the detected metabolites by pathway or superpathway.
+There is a free text search in the top bar that allows the researcher to narrow down on a particular compound or pathway. One can also sort on any of the columns by clicking on the title bar. Additionally, there are drop-down menus to filter the detected metabolites by pathway or superpathway.
 
 Each experimental comparison is listed in the table next to the name and formula of each metabolite. Levels of the metabolite relative to the control condition are shown as log2 fold changes and colour coded red for upregulated and blue for downregulated. Finally, each metabolite is listed as 'annotated' or 'identified' based on the Metabolite Standards Initiative guidelines.
 
