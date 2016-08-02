@@ -376,7 +376,6 @@ metExploreD3.GraphCaption = {
 			blue  = Math.sin(frequency*i+4+phase) * width + center;
 	 
 			var group = session.groups[i];
-			group.color=metExploreD3.GraphUtils.RGB2Color(red,green,blue);
 
 			caption.append("svg:line")
 				.attr('class', 'metabolite')

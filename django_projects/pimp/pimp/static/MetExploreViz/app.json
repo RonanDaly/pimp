@@ -237,12 +237,10 @@
             "bundle": true
         },
         {
-            "path": "resources/lib/jquery/jquery-1.7.2.min.js",
-            "bundle": true
+            "path": "resources/lib/jquery-3.0.0.min.js"
         },
         {
-            "path": "resources/lib/jscolor/jscolor.min.js",
-            "bundle": true
+            "path": "resources/lib/jscolor/jscolor.min.js"
         },
         {
             "path": "resources/lib/jscolor/jscolor.js",

@@ -954,9 +954,18 @@ Graph.Node = function(id, node){
         for(i in this.edges)
             (this.edges[i].source.id == id || this.edges[i].target == id) && this.edges[i].show && this.edges[i].show();
     };
+    node.getAdjacents = function(){
+		return this.edges.map(function(edge){
+			if(edge.source.id == node.id)
+				return edge.target;
+			else
+				return edge.source;
+		})
+	};
     return node;
 };
 Graph.Node.prototype = {
+
 };
 
 

@@ -48,12 +48,12 @@ ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 
-EMAIL_HOST = 'mail-relay.gla.ac.uk'
+EMAIL_HOST = getString('PIMP_EMAIL_HOST', None)
 # EMAIL_USE_TLS = True
 # EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
+DEFAULT_FROM_EMAIL = getString('PIMP_DEFAULT_FROM_EMAIL', None)
 
 # EMAIL_FILE_PATH = '/opt/django/projects/django_projects/tmp/app-messages'
 
@@ -165,7 +165,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'a5s!nh^1=tq3a4)jbe07*$nv6npve6d%a7nn6(8g#la)lp6oh('
+SECRET_KEY = getNeededString('PIMP_SECRET_KEY')
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (

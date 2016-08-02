@@ -167,6 +167,14 @@ NodeData.prototype = {
         });
         return themappingData;
     },
+    setMappingDataByNameAndCond : function(name, cond, val){
+        var themappingData = null;
+        this.mappingDatas.forEach(function(aMappingData){            
+            if(aMappingData.getMappingName()==name && aMappingData.getConditionName()==cond)
+                themappingData = aMappingData;
+        });
+        themappingData.setMapValue(val);
+    },
     getPathways : function(){
         return this.pathways;
     },

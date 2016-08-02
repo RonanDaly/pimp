@@ -40,9 +40,27 @@ Ext.define('metExploreViz.view.form.selectConditionForm.SelectConditionForm', {
         xtype: 'menuseparator'
     },
     {
-        id:'selectCondition',
-        xtype:'selectCondition',
+        id:'selectConditionType',
+        xtype:'selectConditionType',
+        reference:'selectConditionType',
         disabled:true
+    }
+    ,
+    {
+
+        margin:'10 0 0 5',
+        xtype      : 'fieldcontainer',
+        defaultType: 'checkboxfield',
+        reference : 'opacity', 
+        hidden : true,
+        items: [
+            {
+                boxLabel  : 'Opacity',
+                name      : 'opacity',
+                inputValue: true,
+                id        : 'opacityCheck'
+            }
+        ]
     },
     {   
         border:false,
@@ -54,22 +72,14 @@ Ext.define('metExploreViz.view.form.selectConditionForm.SelectConditionForm', {
            align:'stretch'
         },
         items:[{
-            id:'selectConditionType',
-            xtype:'selectConditionType',
-            disabled:true
-        },{
-            xtype:'button',
-            iconCls:'add',
-            tooltip:'You must choose a condition to add it',
-            //formBind: true,
-            margin:'5 5 5 5',
-            id:'addCondition',
-            reference:'addCondition',
-            action:'addCondition',
-            disabled:true,
-            padding:'0 0 0 0'
-        }]
-    },{
+            id:'selectCondition',
+            xtype:'selectCondition',
+            reference:'selectCondition',
+            disabled:true           
+        }
+        ]
+    }
+        ,{
             xtype: 'menuseparator'
     }
     ]  

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite name="Test session network after mapping" errors="0" tests="2" failures="0" time="5.741" timestamp="2016-04-22T17:08:04">
+  <testcase classname="Test session network after mapping" name="Session not null" time="3.091"></testcase>
+  <testcase classname="Test session network after mapping" name="should be created" time="2.648"></testcase>
+</testsuite>

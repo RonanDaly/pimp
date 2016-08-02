@@ -2,8 +2,191 @@
  * @author MC
  * @description : Basic functions
  */
-metExploreD3.GraphFunction = {
     
+metExploreD3.GraphFunction = {
+    bfs : function (node){
+	    var graph = metExploreD3.GraphFunction.getGraphNotDirected();
+
+    	var root = graph.getNode(node.getId());
+  
+  		for (var key in graph.nodes) {	
+	          graph.nodes[key].distance = "INFINITY";        
+	          graph.nodes[key].parent = null;
+	    }            
+  
+      	var queue = [];     
+  
+      	root.distance = 0;
+     	queue.push(root);                      
+ 
+     	while(queue.length!=0){         
+     	     
+			var current = queue.pop();
+
+			current.getAdjacents().forEach(function(n){
+
+				if(n.distance == 'INFINITY')
+			    {
+			    	n.distance = current.distance + 1;
+				    n.parent = current;
+				    queue.push(n); 
+			    }
+			});
+		}  
+		return graph;          
+	},
+
+    colorDistanceOnNode : function(graph, func){
+		var networkData = _metExploreViz.getSessionById('viz').getD3Data();
+		var maxDistance = 0; 
+		for (var key in graph.nodes) {	
+	        var dist = graph.nodes[key].distance;   
+	        if(maxDistance<dist)
+	        	maxDistance=dist;    
+	        networkData.getNodeById(key).distance = dist;
+	    }
+
+    	var color = d3.scale.category20();
+		var color = d3.scale.linear()
+			.domain([0, 4])
+			.range(["blue", "yellow"]);
+
+
+		d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+			.style("fill", function(node) { return color(node.distance); });
+
+		if(func!=undefined){
+			func();
+		}
+    },
+
+    test3 : function(){
+		
+		var networkData = _metExploreViz.getSessionById('viz').getD3Data();	
+		
+		d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+			.on("click", function(node){
+				
+				var array = []; 
+				
+				_metExploreViz.getSessionById('viz').getSelectedNodes().forEach(function(anodeid){
+					var theNode = networkData.getNodeById(anodeid);
+					var graph = metExploreD3.GraphFunction.bfs(theNode);
+					array.push(graph);
+				});
+				
+				var finalGraph = array[0];
+				for (var key in finalGraph.nodes) {	
+
+				    var arrayVal = 
+					    array
+					    	.filter(function(graph){
+					    		return graph.nodes[key].distance !="INFINITY";
+					    	})
+						    .map(function(graph){
+					        	return graph.nodes[key].distance; 
+					        });
+
+			        finalGraph.nodes[key].distance = Math.min.apply(Math, arrayVal) ;   			    
+			       	if(finalGraph.nodes[key].distance=="Infinity") finalGraph.nodes[key].distance=10000;
+			       	
+				};
+				metExploreD3.GraphFunction.colorDistanceOnNode(finalGraph, setCharge);
+		});
+		function setCharge(){
+			var color = d3.scale.linear()
+				.domain([0, 1, 2, 3])
+				.range([-600, -500, -400, -30]);
+
+			metExploreD3.getGlobals().getSessionById('viz').getForce().charge(function(node){
+				var value = node.distance;
+				if(node.distance>3) 
+					value = 3;
+				var val = color(value);
+				return val;
+			});	
+		};
+    },
+    testFlux : function(){
+		
+		var networkData = _metExploreViz.getSessionById('viz').getD3Data();	
+		
+			var color = d3.scale.linear()
+				.domain([0, 0.1, 0.2, 0.5, 1])
+				.range([-30, -50, -60,-500 -600]);
+
+			metExploreD3.getGlobals().getSessionById('viz').getForce().charge(function(node){
+				var value = d3.select('g#node'+node.getId()+'.node').attr('opacity');
+				var val = color(value);
+				return val;
+			});	
+		
+    },
+    test : function(){
+		
+		var networkData = _metExploreViz.getSessionById('viz').getD3Data();	
+		
+		d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+			.on("click", function(node){
+				metExploreD3.GraphFunction.colorDistanceOnNode(metExploreD3.GraphFunction.bfs(node), setCharge);
+		});
+		function setCharge(){
+			var color = d3.scale.linear()
+				.domain([0, 1, 2, 3])
+				.range([-600, -500, -400, -30]);
+
+			metExploreD3.getGlobals().getSessionById('viz').getForce().charge(function(node){
+				var value = node.distance;
+				if(node.distance>3) 
+					value = 3;
+				var val = color(value);
+				return val;
+			});	
+		};
+    },
+    test2 : function(){
+		
+		var networkData = _metExploreViz.getSessionById('viz').getD3Data();	
+		
+		d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+			.on("click", function(node){
+				metExploreD3.GraphFunction.colorDistanceOnNode(metExploreD3.GraphFunction.bfs(node), setLinkDistance);
+		});
+		function setLinkDistance(){
+			var linkStyle = metExploreD3.getLinkStyle();
+			var color = d3.scale.linear()
+				.domain([0, 1, 2, 3])
+				.range([5*linkStyle.getSize(), 4*linkStyle.getSize(), 3*linkStyle.getSize(), linkStyle.getSize()]);
+				
+				// d3.layout.force().friction(0.90).gravity(0.06)
+				// 	.charge(-150)
+
+				// d3.layout.force().friction(0.90).gravity(0.08).charge(-4000).theta(0.2)
+    // 			.linkDistance(600)
+			var color2 = d3.scale.linear()
+				.domain([0, 1, 2, 3])
+				.range([-600, -500, -400, -30]);
+
+			metExploreD3.getGlobals().getSessionById('viz').getForce()
+				.linkDistance(function(link){
+
+					var value = Math.max(link.getSource().distance, link.getTarget().distance);
+					if(value>3) 
+						value = 3;
+					var val = color(value);
+					return val;
+				})
+				.gravity(0.04)
+				.charge(function(node){
+					var value = node.distance;
+					if(node.distance>3) 
+						value = 3;
+					var val = color2(value);
+					return val;
+				});
+		};
+    },
+
     /*******************************************
     * Convert hexa in rgb  
     * @param {} r : Red  
@@ -255,6 +438,30 @@ metExploreD3.GraphFunction = {
 					graph.addEdge(targetId+"_back", sourceId);
 				}
 				
+				graph.addEdge(sourceId, targetId);
+			});
+
+			return graph;
+	},
+
+	getGraphNotDirected : function() {
+		var session = _metExploreViz.getSessionById( 'viz');
+		var graph = new Graph();
+		var vis = d3.select("#viz").select("#D3viz");
+
+		vis.selectAll("g.node")
+			.each(function(node){
+				graph.addNode(node.getId());
+			});
+
+		vis.selectAll("path.link")
+			.each(function(link){
+				var source = link.source;
+				var target = link.target;
+
+				var sourceId = source.getId();
+				var targetId = target.getId();
+			
 				graph.addEdge(sourceId, targetId);
 			});
 
