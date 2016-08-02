@@ -1,3 +1,5 @@
+import timeit
+
 from django.test import TestCase, override_settings
 from experiments.models import Analysis, Attribute
 from fileupload.models import Sample
@@ -18,5 +20,7 @@ class BestHitsTestCase(TestCase):
         s = Sample.objects.filter(
             attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
-        get_best_hits_comparison(dataset, comparisons, s)
-
+        comp_start = timeit.default_timer()
+        experiments.views.get_best_hits_comparison(dataset, comparisons, s)
+        comp_stop = timeit.default_timer()
+        print("comp time: %s", str(comp_stop - comp_start))
