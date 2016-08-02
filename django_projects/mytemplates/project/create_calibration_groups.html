@@ -36,7 +36,10 @@
           <div class="row">
             <div class="col-md-12">
               <p class="lead">Assign calibration samples to calibration and control groups.</p>
-              <p>These calibration and control groups are used for every analysis associated with this project.</p>
+              <p>
+                  These calibration and control groups are used for every analysis associated with this project.
+                  Please upload mzXML files for the QC and Blank and CSV files for the Standard.
+              </p>
             </div>
           </div>
         </div>
@@ -50,6 +53,8 @@
     </div>
     <!-- end blank forms -->
 
+    <div id='error-msg' class="alert alert-danger" style='display:none;'>
+    </div>
 
     <form id="samples_attribute_form" method="post" action="{% url 'projfile_attribute' project.id %}">
 
@@ -131,10 +136,10 @@
                         <div class="panel panel-info" id="{{ form.name.value }}">
                             <div class="panel-heading clearfix">
                                 <div class="btn-group pull-right">
-                                    <button data-toggle="tooltip" data-container="body" title="Add select samples" class="btn btn-sm btn-default add_samples" data-original-title="Add selected samples">
+                                    <button id="{{ form.name.value }}-add-btn" data-toggle="tooltip" data-container="body" title="Add select samples" class="btn btn-sm btn-default add_samples" data-original-title="Add selected samples">
                                         <span class="glyphicon glyphicon-plus"></span>
                                     </button>
-                                    <button data-toggle="tooltip" data-container="body" title="Remove all samples" class="btn btn-sm btn-default remove_samples" data-original-title="Remove all samples">
+                                    <button id="{{ form.name.value }}-remove-btn" data-toggle="tooltip" data-container="body" title="Remove all samples" class="btn btn-sm btn-default remove_samples" data-original-title="Remove all samples">
                                         <span class="glyphicon glyphicon-eject"></span>
                                     </button>
                                 </div>
