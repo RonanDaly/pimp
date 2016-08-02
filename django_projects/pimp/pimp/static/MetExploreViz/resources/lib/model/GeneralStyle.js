@@ -6,7 +6,7 @@
  /**
  * General style
  */
-var GeneralStyle = function(siteName, minContinuous, maxContinuous, max, dispLabel, dispLink, dispConvexhull, clust, dispCaption){
+var GeneralStyle = function(siteName, minContinuous, maxContinuous, max, dispLabel, dispLink, dispConvexhull, clust, dispCaption, eventForNodeInfo, loadButtonHidden, windowsAlertDisable){
     this.websiteName = siteName;
     this.colorMinMappingContinuous = minContinuous;
     this.colorMaxMappingContinuous = maxContinuous;
@@ -15,7 +15,7 @@ var GeneralStyle = function(siteName, minContinuous, maxContinuous, max, dispLab
     this.displayLinksForOpt = dispLink;
     this.displayConvexhulls = dispConvexhull;
     this.displayCaption = dispCaption;
-    this.eventForNodeInfo = false;
+    this.eventForNodeInfo=eventForNodeInfo;
     this.loadButtonHidden=false;
     this.windowsAlertDisable=false;
     this.clustered=clust;

@@ -13,6 +13,16 @@ Ext.define('metExploreViz.view.form.selectCondition.SelectCondition', {
     store: {
         fields: ['name']
     },
+    listeners: {
+        render: function(c) {
+            new Ext.ToolTip({
+                target: c.getEl(),
+                html: 'Select a condition'
+            });
+        }
+    }, 
+    flex:1,
+    multiSelect:true,
 	displayField: 'name',
 	valueField: 'name',
 	queryMode: 'local',

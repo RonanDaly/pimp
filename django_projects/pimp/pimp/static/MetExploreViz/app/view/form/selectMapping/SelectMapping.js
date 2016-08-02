@@ -17,6 +17,14 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMapping', {
         store: {
             fields: ['name']
         },
+        listeners: {
+            render: function(c) {
+                new Ext.ToolTip({
+                    target: c.getEl(),
+                    html: 'Select a mapping'
+                });
+            }
+        }, 
         displayField: 'name',
         valueField: 'name',
         width: 150,

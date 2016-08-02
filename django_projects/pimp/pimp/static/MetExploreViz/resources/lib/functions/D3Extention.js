@@ -26,7 +26,8 @@ d3.selection.enter.prototype =
 	};
 
 	d3.selection.prototype.setNodeForm = function(width, height, rx, ry, stroke, strokewidth) {
-	    this.select("rect")
+		this.style("opacity", 1)
+	    	.select("rect")
 			.attr("width", width)
 			.attr("height", height)
 			.attr("rx", rx)

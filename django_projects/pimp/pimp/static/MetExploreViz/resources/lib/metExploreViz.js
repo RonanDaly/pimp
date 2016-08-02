@@ -437,7 +437,6 @@ var metExploreD3 = {
     }, 
     setGeneralStyle : function(store){
         _metExploreViz.generalStyle = store;
-        console.log("setGeneralStyle");
         metExploreD3.fireEvent("generalStyleForm", "setGeneralStyle");
         metExploreD3.fireEvent("vizIdConvexHullMenu", "setGeneralStyle");
         metExploreD3.fireEvent("buttonImportToNetworkFromWebsite", "setGeneralStyle");
@@ -474,6 +473,11 @@ var metExploreD3 = {
     },
     getConditionsSetLength : function(store){
         return store.getCount();
+    },
+
+
+    getConditionsMapped : function(){
+        return Ext.getCmp('selectConditionForm').lookupReference('selectCondition').lastValue;
     },
 
 
@@ -678,6 +682,20 @@ var metExploreD3 = {
     */
     displayMessage : function(type, msg){
        Ext.Msg.alert(type, msg);
+    },
+
+    /******************************************
+    * Display message 
+    * @param {} type : Message type
+    * @param {} msg : Message to display
+    */
+    displayWarning : function(msgTitle, msg){
+        Ext.Msg.show({
+           title:msgTitle,
+           msg: msg,
+           buttons: Ext.Msg.OK,
+           icon: Ext.Msg.ERROR
+       });
     },
 
     /******************************************

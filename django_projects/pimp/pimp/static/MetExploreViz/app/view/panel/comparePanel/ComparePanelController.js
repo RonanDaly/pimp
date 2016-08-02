@@ -148,6 +148,10 @@ Ext.define( 'metExploreViz.view.panel.comparePanel.ComparePanelController',{
 						hidden : false,
 						handler : function(){ metExploreD3.GraphNetwork.removeSelectedNode(panelId) }
 					},{
+							text : 'Select neighbour',
+							hidden : false,
+							handler : function(){ metExploreD3.GraphNode.selectNeighbours(_metExploreViz.getSessionById(panelId).getD3Data().getNodeById(target.id), panelId); }
+						},{
 						text : 'See more information',
 						hidden : false,
 						handler : function() {

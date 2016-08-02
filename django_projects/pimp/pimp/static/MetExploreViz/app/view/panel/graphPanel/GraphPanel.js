@@ -44,9 +44,6 @@ Ext.define("metExploreViz.view.panel.graphPanel.GraphPanel",{
            {
                tbar:{
                    id:'tbarGraph',
-                   layout: {
-                      overflowHandler: 'Menu'
-                   },
                    items: [
                           {
                                 text: 'Load network', 

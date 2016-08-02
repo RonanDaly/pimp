@@ -98,6 +98,10 @@ Ext.define('metExploreViz.view.panel.viz.VizController', {
 							text : 'Side compound (duplicate)',
 							hidden : false,
 							handler : function(){ metExploreD3.GraphNetwork.duplicateASideCompoundSelected(target.parentNode, "viz"); }
+						},{
+							text : 'Select neighbour',
+							hidden : false,
+							handler : function(){ metExploreD3.GraphNode.selectNeighbours(_metExploreViz.getSessionById('viz').getD3Data().getNodeById(target.id), "viz"); }
 						}
 						,{
 							text : 'See more information',

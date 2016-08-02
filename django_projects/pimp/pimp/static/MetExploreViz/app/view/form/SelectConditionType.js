@@ -12,10 +12,18 @@ Ext.define('metExploreViz.view.form.SelectConditionType', {
         fields: ['name'],
         data : [
             {"name":"Continuous"},
-            {"name":"Discrete"}
+            {"name":"Discrete"},
+            {"name":"Flux"}
         ]
     },
-    flex:1,
+    listeners: {
+        render: function(c) {
+            new Ext.ToolTip({
+                target: c.getEl(),
+                html: 'Select a type of data'
+            });
+        }
+    }, 
     displayField: 'name',
     valueField: 'name',
     queryMode: 'local',
