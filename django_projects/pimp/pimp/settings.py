@@ -74,7 +74,7 @@ if TESTING:
     os.environ['PIMP_DATABASE_NAME'] = TEST_DATABASE_NAME
 else:
     os.environ['PIMP_DATABASE_NAME'] = DATABASE_NAME
-del os.environ['PIMP_DATABASE_FILENAME']
+os.environ.pop('PIMP_DATABASE_FILENAME', None)
 
 DATABASES = {
     'default': {
