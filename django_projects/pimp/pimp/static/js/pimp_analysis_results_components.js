@@ -325,10 +325,8 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 
                 var rightPanelPreferencesContent = $('<div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6"><h3 style="margin-left:10px;margin-bottom: 0px;">MetExplore Viz parameters</h3><div id="biosource-info" style="height:27px"></div><select name="Select MetExplore Biosource" id="biosource_selector"><option disabled>Select MetExplore Biosource</option></select><div id="pathway-info" style="height:27px"></div><select name="Select MetExplore Pathway" multiple="multiple" id="met_pathway_selector"><option disabled>Select MetExplore Pathway</option></select></div><div class="span6"><h3 style="margin-left:10px;">What is MetExplore</h3><p style="margin-left:10px;">Met­Ex­plore is a web server ded­i­cated to the analy­sis of genome scale meta­bolic networks</p><p style="margin-left:10px;">For more information, please visit <a href="http://metexplore.toulouse.inra.fr/joomla3/"  target="_blank">MetExplore website</a></div></div></div>');
 
-                console.log(response.length);
-
                 for (var i=0;i<response.length;i++){
-                    $('<option value="'+response[i]['id']+'">'+response[i]['NomComplet']+'</option>').appendTo($(rightPanelPreferencesContent).find('#biosource_selector'));
+                    $('<option value="'+response[i]['id']+'">'+response[i]['displayName']+'</option>').appendTo($(rightPanelPreferencesContent).find('#biosource_selector'));
                 }
 
                 $(rightPanelPreferencesContent).appendTo($(modalBody));

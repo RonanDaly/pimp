@@ -1022,15 +1022,26 @@ def get_metexplore_biosource(request, project_id, analysis_id):
     if request.is_ajax():
         # Get the list of biosources from metexplore webservice
         url = 'http://metexplore.toulouse.inra.fr:8080/metExploreWebService/biosources'
-        try:
-            resp = urllib2.urlopen(url)
-            contents = resp.read()
-            print "------------ Biosource connection status: WORK ----------"
-        except urllib2.HTTPError, error:
-            error = error.read()
+        r = requests.get(url)
+        if r.raise_for_status():
+            response = "error"
+            response = simplejson.dumps(contents)
             print "------------ Biosource connection status: ERROR ----------"
-            contents = "error"
-        return HttpResponse(contents, content_type='application/json')
+            return HttpResponse(response, content_type='application/json')
+        content = jsonpickle.decode(r.text)
+        response = jsonpickle.encode(content)
+        print "------------ Biosource connection status: WORK ----------"
+        return HttpResponse(response, content_type='application/json')
+        # try:
+        #     resp = urllib2.urlopen(url)
+        #     contents = resp.read()
+        #     print "------------ Biosource connection status: WORK ----------"
+
+        # except urllib2.HTTPError, error:
+        #     error = error.read()
+        #     print "------------ Biosource connection status: ERROR ----------"
+        #     contents = "error"
+        # return HttpResponse(contents, content_type='application/json')
 
 
 def get_metexplore_pathways(request, project_id, analysis_id):
@@ -1040,9 +1051,7 @@ def get_metexplore_pathways(request, project_id, analysis_id):
         project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
         # This token is temporary, a permanent one will be provided, this will have to move to the environment viriables and kept secret
-        # token = "eb0fd4bd183a4dbf0db6ca2b240495bb"
-        # Current site isn't used, legacy code, to be removed after all tests have passed
-        # current_site = Site.objects.get_current()
+        # token = "eb0fd4bd183a4dbf0db6ca2b240495bb" update, no token required anymore
         # Get the selected biosource
         biosource_id = str(request.GET['id'])
         # Create list of inchikey and put it in json
@@ -1053,7 +1062,6 @@ def get_metexplore_pathways(request, project_id, analysis_id):
         # Creation of the url to call MetExplore webservice with the selected biosource
         url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/aspathways/')
         r = requests.post(url, data = data)
-        print "apres req"
         # Check if MetExplore server returns a server error response
         # If so, return error response to PiMP user "MetExplore server is not available"
         if r.raise_for_status():
@@ -1062,15 +1070,11 @@ def get_metexplore_pathways(request, project_id, analysis_id):
             print "------------ Pathway connection status: ERROR ----------"
             return HttpResponse(response, content_type='application/json')
         print "------------ Pathway connection status: WORK ----------"
-        print "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
-        print "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
-        print "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
         # If MetExplore returns code 200, we start parsing the response
         content = jsonpickle.decode(r.text)
         pathway_list = []
         pathway_selection_list = []
 
-        print content
         # Extract the IDs of pathways with more than 1 metabolite mapped
         if "pathwayList" in content[0].keys():
             for pathway in content[0]['pathwayList']:
@@ -1087,7 +1091,6 @@ def get_metexplore_pathways(request, project_id, analysis_id):
         else:
             response = simplejson.dumps(pathway_selection_list)
             print "------------ Send pathway selection list -------------"
-            print pathway_selection_list
             return HttpResponse(response, content_type='application/json')
 
 
@@ -1099,12 +1102,10 @@ def get_metexplore_network(request, project_id, analysis_id):
         biosource_id = str(request.GET['biousourceid'])
         pathway_list = request.GET.getlist('pathwayids')
 
-        print "Pathway list IIIIIICCCCCCCIIIIII"
-        print pathway_list
+        print "------------- Requesting network --------------"
 
         inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
         # Create json data to send to MetExplore webservice
-        # data = simplejson.dumps({"token": token, "Content": inchikey_list, "pathways": pathway_string})
         data = simplejson.dumps({"Content": inchikey_list, "pathways": pathway_list})
         # Create the url with the right biosource
         url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/filteredbypathways/')
@@ -1114,20 +1115,18 @@ def get_metexplore_network(request, project_id, analysis_id):
         if r.raise_for_status():
             response = "error"
             response = simplejson.dumps(contents)
-            print "------------ Pathway connection status: ERROR ----------"
+            print "------------ Network connection status: ERROR ----------"
             return HttpResponse(response, content_type='application/json')
 
-        # print r.text
         # Check if network isn't empty (node count)
         if len(jsonpickle.decode(r.text)['nodes']) == 0:
             response = "empty"
             response = simplejson.dumps(contents)
-            print "------------ Pathway list is empty ----------"
+            print "------------ Network list is empty ----------"
             return HttpResponse(response, content_type='application/json')
+        
         # Modify the network to add abundance values for each metabolite and condition
         mapping = jsonpickle.decode(r.text)
-
-
         inchikey_nodeId_map = {}
         for node in mapping['mappingdata'][0]['mappings'][0]['data']:
             if node['inchikey'] in inchikey_nodeId_map.keys():
