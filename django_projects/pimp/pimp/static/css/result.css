@@ -143,6 +143,44 @@ background: transparent;
 	/*border-bottom: 1px solid #e5e5e5;*/
 }
 
+.subnavtable {
+    position: relative;
+    /*box-shadow: 0px 3px 5px rgba(0,0,0,.1);*/
+    z-index: 9;
+    /*border-bottom: 1px solid #e5e5e5;*/
+}
+
+#subtabnav > li > a {
+    color: rgb(112, 158, 241);
+    border-bottom: solid 3px rgb(227, 236, 253);
+}
+
+#subtabnav > li:hover > a {
+    color: #262626;
+}
+
+#subtabnav > li:hover {
+    border-bottom: solid 3px #427fed;
+}
+
+#subtabnav > li.active {
+    border-bottom: solid 3px #427fed;
+    color: #262626;
+}
+
+#subtabnav > li.active > a {
+    color: #262626;
+    border-bottom: solid 3px #427fed;
+}
+
+#subtabnav > li > a:hover{
+    /*color: #999999;*/
+    border-bottom: solid 3px #427fed;
+    color: #262626;
+    background-color: rgb(227, 236, 253);
+
+}
+
 .tabnav > li > a {
 	color: #999999;
 	border-bottom: solid 3px #f5f5f5;

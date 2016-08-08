@@ -71,6 +71,11 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	        }
 	});
 
+    $('#subtabnav a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
+
 	$('#right-side-button').click(function (e) {
 		if (right_panel) {
 			$('.myspan3').width('0%');
