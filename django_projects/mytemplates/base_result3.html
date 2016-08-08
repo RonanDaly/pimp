@@ -2498,7 +2498,7 @@
 
 						               	  <th rowspan="2">Peak id</th>
 						                  <th rowspan="2">Mass</th>
-						                  <th rowspan="2">RT (s)</th>
+						                  <th rowspan="2">RT</th>
 						                  {% for member in member_list %}
 						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 						                  {% endfor %}

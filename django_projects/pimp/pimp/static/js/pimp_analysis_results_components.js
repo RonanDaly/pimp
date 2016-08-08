@@ -707,11 +707,11 @@ function set_peaktable(url, callback){
 					"aoColumnDefs": [{
 							"aTargets": [2],
 							"sType": "formatted-rt",
-							"mRender": function(rt, type, full) {
-								var minutes = Math.floor(rt / 60);
-								var seconds = Math.round(rt % 60); // Rounded to nearest second
-								return rt + " ("+ minutes + " min "+ seconds + " s)";
-							}
+							// "mRender": function(rt, type, full) {
+							// 	var minutes = Math.floor(rt / 60);
+							// 	var seconds = Math.round(rt % 60); // Rounded to nearest second
+							// 	return rt + " ("+ minutes + " min "+ seconds + " s)";
+							// }
 						}],
 					"sDom": '<"peak-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
