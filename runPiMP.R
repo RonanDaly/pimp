@@ -160,6 +160,18 @@ loginfo('contrasts: %s', contrasts, logger=logger)
 databases <- getAnnotationDatabases(db, analysis.id)
 loginfo('databases: %s', databases, logger=logger)
 param.idx <- which(analysis.params$state==1)
+
+mzmatch.filters = list(rsd=TRUE, iqr=FALSE, noise=TRUE, n=FALSE, offset=FALSE,
+                       mindetections=TRUE, minscanid=FALSE, maxscanid=FALSE,
+                       mintetentiontime=FALSE, maxretentiontime=FALSE,
+                       minmass=FALSE, maxmass=FALSE, minintensity=TRUE, maxintensity=FALSE)
+
+mzmatch.params = list(rsd=0.5, iqr=0.5, rt.alignment='obiwarp', noise=0.8, ppm=2,
+                      order=3, maxrt=120, rtwindow=30, id.rtwindow=0.05,
+                      combination='set', mindetections=4, minintensity=5000,
+                      adducts.positive='M+H,M+ACN+Na,M+Na,M+K,M+ACN+H',
+                      adducts.negative='M-H,M-ACN+Na,M-Na,M-K,M-ACN+H')
+
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
 	loginfo('Setting params', logger=logger)
