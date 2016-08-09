@@ -1408,6 +1408,11 @@ def compound_info(request, project_id, analysis_id):
         compound_id = int(request.GET['id'])
         compound = Compound.objects.get(pk=compound_id)
         data = [compound.adduct, compound.inchikey]
+        pathway_list = [pathway_name.encode("utf8") for pathway_name in compound.compoundpathway_set.all().values_list('pathway__pathway__name', flat=True).distinct()]
+        if pathway_list:
+            data.append(pathway_list)
+        else:
+            data.append(None)
         for repo in compound.repositorycompound_set.all():
             repoInfo = []
             repoInfo = [repo.db_name, repo.compound_name, repo.identifier]
