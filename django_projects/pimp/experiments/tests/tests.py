@@ -129,15 +129,18 @@ def group_calibration_samples(qc_list, blank_list, std_list):
 
     qc_attr = calibration_types['qc']
     for qc_samp in qc_list:
-        ProjfileAttribute.objects.create(attribute=qc_attr, calibrationsample=qc_samp)
+        pja = ProjfileAttribute.objects.create(attribute=qc_attr, calibrationsample=qc_samp)
+        pja.save()
 
     blank_attr = calibration_types['blank']
     for blank_samp in blank_list:
-        ProjfileAttribute.objects.create(attribute=blank_attr, calibrationsample=blank_samp)        
+        pja = ProjfileAttribute.objects.create(attribute=blank_attr, calibrationsample=blank_samp)
+        pja.save()
 
     std_attr = calibration_types['standard']
     for std_samp in std_list:
-        ProjfileAttribute.objects.create(attribute=std_attr, calibrationsample=std_samp)
+        pja = ProjfileAttribute.objects.create(attribute=std_attr, calibrationsample=std_samp)
+        pja.save()
     
 def create_default_analysis_parameters():
     
@@ -182,6 +185,7 @@ def create_database(fixture_dir, env):
         created = datetime.now(),
         modified = datetime.now()
     )
+    project.save()
 
     #######################################################
     # 2. create calibration, blank and std samples
