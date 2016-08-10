@@ -189,7 +189,7 @@ def create_database(fixture_dir, env):
     user_project = UserProject.objects.create(
         project=project,
         user=user,
-        data_joined = datetime.now(),
+        date_joined = datetime.now(),
         permission = 'admin'
     )
     user_project.save()
