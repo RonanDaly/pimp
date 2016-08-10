@@ -20,7 +20,7 @@ from experiments.tasks import start_pimp_pipeline
 from fileupload.models import ProjFile, Picture, SampleFileGroup, Sample, \
     StandardFileGroup, CalibrationSample
 from groups.models import Group, Attribute, ProjfileAttribute, SampleAttribute
-from projects.models import Project
+from projects.models import Project, UserProject
 
 logger = logging.getLogger(__name__)
     
@@ -186,6 +186,13 @@ def create_database(fixture_dir, env):
         modified = datetime.now()
     )
     project.save()
+    user_project = UserProject.objects.create(
+        project=project,
+        user=user,
+        data_joined = datetime.now(),
+        permission = 'admin'
+    )
+    user_project.save()
 
     #######################################################
     # 2. create calibration, blank and std samples
