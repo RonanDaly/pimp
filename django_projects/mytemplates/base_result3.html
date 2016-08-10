@@ -1389,6 +1389,8 @@
 
                 // Structure for the compound
 
+                console.log(rowInfo);
+
                 var data = {"id":rowInfo[0]};
 
 				var url = "{% url 'get_compound_info' project.id analysis.id %}";
@@ -1400,7 +1402,7 @@
 		            data: data,
 		            success: function(response){
 		            	var database_info = {};
-		            	for (var i=2;i<response.length;i++){
+		            	for (var i=3;i<response.length;i++){
 		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
 		            	}
 		            	$(evidencePanel).append('<div class="span12" style="margin-left:0px;"><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><select class="span6 db_selector">');
@@ -1423,6 +1425,21 @@
 		            	else {
 		            		structureDom = $('<p>Structure not available</p>');
 		            	}
+                        
+                            // console.log("It is not null");
+                        if (response[2] != null){
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;">'+response[2].length+'</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                            for (var i=0;i<response[2].length;i++){
+                                console.log(response[2][i]);
+                                $('#metabolite_pathway_list').append('<li>'+response[2][i]+'</li>');
+                            }
+                            $('#pathway-card-title').click(function(){
+                                $('#pathway-card-content').toggle('slow');
+                            });
+                        }
+                        else{
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;">0</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                        }
                         $(loadingPan).remove();
 
 		            	var structureDiv = $('.structure');
@@ -2066,7 +2083,7 @@
 		<div id="main-container" class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:155px;z-index:6;">
 			<div class="tab-content" id="general-tab-content">
 				<div id="summary" class="tab-pane active">
-                    <div class="subnavtable" style="width:100%;padding:0px;text-align:center;height:40px;background-color: rgba(66, 127, 237, 0.15);">
+                    <div class="subnavtable" style="width:100%;padding:0px;text-align:center;height:40px;background-color: rgb(227, 236, 253);">
                         <ul id="subtabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
                             <li id="subsummary-li" class="active" style="float:left;margin:0px;height:37px;"><a href="#subsummary" style="float:left;margin:0px;">Summary</a></li>
                             <li id="qc-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#qc" style="float:left;">Quality control</a></li>
