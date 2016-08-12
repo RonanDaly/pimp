@@ -1405,30 +1405,38 @@
 		            	for (var i=3;i<response.length;i++){
 		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
 		            	}
-		            	$(evidencePanel).append('<div class="span12" style="margin-left:0px;"><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><select class="span6 db_selector">');
+		            	$(evidencePanel).append('<div class="card"><div class="span12 card-title" id="compound-card-title" style="margin-left:0px;"><h5 class="right-side-title">Compound</h5><span class="card-face__title"></span></div><div class="span12 structure card-content" id="compound-card-content" style="margin-left:0px;display:none;"></div><div class="span12 compound_name" style="margin-left:0px;"></div><div class="span12" style="margin-left:0px;padding-left:13px;margin-top:10px;"><span class="span6" style="padding-top: 7px;">Database</span><select class="span4 db_selector" style="float: right;margin-right: 10px;"></select></div></div>');
 		            	for (var index in database_info){
 		            		$('.db_selector').append('<option value="'+index+'">'+index+'</option>');
 		            	}
-		            	$(evidencePanel).append('</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>');
+		            	// $(evidencePanel).append('</select></div><div class="span12 structure" style="margin-left:0px;"></div>');
                         var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading structure...</p></div>');
 		            	$(loadingPan).appendTo(evidencePanel);
 		            	var structureDom;
 		            	if ($('select.db_selector').val() == "hmdb"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text"><span class="card-face__title"></span>');
+                            nameDom = $('<span id="compound-name">'+database_info["hmdb"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
 		            	else if ($('select.db_selector').val() == "kegg"){
-		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text"><span class="card-face__title"></span>');
+                            nameDom = $('<span id="compound-name">'+database_info["kegg"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
 		            	else if ($('select.db_selector').val() == "lipidmaps"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text"><span class="card-face__title"></span>');
+                            nameDom = $('<span id="compound-name">'+database_info["lipidmaps"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
 		            	else {
 		            		structureDom = $('<p>Structure not available</p>');
+                            nameDom = $('<span id="compound-name">'+database_info["stds_db"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
+
+                        $('#compound-card-title').click(function(){
+                                $('#compound-card-content').toggle('slow');
+                            });
                         
-                            // console.log("It is not null");
+                        // Add pathway card
                         if (response[2] != null){
-                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;">'+response[2].length+'</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+response[2].length+'</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
                             for (var i=0;i<response[2].length;i++){
                                 console.log(response[2][i]);
                                 $('#metabolite_pathway_list').append('<li>'+response[2][i]+'</li>');
@@ -1438,28 +1446,40 @@
                             });
                         }
                         else{
-                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;">0</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">0</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
                         }
                         $(loadingPan).remove();
 
 		            	var structureDiv = $('.structure');
 		            	$(structureDom).appendTo($(structureDiv));
+
+                        var compoundNameDiv = $('.compound_name');
+                        $(nameDom).appendTo($(compoundNameDiv));
+
 		            	$('select.db_selector').change(function (){
 		            		$('select.db_selector').val($(this).val());
 		            		if ($(this).val() == "hmdb"){
-		            		    structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            		    structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text"><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["hmdb"][0]+'</span><span class="card-face__bottom"></span>');
 			            	}
 			            	else if ($(this).val() == "kegg"){
-			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+			            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text"><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["kegg"][0]+'</span><span class="card-face__bottom"></span>');
 			            	}
 			            	else if ($(this).val() == "lipidmaps"){
-		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text"><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["lipidmaps"][0]+'</span><span class="card-face__bottom"></span>');
 		            		}
 			            	else {
-			            		structureDom = $('<p>Structure not available</p>');
+			            		structureDom = $('<p>Structure not available</p><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["stds_db"][0]+'</span><span class="card-face__bottom"></span>');
 			            	}
+                            // $('#compound-card-content').toggle('slow');
 			            	$(structureDiv).empty();
 			            	$(structureDom).appendTo($(structureDiv));
+                            // $('#compound-card-content').toggle('slow');
+                            $(compoundNameDiv).empty();
+                            $(nameDom).appendTo($(compoundNameDiv));
 			            });
 		            },
 		            error: function(){

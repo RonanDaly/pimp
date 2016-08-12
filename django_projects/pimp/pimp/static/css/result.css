@@ -1113,7 +1113,8 @@ a.DTTT_button_collection {
     overflow: hidden;
     position: relative;
     margin-top: 5px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+    border-left: solid 1px #eeeeee;
     /*border-radius: 3px 3px 0 0;*/
     transition: opacity 0.2s;
     -webkit-transition: opacity 0.2s;
@@ -1136,7 +1137,7 @@ a.DTTT_button_collection {
     font-size: 16em;
 }
 
-.card img {
+/*.card img {
     position:absolute;
     left: -100%;
     right: -100%;
@@ -1145,6 +1146,14 @@ a.DTTT_button_collection {
     margin: auto; 
     min-height: 100%;
     min-width: 100%;
+}*/
+.compound_name {
+    padding-top: 10px;
+}
+
+#compound-name {
+    margin: 13px;
+    color: rgb(112, 158, 241);
 }
 
 .full-card {
@@ -1156,4 +1165,22 @@ a.DTTT_button_collection {
     float: right;
     margin-top: -28px;
     margin-right: 14px;
+}
+
+.card-face__title:after {
+    content: "";
+    background-color: #E3EBEE;
+    width: 70px;
+    height: 1px;
+    margin: 0 auto 0 auto;
+    display: block;
+}
+
+.card-face__bottom:after {
+    content: "";
+    background-color: #E3EBEE;
+    width: 70px;
+    height: 1px;
+    margin: 10px auto 0 auto;
+    display: block;
 }
