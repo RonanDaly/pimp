@@ -260,11 +260,12 @@ We hope that this provides you with enough information to get started with PiMP.
 
 [project_management]:../../documentation/img/Project_Management.png
 [my_projects]:../../documentation/img/My_Projects.png
-[create_project]:../../documentation/img/Create_Broject_Button.png
-[project_dialog]:../../documentation/img/Create_Project_Dialog.png
+[create_project]:../../documentation/img/Create_Project_Button.png
+[project_dialog]:../../documentation/img/Create_project_dialog.png
 [project_administration]:../../documentation/img/project_administration.png
+[project_card]:../../documentation/img/project_card.png
 [calibration_samples]:../../documentation/img/calibration_samples.png
-[assign_calibration_samples]:../../documentation/img/assign_calibration_samples.png
+[assign_calibration_samples]:../../documentation/img/Assign_Calibration_samples.png
 [assign_qc]:../../documentation/img/assign_qc.png
 [search_calib]:../../documentation/img/search_calib.png
 [upload_files]:../../documentation/img/upload_files.png
@@ -277,7 +278,7 @@ We hope that this provides you with enough information to get started with PiMP.
 [tic]:../../documentation/img/tic.png
 [results]:../../documentation/img/results.png
 [volcano]:../../documentation/img/volcano.png
-[metabolites]:../../documentation/img/metabolites.png
+[metabolites]:../../documentation/img/Metabolites.png
 [metabolite_peak]:../../documentation/img/metabolite_peak.png
 [metabolite_int]:../../documentation/img/metabolite_int.png
 [maps]:../../documentation/img/maps.png
