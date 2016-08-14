@@ -258,7 +258,7 @@ We hope that this provides you with enough information to get started with PiMP.
 
 
 
-[project_management]:./img/project_management.png
+[project_management]:./documentation/img/project_management.png
 [my_projects]:./img/my_projects.png
 [create_project]:./img/create_project_button.png
 [project_dialog]:./img/create_project_dialog.png
