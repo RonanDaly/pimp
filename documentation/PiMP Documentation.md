@@ -273,9 +273,9 @@ We hope that this provides you with enough information to get started with PiMP.
 [analysis_definition]:../../documentation/img/analysis_definition.png
 [analysis_list]:../../documentation/img/analysis_list.png
 [loading_screen]:../../documentation/img/loading_screen.png
-[summary_page]:../../documentation/img/summary_page.png
+[summary_page]:../../documentation/img/Summary_page.png
 [pca]:../../documentation/img/pca.png
-[tic]:../../documentation/img/tic.png
+[tic]:../../documentation/img/TIC.png
 [results]:../../documentation/img/results.png
 [volcano]:../../documentation/img/volcano.png
 [metabolites]:../../documentation/img/Metabolites.png
