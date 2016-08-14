@@ -1389,6 +1389,8 @@
 
                 // Structure for the compound
 
+                console.log(rowInfo);
+
                 var data = {"id":rowInfo[0]};
 
 				var url = "{% url 'get_compound_info' project.id analysis.id %}";
@@ -1400,7 +1402,7 @@
 		            data: data,
 		            success: function(response){
 		            	var database_info = {};
-		            	for (var i=2;i<response.length;i++){
+		            	for (var i=3;i<response.length;i++){
 		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
 		            	}
 		            	$(evidencePanel).append('<div class="span12" style="margin-left:0px;"><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><select class="span6 db_selector">');
@@ -1423,6 +1425,21 @@
 		            	else {
 		            		structureDom = $('<p>Structure not available</p>');
 		            	}
+                        
+                            // console.log("It is not null");
+                        if (response[2] != null){
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;">'+response[2].length+'</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                            for (var i=0;i<response[2].length;i++){
+                                console.log(response[2][i]);
+                                $('#metabolite_pathway_list').append('<li>'+response[2][i]+'</li>');
+                            }
+                            $('#pathway-card-title').click(function(){
+                                $('#pathway-card-content').toggle('slow');
+                            });
+                        }
+                        else{
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;">0</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                        }
                         $(loadingPan).remove();
 
 		            	var structureDiv = $('.structure');
@@ -1812,7 +1829,7 @@
 			           	filename: 'intensity_comparison'
 			        },
 		            xAxis: {
-						categories: categories,
+						type: 'category',
 						labels: {
                     		rotation: -45,
                     		align: 'right'
@@ -2066,295 +2083,340 @@
 		<div id="main-container" class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:155px;z-index:6;">
 			<div class="tab-content" id="general-tab-content">
 				<div id="summary" class="tab-pane active">
-					<div class="row" style="margin:0px;">
-						<div class="span12" style="width:100%;margin:0px;">
-							<div class='home-title' style='text-align:center;background-color:whitesmoke;'>
-								<h2 style="margin-top:0px">PiMP summary report</h2>
-								<h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
-							</div>
-						</div>
-					</div>
-					<div class="row" style="margin-left:0px;">
-						<div class="row-fluid">
-							<div class="span3 bs-docs-sidebar" style="">
-									<div id="home-side-nav" class="bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="140">
-										<div class="row-fluid">
-											<div class="span12">
-												<ul  class="nav nav-list">
-												  <li class="nav-header">Navigation</li>
-												  <li class="active"><a href="#">Study</a></li>
-												  <li><a href="#">Data processing</a></li>
-												  <li><a href="#">Quality Control</a></li>
-												  <li><a href="#">Results</a></li>
-												</ul>
-											</div>
-										</div>
-									</div>
-							</div>
-							<div class="span9" style="float:right;">
-								<!-- Just for test -->
-								<div class="row-fluid">
-									<h3>Study</h3>
-									<p>A metabolomic analysis was performed on {{ sample_list|samplelistlength }} samples consisting of {{ member_list|length }} groups: {% for member in member_list %}{% if not forloop.first and not forloop.last %},{% elif forloop.last %} and{% endif %} {{ member.name }}{% endfor %}. </p>
+                    <div class="subnavtable" style="width:100%;padding:0px;text-align:center;height:40px;background-color: rgb(227, 236, 253);">
+                        <ul id="subtabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
+                            <li id="subsummary-li" class="active" style="float:left;margin:0px;height:37px;"><a href="#subsummary" style="float:left;margin:0px;">Summary</a></li>
+                            <li id="qc-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#qc" style="float:left;">Quality control</a></li>
+                            <li id="results-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#results" style="float:left;">Results</a></li>
+                        </ul>
+                    </div>
+                    <div class="container" style="bottom:0px;margin:0px;width:100%;">
+                        <div class="tab-content">
+                            <div id="subsummary" class="tab-pane active">
+            					<div class="row" style="margin:0px;">
+            						<div class="span12" style="width:100%;margin:0px;">
+            							<div class='home-title' style='text-align:center;'>
+            								<h2 style="margin-top:0px">PiMP summary report</h2>
+            								<h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+            							</div>
+            						</div>
+            					</div>
+            					<div class="row" style="margin-left:0px;">
+            						<div class="row-fluid">
+                                        <div class="row">
+                                            <div class="span2"></div>
+                    							<div class="span8">
+                    								<!-- Just for test -->
+                    								<div class="row-fluid">
+                    									<h3>Study</h3>
+                    									<p>A metabolomic analysis was performed on {{ sample_list|samplelistlength }} samples consisting of {{ member_list|length }} groups: {% for member in member_list %}{% if not forloop.first and not forloop.last %},{% elif forloop.last %} and{% endif %} {{ member.name }}{% endfor %}. </p>
 
-									{% with member_list|sampletable as sampledescriptiontable %}
-										<table class="summary-table">
-											<thead>
-										        <tr>
-										            <th style="border-top: 2px solid rgba(255, 255, 255, 0);"></th>
-										            {% for member in member_list %}
-										            <th>{{ member.name }}</th>
-										            {% endfor %}
-										        </tr>
-										    </thead>
-										    <tbody>
-										    	{% for row in sampledescriptiontable %}
-										    	<tr>
-										    		<th>Replicate {{ forloop.counter }}</th>
-										    		{% for samplename in row %}
-										    			{% if samplename %}
-										    				<td>{{ samplename }}</td>
-										    			{% else %}
-										    				<td></td>
-										    			{% endif %}
-										    		{% endfor %}
-										    	</tr>
-										    	{% endfor %}
-											</tbody>
-										</table>
-									{% endwith %}
+                    									{% with member_list|sampletable as sampledescriptiontable %}
+                    										<table class="summary-table">
+                    											<thead>
+                    										        <tr>
+                    										            <th style="border-top: 2px solid rgba(255, 255, 255, 0);"></th>
+                    										            {% for member in member_list %}
+                    										            <th>{{ member.name }}</th>
+                    										            {% endfor %}
+                    										        </tr>
+                    										    </thead>
+                    										    <tbody>
+                    										    	{% for row in sampledescriptiontable %}
+                    										    	<tr>
+                    										    		<th>Replicate {{ forloop.counter }}</th>
+                    										    		{% for samplename in row %}
+                    										    			{% if samplename %}
+                    										    				<td>{{ samplename }}</td>
+                    										    			{% else %}
+                    										    				<td></td>
+                    										    			{% endif %}
+                    										    		{% endfor %}
+                    										    	</tr>
+                    										    	{% endfor %}
+                    											</tbody>
+                    										</table>
+                    									{% endwith %}
 
-									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed:
-											{% for comparison in comparisons %}
-											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} relative to {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
-											{% endfor %}
-										</ul>
-									</p>
+                    									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed:
+                    											{% for comparison in comparisons %}
+                    											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} relative to {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
+                    											{% endfor %}
+                    										</ul>
+                    									</p>
 
 
-									<!--<div style="margin-left:30px;">
-										<h4>Description & hypothesis</h4>
-										{% if project.description %}
-										<p>{{ project.description }}</p>
-										{% else %}
-										<p>Data not available</p>
-										{% endif %}
-									</div>-->
+                    									<!--<div style="margin-left:30px;">
+                    										<h4>Description & hypothesis</h4>
+                    										{% if project.description %}
+                    										<p>{{ project.description }}</p>
+                    										{% else %}
+                    										<p>Data not available</p>
+                    										{% endif %}
+                    									</div>-->
 
-									<!--<h3>LCMS</h3>
-									<p>Samples were separated using a <b>ZIC-HILIC/ZIC-pHILIC</b> column.</p>
-									<p>The solvents used were:
-										<ul>
-											<li>A: water with 20mM ammonium carbonate.</li>
-											<li>B: acetonitrile.</li>
-										</ul>
-									</p>
-									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p>
-									<p>The chromatography system was coupled to an orbitrap <b>Exactive/Q-Exactive</b> running at <b>50,000/70,000</b> resolution in positive/negative switching mode.</p>-->
+                    									<!--<h3>LCMS</h3>
+                    									<p>Samples were separated using a <b>ZIC-HILIC/ZIC-pHILIC</b> column.</p>
+                    									<p>The solvents used were:
+                    										<ul>
+                    											<li>A: water with 20mM ammonium carbonate.</li>
+                    											<li>B: acetonitrile.</li>
+                    										</ul>
+                    									</p>
+                    									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p>
+                    									<p>The chromatography system was coupled to an orbitrap <b>Exactive/Q-Exactive</b> running at <b>50,000/70,000</b> resolution in positive/negative switching mode.</p>-->
 
-									<h3>Data processing</h3>
-									<p>The peaks for each sample were called and retention time corrected using the Obiwarp (Prince &amp; Marcotte&#44; 2006) algorithm.  Filtering was carried out on the basis of noise, number of values present etc.</p>
-									<!--<div style="margin-left:30px;">
-										<h4>Softwares and libraries</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Peak picking</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Retention time correction</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Filters</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Identification</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-									</div>-->
+                    									<h3>Data processing</h3>
+                    									<p>The peaks for each sample were called and retention time corrected using the Obiwarp (Prince &amp; Marcotte&#44; 2006) algorithm.  Filtering was carried out on the basis of noise, number of values present etc.</p>
 
-									<!--<h3>Normalization/transformation</h3>
-									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+                                                        <h4>Metabolic Maps</h4>
+                                                        <p>The identified and annotated metabolites mapped to {{pathway_list|length}} KEGG metabolic maps. {{pathway_list|significant_pathway_coverage}} metabolic maps had greater than 75% coverage.</p>
+                    									<!--<div style="margin-left:30px;">
+                    										<h4>Softwares and libraries</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Peak picking</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Retention time correction</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Filters</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Identification</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    									</div>-->
 
-									<h3>Quality Control</h3>
-									<p>Principal Component Analysis</p>
-									<div class="" id="pca_test"></div>
+                    									<!--<h3>Normalization/transformation</h3>
+                    									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+                                                    </div>
+                                                </div>
+                                            <div class="span2"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="qc" class="tab-pane">
+                                <div class="row" style="margin:0px;">
+                                    <div class="span12" style="width:100%;margin:0px;">
+                                        <div class='home-title' style='text-align:center;'>
+                                            <h2 style="margin-top:0px">PiMP summary report</h2>
+                                            <h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-left:0px;">
+                                    <div class="row-fluid">
+                                        <div class="span2"></div>
+                                            <div class="span8" >
+                                                <!-- Just for test -->
+                                                <div class="row-fluid">
+                									<h3>Quality Control</h3>
+                									<p>Principal Component Analysis</p>
+                									<div class="" id="pca_test"></div>
 
-									<p>Total Ion Chromatograms</p>
-									{% for member in member_list %}
-									<div class="" id="tic_pos{{member.id}}"></div>
-									{% endfor %}
-									{% for member in member_list %}
-									<div class="" id="tic_neg{{member.id}}"></div>
-									{% endfor %}
+                									<p>Total Ion Chromatograms</p>
+                									{% for member in member_list %}
+                                                    <div class="row">
+                									   <div class="span12" id="tic_pos{{member.id}}"></div>
+                                                    </div>
+                									{% endfor %}
+                									{% for member in member_list %}
+                                                    <div class="row">
+                									   <div class="span12" id="tic_neg{{member.id}}"></div>
+                                                    </div>
+                									{% endfor %}
+                                                </div>
+                                            </div>
+                                        <div class="span2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="results" class="tab-pane">
+                                <div class="row" style="margin:0px;">
+                                    <div class="span12" style="width:100%;margin:0px;">
+                                        <div class='home-title' style='text-align:center;'>
+                                            <h2 style="margin-top:0px">PiMP summary report</h2>
+                                            <h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-left:0px;">
+                                    <div class="row-fluid">
+                                        <div class="span2"></div>
+                                            <div class="span8">
+                                                <!-- Just for test -->
+                                                <div class="row-fluid">
+                									<h3>Results</h3>
+                									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
 
-									<h3>Results</h3>
-									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
+                									<h4>Identification</h4>
+                									<p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. {{ dataset|number_unique_compounds:True }} unique compounds matched to a known standard.</p>
 
-									<h4>Identification</h4>
-									<p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. {{ dataset|number_unique_compounds:True }} unique compounds matched to a known standard.</p>
+                									<h4>Comparison</h4>
+                									<p>{{ comparisons|length }} group-wise comparisons were undertaken to identify differences (fold changes). Each fold change has associated significance statistics.  Peaks with an adjusted p-value less than 0.05 were considered significant. The tables below for each comparison show the statistically significant identified and annotated peaks along with their associated log fold changes.</p>
 
-									<h4>Comparison</h4>
-									<p>{{ comparisons|length }} group-wise comparisons were undertaken to identify differences (fold changes). Each fold change has associated significance statistics.  Peaks with an adjusted p-value less than 0.05 were considered significant. The tables below for each comparison show the statistically significant identified and annotated peaks along with their associated log fold changes.</p>
+                									{% for comparison,comparison_hits in comparison_hits_list.items %}
+                									<h5>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</h5>
 
-									{% for comparison,comparison_hits in comparison_hits_list.items %}
-									<h5>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</h5>
+                										{% if comparison_hits.0 and comparison_hits.1 %}
+                											{% if comparison_hits.0|length > 10 %}
+                												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing. The 10 most significant hits are displayed below.</p>
+                											{% else %}
+                												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                												<thead>
+                											        <tr>
+                											            <th>Compound</th>
+                											            <th>Peak</th>
+                											            <th>Log FC</th>
+                											            <th>P-Value</th>
+                											            <th>Adj. P-Value</th>
+                											            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
+                												        <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
+                											            <th>Intensity</th>
+                											        </tr>
+                											    </thead>
+                											    <tbody>
+                											    	{% for compound in comparison_hits.0|slice:":10" %}
+                											    	<tr>
+                											    		<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
+                											    		<td>{{ compound.0.peak.secondaryId }}</td>
+                											    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                											    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                											    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                											    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
+                												    	<td>{{  compound.2.1.1|floatformat:"0" }}</td>
+                											    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
+                											    	</tr>
+                											    	{% endfor %}
+                											    </tbody>
+                											</table>
+                											{% if comparison_hits.1|length > 10 %}
+                												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing. The 10 most significant hits are displayed below. Click 'Show all' to see the 50 most significant hits.</p>
+                												<div class="summary_table_container" id="summary_table_container-{{ forloop.counter }}">
+                											{% else %}
+                												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                													<thead>
+                												        <tr>
+                												            <th>Peak</th>
+                												            <th>Log FC</th>
+                												            <th>P-Value</th>
+                												            <th>Adj. P-Value</th>
+                												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
+                												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
+                												            <th>Intensity</th>
+                												        </tr>
+                												    </thead>
+                												    <tbody>
+                												    	{% for compound in comparison_hits.1|slice:":50" %}
+                												    	<tr>
+                												    		<th class="peak_id" tooltip-append-to-body="true" data-toggle="tooltip" title="Click for compounds" data-container="body">{{ compound.0.peak.secondaryId }}</th>
+                												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
+                												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
+                												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
+                												    	</tr>
+                												    	{% endfor %}
+                												    </tbody>
+                												</table>
+                											{% if comparison_hits.1|length > 10 %}
+                											</div>
+                											<p style="text-align: center;"><span class="summary_table_expand_button" id="summary_table_expand_button-{{ forloop.counter }}">Show all</span></p>
+                											{% endif %}
+                										{% elif comparison_hits.0 and not comparison_hits.1 %}
+                											{% if comparison_hits.0|length > 10 %}
+                												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
+                											{% else %}
+                												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                													<thead>
+                												        <tr>
+                												            <th>Compound</th>
+                												            <th>Peak</th>
+                												            <th>Log FC</th>
+                												            <th>P-Value</th>
+                												            <th>Adj. P-Value</th>
+                												            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
+                												            <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
+                												            <th>Intensity</th>
+                												        </tr>
+                												    </thead>
+                												    <tbody>
+                												    	{% for compound in comparison_hits.0|slice:":10" %}
+                												    	<tr>
+                													    	<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
+                												    		<td>{{ compound.0.peak.secondaryId }}</td>
+                												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                												    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                												    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                												    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
+                												    		<td>{{  compound.2.1.1|floatformat:"0" }}</td>
+                												    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
+                												    	</tr>
+                												    	{% endfor %}
+                												    </tbody>
+                												</table>
+                											<p>No statistically significant annotated peak has been found for this comparison.Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
 
-										{% if comparison_hits.0 and comparison_hits.1 %}
-											{% if comparison_hits.0|length > 10 %}
-												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing. The 10 most significant hits are displayed below.</p>
-											{% else %}
-												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-												<thead>
-											        <tr>
-											            <th>Compound</th>
-											            <th>Peak</th>
-											            <th>Log FC</th>
-											            <th>P-Value</th>
-											            <th>Adj. P-Value</th>
-											            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
-												        <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
-											            <th>Intensity</th>
-											        </tr>
-											    </thead>
-											    <tbody>
-											    	{% for compound in comparison_hits.0|slice:":10" %}
-											    	<tr>
-											    		<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
-											    		<td>{{ compound.0.peak.secondaryId }}</td>
-											    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-											    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-											    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-											    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
-												    	<td>{{  compound.2.1.1|floatformat:"0" }}</td>
-											    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
-											    	</tr>
-											    	{% endfor %}
-											    </tbody>
-											</table>
-											{% if comparison_hits.1|length > 10 %}
-												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing. The 10 most significant hits are displayed below. Click 'Show all' to see the 50 most significant hits.</p>
-												<div class="summary_table_container" id="summary_table_container-{{ forloop.counter }}">
-											{% else %}
-												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-													<thead>
-												        <tr>
-												            <th>Peak</th>
-												            <th>Log FC</th>
-												            <th>P-Value</th>
-												            <th>Adj. P-Value</th>
-												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
-												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
-												            <th>Intensity</th>
-												        </tr>
-												    </thead>
-												    <tbody>
-												    	{% for compound in comparison_hits.1|slice:":50" %}
-												    	<tr>
-												    		<th class="peak_id" tooltip-append-to-body="true" data-toggle="tooltip" title="Click for compounds" data-container="body">{{ compound.0.peak.secondaryId }}</th>
-												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
-												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
-												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
-												    	</tr>
-												    	{% endfor %}
-												    </tbody>
-												</table>
-											{% if comparison_hits.1|length > 10 %}
-											</div>
-											<p style="text-align: center;"><span class="summary_table_expand_button" id="summary_table_expand_button-{{ forloop.counter }}">Show all</span></p>
-											{% endif %}
-										{% elif comparison_hits.0 and not comparison_hits.1 %}
-											{% if comparison_hits.0|length > 10 %}
-												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
-											{% else %}
-												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-													<thead>
-												        <tr>
-												            <th>Compound</th>
-												            <th>Peak</th>
-												            <th>Log FC</th>
-												            <th>P-Value</th>
-												            <th>Adj. P-Value</th>
-												            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
-												            <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
-												            <th>Intensity</th>
-												        </tr>
-												    </thead>
-												    <tbody>
-												    	{% for compound in comparison_hits.0|slice:":10" %}
-												    	<tr>
-													    	<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
-												    		<td>{{ compound.0.peak.secondaryId }}</td>
-												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-												    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-												    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-												    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
-												    		<td>{{  compound.2.1.1|floatformat:"0" }}</td>
-												    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
-												    	</tr>
-												    	{% endfor %}
-												    </tbody>
-												</table>
-											<p>No statistically significant annotated peak has been found for this comparison.Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+                										{% elif not comparison_hits.0 and comparison_hits.1 %}
+                										<p>No statistically significant identified compounds have been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
 
-										{% elif not comparison_hits.0 and comparison_hits.1 %}
-										<p>No statistically significant identified compounds have been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+                											{% if comparison_hits.1|length > 10 %}
+                												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
+                											{% else %}
+                												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                													<thead>
+                												        <tr>
+                												            <th>Peak</th>
+                												            <th>Log FC</th>
+                												            <th>P-Value</th>
+                												            <th>Adj. P-Value</th>
+                												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
+                												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
+                												            <th>Intensity</th>
+                												        </tr>
+                												    </thead>
+                												    <tbody>
+                												    	{% for compound in comparison_hits.1|slice:":10" %}
+                												    	<tr>
+                												    		<th class="peak_id">{{ compound.0.peak.secondaryId }}</th>
+                												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
+                												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
+                												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
+                												    	</tr>
+                												    	{% endfor %}
+                												    </tbody>
+                												</table>
 
-											{% if comparison_hits.1|length > 10 %}
-												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
-											{% else %}
-												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-													<thead>
-												        <tr>
-												            <th>Peak</th>
-												            <th>Log FC</th>
-												            <th>P-Value</th>
-												            <th>Adj. P-Value</th>
-												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
-												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
-												            <th>Intensity</th>
-												        </tr>
-												    </thead>
-												    <tbody>
-												    	{% for compound in comparison_hits.1|slice:":10" %}
-												    	<tr>
-												    		<th class="peak_id">{{ compound.0.peak.secondaryId }}</th>
-												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
-												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
-												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
-												    	</tr>
-												    	{% endfor %}
-												    </tbody>
-												</table>
+                										{% else %}
+                										<p>No statistically significant change has been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
 
-										{% else %}
-										<p>No statistically significant change has been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+                										{% endif %}
 
-										{% endif %}
+                									<p>The volcano plot below display significance versus fold-change on the y- and x-axes, respectively. This specific plot is constructed by plotting the negative log (base 10) of the <b>adjusted p-value</b> on the y-axis.</p>
+                									<p>For more information on the <b>p-value</b> please refer to the single comparison tab on the top right of the window</p>
+                									<div class="volcano-plot" id="comparison{{ comparison.id }}-volcano-plot"></div>
+                									{% endfor %}
 
-									<p>The volcano plot below display significance versus fold-change on the y- and x-axes, respectively. This specific plot is constructed by plotting the negative log (base 10) of the <b>adjusted p-value</b> on the y-axis.</p>
-									<p>For more information on the <b>p-value</b> please refer to the single comparison tab on the top right of the window</p>
-									<div class="volcano-plot" id="comparison{{ comparison.id }}-volcano-plot"></div>
-									{% endfor %}
-
-									<h4>Metabolic Maps</h4>
-									<p>The identified and annotated metabolites mapped to {{pathway_list|length}} KEGG metabolic maps. {{pathway_list|significant_pathway_coverage}} metabolic maps had greater than 75% coverage.</p>
-
-									<!--<h3>Disclaimer</h3>
-									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
-								</div>
-
-							</div>
-						</div>
-					</div>
+                									<!--<h3>Disclaimer</h3>
+                									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+                								</div>
+                							</div>
+                                        <div class="span2"></div>
+            						</div>
+            					</div>
+                            </div>
+                        </div>
+                    </div>
 				</div>
 				<div id="metabolites" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
@@ -2498,7 +2560,7 @@
 
 						               	  <th rowspan="2">Peak id</th>
 						                  <th rowspan="2">Mass</th>
-						                  <th rowspan="2">RT (s)</th>
+						                  <th rowspan="2">RT</th>
 						                  {% for member in member_list %}
 						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 						                  {% endfor %}

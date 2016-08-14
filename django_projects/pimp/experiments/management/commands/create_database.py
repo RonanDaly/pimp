@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from experiments.tests import initialise_database, create_database
+from experiments.tests.tests import initialise_database, create_database
 
 
 class Command(BaseCommand):

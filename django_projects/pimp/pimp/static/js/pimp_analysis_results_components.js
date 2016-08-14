@@ -71,6 +71,11 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 	        }
 	});
 
+    $('#subtabnav a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
+
 	$('#right-side-button').click(function (e) {
 		if (right_panel) {
 			$('.myspan3').width('0%');
@@ -707,11 +712,11 @@ function set_peaktable(url, callback){
 					"aoColumnDefs": [{
 							"aTargets": [2],
 							"sType": "formatted-rt",
-							"mRender": function(rt, type, full) {
-								var minutes = Math.floor(rt / 60);
-								var seconds = Math.round(rt % 60); // Rounded to nearest second
-								return rt + " ("+ minutes + " min "+ seconds + " s)";
-							}
+							// "mRender": function(rt, type, full) {
+							// 	var minutes = Math.floor(rt / 60);
+							// 	var seconds = Math.round(rt % 60); // Rounded to nearest second
+							// 	return rt + " ("+ minutes + " min "+ seconds + " s)";
+							// }
 						}],
 					"sDom": '<"peak-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
