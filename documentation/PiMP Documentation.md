@@ -6,10 +6,10 @@
 
 ## Logging in to PiMP:
 
-To log in to PiMP, go to: [PiMP Homepage](http://polyomics.mvls.gla.ac.uk/accounts/login/, "PiMP")
+To log in to PiMP, go to: [PiMP Homepage](http:/polyomics.mvls.gla.ac.uk/accounts/login/, "PiMP")
 
 Once there, please input your username and password.
-If you have not been provided with a username and password, please contact the PiMP administrator. Once you hit enter, or click XXXX, you should find yourself in the project management page. From here you can see some general information about your projects, collaborators and the amount of storage you have used.
+If you have not been provided with a username and password, please contact the PiMP administrator. Once you hit enter, or click 'Submit', you should find yourself in the project management page. From here you can see some general information about your projects, collaborators and the amount of storage you have used.
 
 ![Project Management Page][project_management]
 
@@ -259,35 +259,35 @@ We hope that this provides you with enough information to get started with PiMP.
 
 
 [project_management]:../../documentation/img/Project_Management.png
-[my_projects]:../../documentation/img/my_projects.png
-[create_project]:../../documentation/img//create_project_button.png
-[project_dialog]:../../documentation/img//create_project_dialog.png
-[project_administration]:../../documentation/img//project_administration.png
-[calibration_samples]:../../documentation/img//calibration_samples.png
-[assign_calibration_samples]:../../documentation/img//assign_calibration_samples.png
-[assign_qc]:../../documentation/img//assign_qc.png
-[search_calib]:../../documentation/img//search_calib.png
-[upload_files]:../../documentation/img//upload_files.png
-[experiment_definition]:../../documentation/img//experiment_definition.png
-[analysis_definition]:../../documentation/img//analysis_definition.png
-[analysis_list]:../../documentation/img//analysis_list.png
-[loading_screen]:../../documentation/img//loading_screen.png
-[summary_page]:../../documentation/img//summary_page.png
-[pca]:../../documentation/img//pca.png
-[tic]:../../documentation/img//tic.png
-[results]:../../documentation/img//results.png
-[volcano]:../../documentation/img//volcano.png
-[metabolites]:../../documentation/img//metabolites.png
-[metabolite_peak]:../../documentation/img//metabolite_peak.png
-[metabolite_int]:../../documentation/img//metabolite_int.png
-[maps]:../../documentation/img//maps.png
-[kegg_map]:../../documentation/img//maps_kegg.png
-[maps_button]:../../documentation/img//maps_kegg_button.png
-[maps_select_comp]:../../documentation/img//maps_select_comp.png
-[maps_comparison]:../../documentation/img//maps_comparison.png
-[comparison]:../../documentation/img//comparison.png
-[comparison_sidebar]:../../documentation/img//comparison_sidebar.png
-[peaks]:../../documentation/img//peaks.png
-[more_comparison]:../../documentation/img//more_comparison.png
-[more_comparison_filters]:../../documentation/img//more_comparison_filters.png
-[more_comparison_id_filters]:../../documentation/img//more_comparison_id_filters.png
+[my_projects]:../../documentation/img/My_Projects.png
+[create_project]:../../documentation/img/create_project_button.png
+[project_dialog]:../../documentation/img/create_project_dialog.png
+[project_administration]:../../documentation/img/project_administration.png
+[calibration_samples]:../../documentation/img/calibration_samples.png
+[assign_calibration_samples]:../../documentation/img/assign_calibration_samples.png
+[assign_qc]:../../documentation/img/assign_qc.png
+[search_calib]:../../documentation/img/search_calib.png
+[upload_files]:../../documentation/img/upload_files.png
+[experiment_definition]:../../documentation/img/experiment_definition.png
+[analysis_definition]:../../documentation/img/analysis_definition.png
+[analysis_list]:../../documentation/img/analysis_list.png
+[loading_screen]:../../documentation/img/loading_screen.png
+[summary_page]:../../documentation/img/summary_page.png
+[pca]:../../documentation/img/pca.png
+[tic]:../../documentation/img/tic.png
+[results]:../../documentation/img/results.png
+[volcano]:../../documentation/img/volcano.png
+[metabolites]:../../documentation/img/metabolites.png
+[metabolite_peak]:../../documentation/img/metabolite_peak.png
+[metabolite_int]:../../documentation/img/metabolite_int.png
+[maps]:../../documentation/img/maps.png
+[kegg_map]:../../documentation/img/maps_kegg.png
+[maps_button]:../../documentation/img/maps_kegg_button.png
+[maps_select_comp]:../../documentation/img/maps_select_comp.png
+[maps_comparison]:../../documentation/img/maps_comparison.png
+[comparison]:../../documentation/img/comparison.png
+[comparison_sidebar]:../../documentation/img/comparison_sidebar.png
+[peaks]:../../documentation/img/peaks.png
+[more_comparison]:../../documentation/img/more_comparison.png
+[more_comparison_filters]:../../documentation/img/more_comparison_filters.png
+[more_comparison_id_filters]:../../documentation/img/more_comparison_id_filters.png
