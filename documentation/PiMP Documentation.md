@@ -260,8 +260,8 @@ We hope that this provides you with enough information to get started with PiMP.
 
 [project_management]:../../documentation/img/Project_Management.png
 [my_projects]:../../documentation/img/My_Projects.png
-[create_project]:../../documentation/img/create_project_button.png
-[project_dialog]:../../documentation/img/create_project_dialog.png
+[create_project]:../../documentation/img/Create_Broject_Button.png
+[project_dialog]:../../documentation/img/Create_Project_Dialog.png
 [project_administration]:../../documentation/img/project_administration.png
 [calibration_samples]:../../documentation/img/calibration_samples.png
 [assign_calibration_samples]:../../documentation/img/assign_calibration_samples.png
