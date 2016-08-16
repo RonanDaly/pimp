@@ -562,8 +562,13 @@ def get_metabolite_info(request, project_id, analysis_id):
 
         for peak in peaks:
             comp = peak.compound_set.get(secondaryId=compound_secondary_id)
+            print comp.identified
+            if comp.identified == "True":
+                standard_peak = True
+            else:
+                standard_peak = False
             # print comp.adduct," ",comp.ppm
-            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type), str(comp.adduct), str(round(comp.ppm, 4))])
+            peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)), str(round(peak.mass, 4)), str(peak.polarity), str(peak.type), str(comp.adduct), str(round(comp.ppm, 4)), standard_peak])
 
             # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
             #
