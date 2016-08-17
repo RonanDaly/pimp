@@ -119,6 +119,10 @@ task installPiMPRDependencies(type: Exec, dependsOn: setupProjectProperties) {
 	commandLine project.ext.props.PIMP_RSCRIPT_PATH, 'setupR.R'
 }
 
+task updatePiMPR(type: Exec, dependsOn: setupProjectProperties) {
+	commandLine project.ext.props.PIMP_RSCRIPT_PATH, 'update_pimp.R'
+}
+
 task installPiMPDependencies(dependsOn: [installPiMPPythonDependencies, installPiMPRDependencies])
 
 task synchroniseDatabase(type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties]) {
