@@ -1,7 +1,7 @@
 Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 	stds <- .parseStandardsFiles(files=files)
-	stds.idx <- match(tolower(stds$name), tolower(names(standard2InChIKey)))
-	stds$inchi <- as.character(unlist(standard2InChIKey[stds.idx]))
+	stds.idx <- match(tolower(stds$name), tolower(names(PiMP::standard2InChIKey)))
+	stds$inchi <- as.character(unlist(PiMP::standard2InChIKey[stds.idx]))
 	RCreateXMLDB(data=stds, outputfile=outfile)
 	if(!file.exists(outfile)) {
 		stop(paste(outfile), "not created.")

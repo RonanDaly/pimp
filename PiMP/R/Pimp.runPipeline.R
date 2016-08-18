@@ -1,6 +1,8 @@
-Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(), standards=character(), databases=character(), normalization="none", nSlaves=0, reports=c("excel", "xml"), batch.correction=FALSE, verbose=TRUE, saveFixtures=FALSE, ...) {
+Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(),
+                             standards=character(), databases=character(), normalization="none", nSlaves=0,
+                             reports=c("excel", "xml"), mzmatch.params, mzmatch.filters, mzmatch.outputs,
+                             xcms.params, peakml.params, batch.correction=FALSE, verbose=TRUE, saveFixtures=FALSE, ...) {
 	logger <- getPiMPLogger('Pimp.runPipeline')
-	setPiMPLoggerAnalysisID(analysis.id)
 
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)
@@ -17,9 +19,10 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	analysis.id <- NULL
 	if("analysis.id" %in% names(args)) {
 		analysis.id <- args$analysis.id
+		setPiMPLoggerAnalysisID(analysis.id)
 	}
-	if ("mzmatch.params" %in% names(args)) {
-		mzmatch.params = args$mzmatch.params
+	if("db" %in% names(args)) {
+	  db <- args$db
 	}
 
 	#Check that all files exist
@@ -103,11 +106,11 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	
 	#Process mzXML files for each polarity
 	if(length(files$positive) > 0) {
-		raw.data.pos <- Pimp.processRawData(files=files$positive, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, polarity="positive", batch.correction=batch.correction, nSlaves=nSlaves)
+		raw.data.pos <- Pimp.processRawData(files=files$positive, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="positive", batch.correction=batch.correction, nSlaves=nSlaves)
 	}
 	
 	if(length(files$negative) > 0) {
-		raw.data.neg <- Pimp.processRawData(files=files$negative, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, polarity="negative", batch.correction=batch.correction, nSlaves=nSlaves)
+		raw.data.neg <- Pimp.processRawData(files=files$negative, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="negative", batch.correction=batch.correction, nSlaves=nSlaves)
 	}
 
 	
@@ -188,8 +191,8 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	compound.info <- identification[which(identification$DB=="kegg"),]
 
 	if ( 'kegg' %in% databases ) {
-		identified.compounds.by.pathway <- .get.identified.compounds.by.pathways(ids=compound.ids, compounds2Pathways=compounds2Pathways)
-		pathway.stats <- Pimp.report.generatePathwayStatistics(pathways=pathways, compound.info=compound.info, compound.std.ids=compound.std.ids, identified.compounds.by.pathway=identified.compounds.by.pathway, toptables=toptables)
+		identified.compounds.by.pathway <- .get.identified.compounds.by.pathways(ids=compound.ids, compounds2Pathways=PiMP::compounds2Pathways)
+		pathway.stats <- Pimp.report.generatePathwayStatistics(pathways=PiMP::pathways, compound.info=compound.info, compound.std.ids=compound.std.ids, identified.compounds.by.pathway=identified.compounds.by.pathway, toptables=toptables)
 	} else {
 		identified.compounds.by.pathway = list()
 		pathway.stats = data.frame()

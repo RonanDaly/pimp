@@ -131,7 +131,7 @@ build.kegg.xml <- function(kegg.compounds=list(), outxml="kegg.xml") {
 		name <- names[1]
 		other.names <- names[-1]
 		formula <- gsub("\\s", "", kegg.compound$FORMULA)
-		inchi <- kegg2InChiKey[[id]]
+		inchi <- PiMP::kegg2InChiKey[[id]]
 		smiles <- ""
 		description <- ""
 
@@ -198,7 +198,7 @@ build.lipidmaps.xml <- function(file=character(), outxml="lipidmaps.xml") {
 		stop("No file")
 	}
 
-	lipids <- read.table(file=file, header=T, sep="\t", quote="", comment.char="")
+	lipids <- read.table(file=file, header=TRUE, sep="\t", quote="", comment.char="")
 
 	doc <- newXMLDoc()
 	compounds <- newXMLNode("compounds", doc=doc)

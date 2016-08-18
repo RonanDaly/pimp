@@ -159,6 +159,7 @@ loginfo('Number of contrasts: %d', length(contrasts), logger=logger)
 loginfo('contrasts: %s', contrasts, logger=logger)
 databases <- getAnnotationDatabases(db, analysis.id)
 loginfo('databases: %s', databases, logger=logger)
+pimp.params = getDefaultSettings()
 param.idx <- which(analysis.params$state==1)
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
@@ -168,21 +169,21 @@ if(length(param.idx) > 0) {
 		logdebug('Name: %s Value: %s', params$name[i], params$value[i], logger=logger)
 
 		if(params$name[i]=="ppm") {
-			xcms.params$ppm <- params$value[i]
-			mzmatch.params$ppm <- params$value[i]
+		  pimp.params$xcms.params$ppm <- params$value[i]
+		  pimp.params$mzmatch.params$ppm <- params$value[i]
 		}
 		else if(params$name[i]=="rt.alignment") {
-			mzmatch.params$rt.alignment <- "obiwarp"
+		  pimp.params$mzmatch.params$rt.alignment <- "obiwarp"
 		}
 		else if(params$name[i]=="rtwindow") {
-			mzmatch.params$id.rtwindow <- params$value[i]
+		  pimp.params$mzmatch.params$id.rtwindow <- params$value[i]
 		}
 		else {
 			if(is.na(params$value[i])){
-				mzmatch.params[[params$name[i]]] <- TRUE
+			  pimp.params$mzmatch.params[[params$name[i]]] <- TRUE
 			}
 			else {
-				mzmatch.params[[params$name[i]]] <- params$value[i]
+			  pimp.params$mzmatch.params[[params$name[i]]] <- params$value[i]
 			}
 		}
 	}
@@ -201,13 +202,14 @@ loginfo('contrasts: %s', contrasts, logger=logger)
 loginfo('databases: %s', databases, logger=logger)
 loginfo('nSlaves: %s', nSlaves, logger=logger)
 loginfo('analysis.id: %d', analysis.id, logger=logger)
-loginfo('mzmatch.params: %s', mzmatch.params, logger=logger)
-loginfo('xcms.params: %s', xcms.params, logger=logger)
+loginfo('mzmatch.params: %s', pimp.params$mzmatch.params, logger=logger)
+loginfo('xcms.params: %s', pimp.params$xcms.params, logger=logger)
 
-Pimp.runPipeline(files=files, groups=groups, standards=stds, comparisonNames=names,
-	contrasts=contrasts, databases=databases, nSlaves=nSlaves, reports="xml",
-	analysis.id=analysis.id, db=db, mzmatch.params=mzmatch.params, xcms.params=xcms.params,
-	saveFixtures=saveFixtures)
+Pimp.runPipeline(files=files, groups=groups, comparisonNames=names, contrasts=contrasts, standards=stds, 
+	databases=databases, nSlaves=nSlaves, reports="xml",
+	db=db, mzmatch.params=pimp.params$mzmatch.params, mzmatch.filters=pimp.params$mzmatch.filters,
+	mzmatch.outputs=pimp.params$mzmatch.outputs, xcms.params=pimp.params$xcms.params,
+	peakml.params=pimp.params$peakml.params, analysis.id=analysis.id, saveFixtures=saveFixtures)
 
 loginfo('END OF R PIPELINE SCRIPT', logger=logger)
 quit(save = "default", status = 0, runLast = TRUE)
