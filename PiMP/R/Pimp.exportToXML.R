@@ -287,7 +287,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
         dbid.idx <- which(
             pathway.compounds$DBID %in% identified.compounds.by.pathway[[pathway.stats$id[i]]], 
-            arr.ind=T
+            arr.ind=TRUE
             )
         lapply(
             unique(pathway.compounds[dbid.idx,'compound.id']),
