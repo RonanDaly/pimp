@@ -160,40 +160,52 @@ loginfo('contrasts: %s', contrasts, logger=logger)
 databases <- getAnnotationDatabases(db, analysis.id)
 loginfo('databases: %s', databases, logger=logger)
 pimp.params = getDefaultSettings()
-param.idx <- which(analysis.params$state==1)
+
+loginfo('---------------------------------------------------', logger=logger)
+loginfo('Preset Analysis parameters', logger=logger)
+loginfo('---------------------------------------------------', logger=logger)
+loginfo('mzmatch.filters names: %s', names(pimp.params$mzmatch.filters), logger=logger)
+loginfo('mzmatch.filters: %s', pimp.params$mzmatch.filters, logger=logger)
+
+param.idx <- which(analysis.params$state==1 | analysis.params$state==0)
 if(length(param.idx) > 0) {
 	params <- analysis.params[param.idx,]
 	loginfo('Setting params', logger=logger)
 
 	for(i in 1:nrow(params)) {
 		logdebug('Name: %s Value: %s', params$name[i], params$value[i], logger=logger)
+	  
+	  if (params$state[i] == 1) {
 
-		if(params$name[i]=="ppm") {
-		  pimp.params$xcms.params$ppm <- params$value[i]
-		  pimp.params$mzmatch.params$ppm <- params$value[i]
-		}
-		else if(params$name[i]=="rt.alignment") {
-		  pimp.params$mzmatch.params$rt.alignment <- "obiwarp"
-		}
-		else if(params$name[i]=="rtwindow") {
-		  pimp.params$mzmatch.params$id.rtwindow <- params$value[i]
-		}
-		else {
-			if(is.na(params$value[i])){
-			  pimp.params$mzmatch.params[[params$name[i]]] <- TRUE
-			}
-			else {
-			  pimp.params$mzmatch.params[[params$name[i]]] <- params$value[i]
-			}
-		}
+  		if(params$name[i]=="ppm") {
+  		  pimp.params$xcms.params$ppm <- params$value[i]
+  		  pimp.params$mzmatch.params$ppm <- params$value[i]
+  		}
+  		else if(params$name[i]=="rt.alignment") {
+  		  pimp.params$mzmatch.params$rt.alignment <- "obiwarp"
+  		}
+  		else if(params$name[i]=="rtwindow") {
+  		  pimp.params$mzmatch.params$id.rtwindow <- params$value[i]
+  		}
+  		else {
+  			if(is.na(params$value[i])){
+  			  pimp.params$mzmatch.params[[params$name[i]]] <- TRUE
+  			}
+  			else {
+  			  pimp.params$mzmatch.params[[params$name[i]]] <- params$value[i]
+  			}
+
+  		}
+	  }
+	  pimp.params$mzmatch.filters[[params$name[i]]] = as.logical(params$state[i])
 	}
 }
 
 nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
 
-message('---------------------------------------------------')
-message('Analysis parameters')
-message('---------------------------------------------------')
+loginfo('---------------------------------------------------', logger=logger)
+loginfo('Analysis parameters', logger=logger)
+loginfo('---------------------------------------------------', logger=logger)
 loginfo('files: %s', files, logger=logger)
 loginfo('groups: %s', groups, logger=logger)
 loginfo('stds: %s', stds, logger=logger)
@@ -204,6 +216,9 @@ loginfo('nSlaves: %s', nSlaves, logger=logger)
 loginfo('analysis.id: %d', analysis.id, logger=logger)
 loginfo('mzmatch.params: %s', pimp.params$mzmatch.params, logger=logger)
 loginfo('xcms.params: %s', pimp.params$xcms.params, logger=logger)
+loginfo('peakml.params: %s', pimp.params$peakml.params, logger=logger)
+loginfo('mzmatch.filters names: %s', names(pimp.params$mzmatch.filters), logger=logger)
+loginfo('mzmatch.filters: %s', pimp.params$mzmatch.filters, logger=logger)
 
 Pimp.runPipeline(files=files, groups=groups, comparisonNames=names, contrasts=contrasts, standards=stds, 
 	databases=databases, nSlaves=nSlaves, reports="xml",
