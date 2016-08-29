@@ -323,10 +323,10 @@ def compare(comparison_name, experiment, case, control):
     comparison = Comparison(name=comparison_name, experiment=experiment)
     comparison.save()
             
-    attribute_comp = AttributeComparison(control=False, attribute=case, comparison=comparison)
+    attribute_comp = AttributeComparison(group=1, attribute=case, comparison=comparison)
     attribute_comp.save()
 
-    attribute_comp = AttributeComparison(control=True, attribute=control, comparison=comparison)
+    attribute_comp = AttributeComparison(group=0, attribute=control, comparison=comparison)
     attribute_comp.save()
 
 # Django's TestCase class wraps each test in a transaction and rolls back that transaction after each test, 
