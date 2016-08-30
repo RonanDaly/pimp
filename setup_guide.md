@@ -20,7 +20,7 @@ In the repository, run these commands
 **(OS X)**
 
     $ git config --global credential.helper osxkeychain
-    
+
 ## 1. System Setup
 
 ### Java
@@ -81,9 +81,15 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 2. Edit the `.env` file for your environment
 
- **(OSX)** Make sure the DYLD_LIBRARY_PATH variable is set to the library folder
- for your 1.8 JVM. This is to work around a bug with rJava finding the correct
- JVM at runtime.
+**(OS X)** Getting rJava to install can be a pain. One method that works is to
+run R with the correct environment variables; running the following command will run a subshell with the correct environment variables set.
+
+    JAVA_CPPFLAGS="-I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include \
+    -I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include/darwin" \
+    JAVA_LIBS="-L/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/jre/lib/server -ljvm" \
+    R CMD javareconf -e
+
+Obviously, the correct directories need to be specified.
 
 3. Run the following command in the project root directory
 
