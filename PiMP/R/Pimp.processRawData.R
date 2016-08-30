@@ -1,4 +1,4 @@
-Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
+Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), mzmatch.filters=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
 	logger <- getPiMPLogger('Pimp.processRawData')
 	loginfo('files: %s', files, logger=logger)
 	loginfo('groups: %s', groups, logger=logger)
@@ -104,7 +104,7 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
   	}
 
   	##Sort related peaks
-	mzmatch.ipeak.sort.RelatedPeaks(i=mzmatch.outputs$final.combined.gapfilled.file, v=T,o=mzmatch.outputs$final.combined.related.file,basepeaks=mzmatch.outputs$final.combined.basepeaks.file,ppm=mzmatch.params$ppm, rtwindow=mzmatch.params$rtwindow)
+	mzmatch.ipeak.sort.RelatedPeaks(i=mzmatch.outputs$final.combined.gapfilled.file, v=TRUE,o=mzmatch.outputs$final.combined.related.file,basepeaks=mzmatch.outputs$final.combined.basepeaks.file,ppm=mzmatch.params$ppm, rtwindow=mzmatch.params$rtwindow)
 
 	#No return value from MZMatch functions. Stop if related peaks has barfed
 	if(!file.exists(mzmatch.outputs$final.combined.related.file))

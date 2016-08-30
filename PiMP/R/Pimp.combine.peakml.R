@@ -47,7 +47,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	    	filtered.file <- file.path(mzmatch.outputs$combined.rsd.filtered.folder, basename(combined.file))
     		rejected.file <- file.path(mzmatch.outputs$combined.rsd.rejected.folder, basename(combined.file))
     		loginfo('Groupa %s', group, logger=logger)
-    		.mzmatch.ipeak.filter.RSDFilter(i=combined.group.file, o=filtered.file, rejected=rejected.file, rsd=mzmatch.params$rsd, v=T, JHeapSize=heapsize)
+    		.mzmatch.ipeak.filter.RSDFilter(i=combined.group.file, o=filtered.file, rejected=rejected.file, rsd=mzmatch.params$rsd, v=TRUE, JHeapSize=heapsize)
     		#check file exists
     		if(!file.exists(filtered.file)) stop(paste(filtered.file, "does not exist!\n"))
     	}
@@ -91,7 +91,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 
     mzmatch.ipeak.Combine(
 		i=paste(files,collapse=","),
-		v=T,
+		v=TRUE,
 		rtwindow=mzmatch.params$rtwindow, #rt.mins.to.secs(mzmatch.defaults$RTw), #check in secs
 		o=outfile,
 		combination=mzmatch.params$combination,

@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.db import connection;
 ##### JUST FOR SCOTT ALTERNATIVE CODE
 import rpy2.robjects as robjects
 
@@ -188,6 +189,7 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     
     analysis.status = 'Processing'
     analysis.save(update_fields=['status'])
+    connection.close()
 
     # Here is the entry point to the R pipeline
     return_code = subprocess.call(r_command, shell=True)
