@@ -66,11 +66,12 @@ class Pathway(models.Model):
             for dssp in pathway.datasourcesuperpathway_set.all():
                 for cp in dssp.compoundpathway_set.all():
                     compound = cp.compound
-                    for ro in compound.repositorycompounds:
-                        if compound.identified == 'True':
-                            identified_compounds[ro.identifier].append(compound.peak_id)
-                        elif compound.identified == 'False' and compound.secondaryId not in identifiedSecondaryIds:
-                            annotated_compounds[ro.identifier].append(compound.peak_id)
+                    if compound.peak.dataset == dataset:
+                        for ro in compound.repositorycompounds:
+                            if compound.identified == 'True':
+                                identified_compounds[ro.identifier].append(compound.peak_id)
+                            elif compound.identified == 'False' and compound.secondaryId not in identifiedSecondaryIds:
+                                annotated_compounds[ro.identifier].append(compound.peak_id)
             info = [pathway, len(identified_compounds), len(annotated_compounds),
                     round(((len(identified_compounds) + len(annotated_compounds)) / float(pathway.datasourcesuperpathway_set.all()[0].compound_number)) * 100, 2),
                     [identified_compounds.keys(), annotated_compounds.keys()],
