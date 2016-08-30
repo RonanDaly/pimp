@@ -33,6 +33,7 @@ def create_test_user():
             email='testrunner@gmail.com',
             password='password'
         )
+        user.is_staff = True
     return user
 
 def create_sample(project, fixture_dir, name):
