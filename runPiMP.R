@@ -149,7 +149,7 @@ names <- experiment.contrasts$name
 contrasts = c()
 for ( i in 1:length(fetchedContrasts) ) {
 	con = unlist(strsplit(controls[i], ','))
-	if ( con[1] == '0' ) {
+	if ( con[1] == '1' ) {
     	cont = unlist(strsplit(fetchedContrasts[i], ','))
     	fetchedContrasts[i] = paste0(cont[2], ',', cont[1])
 	}
