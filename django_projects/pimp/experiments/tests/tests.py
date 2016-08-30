@@ -23,22 +23,24 @@ from groups.models import Group, Attribute, ProjfileAttribute, SampleAttribute
 from projects.models import Project, UserProject
 
 logger = logging.getLogger(__name__)
-    
+
 def create_test_user():
     try:
         user = User.objects.get_by_natural_key('testrunner')
     except ObjectDoesNotExist:
-        user = User.objects.create_user(
+        user = User.objects.create_superuser(
             username='testrunner',
             email='testrunner@gmail.com',
-            password='password'
+            password='password',
+            first_name='Test',
+            last_name='Runner'
         )
     return user
 
 def create_sample(project, fixture_dir, name):
-        
+
     name = '%s.mzXML' % name
-    f = file('%s/samples/POS/%s' % (fixture_dir, name), 'rb') 
+    f = file('%s/samples/POS/%s' % (fixture_dir, name), 'rb')
     file_pos = Picture.objects.create(
         project = project,
         file = SimpleUploadedFile('%s' % name, f.read()),
@@ -46,26 +48,26 @@ def create_sample(project, fixture_dir, name):
     )
     file_pos.setpolarity('+')
 
-    f = file('%s/samples/NEG/%s' % (fixture_dir, name), 'rb') 
+    f = file('%s/samples/NEG/%s' % (fixture_dir, name), 'rb')
     file_neg = Picture.objects.create(
         project = project,
         file = SimpleUploadedFile('%s' % name, f.read()),
         name = '%s' % name,
     )
     file_neg.setpolarity('-')
-     
+
     samplefilegroup = SampleFileGroup.objects.create(type="mzxml", posdata=file_pos, negdata=file_neg)
-    samplefilegroup.save()        
- 
+    samplefilegroup.save()
+
     sample = Sample.objects.create(project=project,name=name, samplefile=samplefilegroup)
-    sample.save() 
+    sample.save()
 
     return sample
-    
+
 def create_calibration_sample(project, fixture_dir, name):
 
     name = '%s.mzXML' % name
-    f = file('%s/calibration_samples/POS/%s' % (fixture_dir, name), 'rb') 
+    f = file('%s/calibration_samples/POS/%s' % (fixture_dir, name), 'rb')
     file_pos = ProjFile.objects.create(
         project = project,
         file = SimpleUploadedFile('%s' % name, f.read()),
@@ -73,7 +75,7 @@ def create_calibration_sample(project, fixture_dir, name):
     )
     file_pos.setpolarity('+')
 
-    f = file('%s/calibration_samples/NEG/%s' % (fixture_dir, name), 'rb') 
+    f = file('%s/calibration_samples/NEG/%s' % (fixture_dir, name), 'rb')
     file_neg = ProjFile.objects.create(
         project = project,
         file = SimpleUploadedFile('%s' % name, f.read()),
@@ -85,14 +87,14 @@ def create_calibration_sample(project, fixture_dir, name):
     standardfilegroup.save()
 
     sample = CalibrationSample.objects.create(project=project, name=name, standardFile=standardfilegroup)
-    sample.save() 
-    
+    sample.save()
+
     return sample
-    
+
 def create_standard_csv(project, fixture_dir, name):
 
     name = '%s.csv' % name
-    f = file('%s/calibration_samples/standard/%s' % (fixture_dir, name), 'rb') 
+    f = file('%s/calibration_samples/standard/%s' % (fixture_dir, name), 'rb')
     file_std = ProjFile.objects.create(
         project = project,
         file = SimpleUploadedFile('%s' % name, f.read()),
@@ -105,19 +107,22 @@ def create_standard_csv(project, fixture_dir, name):
 
     sample = CalibrationSample.objects.create(project=project, name=name, standardFile=standardfilegroup)
     sample.save()
-    
-    return sample 
+
+    return sample
 
 def create_grouping(group_name, attribute_list):
-    
+
+    # Group is a factor, e.g. gender
     group = Group.objects.create(name=group_name)
     group.save()
-    
+
     attr_map = {}
     for attr in attribute_list:
+        # Attribute at the levels of a factor, e.g. Male, Female
+        # Also called a 'condition' on the screen
         attr_map[attr] = Attribute.objects.create(name=attr, group=group)
         attr_map[attr].save()
-        
+
     return attr_map
 
 def group_calibration_samples(qc_list, blank_list, std_list):
@@ -141,17 +146,17 @@ def group_calibration_samples(qc_list, blank_list, std_list):
     for std_samp in std_list:
         pja = ProjfileAttribute.objects.create(attribute=std_attr, calibrationsample=std_samp)
         pja.save()
-    
+
 def create_default_analysis_parameters():
-    
+
     default_parameters = DefaultParameter.objects.all()
     params = Params()
     params.save()
     for default in default_parameters:
         parameter = Parameter(state=default.state, name=default.name, value=default.value)
         parameter.save()
-        params.param.add(parameter)            
-        
+        params.param.add(parameter)
+
     databases_ids = Database.objects.all().exclude(name='standards').values_list('id', flat=True)
     for db_id in databases_ids:
         params.databases.add(db_id)
@@ -159,16 +164,16 @@ def create_default_analysis_parameters():
     return params
 
 def create_analysis(experiment_title, user):
-    
-    params = create_default_analysis_parameters()    
-    experiment = Experiment.objects.create(title=experiment_title)               
+
+    params = create_default_analysis_parameters()
+    experiment = Experiment.objects.create(title=experiment_title)
     analysis = Analysis.objects.create(
         owner = user.username,
         experiment = experiment,
         params = params,
         status = 'Ready'
     )
-    
+
     analysis.save()
     return experiment, analysis
 
@@ -245,29 +250,53 @@ def create_database(fixture_dir, env):
     # 5. group the samples into conditions
     #######################################################
 
-    group_name = 'test_experiment'
-    attribute_names = ['beer1', 'beer2', 'beer3', 'beer4']
+    group_name = 'beer_taste'               # --> feature
+    attribute_names = ['tasty', 'awful']    # --> feature values
     conditions = create_grouping(group_name, attribute_names)
 
-    beer1_attr = conditions['beer1']
-    SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_1)
-    SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_2)
-    SampleAttribute.objects.create(attribute=beer1_attr, sample=beer1_3)
+    beer1_taste = conditions['tasty']
+    SampleAttribute.objects.create(attribute=beer1_taste, sample=beer1_1)
+    SampleAttribute.objects.create(attribute=beer1_taste, sample=beer1_2)
+    SampleAttribute.objects.create(attribute=beer1_taste, sample=beer1_3)
 
-    beer2_attr = conditions['beer2']
-    SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_1)
-    SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_2)
-    SampleAttribute.objects.create(attribute=beer2_attr, sample=beer2_3)
+    beer2_taste = conditions['tasty']
+    SampleAttribute.objects.create(attribute=beer2_taste, sample=beer2_1)
+    SampleAttribute.objects.create(attribute=beer2_taste, sample=beer2_2)
+    SampleAttribute.objects.create(attribute=beer2_taste, sample=beer2_3)
 
-    beer3_attr = conditions['beer3']
-    SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_1)
-    SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_2)
-    SampleAttribute.objects.create(attribute=beer3_attr, sample=beer3_3)
+    beer3_taste = conditions['tasty']
+    SampleAttribute.objects.create(attribute=beer3_taste, sample=beer3_1)
+    SampleAttribute.objects.create(attribute=beer3_taste, sample=beer3_2)
+    SampleAttribute.objects.create(attribute=beer3_taste, sample=beer3_3)
 
-    beer4_attr = conditions['beer4']
-    SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_1)
-    SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_2)
-    SampleAttribute.objects.create(attribute=beer4_attr, sample=beer4_3)
+    beer4_taste = conditions['awful']
+    SampleAttribute.objects.create(attribute=beer4_taste, sample=beer4_1)
+    SampleAttribute.objects.create(attribute=beer4_taste, sample=beer4_2)
+    SampleAttribute.objects.create(attribute=beer4_taste, sample=beer4_3)
+
+    group_name = 'beer_colour'              # --> another feature
+    attribute_names = ['dark', 'light']     # --> the values of that feature
+    conditions = create_grouping(group_name, attribute_names)
+
+    beer1_colour = conditions['dark']
+    SampleAttribute.objects.create(attribute=beer1_colour, sample=beer1_1)
+    SampleAttribute.objects.create(attribute=beer1_colour, sample=beer1_2)
+    SampleAttribute.objects.create(attribute=beer1_colour, sample=beer1_3)
+
+    beer2_colour = conditions['dark']
+    SampleAttribute.objects.create(attribute=beer2_colour, sample=beer2_1)
+    SampleAttribute.objects.create(attribute=beer2_colour, sample=beer2_2)
+    SampleAttribute.objects.create(attribute=beer2_colour, sample=beer2_3)
+
+    beer3_colour = conditions['light']
+    SampleAttribute.objects.create(attribute=beer3_colour, sample=beer3_1)
+    SampleAttribute.objects.create(attribute=beer3_colour, sample=beer3_2)
+    SampleAttribute.objects.create(attribute=beer3_colour, sample=beer3_3)
+
+    beer4_colour = conditions['light']
+    SampleAttribute.objects.create(attribute=beer4_colour, sample=beer4_1)
+    SampleAttribute.objects.create(attribute=beer4_colour, sample=beer4_2)
+    SampleAttribute.objects.create(attribute=beer4_colour, sample=beer4_3)
 
     #######################################################
     # 6. create a new experiment and analysis
@@ -276,8 +305,6 @@ def create_database(fixture_dir, env):
     experiment, analysis = create_analysis('test_analysis', user)
     logger.info('experiment.id: %s',  experiment.id)
     logger.info('analysis.id: %s',  analysis.id)
-    #print experiment.id
-    #print analysis.id
     experiment.save()
     analysis.save()
 
@@ -285,8 +312,33 @@ def create_database(fixture_dir, env):
     # 7. set up comparisons
     #######################################################
 
-    compare('comparison_1', experiment, beer1_attr, beer2_attr)
-    compare('comparison_2', experiment, beer3_attr, beer4_attr)
+    # set up a simple comparison
+
+    comparison = Comparison(name='beer_colour_comparison', experiment=experiment)
+    comparison.save()
+
+    # lowest group is the control
+    ac0 = AttributeComparison(group=0, attribute=beer1_colour, comparison=comparison)
+    ac0.save()
+
+    ac1 = AttributeComparison(group=1, attribute=beer2_colour, comparison=comparison)
+    ac1.save()
+
+    # set up a more complicated comparison
+
+    comparison = Comparison(name='beer_taste_comparison', experiment=experiment)
+    comparison.save()
+
+    # lowest group is the control
+    ac0 = AttributeComparison(group=0, attribute=beer4_taste, comparison=comparison)
+    ac0.save()
+
+    ac1 = AttributeComparison(group=1, attribute=beer1_taste, comparison=comparison)
+    ac2 = AttributeComparison(group=1, attribute=beer2_taste, comparison=comparison)
+    ac3 = AttributeComparison(group=1, attribute=beer3_taste, comparison=comparison)
+    ac1.save()
+    ac2.save()
+    ac3.save()
 
     #######################################################
     # 8. Run the R analysis pipeline
@@ -317,21 +369,9 @@ def initialise_database():
     #env.set('PIMP_MEDIA_ROOT', test_media_root)
     return fixture_dir, test_media_root, env
 
-
-def compare(comparison_name, experiment, case, control):
-    
-    comparison = Comparison(name=comparison_name, experiment=experiment)
-    comparison.save()
-            
-    attribute_comp = AttributeComparison(control=False, attribute=case, comparison=comparison)
-    attribute_comp.save()
-
-    attribute_comp = AttributeComparison(control=True, attribute=control, comparison=comparison)
-    attribute_comp.save()
-
-# Django's TestCase class wraps each test in a transaction and rolls back that transaction after each test, 
-# in order to provide test isolation. This means that no transaction is ever actually committed, thus your 
-# on_commit() callbacks will never be run. If you need to test the results of an on_commit() callback, use a 
+# Django's TestCase class wraps each test in a transaction and rolls back that transaction after each test,
+# in order to provide test isolation. This means that no transaction is ever actually committed, thus your
+# on_commit() callbacks will never be run. If you need to test the results of an on_commit() callback, use a
 # TransactionTestCase instead.
 class ExperimentTestCase(TransactionTestCase):
 
@@ -340,7 +380,7 @@ class ExperimentTestCase(TransactionTestCase):
         self.fixture_dir = fixture_dir
         self.test_media_root = test_media_root
         self.env = env
-        
+
     @patch('experiments.tasks.send_email')
     def test_analysis(self, mock_send_email):
         """test that R analysis pipeline can run"""
@@ -353,28 +393,28 @@ class ExperimentTestCase(TransactionTestCase):
         #######################################################
 
         # assert that the return code from R is 0
-        self.assertEqual(success, True)        
-        
+        self.assertEqual(success, True)
+
         # assert that analysis status is set to Finished
         analysis = Analysis.objects.get_or_create(id=analysis.id)[0]
         self.assertEqual(analysis.status, 'Finished')
-                
+
         # assert that send email is called once
         self.assertTrue(mock_send_email.called)
-        
+
         # assert that the resulting peaks from this test analysis are identical to the fixture
         dump_path = os.path.join(self.test_media_root, 'projects',
                                  str(project.id), 'test_peaks.json')
         with open(dump_path, 'w') as f:
-            call_command('dumpdata', 'data.peak', indent=4, stdout=f)        
+            call_command('dumpdata', 'data.peak', indent=4, stdout=f)
         test_data = open(dump_path).read()
-        test_peaks = json.loads(test_data)        
+        test_peaks = json.loads(test_data)
         fixture_data = open(os.path.join(self.fixture_dir, 'peak.json')).read()
         fixture_peaks = json.loads(fixture_data)
-        assert(test_peaks == fixture_peaks)        
-        
+        assert(test_peaks == fixture_peaks)
+
         #######################################################
         # 10. remove the analysis results
         #######################################################
-        
+
         shutil.rmtree(os.path.join(self.test_media_root, 'projects'))

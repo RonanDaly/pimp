@@ -1,5 +1,5 @@
 #' get Connection to PiMP database
-#' 
+#'
 
 #' @export
 setMethod("dbconnection", "PiMPDB", function(object) object@dbconnection)
@@ -35,17 +35,17 @@ setMethod("getExperimentSamples", "PiMPDB", function(object, experiment.id) {
 })
 
 setMethod("getExperimentControls", "PiMPDB", function(object, experiment.id) {
-	samples <- querydb(object, 
+	samples <- querydb(object,
 					   "SELECT DISTINCT fileupload_calibrationsample.id, fileupload_calibrationsample.name, T11.name AS type
-						FROM fileupload_calibrationsample 
-						INNER JOIN projects_project ON ( fileupload_calibrationsample.project_id = projects_project.id ) 
-						INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id ) 
-						INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id ) 
-						INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id ) 
-						INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id ) 
-						INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id ) 
-						INNER JOIN experiments_experiment ON ( experiments_comparison.experiment_id = experiments_experiment.id ) 
-						INNER JOIN groups_projfileattribute ON ( fileupload_calibrationsample.id = groups_projfileattribute.calibrationsample_id ) 
+						FROM fileupload_calibrationsample
+						INNER JOIN projects_project ON ( fileupload_calibrationsample.project_id = projects_project.id )
+						INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )
+						INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )
+						INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id )
+						INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id )
+						INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id )
+						INNER JOIN experiments_experiment ON ( experiments_comparison.experiment_id = experiments_experiment.id )
+						INNER JOIN groups_projfileattribute ON ( fileupload_calibrationsample.id = groups_projfileattribute.calibrationsample_id )
 						INNER JOIN groups_attribute T11 ON ( groups_projfileattribute.attribute_id = T11.id ) WHERE (experiments_experiment.id = %d)",
 						bind=experiment.id)
 						return(samples)
@@ -53,11 +53,11 @@ setMethod("getExperimentControls", "PiMPDB", function(object, experiment.id) {
 
 
 setMethod("getExperimentGroups", "PiMPDB", function(object, experiment.id) {
-    groups <- querydb(object, 
+    groups <- querydb(object,
                       paste("select distinct groups_group.id, groups_group.name",
-                            "from experiments_comparison, experiments_attributecomparison, groups_attribute, groups_group", 
-                            "where experiments_comparison.id=experiments_attributecomparison.comparison_id", 
-                            "and experiments_attributecomparison.attribute_id = groups_attribute.id", 
+                            "from experiments_comparison, experiments_attributecomparison, groups_attribute, groups_group",
+                            "where experiments_comparison.id=experiments_attributecomparison.comparison_id",
+                            "and experiments_attributecomparison.attribute_id = groups_attribute.id",
                             "and groups_attribute.group_id = groups_group.id",
                             "and experiments_comparison.experiment_id = %d"),
                       bind=experiment.id
@@ -66,20 +66,20 @@ setMethod("getExperimentGroups", "PiMPDB", function(object, experiment.id) {
 })
 
 setMethod("getControlGroups", "PiMPDB", function(object, experiment.id) {
-    groups <- querydb(object, 
+    groups <- querydb(object,
                       paste("SELECT DISTINCT groups_group.id, groups_group.name
                             FROM groups_group
                             INNER JOIN groups_attribute ON ( groups_group.id = groups_attribute.group_id )
                             INNER JOIN groups_projfileattribute ON ( groups_attribute.id = groups_projfileattribute.attribute_id )
                             INNER JOIN fileupload_calibrationsample ON ( groups_projfileattribute.calibrationsample_id = fileupload_calibrationsample.id )
                             WHERE (fileupload_calibrationsample.project_id) IN (
-                                SELECT projects_project.id 
-                                FROM projects_project 
-                                INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id ) 
-                                INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id ) 
-                                INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id ) 
-                                INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id ) 
-                                INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id ) 
+                                SELECT projects_project.id
+                                FROM projects_project
+                                INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )
+                                INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )
+                                INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id )
+                                INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id )
+                                INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id )
                                 WHERE experiments_comparison.experiment_id = %d )"),
                       bind=experiment.id
               )
@@ -135,13 +135,13 @@ setMethod("getControlMemberSamples", "PiMPDB", function(object, member.id) {
 
 setMethod("getExperimentComparisons", "PiMPDB", function(object, experiment.id) {
     comparisons <- querydb(object,
-                    paste("select experiments_comparison.id, experiments_comparison.name, group_concat(groups_attribute.name) AS contrast, group_concat(experiments_attributecomparison.control) AS control",
+                    paste("select experiments_comparison.id, experiments_comparison.name, group_concat(groups_attribute.name) AS contrast, group_concat(experiments_attributecomparison.group) AS control",
                     	  "from experiments_comparison, experiments_attributecomparison, groups_attribute",
                     	  "where experiments_comparison.id = experiments_attributecomparison.comparison_id",
                     	  "and experiments_attributecomparison.attribute_id = groups_attribute.id",
                     	  "and experiments_comparison.experiment_id = %d",
                     	  "group by comparison_id",
-                    	  "order by experiments_attributecomparison.control DESC"),
+                    	  "order by experiments_attributecomparison.group DESC"),
                     	  bind=experiment.id)
 
     return(comparisons)
@@ -168,7 +168,7 @@ setMethod("getAnalysisParameters", "PiMPDB", function(object, analysis.id) {
 
 setMethod("getProjectID", "PiMPDB", function(object, analysis.id) {
 	id <- querydb(object,
-						    paste("SELECT DISTINCT projects_project.id", 
+						    paste("SELECT DISTINCT projects_project.id",
 						  		"FROM projects_project",
 								"INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )",
 								"INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )",
