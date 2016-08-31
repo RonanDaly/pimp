@@ -2,6 +2,7 @@
 import os
 import djcelery
 import distutils.util as du
+import uuid
 
 djcelery.setup_loader()
 
@@ -37,7 +38,7 @@ DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
 
 MANAGERS = ADMINS
 
-DATABASE_NAME = 'pimp_dev'
+DATABASE_NAME = 'iss_146'
 # DATABASE_NAME = 'frank_dev'
 
 DATABASES = {
@@ -52,6 +53,7 @@ DATABASES = {
         'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+os.environ['PIMP_DATABASE_NAME'] = DATABASE_NAME
 
 AUTHENTICATION_BACKENDS = ('backends.EmailOrUsernameModelBackend','django.contrib.auth.backends.ModelBackend')
 # Local time zone for this installation. Choices can be found here:
@@ -81,8 +83,15 @@ USE_TZ = False
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
-MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'pimp_data')
-
+TESTING = False
+randomUUID = str(uuid.uuid4())
+TEST_MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'TESTDATA_' + randomUUID)
+NORMAL_MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'pimp_data')
+if TESTING:
+    MEDIA_ROOT = TEST_MEDIA_ROOT
+else:
+    MEDIA_ROOT = NORMAL_MEDIA_ROOT
+os.environ['PIMP_MEDIA_ROOT'] = MEDIA_ROOT
 
 #MEDIA_ROOT = '/opt/django/data/pimp_data/'
 #MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
