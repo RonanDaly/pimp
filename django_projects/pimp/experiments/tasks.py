@@ -1,26 +1,21 @@
-from djcelery import celery
-# from rpy2.robjects.packages import importr
-# import rpy2.robjects as robjects
 import os
-import subprocess
 import re
-from fileupload.models import Sample, CalibrationSample
-from experiments.models import Comparison, Analysis
-from data.models import *
-from compound.models import *
-from experiments.pimpxml_parser.pimpxml_parser import Xmltree
-from django.core.mail import send_mail
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.db import connection;
-##### JUST FOR SCOTT ALTERNATIVE CODE
+from djcelery import celery
+from rpy2.robjects.packages import importr
+
+from compound.models import logging, Compound, RepositoryCompound, DataSourceSuperPathway, CompoundPathway
+from data.models import Analysis, Dataset, Peak, Comparison, PeakDtComparison, Sample, PeakDTSample, CalibrationSample, PeakQCSample
+from experiments.pimpxml_parser.pimpxml_parser import Xmltree
 import rpy2.robjects as robjects
 
 logger = logging.getLogger(__name__)
 
 def populate_database(xml_file_path):
-    
+
     compound_id_map = {}
     print "Database population started!"
     xmltree = Xmltree(xml_file_path)
@@ -126,9 +121,9 @@ def populate_database(xml_file_path):
                     for compound_id in compound_id_map[compound_in_pathway_id]:
                         compound = Compound.objects.get(id=compound_id)
                         CompoundPathway.objects.create(compound=compound, pathway=datasource_super_pathway)
-                        
+
 def send_email(analysis, project, user, success):
-    
+
     ctx_dict = {'analysis_name': analysis.experiment.title,
                 'analysis': analysis,
                 'project': project,
@@ -143,56 +138,157 @@ def send_email(analysis, project, user, success):
         html_content = render_to_string('email_templates/analysis_status_success_email.html', ctx_dict)
     else: # analysis failed
         text_content = render_to_string('email_templates/analysis_status_error_email.txt', ctx_dict)
-        html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)        
+        html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
-    msg.send()    
+    msg.send()
 
+def get_file_list(analysis, project):
+    file_list = {}
+    file_list['positive'] = [
+        'samples/POS/Beer_4_full1.mzXML', 'samples/POS/Beer_4_full2.mzXML', 'samples/POS/Beer_4_full3.mzXML',
+        'samples/POS/Beer_1_full1.mzXML', 'samples/POS/Beer_1_full2.mzXML', 'samples/POS/Beer_1_full3.mzXML',
+        'samples/POS/Beer_2_full1.mzXML', 'samples/POS/Beer_2_full2.mzXML', 'samples/POS/Beer_2_full3.mzXML',
+        'samples/POS/Beer_3_full1.mzXML', 'samples/POS/Beer_3_full2.mzXML', 'samples/POS/Beer_3_full3.mzXML'
+    ]
+    file_list['negative'] = [
+        'samples/NEG/Beer_4_full1.mzXML', 'samples/NEG/Beer_4_full2.mzXML', 'samples/NEG/Beer_4_full3.mzXML',
+        'samples/NEG/Beer_1_full1.mzXML', 'samples/NEG/Beer_1_full2.mzXML', 'samples/NEG/Beer_1_full3.mzXML',
+        'samples/NEG/Beer_2_full1.mzXML', 'samples/NEG/Beer_2_full2.mzXML', 'samples/NEG/Beer_2_full3.mzXML',
+        'samples/NEG/Beer_3_full1.mzXML', 'samples/NEG/Beer_3_full2.mzXML', 'samples/NEG/Beer_3_full3.mzXML'
+    ]
+    return file_list
+
+def get_groups(analysis, project):
+    groups = {
+        'beer_taste' : {
+            'delicious' : ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'],
+            'not_bad'   : ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'],
+            'bad'       : ['Beer_4_full1'],
+            'awful'     : ['Beer_4_full2', 'Beer_4_full3']
+        },
+        'beer_colour' : {
+            'dark'      : ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'],
+            'light'     : ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 'Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3']
+        }
+    }
+    return groups
+
+def convert_to_r(groups):
+    ''' Convert groups in python into rpy2 objects'''
+
+    outer_dict = {}
+    for key in groups.keys():
+        inner_dict = groups[key]
+        group_dict = {}
+        for k in inner_dict.keys():
+            group_dict[k] = robjects.StrVector(inner_dict[k])
+        item = robjects.ListVector(group_dict)
+        outer_dict[key] = item
+
+    r_thing = robjects.ListVector(outer_dict)
+    return r_thing
+
+def get_standard_list():
+    standard_list = [
+        'calibration_samples/standard/Std1_1_20150422_150810.csv',
+        'calibration_samples/standard/Std2_1_20150422_150711.csv',
+        'calibration_samples/standard/Std3_1_20150422_150553.csv'
+    ]
+    return standard_list
+
+def get_comparisons(analysis, project):
+    comparisons = ['beer1', 'beer4']
+    comparison_names = ['beer_comparison']
+    return comparisons, comparison_names
+
+def get_database_list(analysis, project):
+    database_list = ['kegg', 'hmdb', 'lipidmaps', 'standard']
+    return database_list
+
+class PipelineMetadata(object):
+    def __init__(self, files, groups, stds, names, contrasts, databases):
+        self.files = files
+        self.groups = groups
+        self.stds = stds
+        self.names = names
+        self.contrasts = contrasts
+        self.databases = databases
+        
+def get_pipeline_metadata(analysis, project):
+    
+    # set up files
+    file_list = get_file_list(analysis, project)
+    posvector = robjects.StrVector(file_list['positive'])
+    negvector = robjects.StrVector(file_list['negative'])
+    files = robjects.ListVector({'positive': posvector, 'negative': negvector})
+
+    # set up groups
+    groups = get_groups(analysis, project)
+    groups = convert_to_r(groups)
+
+    # set up standards
+    standard_list = get_standard_list()
+    stds = robjects.StrVector(standard_list)
+
+    # TODO: need to set up the comparison correctly
+    comparisons, comparison_names = get_comparisons(analysis, project)
+    contrasts = robjects.StrVector(comparisons)
+    names = robjects.StrVector(comparison_names)
+
+    # set up databases
+    database_list = get_database_list(analysis, project)
+    databases = robjects.StrVector(database_list)
+    
+    # collect all the values together
+    metadata = PipelineMetadata(files, groups, stds, names, 
+                                contrasts, databases)
+    
+    return metadata
+
+# read and think about this:
+# http://stackoverflow.com/questions/5707382/is-multiprocessing-with-rpy-safe
+def run_rpy2_pipeline(analysis, project, metadata, saveFixtures):
+        
+    importr('PiMP')
+
+    # TODO: we should do this in Python ..
+    get_pimp_wd = robjects.r['Pimp.getPimpWd']
+    working_dir = get_pimp_wd(project.id)
+
+    # TODO: we should do this in Python ??
+    validate_input = robjects.r['Pimp.validateInput']
+    validate_input(analysis.id, metadata.files, metadata.groups, working_dir)
+
+    # TODO: we should do this in Python !!
+    get_analysis_params = robjects.r['Pimp.getAnalysisParams']
+    pimp_params = get_analysis_params(analysis.id)
+
+    # dump the input parameters out for R debugging
+    dump_input = robjects.r['Pimp.dump_parameters']
+    dump_input(metadata.files, metadata.groups, metadata.stds, 
+               metadata.names, metadata.contrasts, metadata.databases, 
+               analysis.id, project.id, working_dir, pimp_params)
+
+    # call the pipeline
+    runPipeline = robjects.r['Pimp.runPipeline']
+    runPipeline(metadata.files, metadata.groups, metadata.stds, 
+                metadata.names, metadata.contrasts, metadata.databases, 
+                saveFixtures, analysis.id, project.id, working_dir,
+                pimp_params)
+    
+    return_code = 0
+    return return_code
+    
 @celery.task
 def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
-    """ Starts the pimp R pipeline """
-    
-    # some old code not sure written by whom to call Pimp.runPipeline from python using rpy2
-    # according to yoann, this doesn't work with the mzmatch pipeline because it's too big 
-    # and takes too long to run
-    
-    # print "standards: ",standard_list
-    # print "comparisons: ",comparisons
-    # print "file list: ",file_list
-    # print "groups: ",group_list
-    # print "+++++++++++++++++ Loading parameters +++++++++++++++"
-    # base = importr('base')
-    # base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
-    # posvector = robjects.StrVector(file_list['positive'])
-    # negvector = robjects.StrVector(file_list['negative'])
-    # files = robjects.ListVector({'positive': posvector, 'negative': negvector})
-    # print "----------------- File list loaded ----------------"
-    # group_dict = {}
-    # for k in group_list.keys():
-    # 	group_dict[k] = robjects.StrVector(group_list[k])
-    # groups = robjects.ListVector(group_dict)
-    # print "----------------- Group list loaded ---------------"
-    # standards = robjects.StrVector(standard_list)
-    # print "--------------- Standard list loaded --------------"
-    # contrasts = robjects.StrVector(comparisons)
-    # print "--------------- Contrast list loaded --------------"
-    # databases = robjects.StrVector(database_list)
-    # print "--------------- Database list loaded --------------"
-    # pimp = importr('PiMP')
-    # runPipeline = robjects.r['Pimp.runPipeline']
-    # runPipeline(files=files, groups=groups, contrasts=contrasts, standards=standards, databases=databases, nSlaves=15)
-    
-    r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'),
-                      str(analysis.id), str(saveFixtures)]
-    r_command = " ".join(r_command_list)
-    logger.info('r_command is %s' % r_command)    
-    
-    analysis.status = 'Processing'
-    analysis.save(update_fields=['status'])
-    connection.close()
+    ''' Starts the pimp R pipeline '''
 
-    # Here is the entry point to the R pipeline
-    return_code = subprocess.call(r_command, shell=True)
+    base = importr('base')
+    base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
+
+    metadata = get_pipeline_metadata(analysis, project)
+    return_code = run_rpy2_pipeline(analysis, project, metadata, saveFixtures)
 
     xml_file_name = ".".join(["_".join(["analysis", str(analysis.id)]), "xml"])
     xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(project.id), xml_file_name)
@@ -206,7 +302,7 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     else:
         analysis.status = 'Error'
         analysis.save(update_fields=['status'])
-        send_email(analysis, project, user, False)
+        # send_email(analysis, project, user, False) REMEMBER TO UNCOMMENT THIS
 
     success = True if return_code == 0 else False
     return success

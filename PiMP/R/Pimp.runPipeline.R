@@ -1,84 +1,195 @@
-Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(),
-                             standards=character(), databases=character(), normalization="none", nSlaves=0,
-                             reports=c("excel", "xml"), mzmatch.params, mzmatch.filters, mzmatch.outputs,
-                             xcms.params, peakml.params, batch.correction=FALSE, verbose=TRUE, saveFixtures=FALSE, ...) {
-	logger <- getPiMPLogger('Pimp.runPipeline')
+library()
 
+# original parameters
+# Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(),
+#                             standards=character(), databases=character(), normalization="none", nSlaves=0,
+#                             reports=c("excel", "xml"), mzmatch.params, mzmatch.filters, mzmatch.outputs,
+#                             xcms.params, peakml.params, batch.correction=FALSE, verbose=TRUE, saveFixtures=FALSE, ...) {
+
+getNeededString = function(name) {
+    Sys.getenv(name, unset=NA)
+}
+
+getString = function(name, default) {
+    Sys.getenv(name, unset=default)
+}
+
+getInteger = function(name, default) {
+    value = getNeededString(name)
+    if ( is.na(value) ) {
+        return(default)
+    }
+    return(as.numeric(value))
+}
+
+Pimp.getPimpWd <- function(project_id) {
+    logger <- getPiMPLogger('Pimp.getPimpWd')
+    DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', 'pimp_data')), 'projects')
+    PROJECT_DIR = file.path(DATA_DIR, project_id)
+    loginfo('Data dir: %s', DATA_DIR, logger=logger)
+    loginfo('Project dir: %s', PROJECT_DIR, logger=logger)
+    return(PROJECT_DIR)
+}
+
+Pimp.dump_parameters <- function(files, groups, standards, comparisonNames,
+                        contrasts, databases, analysis_id, project_id, wd, pimp_params) {
+    save(files, groups, standards, comparisonNames, contrasts, 
+         databases, analysis_id, project_id, wd, pimp_params, file='dump.out')
+}
+
+Pimp.validateInput <- function(analysis_id, files, groups, wd) {
+
+    setwd(wd)
+    
+    logger <- getPiMPLogger('Pimp.validateInput')
+    setPiMPLoggerAnalysisID(analysis_id)
+    
+    #Check that all files exist
+    if(any(!file.exists(unlist(files))))
+        stop(cat("The following files were not found:", unlist(files)[which(!file.exists(unlist(files)))], sep="\n"))
+    
+    #Check all files have a corresponding file of the opposite polarity if both positive and negative files are present
+    if(length(files$positive) > 0 && length(files$negative) > 0) {
+        if(!all.equal(basename(files$positive), basename(files$negative))) {
+            stop("Positive and Negative sample names do not match.")
+        }
+    }
+    
+    #Check all samples in groups have corresponding file
+    file.samples <- sort(unique(file_path_sans_ext(basename(unlist(files)))))
+    group.samples <- sort(as.character(unlist(groups)))
+    
+    # TODO: this probably isn't doing the right thing
+    files.not.in.groups <- setdiff(file.samples, group.samples)
+    groups.not.in.files <- setdiff(group.samples, file.samples)
+    if(length(files.not.in.groups)) {
+        stop(paste("The following samples are found in files, but not in a group: ", paste(files.not.in.groups, collapse=", ")))
+    }
+    if(length(groups.not.in.files)) {
+        stop(paste("The following samples are found in groups, but not found in files: ", paste(groups.not.in.files, collapse=", ")))
+    }
+
+    # TODO: this probably isn't doing the right thing .. commented for now
+    # #Check contrasts information for the statistics calculations exist
+    # if(!all(unique(unlist(strsplit(contrasts, ","))) %in% names(groups))) {
+    #     logerror('contrasts: %s', contrasts, logger=logger)
+    #     logerror('groups: %s', groups, logger=logger)
+    #     stop("Some contrast levels not found in groups.")
+    # }
+    
+    # TODO: commented for now
+    # ##if batch correcting check files are mzML.
+    # if(batch_correction) {
+    #     message("Batch correction enabled. Checking file types.")
+    #     if(!all(file_ext(unlist(files))=="mzML")) {
+    #         stop("Incorrect file type detected. mzML files required. Unable to batch correct.")
+    #     }
+    # }
+    
+    loginfo('Input validated correctly!', logger=logger)
+    
+}
+
+Pimp.getAnalysisParams <- function(analysis_id) {
+    
+    logger <- getPiMPLogger('Pimp.getAnalysisParams')
+    setPiMPLoggerAnalysisID(analysis_id)
+    
+    library(PiMPDB)
+    db <- new("PiMPDB",
+              dbuser='root',
+              dbpassword='p01y0m1c5',
+              dbname='iss_146',
+              dbhost='localhost',
+              dbport=3306,
+              dbtype='mysql'
+    )
+    pimp.params = getDefaultSettings()
+    
+    analysis.params <- getAnalysisParameters(db, analysis_id)
+    param.idx <- which(analysis.params$state==1 | analysis.params$state==0)
+    if(length(param.idx) > 0) {
+        params <- analysis.params[param.idx,]
+        loginfo('Setting params', logger=logger)
+        
+        for(i in 1:nrow(params)) {
+            logdebug('Name: %s Value: %s', params$name[i], params$value[i], logger=logger)
+            
+            if (params$state[i] == 1) {
+                
+                if(params$name[i]=="ppm") {
+                    pimp.params$xcms.params$ppm <- params$value[i]
+                    pimp.params$mzmatch.params$ppm <- params$value[i]
+                }
+                else if(params$name[i]=="rt.alignment") {
+                    pimp.params$mzmatch.params$rt.alignment <- "obiwarp"
+                }
+                else if(params$name[i]=="rtwindow") {
+                    pimp.params$mzmatch.params$id.rtwindow <- params$value[i]
+                }
+                else {
+                    if(is.na(params$value[i])){
+                        pimp.params$mzmatch.params[[params$name[i]]] <- TRUE
+                    }
+                    else {
+                        pimp.params$mzmatch.params[[params$name[i]]] <- params$value[i]
+                    }
+                    
+                }
+            }
+            pimp.params$mzmatch.filters[[params$name[i]]] = as.logical(params$state[i])
+        }
+    }
+    return(pimp.params)    
+
+}
+
+Pimp.runPipeline <- function(files, groups, standards, comparisonNames,
+    contrasts, databases, saveFixtures, analysis_id, project_id, wd, 
+    pimp_params) {
+
+    setwd(wd)
+    logger <- getPiMPLogger('Pimp.runPipeline')
+    setPiMPLoggerAnalysisID(analysis_id)
+    
+    loginfo('---------------------------------------------------', logger=logger)
+    loginfo('Analysis parameters', logger=logger)
+    loginfo('---------------------------------------------------', logger=logger)
+    loginfo('files: %s', files, logger=logger)
+    loginfo('groups: %s', groups, logger=logger)
+    
+	normalization <- 'none'
+	reports <- 'xml'
+	batch_correction <- FALSE
+	verbose <- TRUE
+
+	# TODO: this is probably not correct
+	nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
+	
 	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
 	# library(PiMP)
 
+	# is this still necessary???????
 	##set java to headless mode - prevents MacOS barfing in spreadsheet generation
 	.jcall("java/lang/System","S","setProperty","java.awt.headless","true")
 
-	##
-	## Initial checks ensuring all required information is present
-	##
-
-	#Set non-default parameters
-	args <- list(...)
-	analysis.id <- NULL
-	if("analysis.id" %in% names(args)) {
-		analysis.id <- args$analysis.id
-		setPiMPLoggerAnalysisID(analysis.id)
-	}
-	if("db" %in% names(args)) {
-	  db <- args$db
-	}
-
-	#Check that all files exist
-	if(any(!file.exists(unlist(files))))
-		stop(cat("The following files were not found:", unlist(files)[which(!file.exists(unlist(files)))], sep="\n"))
-
+	# extract the parameters
+	mzmatch.params <- pimp_params$mzmatch.params
+	mzmatch.filters <- pimp_params$mzmatch.filters 
+	mzmatch.outputs <- pimp_params$mzmatch.outputs
+	xcms.params <- pimp_params$xcms.params
+	peakml.params <- pimp_params$peakml.params
 	
-	#Check all files have a corresponding file of the opposite polarity if both positive and negative files are present
-	if(length(files$positive) > 0 && length(files$negative) > 0) {
-		if(!all.equal(basename(files$positive), basename(files$negative))) {
-			stop("Positive and Negative sample names do not match.")
-		}
-	}
-	
-	#Check all samples in groups have corresponding file
-	file.samples <- sort(unique(file_path_sans_ext(basename(unlist(files)))))
-	group.samples <- sort(as.character(unlist(groups)))
-	
-	files.not.in.groups <- setdiff(file.samples, group.samples)
-	groups.not.in.files <- setdiff(group.samples, file.samples)
-
-	if(length(files.not.in.groups)) {
-		stop(paste("The following samples are found in files, but not in a group: ", paste(files.not.in.groups, collapse=", ")))
-	}
-
-	if(length(groups.not.in.files)) {
-		stop(paste("The following samples are found in groups, but not found in files: ", paste(groups.not.in.files, collapse=", ")))
-	}
-	
-
-
-	#Check contrasts information for the statistics calculations exist
-	if(!all(unique(unlist(strsplit(contrasts, ","))) %in% names(groups))) {
-		logerror('contrasts: %s', contrasts, logger=logger)
-		logerror('groups: %s', groups, logger=logger)
-		stop("Some contrast levels not found in groups.")
-	}
-
-	##if batch correcting check files are mzML.
-	if(batch.correction) {
-		message("Batch correction enabled. Checking file types.")
-		if(!all(file_ext(unlist(files))=="mzML")) {
-  			stop("Incorrect file type detected. mzML files required. Unable to batch correct.")
-  		}
-	}
-
 	##create analysis directory
-	if(!is.null(analysis.id)) {
-		message(paste0("Setting analysis directory to: ", paste(mzmatch.outputs$analysis.folder, analysis.id, sep="_")))
+	if(!is.null(analysis_id)) {
+		message(paste0("Setting analysis directory to: ", paste(mzmatch.outputs$analysis.folder, analysis_id, sep="_")))
 		mzmatch.outputs <- lapply(mzmatch.outputs, function(x) {
-								  sub(paste0("^", mzmatch.outputs$analysis.folder), 
-								  	  paste0(mzmatch.outputs$analysis.folder, "_", analysis.id), x)
+								  sub(paste0("^", mzmatch.outputs$analysis.folder),
+								  	  paste0(mzmatch.outputs$analysis.folder, "_", analysis_id), x)
 								}
 							)
-		#mzmatch.outputs$analysis.folder = paste(mzmatch.outputs$analysis.folder, analysis.id, sep="_")
-	} 
+		#mzmatch.outputs$analysis.folder = paste(mzmatch.outputs$analysis.folder, analysis_id, sep="_")
+	}
 	dir.create(mzmatch.outputs$analysis.folder)
 	#print(mzmatch.params$ppm)
 
@@ -91,29 +202,26 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	}
 	databases = databases[ ! databases == 'standard']
 
-	
 	##Get external annotation database info - using our own DBs rather than the out of data MzMatch ones which are out of date.
 	DBS <- dir(system.file("dbs", package=getPackageName()), full.names=TRUE, pattern=paste(databases, ".*\\.xml$", sep="", collapse="|"), ignore.case=TRUE)
-	
+
 	if(length(DBS)!=length(databases)) {
 		stop("Not all annotation databases found.")
 	}
 
-
 	##
 	## Processing of raw data files
 	##
-	
+
 	#Process mzXML files for each polarity
 	if(length(files$positive) > 0) {
-		raw.data.pos <- Pimp.processRawData(files=files$positive, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="positive", batch.correction=batch.correction, nSlaves=nSlaves)
-	}
-	
-	if(length(files$negative) > 0) {
-		raw.data.neg <- Pimp.processRawData(files=files$negative, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="negative", batch.correction=batch.correction, nSlaves=nSlaves)
+		raw.data.pos <- Pimp.processRawData(files=files$positive, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="positive", batch.correction=batch_correction, nSlaves=nSlaves)
 	}
 
-	
+	if(length(files$negative) > 0) {
+		raw.data.neg <- Pimp.processRawData(files=files$negative, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="negative", batch.correction=batch_correction, nSlaves=nSlaves)
+	}
+
 	#Data are returned in data.frame with checksum as peak id.  Row bind if two polarities
 	if(exists("raw.data.pos") && exists("raw.data.neg")) {
 		loginfo('Two polarities exist', logger=logger)
@@ -148,11 +256,10 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 		stop("No Raw Data objects exist.")
 	}
 
-
 	##
 	## Preparation of raw data for statistics
 	##
-	
+
 	#Remove analysis samples from data for statistical analysis
 	data.groups <- groups[!names(groups) %in% c("QC", "Blank", "Standard")]
 
@@ -182,7 +289,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	## Output
 	##
 
-	#ids 
+	#ids
 	identification <- Pimp.report.generateIdentifications(raw.data=raw.data, databases=DBS, stds.db=mzmatch.outputs$stds.xml.db)
 
 	#pathway stuff
@@ -207,22 +314,22 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 
 	if("xml" %in% reports) {
 		if(!exists("db")) {
-			warning("No database connection.  Unable to generate XML file.")			
+			warning("No database connection.  Unable to generate XML file.")
 		}
-		else if(is.null(analysis.id)) {
-			warning("No analysis ID.  Unable to generate XML file.")	
+		else if(is.null(analysis_id)) {
+			warning("No analysis ID.  Unable to generate XML file.")
 		}
 		else {
 			if ( saveFixtures ) {
 				logger$info('Saving Pimp.exportToXML.Robj_fixture')
 				dir.create(file.path('tests', 'fixtures'), recursive=TRUE)
-				save(analysis.id, raw.data, identification, toptables, pathway.stats,
+				save(analysis_id, raw.data, identification, toptables, pathway.stats,
 					 identified.compounds.by.pathway, db, file=file.path('tests', 'fixtures', 'Pimp.exportToXML.Robj_fixture'))
 			}
-			Pimp.exportToXML(id=analysis.id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, db=db)
+			Pimp.exportToXML(id=analysis_id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, db=db)
 		}
 	}
-	
+
 	#save analysis and session information
 	sessionInfo <- sessionInfo()
 	save(sessionInfo, file="sessionInfo.RData")
@@ -234,7 +341,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 
 	##select only columns of samples of interest i.e. no QC, blanks, stds
 	intensities.idx <- match(as.character(unlist(groups)), colnames(raw.data))
-	
+
 	#get rows containing basepeaks or match to standard
 	basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
 	stds <- which(!is.na(raw.data$stds_db_identification))
@@ -256,5 +363,3 @@ Pimp.my.metabolome <- function(..., seconds=5, interval=0.5) {
 	Pimp.runPipeline(...)
 	.goodbye(interval, seconds)
 }
-
-
