@@ -173,7 +173,9 @@ def create_analysis(experiment_title, user):
     analysis.save()
     return experiment, analysis
 
-def create_database(fixture_dir, env):
+
+def create_database(fixture_dir, env,
+        standard_csvs=('Std1_1_20150422_150810', 'Std2_1_20150422_150711', 'Std3_1_20150422_150553')):
     #######################################################
     # 1. create user and project
     #######################################################
@@ -211,9 +213,8 @@ def create_database(fixture_dir, env):
 #         for name in samp_names:
 #             blank_list.append(create_calibration_sample(project, self.fixture_dir, name))
 
-    samp_names = ['Std1_1_20150422_150810', 'Std2_1_20150422_150711', 'Std3_1_20150422_150553']
     std_list = []
-    for name in samp_names:
+    for name in standard_csvs:
         std_list.append(create_standard_csv(project, fixture_dir, name))
 
     #######################################################

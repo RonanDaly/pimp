@@ -1,7 +1,15 @@
 Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
+  # This is the InChIKey generated with no structure
+  emptyInChIKey = 'MOSFIJXAXDLOML-UHFFFAOYSA-N'
+  
+  logger <- getPiMPLogger('Pimp.stds.createAnnotationFile')
+  logger$info('Creating annotation file from %s, outputting to %s', files, outfile)
 	stds <- .parseStandardsFiles(files=files)
+	logger$info('Matching names to standard2InChIKey database')
 	stds.idx <- match(tolower(stds$name), tolower(names(PiMP::standard2InChIKey)))
-	stds$inchi <- as.character(unlist(PiMP::standard2InChIKey[stds.idx]))
+	inchiKeys = as.character(PiMP::standard2InChIKey[stds.idx])
+	inchiKeys[inchiKeys == 'NULL'] = emptyInChIKey
+	stds$inchi = inchiKeys
 	RCreateXMLDB(data=stds, outputfile=outfile)
 	if(!file.exists(outfile)) {
 		stop(paste(outfile), "not created.")
@@ -10,6 +18,8 @@ Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 }
 
 .parseStandardsFiles <- function(files=character()) {
+  logger <- getPiMPLogger('Pimp.stds.createAnnotationFile.parseStandardsFiles')
+  logger$info('Parsing standards files')
 	#determine type
 
 	if(length(files)<1) {
@@ -26,12 +36,14 @@ Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 }
 
 .determineFileParser <- function(file=NULL) {
+  logger <- getPiMPLogger('Pimp.stds.createAnnotationFile.determineFileParser')
 	if(is.null(file)) {
 		stop("No file found.")
 	}
 
 	if(file_ext(file) == "xlsx") {
 		parser <- .parse.xlsx.file
+		logger$info('Parser for %s is .parse.xlsx.file', file)
 	}
 	else {
 		info <- readLines(con=file)
@@ -41,9 +53,11 @@ Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 
 		if(length(grep("Peak Num", info, ignore.case = TRUE)) > 0) {
 			parser <- .parse.toxid.file
+			logger$info('Parser for %s is .parse.toxid.file', file)
 		}
 		else if(length(grep("retentiontime", info, ignore.case = TRUE)) > 0) {
 			parser <- .parse.csv.file
+			logger$info('Parser for %s is .parse.csv.file', file)
 		}
 		else {
 			stop(paste("Standards file", file, "type not recognised."))
@@ -69,6 +83,8 @@ Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 # }
 
 .parse.csv.file <- function(infile=NULL, sep=",", quote="") {
+  logger <- getPiMPLogger('Pimp.stds.createAnnotationFile.parse.csv.file')
+  logger$info('Parsing csv file: %s', infile)
 	if(!file.exists(infile)) stop(paste(infile, "does not exist", sep=""))
 
 	info <- readLines(con=infile)
@@ -85,6 +101,8 @@ Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 }
 
 .parse.xlsx.file <- function(infile=NULL) {
+  logger <- getPiMPLogger('Pimp.stds.createAnnotationFile.parse.xlsx.file')
+  logger$info('Parsing xlsx file: %s', infile)
 	if(!file.exists(infile)) stop(paste(infile, "does not exist", sep=""))
 
 	##makes assumption data in first sheet.
@@ -98,7 +116,9 @@ Pimp.stds.createAnnotationFile <- function(files=character(), outfile=NULL) {
 }
 
 .parse.toxid.file <- function(infile=NULL, sep=",", quote="") {
-    if(!file.exists(infile)) stop(paste(infile, "does not exist", sep=" "))
+  logger <- getPiMPLogger('Pimp.stds.createAnnotationFile.parse.toxid.file')
+  logger$info('Parsing toxid file: %s', infile)
+  if(!file.exists(infile)) stop(paste(infile, "does not exist", sep=" "))
     
 	##find start of table by reading in a few lines and finding "Peak Num" column
 	info <- readLines(con=infile)

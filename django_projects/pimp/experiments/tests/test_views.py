@@ -21,6 +21,6 @@ class BestHitsTestCase(TestCase):
             attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
         comp_start = timeit.default_timer()
-        experiments.views.get_best_hits_comparison(dataset, comparisons, s)
+        get_best_hits_comparison(dataset, comparisons, s)
         comp_stop = timeit.default_timer()
         print("comp time: %s", str(comp_stop - comp_start))
