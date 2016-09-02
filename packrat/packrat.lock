@@ -394,7 +394,7 @@ Hash: bdc4d48c3135e8f3b399536ddf160df4
 
 Package: maps
 Source: PuMP
-Version: 3.0.1
+Version: 3.1.1
 Hash: 14756dbe9c815658dfaa2f4fae5d69f3
 
 Package: memoise
