@@ -81,15 +81,23 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 2. Edit the `.env` file for your environment
 
-**(OS X)** Getting rJava to install can be a pain. One method that works is to
-run R with the correct environment variables; running the following command will run a subshell with the correct environment variables set.
+ **(OS X)** Getting rJava to install can be a pain. One method that works is to
+run R with the correct environment variables; firstly run the following command:
+
+
+    JAVA_CPPFLAGS="-I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include \
+    -I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include/darwin" \
+    JAVA_LIBS="-L/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/jre/lib/server -ljvm" \
+    sudo R CMD javareconf
+
+Then, running the following command will run a subshell with the correct environment variables set; do all the rest of the installation steps from this subshell:
 
     JAVA_CPPFLAGS="-I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include \
     -I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include/darwin" \
     JAVA_LIBS="-L/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/jre/lib/server -ljvm" \
     R CMD javareconf -e
 
-Obviously, the correct directories need to be specified.
+ Obviously, the correct directories for the header files and libraries need to be specified.
 
 3. Run the following command in the project root directory
 

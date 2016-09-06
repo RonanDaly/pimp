@@ -40,12 +40,12 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     #    groups$Blank <- file_path_sans_ext(controls$name)
     #}
 
-  doc = read_xml('<?xml version="1.0"?>
+  doc = read_xml(sprintf('<?xml version="1.0"?>
               <gpimp:pimp_analysis
                 xmlns:gpimp="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xsi:schemaLocation="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0 http://puma.ibls.gla.ac.uk/ns/gpimp/1.0/pimp_framework.xsd"
-                id="1"></gpimp:pimp_analysis>')
+                id="%s"></gpimp:pimp_analysis>', id))
 
     ##settings
     settings = xml_add_child(doc, 'settings')
