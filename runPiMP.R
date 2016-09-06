@@ -201,7 +201,7 @@ if(length(param.idx) > 0) {
 	}
 }
 
-nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
+nSlaves = getInteger('PIMP_PIPELINE_NSLAVES', ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups))))
 
 loginfo('---------------------------------------------------', logger=logger)
 loginfo('Analysis parameters', logger=logger)
