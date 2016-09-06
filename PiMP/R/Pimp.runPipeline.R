@@ -157,7 +157,7 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	data.groups <- groups[!names(groups) %in% c("QC", "Blank", "Standard")]
 
 	#Preprocess raw data for statistical analysis. Keep BP plus those matching to STD, set 0s to NA
-	preprocessed <- .preProcessRawData(raw.data=raw.data, groups=data.groups)
+	preprocessed <- .preProcessRawData(raw.data=raw.data, groups=data.groups, minintensity = mzmatch.params$minintensity)
 
 	#Normalization if required. Default is "none"
 	norm.data <- Pimp.normalize(preprocessed$data, method=normalization)
@@ -171,6 +171,11 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	##
 
 	##differential analysis using ebayes
+	if ( saveFixtures ) {
+	  logger$info('Saving Pimp.statistics.differential.Robj_fixture')
+	  dir.create(file.path('tests', 'fixtures'), recursive=TRUE)
+	  save(norm.data, data.groups, contrasts, file=file.path('tests', 'fixtures', 'Pimp.statistics.differential.Robj_fixture'))
+	}
 	diff.stats <- Pimp.statistics.differential(data=norm.data, groups=data.groups, contrasts=contrasts, method="ebayes", repblock=NULL)
 	toptables <- lapply(1:ncol(diff.stats$contrasts), function(i){topTable(diff.stats, coef=i, genelist=data.frame(Mass=preprocessed$Mass, RT=preprocessed$RT), number=length(diff.stats$coef[,1]), confint=TRUE)})      #[,c("Mass", "RT", "logFC","P.Value","adj.P.Val")]
 	names(toptables) <- comparisonNames
@@ -230,7 +235,12 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 
 }
 
-.preProcessRawData <- function(raw.data=data.frame(), groups=list()) {
+.preProcessRawData <- function(raw.data=data.frame(), groups=list(), minintensity=NULL) {
+  if ( is.numeric(minintensity) ) {
+    low_level = minintensity
+  } else {
+    low_level = 1
+  }
 
 	##select only columns of samples of interest i.e. no QC, blanks, stds
 	intensities.idx <- match(as.character(unlist(groups)), colnames(raw.data))
@@ -238,12 +248,21 @@ Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=charac
 	#get rows containing basepeaks or match to standard
 	basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
 	stds <- which(!is.na(raw.data$stds_db_identification))
-
+	
+	# If _all_ the replicates in a group are NA or 0, then replace with low level
+	# Else leave alone
+	for (group in groups) {
+	  for (i in 1:nrow(raw.data)) {
+	    if ( all(raw.data[i,group] == 0 | is.na(raw.data[i,group])) ) {
+	      raw.data[i,group] = low_level
+	    }
+	  }
+	}
+	
 	data <- as.matrix(raw.data[unique(basepeaks,stds),intensities.idx]) #subset to produce data for statistical analysis
 	# NB The gap filler must have fillAll=TRUE to make sure we aren't setting missing peaks to 1, i.e. the only
 	# peaks that should be set to 1 are those that have levels too low to detect.
-	data[data==0] <- 1.0 ##convert 0s to 1s
-	data[is.na(data)] <- 1.0 ##convert NAs to 1s
+	data[data==0] <- NA ##convert 0s to NAs
 
 	Mass <- raw.data[unique(basepeaks,stds),'Mass']
 	RT <- raw.data[unique(basepeaks,stds),'RT']
