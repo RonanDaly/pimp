@@ -8,12 +8,44 @@ import rpy2.robjects as robjects
 
 class Rpy2PipelineMetadata(object):
     def __init__(self, files, groups, stds, names, contrasts, databases):
+        
         self.files = files
         self.groups = groups
         self.stds = stds
         self.names = names
         self.contrasts = contrasts
         self.databases = databases
+        
+        ##############################################
+        # convert from python into R data structures    
+        ##############################################
+
+        # files
+        posvector = robjects.StrVector(self.files['positive'])
+        negvector = robjects.StrVector(self.files['negative'])
+        self.r_files = robjects.ListVector({'positive': posvector, 'negative': negvector})        
+        
+        # groups
+        outer_dict = {}
+        for key in groups.keys():
+            inner_dict = groups[key]
+            group_dict = {}
+            for k in inner_dict.keys():
+                group_dict[k] = robjects.StrVector(inner_dict[k])
+            item = robjects.ListVector(group_dict)
+            outer_dict[key] = item    
+        self.r_groups = robjects.ListVector(outer_dict)
+
+        # stds
+        self.r_stds = robjects.StrVector(self.stds)        
+
+        # contrasts
+        self.r_contrasts = robjects.StrVector(self.contrasts)
+        self.r_names = robjects.StrVector(self.names)        
+
+        # databases
+        self.r_databases = robjects.StrVector(self.databases)
+        
 
 class Rpy2Pipeline(object):
 
@@ -52,10 +84,7 @@ class Rpy2Pipeline(object):
             'samples/NEG/Beer_2_full1.mzXML', 'samples/NEG/Beer_2_full2.mzXML', 'samples/NEG/Beer_2_full3.mzXML',
             'samples/NEG/Beer_3_full1.mzXML', 'samples/NEG/Beer_3_full2.mzXML', 'samples/NEG/Beer_3_full3.mzXML'
         ]
-        posvector = robjects.StrVector(file_list['positive'])
-        negvector = robjects.StrVector(file_list['negative'])
-        files = robjects.ListVector({'positive': posvector, 'negative': negvector})        
-        return files
+        return file_list
         
     def get_groups(self):
         groups = {
@@ -70,19 +99,7 @@ class Rpy2Pipeline(object):
                 'light'     : ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 'Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3']
             }
         }
-        
-        # convert groups from python into rpy2 objects
-        outer_dict = {}
-        for key in groups.keys():
-            inner_dict = groups[key]
-            group_dict = {}
-            for k in inner_dict.keys():
-                group_dict[k] = robjects.StrVector(inner_dict[k])
-            item = robjects.ListVector(group_dict)
-            outer_dict[key] = item
-    
-        r_thing = robjects.ListVector(outer_dict)
-        return r_thing    
+        return groups
     
     def get_standards(self):
         standard_list = [
@@ -90,21 +107,17 @@ class Rpy2Pipeline(object):
             'calibration_samples/standard/Std2_1_20150422_150711.csv',
             'calibration_samples/standard/Std3_1_20150422_150553.csv'
         ]
-        stds = robjects.StrVector(standard_list)        
-        return stds
+        return standard_list
     
     # need to think about what data structure to store the comparisons ...
     def get_comparisons(self):
         comparisons = ['beer1', 'beer4']
         comparison_names = ['beer_comparison']
-        contrasts = robjects.StrVector(comparisons)
-        names = robjects.StrVector(comparison_names)        
-        return contrasts, names
+        return comparisons, comparison_names
     
     def get_databases(self):
         database_list = ['kegg', 'hmdb', 'lipidmaps', 'standard']
-        databases = robjects.StrVector(database_list)
-        return databases
+        return database_list
         
     def get_pipeline_metadata(self):
         
@@ -119,13 +132,15 @@ class Rpy2Pipeline(object):
     
     def setup(self):
         
+        print 'Setup called'
+        
         # TODO: we could do this in Python ..
         get_pimp_wd = robjects.r['Pimp.getPimpWd']
         self.working_dir = get_pimp_wd(self.project.id)
     
         # TODO: we could do this in Python ??
         validate_input = robjects.r['Pimp.validateInput']
-        validate_input(self.analysis.id, self.metadata.files, self.metadata.groups, self.working_dir)
+        validate_input(self.analysis.id, self.metadata.r_files, self.metadata.r_groups, self.working_dir)
     
         # TODO: we could do this in Python !!
         get_analysis_params = robjects.r['Pimp.getAnalysisParams']
@@ -138,13 +153,13 @@ class Rpy2Pipeline(object):
     
         # generate std xml
         generate_std_xml = robjects.r('Pimp.generateStdXml')
-        self.dbs = generate_std_xml(self.metadata.stds, self.metadata.databases, pimp_params, self.working_dir)
+        self.dbs = generate_std_xml(self.metadata.r_stds, self.metadata.r_databases, pimp_params, self.working_dir)
     
         # dump the input parameters out for R debugging
         if self.saveFixtures:
             dump_parameters = robjects.r['Pimp.dumpParameters']
-            dump_parameters(self.metadata.files, self.metadata.groups, self.metadata.stds, 
-                       self.metadata.names, self.metadata.contrasts, self.metadata.databases, 
+            dump_parameters(self.metadata.r_files, self.metadata.r_groups, self.metadata.r_stds, 
+                       self.metadata.r_names, self.metadata.r_contrasts, self.metadata.r_databases, 
                        self.analysis.id, self.project.id, self.working_dir, 
                        pimp_params, self.dbs)        
     
@@ -156,6 +171,10 @@ class Rpy2Pipeline(object):
     #                 metadata.names, metadata.contrasts, metadata.databases, 
     #                 saveFixtures, analysis.id, project.id, working_dir,
     #                 pimp_params, DBS)
+
+        # still assuming that there are two polarities: pos and neg
+        for polarity in self.files:
+            print polarity
         
         return_code = 0
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
