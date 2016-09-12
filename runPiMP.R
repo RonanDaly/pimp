@@ -63,7 +63,21 @@ if ( DATABASE_FILENAME == '' )  {
 
 dbtype = getNeededString('PIMP_DATABASE_ENGINE')
 if ( dbtype == 'django.db.backends.mysql' ) {
+	db <- new("PiMPDB",
+		dbuser=getNeededString('MYSQL_USER'),
+		dbpassword=getNeededString('MYSQL_PASSWORD'),
+		dbname=getNeededString('MYSQL_DATABASE'),
+		dbhost=getString('PIMP_DATABASE_HOST', ''),
+		dbport=getInteger('PIMP_DATABASE_PORT', 0),
+		dbtype=DATABASE_TYPE
+	)
+
+
+
+
+
 	DATABASE_TYPE = 'mysql'
+	
 } else if ( dbtype == 'django.db.backends.sqlite3' ) {
 	DATABASE_TYPE = 'sqlite'
 } else {
