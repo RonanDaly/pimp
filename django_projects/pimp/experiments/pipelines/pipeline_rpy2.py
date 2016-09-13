@@ -5,6 +5,41 @@ from rpy2.robjects.packages import importr
 
 import rpy2.robjects as robjects
 
+class Tree(object):
+    def __init__(self, factor, level_label, depth, parent):
+
+        self.parent = parent
+        parent_files = set()
+        if self.parent is not None:
+            self.parent.children.append(self)
+            parent_files = self.parent.level_files
+        
+        self.depth = depth
+        self.factor = factor
+        self.children = []
+        self.level_label = level_label
+        
+        level_files = set()
+        if factor is not None:
+            level_files = set(factor.level_files[level_label])            
+        self.level_files = level_files.intersection(parent_files)
+                
+    def __repr__(self):
+        output = ' factor %s (%s) depth=%d children=%d' % (self.factor, self.level_label, self.depth, len(self.children))
+        return output
+
+class Factor(object):
+    def __init__(self, factor_label):
+        self.label = factor_label
+        self.levels = []
+        self.level_files = {}
+        
+    def add_level(self, level_label, level_files):
+        self.levels.append(level_label)
+        self.level_files[level_label] = level_files
+        
+    def __repr__(self):
+        return self.label + ' with ' + str(len(self.levels)) + ' levels'
 
 class Rpy2PipelineMetadata(object):
     def __init__(self, files, groups, stds, names, contrasts, databases):
@@ -27,13 +62,12 @@ class Rpy2PipelineMetadata(object):
         
         # groups
         outer_dict = {}
-        for key in groups.keys():
-            inner_dict = groups[key]
+        for factor in groups:
             group_dict = {}
-            for k in inner_dict.keys():
-                group_dict[k] = robjects.StrVector(inner_dict[k])
+            for level in factor.levels:
+                group_dict[level] = robjects.StrVector(factor.level_files[level])
             item = robjects.ListVector(group_dict)
-            outer_dict[key] = item    
+            outer_dict[factor.label] = item    
         self.r_groups = robjects.ListVector(outer_dict)
 
         # stds
@@ -85,22 +119,44 @@ class Rpy2Pipeline(object):
             'samples/NEG/Beer_3_full1.mzXML', 'samples/NEG/Beer_3_full2.mzXML', 'samples/NEG/Beer_3_full3.mzXML'
         ]
         return file_list
+    
+    def get_short_names(self, polarity):
+        files = self.get_files()[polarity]
+        short_names = []
+        for f in files:
+            base = os.path.basename(f)
+            parts = os.path.splitext(base)
+            front = parts[0]
+            short_names.append(front)
+        return short_names
         
     def get_groups(self):
-        groups = {
-            'beer_taste' : {
-                'delicious' : ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'],
-                'not_bad'   : ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'],
-                'bad'       : ['Beer_4_full1'],
-                'awful'     : ['Beer_4_full2', 'Beer_4_full3']
-            },
-            'beer_colour' : {
-                'dark'      : ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'],
-                'light'     : ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 'Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3']
-            }
-        }
-        return groups
-    
+
+        factors = []
+
+        f1 = Factor('beer_sample')
+        f1.add_level('beer1', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3'])
+        f1.add_level('beer2', ['Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
+        f1.add_level('beer3', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
+        f1.add_level('beer4', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
+        factors.append(f1)
+
+        f2 = Factor('beer_colour')
+        f2.add_level('dark', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
+                              'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
+        f2.add_level('light', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 
+                               'Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
+        factors.append(f2)
+
+        f1 = Factor('beer_taste')
+        f1.add_level('delicious', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
+                                   'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
+        f1.add_level('okay', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
+        f1.add_level('awful', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
+        factors.append(f1)
+        
+        return factors
+        
     def get_standards(self):
         standard_list = [
             'calibration_samples/standard/Std1_1_20150422_150810.csv',
