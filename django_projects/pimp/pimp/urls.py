@@ -120,6 +120,7 @@ urlpatterns = patterns('',
     #url(r'^frank/', include('frank.urls')),
     url(r'^credits/$', 'home.views.credits', name='credits'),
     url(r'^licence/$', 'home.views.licence', name='licence'),
+    url(r'^userguide/$', 'home.views.userguide', name='userguide'),
 )
 
 urlpatterns += staticfiles_urlpatterns()

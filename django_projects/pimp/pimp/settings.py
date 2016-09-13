@@ -225,6 +225,7 @@ INSTALLED_APPS = (
     'djcelery',
     'gp_registration',
     'frank',
+    'django_markdown2',
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',

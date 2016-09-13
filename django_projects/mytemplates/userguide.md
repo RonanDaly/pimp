@@ -1,3 +1,5 @@
+{% load staticfiles %}
+
 # Getting started
 
 **Please Note**
@@ -22,7 +24,7 @@ Prerequisites
 
 To analyse your data, you first need:
 1. Your data in MzXML format
-2. Three retention time standards files in the appropriate format (click here for downloadable examples ([Standards 1](./stds1.csv), [Standards 2](./stds2.csv), [Standards 3](./stds3.csv))).
+2. Three retention time standards files in the appropriate format (click here for downloadable examples ([Standards 1]({% static "userguide/stds1.csv" %}), [Standards 2]({% static "userguide/stds2.csv" %}), [Standards 3]({% static "userguide/stds3.csv" %}))).
 3. Your experimental design
 
 Once you have these things available, please click on ‘Create Project’.
@@ -258,37 +260,37 @@ We hope that this provides you with enough information to get started with PiMP.
 
 
 
-[project_management]:img/Project_Management.png
-[my_projects]:../../documentation/img/My_Projects.png
-[create_project]:../../documentation/img/Create_Project_Button.png
-[project_dialog]:../../documentation/img/Create_project_dialog.png
-[project_administration]:../../documentation/img/project_administration.png
-[project_card]:../../documentation/img/Project_Card.png
-[calibration_samples]:../../documentation/img/calibration_samples.png
-[assign_calibration_samples]:../../documentation/img/Assign_Calibration_samples.png
-[assign_qc]:../../documentation/img/assign_qc.png
-[search_calib]:../../documentation/img/search_calib.png
-[upload_files]:../../documentation/img/upload_files.png
-[experiment_definition]:../../documentation/img/experiment_definition.png
-[analysis_definition]:../../documentation/img/analysis_definition.png
-[analysis_list]:../../documentation/img/analysis_list.png
-[loading_screen]:../../documentation/img/loading_screen.png
-[summary_page]:../../documentation/img/Summary_page.png
-[pca]:../../documentation/img/pca.png
-[tic]:../../documentation/img/TIC.png
-[results]:../../documentation/img/results.png
-[volcano]:../../documentation/img/volcano.png
-[metabolites]:../../documentation/img/Metabolites.png
-[metabolite_peak]:../../documentation/img/metabolite_peak.png
-[metabolite_int]:../../documentation/img/metabolite_int.png
-[maps]:../../documentation/img/maps.png
-[kegg_map]:../../documentation/img/maps_kegg.png
-[maps_button]:../../documentation/img/maps_kegg_button.png
-[maps_select_comp]:../../documentation/img/maps_select_comp.png
-[maps_comparison]:../../documentation/img/maps_comparison.png
-[comparison]:../../documentation/img/comparison.png
-[comparison_sidebar]:../../documentation/img/comparison_sidebar.png
-[peaks]:../../documentation/img/peaks.png
-[more_comparison]:../../documentation/img/more_comparison.png
-[more_comparison_filters]:../../documentation/img/more_comparison_filters.png
-[more_comparison_id_filters]:../../documentation/img/more_comparison_id_filters.png
+[project_management]:{% static "userguide/img/Project_Management.png" %}
+[my_projects]:{% static "userguide/img/My_Projects.png" %}
+[create_project]:{% static "userguide/img/Create_Project_Button.png" %}
+[project_dialog]:{% static "userguide/img/Create_project_dialog.png" %}
+[project_administration]:{% static "userguide/img/project_administration.png" %}
+[project_card]:{% static "userguide/img/Project_Card.png" %}
+[calibration_samples]:{% static "userguide/img/calibration_samples.png" %}
+[assign_calibration_samples]:{% static "userguide/img/Assign_Calibration_samples.png" %}
+[assign_qc]:{% static "userguide/img/assign_qc.png" %}
+[search_calib]:{% static "userguide/img/search_calib.png" %}
+[upload_files]:{% static "userguide/img/upload_files.png" %}
+[experiment_definition]:{% static "userguide/img/experiment_definition.png" %}
+[analysis_definition]:{% static "userguide/img/analysis_definition.png" %}
+[analysis_list]:{% static "userguide/img/analysis_list.png" %}
+[loading_screen]:{% static "userguide/img/loading_screen.png" %}
+[summary_page]:{% static "userguide/img/Summary_page.png" %}
+[pca]:{% static "userguide/img/pca.png" %}
+[tic]:{% static "userguide/img/TIC.png" %}
+[results]:{% static "userguide/img/results.png" %}
+[volcano]:{% static "userguide/img/volcano.png" %}
+[metabolites]:{% static "userguide/img/Metabolites.png" %}
+[metabolite_peak]:{% static "userguide/img/metabolite_peak.png" %}
+[metabolite_int]:{% static "userguide/img/metabolite_int.png" %}
+[maps]:{% static "userguide/img/maps.png" %}
+[kegg_map]:{% static "userguide/img/maps_kegg.png" %}
+[maps_button]:{% static "userguide/img/maps_kegg_button.png" %}
+[maps_select_comp]:{% static "userguide/img/maps_select_comp.png" %}
+[maps_comparison]:{% static "userguide/img/maps_comparison.png" %}
+[comparison]:{% static "userguide/img/comparison.png" %}
+[comparison_sidebar]:{% static "userguide/img/comparison_sidebar.png" %}
+[peaks]:{% static "userguide/img/peaks.png" %}
+[more_comparison]:{% static "userguide/img/more_comparison.png" %}
+[more_comparison_filters]:{% static "userguide/img/more_comparison_filters.png" %}
+[more_comparison_id_filters]:{% static "userguide/img/more_comparison_id_filters.png" %}
