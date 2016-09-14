@@ -62,28 +62,37 @@ MANAGERS = ADMINS
 TESTING = 'test' in sys.argv
 randomUUID = str(uuid.uuid4())
 
-DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', None)
-if DATABASE_FILENAME is None:
-    DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
+PIMP_DATABASE_ENGINE = getNeededString('PIMP_DATABASE_ENGINE')
+
+if PIMP_DATABASE_ENGINE == 'django.db.backends.mysql':
+    PIMP_DATABASE_NAME = getNeededString('MYSQL_DATABASE')
+    PIMP_DATABASE_USER = getNeededString('MYSQL_USER')
+    PIMP_DATABASE_PASSWORD = getNeededString('MYSQL_PASSWORD')
     TEST_DATABASE_NAME = 'TESTDB_' + randomUUID
-else:
-    DATABASE_NAME = os.path.join(BASE_DIR, DATABASE_FILENAME)
+    if TESTING:
+        os.environ['MYSQL_DATABASE'] = TEST_DATABASE_NAME
+elif PIMP_DATABASE_ENGINE == 'django.db.backends.sqlite3':
+    SQLITE_DATABASE_FILENAME = getNeededString('SQLITE_DATABASE_FILENAME')
+    PIMP_DATABASE_NAME = os.path.join(BASE_DIR, SQLITE_DATABASE_FILENAME)
+    PIMP_DATABASE_USER = ''
+    PIMP_DATABASE_PASSWORD = ''
     TEST_DATABASE_NAME = os.path.join(BASE_DIR, 'TESTDB_' + randomUUID + '.db')
+    if TESTING:
+        os.environ['SQLITE_DATABASE_FILENAME'] = 'TESTDB_' + randomUUID + '.db'
 
 if TESTING:
-    os.environ['PIMP_DATABASE_NAME'] = TEST_DATABASE_NAME
+    ACTUAL_DATABASE = TEST_DATABASE_NAME
 else:
-    os.environ['PIMP_DATABASE_NAME'] = DATABASE_NAME
-os.environ.pop('PIMP_DATABASE_FILENAME', None)
+    ACTUAL_DATABASE = PIMP_DATABASE_NAME
 
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': getNeededString('PIMP_DATABASE_ENGINE'),
-        'NAME': DATABASE_NAME,
+        'ENGINE': PIMP_DATABASE_ENGINE,
+        'NAME': PIMP_DATABASE_NAME,
         # 'NAME': '/Users/yoanngloaguen/Documents/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
-        'USER': getString('PIMP_DATABASE_USER', ''),                      # Not used with sqlite3.
-        'PASSWORD': getString('PIMP_DATABASE_PASSWORD', ''),                  # Not used with sqlite3.
+        'USER': PIMP_DATABASE_USER,                      # Not used with sqlite3.
+        'PASSWORD': PIMP_DATABASE_PASSWORD,                  # Not used with sqlite3.
         'HOST': getString('PIMP_DATABASE_HOST', ''),                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': getString('PIMP_DATABASE_PORT', ''),                      # Set to empty string for default. Not used with sqlite3.
         'TEST' : {

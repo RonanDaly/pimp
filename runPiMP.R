@@ -54,40 +54,25 @@ if(is.na(analysis.id)) {
 library(PiMPDB)
 library(PiMP)
 
-DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
-if ( DATABASE_FILENAME == '' )  {
-    DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
-} else {
-	DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
-}
-
 dbtype = getNeededString('PIMP_DATABASE_ENGINE')
 if ( dbtype == 'django.db.backends.mysql' ) {
-	db <- new("PiMPDB",
-		dbuser=getNeededString('MYSQL_USER'),
-		dbpassword=getNeededString('MYSQL_PASSWORD'),
-		dbname=getNeededString('MYSQL_DATABASE'),
-		dbhost=getString('PIMP_DATABASE_HOST', ''),
-		dbport=getInteger('PIMP_DATABASE_PORT', 0),
-		dbtype=DATABASE_TYPE
-	)
-
-
-
-
-
 	DATABASE_TYPE = 'mysql'
-	
+	PIMP_DATABASE_NAME = getNeededString('MYSQL_DATABASE')
+	PIMP_DATABASE_USER = getNeededString('MYSQL_USER')
+    	PIMP_DATABASE_PASSWORD = getNeededString('MYSQL_PASSWORD')	
 } else if ( dbtype == 'django.db.backends.sqlite3' ) {
 	DATABASE_TYPE = 'sqlite'
+	PIMP_DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), getNeededString('SQLITE_DATABASE_FILENAME'))
+	PIMP_DATABASE_USER = ''
+    	PIMP_DATABASE_PASSWORD = ''	
 } else {
 	stop(paste('The database type', dbtype, 'is not recognised'))
 }
 
 db <- new("PiMPDB",
-	dbuser=getString('PIMP_DATABASE_USER', ''),
-	dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
-	dbname=DATABASE_NAME,
+	dbuser=PIMP_DATABASE_USER,
+	dbpassword=PIMP_DATABASE_PASSWORD,
+	dbname=PIMP_DATABASE_NAME,
 	dbhost=getString('PIMP_DATABASE_HOST', ''),
 	dbport=getInteger('PIMP_DATABASE_PORT', 0),
 	dbtype=DATABASE_TYPE
@@ -96,8 +81,7 @@ db <- new("PiMPDB",
 #db <- new("PiMPDB", dbname="~/Downloads/sqlite3.db", dbtype="sqlite")
 #db <- new("PiMPDB", dbuser=db.settings$user, dbpassword=db.settings$password, dbname="pimp_prod", dbhost=db.settings$host, dbtype=db.settings$type)
 
-logger$info('DATABASE_FILENAME: %s', DATABASE_FILENAME)
-logger$info('DATABASE_NAME: %s', DATABASE_NAME)
+logger$info('DATABASE_NAME: %s', PIMP_DATABASE_NAME)
 logger$info('DATABASE_TYPE: %s', DATABASE_TYPE)
 
 experiment.id <- getExperimentID(db, analysis.id)
@@ -106,7 +90,6 @@ project.id <- getProjectID(db, analysis.id)
 loginfo('experiment.id: %s', experiment.id, logger=logger)
 loginfo('project.id: %s', project.id, logger=logger)
 
-loginfo('Database name: %s', DATABASE_NAME, logger=logger)
 DATA_DIR = file.path(getString('PIMP_MEDIA_ROOT', file.path(getNeededString('PIMP_BASE_DIR'), '..', 'pimp_data')), 'projects')
 loginfo('Data dir: %s', DATA_DIR, logger=logger)
 
