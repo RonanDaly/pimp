@@ -3,3 +3,4 @@
 *.db_fixture filter=lfs diff=lfs merge=lfs -text
 *.fixture.json filter=lfs diff=lfs merge=lfs -text
 *.tar.bz filter=lfs diff=lfs merge=lfs -text
+*.tar.gz filter=lfs diff=lfs merge=lfs -text
