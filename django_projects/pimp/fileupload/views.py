@@ -34,6 +34,8 @@ class MyContentHandler(ContentHandler):
     def __init__(self):
         self.scan_amount = 0
         self.polarity = None
+        self.polarity_found = False
+
     def startElementNS(self, name, qname, attributes):
         uri, localname = name       
         if localname == 'scan':
@@ -47,19 +49,24 @@ class MyContentHandler(ContentHandler):
                 for name_tuple, value in iter_attributes:
                     if name_tuple[1] == 'polarity':
                       self.polarity = value
-        elif localname == 'cvParam':
+        elif localname == 'spectrum':
             self.scan_amount += 1
-            if self.scan_amount <= 2 :
-                attrs = {} 
-                try: 
-                    iter_attributes = attributes.iteritems() 
-                except AttributeError: 
-                    iter_attributes = attributes.items() 
+        elif localname == 'cvParam':
+            if not self.polarity_found:
+                attrs = {}
+                try:
+                    iter_attributes = attributes.iteritems()
+                except AttributeError:
+                    iter_attributes = attributes.items()
                 for name_tuple, value in iter_attributes:
-                    if name_tuple[1] == 'value' and str(value) == 'Positive':
+                    if (name_tuple[1] == 'value' and str(value) == 'Positive') or \
+                            (name_tuple[1] == 'name' and str(value) == 'positive scan'):
                         self.polarity = "+"
-                    elif name_tuple[1] == 'value' and str(value) == 'Negative':
+                        self.polarity_found = True
+                    elif (name_tuple[1] == 'value' and str(value) == 'Negative') or \
+                            (name_tuple[1] == 'name' and str(value) == 'negative scan'):
                         self.polarity = "-"
+                        self.polarity_found = True
 
 class PictureCreateView(CreateView):
     model = Picture
