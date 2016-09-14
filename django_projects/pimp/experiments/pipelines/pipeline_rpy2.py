@@ -21,7 +21,10 @@ class Tree(object):
         
         level_files = set()
         if factor is not None:
-            level_files = set(factor.level_files[level_label])            
+            level_files = set(factor.level_files[level_label])
+            self.level_idx = factor.level_indices[level_label]
+        else:
+            self.level_idx = None
         self.level_files = level_files.intersection(parent_files)
                 
     def __repr__(self):
@@ -32,11 +35,13 @@ class Factor(object):
     def __init__(self, factor_label):
         self.label = factor_label
         self.levels = []
+        self.level_indices = {}
         self.level_files = {}
         
     def add_level(self, level_label, level_files):
         self.levels.append(level_label)
         self.level_files[level_label] = level_files
+        self.level_indices[level_label] = self.levels.index(level_label)
         
     def __repr__(self):
         return self.label + ' with ' + str(len(self.levels)) + ' levels'
@@ -134,25 +139,25 @@ class Rpy2Pipeline(object):
 
         factors = []
 
-        f1 = Factor('beer_sample')
-        f1.add_level('beer1', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3'])
-        f1.add_level('beer2', ['Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
-        f1.add_level('beer3', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
-        f1.add_level('beer4', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
+        f1 = Factor('beer_smell')
+        f1.add_level('smell_good', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3',
+                                    'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3',
+                                    'Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
+        f1.add_level('smell_bad', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
         factors.append(f1)
 
         f2 = Factor('beer_colour')
-        f2.add_level('dark', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
+        f2.add_level('colour_dark', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
                               'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
-        f2.add_level('light', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 
+        f2.add_level('colour_light', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 
                                'Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
         factors.append(f2)
 
         f1 = Factor('beer_taste')
-        f1.add_level('delicious', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
+        f1.add_level('taste_delicious', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
                                    'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
-        f1.add_level('okay', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
-        f1.add_level('awful', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
+        f1.add_level('taste_okay', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
+        f1.add_level('taste_awful', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
         factors.append(f1)
         
         return factors
