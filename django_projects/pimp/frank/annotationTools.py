@@ -725,21 +725,58 @@ class NISTQueryTool:
             raise
         except TypeError:
             raise
+        
         # Determine suitable names for both the query file and nist output files
+        
+        #Local directory name
+        self.query_nist_dir = os.path.join(
+            os.path.dirname(BASE_DIR),
+            'pimp',
+            'frank',
+            'NISTQueryFiles')
+        
+        #Docker directory name
+        
+        self.query_docker_dir = os.path.join(
+            'data'
+            )
+        
         self.query_file_name = os.path.join(
-            os.path.dirname(BASE_DIR),
-            'pimp',
-            'frank',
-            'NISTQueryFiles',
+            self.query_nist_dir,
             str(self.annotation_query.id)+'.msp'
-        )
+            )
+        
         self.nist_output_file_name = os.path.join(
-            os.path.dirname(BASE_DIR),
-            'pimp',
-            'frank',
-            'NISTQueryFiles',
+            self.query_nist_dir,
             str(self.annotation_query.id)+'_nist_out.txt'
-        )
+            )  
+        
+        # Docker input file name
+        self.docker_input_file = os.path.join(
+            self.query_docker_dir,
+            str(self.annotation_query.id)+'.msp'
+            )
+       
+        # Docker file name
+        self.docker_output_file_name = os.path.join(
+            self.query_docker_dir,
+            str(self.annotation_query.id)+'_nist_out.txt'
+            )
+        
+#         self.query_file_name = os.path.join(
+#             os.path.dirname(BASE_DIR),
+#             'pimp',
+#             'frank',
+#             'NISTQueryFiles',
+#             str(self.annotation_query.id)+'.msp'
+#         )
+#         self.nist_output_file_name = os.path.join(
+#             os.path.dirname(BASE_DIR),
+#             'pimp',
+#             'frank',
+#             'NISTQueryFiles',
+#             str(self.annotation_query.id)+'_nist_out.txt'
+#         )
 
     def get_nist_annotations(self):
 
@@ -803,13 +840,26 @@ class NISTQueryTool:
             raise ValueError('The maximum number of hits exceeds specified bounds (between 1 and 100)')
         search_type = nist_parameters['search_type']
         # The call to NIST is performed via Wine
-        nist_query_call = ["wine",
-                           tool_parameters['source'],
+
+#         param_query_nist_dir = self.query_nist_dir+":"+"/home/nist"
+#         command = "/Users/Karen/nist/DockerContext/msPep.sh"
+#         params = [param_query_nist_dir, search_type, str(max_number_of_hits),
+#                    self.docker_input_file, self.docker_output_file_name]
+#         params_str = ' '.join(params)
+#         nist_query_call =["/bin/bash", command, param_query_nist_dir, search_type, str(max_number_of_hits),
+#                    self.docker_input_file, self.docker_output_file_name]
+        nist_query_call = ["docker","run","--rm","-v",
+                           self.query_nist_dir+":"+"/home/nist/data",
+                           "nist-image",
+                           "wine",
+                           "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
+                           #tool_parameters['source'],
                            search_type,
                            "/HITS",
                            str(max_number_of_hits),
                            '/PATH',
-                           tool_parameters['library_path']]
+                           tool_parameters['library_path']
+                           ]
         # Add the libraries which are to be included in the search to NIST
         for library in library_list:
             if library == 'mainlib':
@@ -824,9 +874,10 @@ class NISTQueryTool:
                 nist_query_call.extend(['/LIB', 'massbank_msms'])
             elif library == 'replib':
                 nist_query_call.extend(['/REPL', 'replib'])
-        additional_parameters = ['/INP', self.query_file_name,
-                                 '/OUT', self.nist_output_file_name]
+        additional_parameters = ['/INP', self.docker_input_file,
+                                 '/OUT', self.docker_output_file_name]
         nist_query_call.extend(additional_parameters)
+
         return nist_query_call
 
     def _query_nist(self, nist_query_call):
@@ -840,6 +891,7 @@ class NISTQueryTool:
         try:
             # Make the call to NIST to write the candidate annotations to the output file
             call(nist_query_call)
+            print "Finished the nist_query_call"
         except CalledProcessError:
             raise
         except OSError:
@@ -907,9 +959,9 @@ class NISTQueryTool:
         except IOError:
             raise
         finally:
-            # Using 'with' should close the file but make sure
-            if output_file.closed is False:
-                output_file.close()
+                # Using 'with' should close the file but make sure
+                if output_file.closed is False:
+                    output_file.close()
         return True
 
     def _populate_annotation_list(self):
@@ -947,6 +999,7 @@ class NISTQueryTool:
                         try:
                             current_parent_peak = peaks_in_fragmentation_set.get(slug=parent_ion_slug)
                             print 'Populating Annotations For: '+current_parent_peak.slug
+                            print current_parent_peak.mass
                         except MultipleObjectsReturned:
                             raise
                         except ObjectDoesNotExist:
