@@ -20,28 +20,29 @@ RUN apt-get update && \
 		libfreetype6-dev \
 		libatlas-base-dev \
 		libpython-dev \
-		cmake \
+		libnlopt-dev \ # Needed for nloptr in R; problem with self downloading
+		#cmake \ # Needed for PySide
 		#libatlas3-base \
 		#libatlas-dev \
 		oracle-java8-installer \
-		r-base \
 		rabbitmq-server && \
-	apt-get install -y oracle-java8-set-default
-		
+	apt-get install -y oracle-java8-set-default && \
+	apt-get install r-base &&
+	R CMD javareconf		
 
 RUN groupadd pimp && useradd -g pimp -m pimp
 #ADD pwiz-bin-windows-x86-vc100-release-3_0_5655.tar.bz2 /home/ransom/
-COPY winetricks /home/pimp/
-WORKDIR /home/pimp
-RUN chown -R pimp:pimp winetricks
-USER pimp
-ENV WINEARCH win32
-ENV WINEPREFIX /home/pimp/.wine
+#COPY winetricks /home/pimp/
+#WORKDIR /home/pimp
+#RUN chown -R pimp:pimp winetricks
+#USER pimp
+#ENV WINEARCH win32
+#ENV WINEPREFIX /home/pimp/.wine
 
 # We need to sleep, because wine launches a background process to do its
 # tasks, finishing whenever it want to. 10 seconds _should_ be enough
-RUN wine cmd.exe /c echo %ProgramFiles% && sleep 10
-RUN xvfb-run ./winetricks -q winxp vcrun2005 vcrun2008 dotnet20 dotnet40 && sleep 10 && rm -rf ~/.cache ~/.local ~/.config
+#RUN wine cmd.exe /c echo %ProgramFiles% && sleep 10
+#RUN xvfb-run ./winetricks -q winxp vcrun2005 vcrun2008 dotnet20 dotnet40 && sleep 10 && rm -rf ~/.cache ~/.local ~/.config
 
 #RUN apt-get purge -y xvfb &&
 #	apt-get clean autoclean &&
