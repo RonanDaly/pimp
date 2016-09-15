@@ -8,8 +8,8 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('experiments', '__first__'),
-        ('data', '__first__'),
+        ('experiments', '0001_initial'),
+        ('data', '0001_initial'),
         ('frank', '0004_auto_20150901_1311'),
     ]
 
@@ -36,6 +36,11 @@ class Migration(migrations.Migration):
             options={
             },
             bases=(models.Model,),
+        ),
+        migrations.AlterField(
+            model_name='annotationquery',
+            name='annotation_tool_params',
+            field=models.CharField(max_length=1000, null=True),
         ),
         migrations.AlterField(
             model_name='peak',
