@@ -6,12 +6,20 @@ This is a setup guide for the PiMP pipeline. It contains instructions for Linux 
 
 To work with large binary files in the repository install git-lfs
 
-  $ brew install git-lfs
+    $ brew install git-lfs
 
 In the repository, run these commands
 
-  $ git config --add lfs.url "http://poisson.tcrc.gla.ac.uk/polyomics/pimp.git/info/lfs"
-  $ git lfs install
+    $ git config --add lfs.url "http://poisson.tcrc.gla.ac.uk/polyomics/pimp.git/info/lfs"
+    $ git lfs install
+
+**(Linux)**
+
+    $ git config --global credential.helper 'cache --timeout=36000'
+
+**(OS X)**
+
+    $ git config --global credential.helper osxkeychain
 
 ## 1. System Setup
 
@@ -58,7 +66,7 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 4. **(Ubuntu)** Install various libraries.
 
-        $ sudo apt-get install libmysqlclient-dev libxml2-dev libxslt1-dev libcurl4-openssl-dev libssl-dev libnetcdf-dev
+        $ sudo apt-get install libmysqlclient-dev libxml2-dev libxslt1-dev libcurl4-openssl-dev libssl-dev libnetcdf-dev libfreetype6-dev libatlas-base-dev libpython-dev
 
 5. **(Fedora)** Install various libraries.
 
@@ -73,9 +81,23 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 2. Edit the `.env` file for your environment
 
- **(OSX)** Make sure the DYLD_LIBRARY_PATH variable is set to the library folder
- for your 1.8 JVM. This is to work around a bug with rJava finding the correct
- JVM at runtime.
+ **(OS X)** Getting rJava to install can be a pain. One method that works is to
+run R with the correct environment variables; firstly run the following command:
+
+
+    JAVA_CPPFLAGS="-I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include \
+    -I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include/darwin" \
+    JAVA_LIBS="-L/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/jre/lib/server -ljvm" \
+    sudo R CMD javareconf
+
+Then, running the following command will run a subshell with the correct environment variables set; do all the rest of the installation steps from this subshell:
+
+    JAVA_CPPFLAGS="-I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include \
+    -I/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/include/darwin" \
+    JAVA_LIBS="-L/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk/Contents/Home/jre/lib/server -ljvm" \
+    R CMD javareconf -e
+
+ Obviously, the correct directories for the header files and libraries need to be specified.
 
 3. Run the following command in the project root directory
 

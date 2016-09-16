@@ -1,0 +1,10 @@
+Sample Name,
+Raw File Name,J:\Data\pHilicTest_18APR15\Std1_1.raw
+Config File Name,J:\StdMix1_20min_pHILIC_06022013.csv
+Laboratory,
+Acquisition Start Time,18/04/2015 15:48:16
+
+
+
+Peak Num,Index,Compound Name,Formula,Polarity,Compound Info,Detected m/z,Delta (ppm),Expected RT,Actual RT,Adduct1 H+,Adduct2 NH4+,Adduct3 Na+,Frag1,Realm/z,Frag2,Real m/z, Frag3, Real m/z
+24,24,L-Proline-Badname,C5H9NO2,+,,116.07052,-0.75,9.75,9.68,551809540,-,-,-,-,-,-,-,-,

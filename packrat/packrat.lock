@@ -149,7 +149,8 @@ Hash: fb672e20eb6f3010a3639f855d8ef6de
 Package: RMassBank
 Source: PuMP
 Version: 1.12.1
-Requires: Rcpp, XML, rjson, yaml, RCurl, mzR, rcdk
+Hash: 826d37f6af560a426f35b0870be4eb6f
+Requires: RCurl, Rcpp, XML, mzR, rcdk, rjson, yaml
 
 Package: RMySQL
 Source: PuMP
@@ -281,6 +282,7 @@ Requires: maps, spam
 Package: fingerprint
 Source: PuMP
 Version: 3.5.2
+Hash: cdf972d922b62b79fd6f70062aa00105
 
 Package: foreach
 Source: PuMP
@@ -392,7 +394,7 @@ Hash: bdc4d48c3135e8f3b399536ddf160df4
 
 Package: maps
 Source: PuMP
-Version: 3.0.1
+Version: 3.1.1
 Hash: 14756dbe9c815658dfaa2f4fae5d69f3
 
 Package: memoise
@@ -415,8 +417,8 @@ Requires: colorspace
 Package: mzR
 Source: PuMP
 Version: 2.6.2
-Hash: bf430655fbca0e06b1f1847a80f2065a
-Requires: Biobase, BiocGenerics, Rcpp, zlibbioc, ProtGenerics
+Hash: 3385069942796906f7c91d46f750d82f
+Requires: Biobase, BiocGenerics, ProtGenerics, Rcpp, zlibbioc
 
 Package: mzmatch.R
 Source: PuMP
@@ -475,11 +477,13 @@ Hash: 3e8627a2a5bd45c9bad6112acfc231d9
 Package: rcdk
 Source: PuMP
 Version: 3.3.2
+Hash: 6c1ec88740344372d89242215bcf2a9f
 Requires: fingerprint, iterators, png, rJava, rcdklibs
 
 Package: rcdklibs
 Source: PuMP
 Version: 1.5.13
+Hash: 5a92ad73fbef47a20734f5fde8e4c594
 Requires: rJava
 
 Package: reshape2
@@ -491,6 +495,7 @@ Requires: Rcpp, plyr, stringr
 Package: rjson
 Source: PuMP
 Version: 0.2.15
+Hash: def074f38d0cff3b597649ee6f976128
 
 Package: roxygen2
 Source: PuMP
@@ -560,7 +565,7 @@ Requires: Biobase, BiocGenerics, ProtGenerics, RColorBrewer, lattice,
 
 Package: xml2
 Source: PuMP
-Version: 0.1.2
+Version: 1.0.0
 Hash: d3a4a61753f1ebf32548bdd9ab709c4b
 Requires: BH, Rcpp
 

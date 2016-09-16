@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.db import connection;
 ##### JUST FOR SCOTT ALTERNATIVE CODE
 import rpy2.robjects as robjects
 
@@ -148,7 +149,7 @@ def send_email(analysis, project, user, success):
     msg.send()    
 
 @celery.task
-def start_pimp_pipeline(analysis, project, user):
+def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     """ Starts the pimp R pipeline """
     
     # some old code not sure written by whom to call Pimp.runPipeline from python using rpy2
@@ -182,12 +183,15 @@ def start_pimp_pipeline(analysis, project, user):
     # runPipeline(files=files, groups=groups, contrasts=contrasts, standards=standards, databases=databases, nSlaves=15)
     
     r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'),
-                      str(analysis.id)]
+                      str(analysis.id), str(saveFixtures)]
     r_command = " ".join(r_command_list)
     logger.info('r_command is %s' % r_command)    
     
     analysis.status = 'Processing'
     analysis.save(update_fields=['status'])
+    connection.close()
+
+    # Here is the entry point to the R pipeline
     return_code = subprocess.call(r_command, shell=True)
 
     xml_file_name = ".".join(["_".join(["analysis", str(analysis.id)]), "xml"])

@@ -25,7 +25,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     experiment.samples <- getExperimentSamples(db, experiment_id)
 
     ##QCs
-    controls <- getExperimentControls(db, experiment.id)
+    controls <- getExperimentControls(db, experiment_id)
 
     #get required controls.  Currently only blanks
     blank.idx <- which(controls$type=="blank")
@@ -40,45 +40,37 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     #    groups$Blank <- file_path_sans_ext(controls$name)
     #}
 
-	doc <- newXMLDoc()
-
-	##top node
-    gpimp <- newXMLNode("gpimp:pimp_analysis", 
-    	doc = doc, 
-    	namespace = c(
-    		gpimp="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0",
-    		xsi="http://www.w3.org/2001/XMLSchema-instance"
-    	),
-    	attrs=c(
-        	"xsi:schemaLocation"="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0 http://puma.ibls.gla.ac.uk/ns/gpimp/1.0/pimp_framework.xsd",
-        	id=id
-        )
-    )
+  doc = read_xml(sprintf('<?xml version="1.0"?>
+              <gpimp:pimp_analysis
+                xmlns:gpimp="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0 http://puma.ibls.gla.ac.uk/ns/gpimp/1.0/pimp_framework.xsd"
+                id="%s"></gpimp:pimp_analysis>', id))
 
     ##settings
-    settings <- newXMLNode("settings", parent=gpimp)
+    settings = xml_add_child(doc, 'settings')
 
     ##group set
-    groupset <- newXMLNode("groupset", parent=settings)
+    groupset = xml_add_child(settings, 'groupset')
 
     ##get experiment groups
     message("Writing group information...")
 
     experiment.groups <- getExperimentGroups(db, experiment_id)
-    control.groups <- getControlGroups(db, experiment.id)
+    control.groups <- getControlGroups(db, experiment_id)
 
     experiment.groups <- rbind(experiment.groups, control.groups)
 
     for(i in 1:nrow(experiment.groups)) {
-        group <- newXMLNode("group", attrs=c("id"=experiment.groups$id[i]), parent=groupset)
-        group.name <- newXMLNode("name", experiment.groups$name[i], parent=group)
-        member.set <- newXMLNode("memberset", parent=group)
+        group = xml_add_child(groupset, 'group', id=as.character(experiment.groups$id[i]))
+        group.name = xml_add_child(group, 'name', experiment.groups$name[i])
+        member.set = xml_add_child(group, 'memberset')
 
         group.members <- getExperimentGroupMembersAll(db, experiment.groups$id[i])
 
         for(j in 1:nrow(group.members)) {
-            member <- newXMLNode("member", attrs=c("id"=group.members$id[j]), parent=member.set)
-            member.name <- newXMLNode("name", group.members$name[j], parent=member)
+            member = xml_add_child(member.set, 'member', id=as.character(group.members$id[j]))
+            member.name = xml_add_child(member, 'name', group.members$name[j])
 
             if(experiment.groups$name[i]=="calibration_group") {
                 samples <- getControlMemberSamples(db, group.members$id[j])
@@ -87,10 +79,15 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
                 samples <- getMemberSamples(db, group.members$id[j])
             }
 
-            sample.set <- newXMLNode("sampleset", parent=member)
+            sample.set = xml_add_child(member, 'sampleset')
             for (k in 1:nrow(samples)) {
-                sample <- newXMLNode("sample", attrs=c("id"=samples$id[k]), parent=sample.set)
-                sample.name <- newXMLNode("name", samples$name[k], parent=sample)
+                if ( length(samples$id[k]) ) {
+                  sample = xml_add_child(sample.set, 'sample', id=as.character(samples$id[k]))
+                  sample.name = xml_add_child(sample, 'name', samples$name[k])
+                } else {
+                  sample = xml_add_child(sample.set, 'sample')
+                  sample.name = xml_add_child(sample, 'name')
+                }
             }
         }
     }
@@ -98,7 +95,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     ##member comparison set
     message("Writing comparison information...")
 
-    member.comparison.set <- newXMLNode("member_comparison_set", parent=settings)
+    member.comparison.set = xml_add_child(settings, "member_comparison_set")
 
     experiment.comparisons <- getExperimentComparisons(db, experiment_id)
     for(i in nrow(experiment.comparisons)) {
@@ -113,16 +110,16 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     }
 
     for(i in 1:nrow(experiment.comparisons)) {
-        member.comparison <- newXMLNode("member_comparison", attrs=c("id"=experiment.comparisons$id[i]), parent=member.comparison.set)
+        member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(experiment.comparisons$id[i]))
         comparison.members <- getExperimentComparisonMembers(db, experiment.comparisons$id[i])
-        sapply(comparison.members, function(x) newXMLNode("member_reference", attrs=c("id"=x), parent=member.comparison))
+        sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
     }
 
 
     ##parameters
     message("Writing parameter information...")
 
-    parameterset <- newXMLNode("parameterset", parent=settings)
+    parameterset = xml_add_child(settings, 'parameterset')
 
     parameters <- getAnalysisParameters(db, id)
 
@@ -131,17 +128,17 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
         value <- parameters$value[i]
         state <- as.logical(parameters$state[i])
         if(state && !is.na(value)) {
-            parameter <- newXMLNode("parameter", attrs=c("type"="numeric_conditional_parameter"), parent=parameterset)
-            newXMLNode("name", name, parent=parameter)
-            numeric_conditional_parameter <- newXMLNode("numeric_conditional_parameter", parent=parameter)
-            newXMLNode("state", "on", parent=numeric_conditional_parameter)
-            newXMLNode("value", value, parent=numeric_conditional_parameter)
+            parameter = xml_add_child(parameterset, 'parameter', 'type'='numeric_conditional_parameter')
+            xml_add_child(parameter, 'name', name)
+            numeric_conditional_parameter = xml_add_child(parameter, 'numeric_conditional_parameter')
+            xml_add_child(numeric_conditional_parameter, 'state', 'on')
+            xml_add_child(numeric_conditional_parameter, 'value', value)
         }
         else if (state && is.na(value)) {
-            parameter <- newXMLNode("parameter", attrs=c("type"="conditional_parameter"), parent=parameterset)
-            newXMLNode("name", name, parent=parameter)
-            conditional_parameter <- newXMLNode("conditional_parameter", parent=parameter)
-            newXMLNode("state", "on", parent=conditional_parameter)
+            parameter = xml_add_child(parameterset, 'parameter', 'type'='conditional_parameter')
+            xml_add_child(parameter, 'name', name)
+            conditional_parameter = xml_add_child(parameter, 'conditional_parameter')
+            xml_add_child(conditional_parameter, 'state', 'on')
         }
     }
 
@@ -149,7 +146,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     ##peakset
     message("Writing peak information...")
 
-    peakset <- newXMLNode("peakset", parent=gpimp)
+    peakset = xml_add_child(doc, 'peakset')
 
     samples.idx <- match(file_path_sans_ext(experiment.samples$name), colnames(raw.data))
 
@@ -158,18 +155,18 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     #compound.id <- 1
     nrow.raw.data = nrow(raw.data)
     for(i in 1:nrow(raw.data)) {
-        logfine('Peak %d of %d', i, nrow.raw.data, logger=logger)
+        logging::logfine('Peak %d of %d', i, nrow.raw.data, logger=logger)
         #cat(paste(i,"of",nrow(raw.data), "my custom message", "\r"))
         peak.id <- rownames(raw.data)[i]
-        peak <- newXMLNode("peak", attrs=c("id"=peak.id), parent=peakset)
-        newXMLNode("mass", raw.data$Mass[i], parent=peak)
-        newXMLNode("retention_time", raw.data$RT[i], parent=peak)
-        newXMLNode("polarity", raw.data$polarity[i], parent=peak)
-        newXMLNode("type", raw.data$relation.ship[i], parent=peak)
+        peak = xml_add_child(peakset, 'peak', id=as.character(peak.id))
+        xml_add_child(peak, 'mass', raw.data$Mass[i])
+        xml_add_child(peak, 'retention_time', raw.data$RT[i])
+        xml_add_child(peak, 'polarity', raw.data$polarity[i])
+        xml_add_child(peak, 'type', raw.data$relation.ship[i])
 
         #identification
-        compoundset <- newXMLNode("compoundset", parent=peak)
-        comparisonset <- newXMLNode("comparisonset", parent=peak) 
+        compoundset = xml_add_child(peak, 'compoundset')
+        comparisonset = xml_add_child(peak, 'comparisonset')
         identified.idx <- which(peak.id == identification$id)
         if(length(identified.idx) > 0) {
             identified.subset <- identification[identified.idx,]
@@ -183,21 +180,23 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
             #inchi.subset <- inchi.sub
             if(nrow(inchi.subset) > 0) {
                 for(j in 1:nrow(inchi.subset)) {
-                    compound <- newXMLNode("compound", attrs=c("id"=inchi.subset$compound.id[j]), parent=compoundset)
-                    newXMLNode("formula", inchi.subset$formula[j], parent=compound)
-                    newXMLNode("inchikey", inchi.subset$InChIKey[j], parent=compound)
-                    newXMLNode("ppm", inchi.subset$ppm[j], parent=compound)
-                    newXMLNode("adduct", inchi.subset$adduct[j], parent=compound)
-                    newXMLNode("identified", inchi.subset$publishable[j], parent=compound)
+                    compound = xml_add_child(compoundset, 'compound', id=as.character(inchi.subset$compound.id[j]))
+                    xml_add_child(compound, 'formula', inchi.subset$formula[j])
+                    xml_add_child(compound, 'inchikey', inchi.subset$InChIKey[j])
+                    xml_add_child(compound, 'ppm', inchi.subset$ppm[j])
+                    xml_add_child(compound, 'adduct', inchi.subset$adduct[j])
+                    xml_add_child(compound, 'identified', inchi.subset$publishable[j])
                     ##add inchi
                     #annotation name????????
                     compound.idx <- which(as.character(identified.subset$InChIKey)==inchi.subset$InChIKey[j])
-                    dbset <- newXMLNode("dbset", parent=compound)
+                    dbset = xml_add_child(compound, 'dbset')
                     for(k in 1:length(compound.idx)) {
-                        db <- newXMLNode("db", parent=dbset)
-                        newXMLNode("db_name", identified.subset$DB[compound.idx[k]], parent=db)
-                        newXMLNode("identifier", identified.subset$DBID[compound.idx[k]], parent=db)
-                        newXMLNode("compound_name", identified.subset$name[compound.idx[k]], parent=db)
+                        db = xml_add_child(dbset, 'db')
+                        xml_add_child(db, 'db_name', identified.subset$DB[compound.idx[k]])
+                        xml_add_child(db, 'identifier', identified.subset$DBID[compound.idx[k]])
+                        #escapedName = stringi::stri_escape_unicode(identified.subset$name[compound.idx[k]])
+                        #encodedName = sub('\\\\u..(..)', '&#x\\U\\1;', escapedName, perl=TRUE)
+                        xml_add_child(db, 'compound_name', identified.subset$name[compound.idx[k]])
                     }
 
                     #compound.id <- compound.id + 1
@@ -206,17 +205,19 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
             if(nrow(no.inchi.subset) > 0) {
                 for(j in 1:nrow(no.inchi.subset)) {
-                    compound <- newXMLNode("compound", attrs=c("id"=no.inchi.subset$compound.id[j]), parent=compoundset)
-                    newXMLNode("formula", no.inchi.subset$formula[j], parent=compound)
-                    newXMLNode("inchikey", parent=compound)
-                    newXMLNode("ppm", no.inchi.subset$ppm[j], parent=compound)
-                    newXMLNode("adduct", no.inchi.subset$adduct[j], parent=compound)
-                    newXMLNode("identified", no.inchi.subset$publishable[j], parent=compound)
-                    dbset <- newXMLNode("dbset", parent=compound)
-                    db <- newXMLNode("db", parent=dbset)
-                    newXMLNode("db_name", no.inchi.subset$DB[j], parent=db)
-                    newXMLNode("identifier", no.inchi.subset$DBID[j], parent=db)
-                    newXMLNode("compound_name", no.inchi.subset$name[j], parent=db)
+                    compound = xml_add_child(compoundset, 'compound', id=as.character(no.inchi.subset$compound.id[j]))
+                    xml_add_child(compound, 'formula', no.inchi.subset$formula[j])
+                    xml_add_child(compound, 'inchikey')
+                    xml_add_child(compound, 'ppm', no.inchi.subset$ppm[j])
+                    xml_add_child(compound, 'adduct', no.inchi.subset$adduct[j])
+                    xml_add_child(compound, 'identified', no.inchi.subset$publishable[j])
+                    dbset = xml_add_child(compound, 'dbset')
+                    db = xml_add_child(dbset, 'db')
+                    xml_add_child(db, 'db_name', no.inchi.subset$DB[j])
+                    xml_add_child(db, 'identifier', no.inchi.subset$DBID[j])
+                    #escapedName = stringi::stri_escape_unicode(no.inchi.subset$name[j])
+                    #encodedName = sub('\\\\u..(..)', '&#x\\U\\1;', escapedName, perl=TRUE)
+                    xml_add_child(db, 'compound_name', no.inchi.subset$name[j])
                     ##add inchi
                     #compound.id <- compound.id + 1
                 }
@@ -243,27 +244,27 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
             tt <- toptables[[experiment.comparisons$name[k]]]
             peak.idx <- match(peak.id, rownames(tt))
             if(!is.na(peak.idx) && !is.na(tt$P.Value[peak.idx])){
-                comparison <- newXMLNode("comparison", attrs=c("id"=experiment.comparisons$id[k]), parent=comparisonset) 
-                newXMLNode("logfc", tt$logFC[peak.idx], parent=comparison)
-                newXMLNode("pvalue", tt$P.Value[peak.idx], parent=comparison)
-                newXMLNode("adjpvalue", tt$adj.P.Val[peak.idx], parent=comparison)
-                newXMLNode("logodds", tt$B[peak.idx], parent=comparison)
+                comparison = xml_add_child(comparisonset, 'comparison', id=as.character(experiment.comparisons$id[k]))
+                xml_add_child(comparison, 'logfc', tt$logFC[peak.idx])
+                xml_add_child(comparison, 'pvalue', tt$P.Value[peak.idx])
+                xml_add_child(comparison, 'adjpvalue', tt$adj.P.Val[peak.idx])
+                xml_add_child(comparison, 'logodds', tt$B[peak.idx])
             }
         }            
     
                     ##add sample intensities
-        sampleintensityset <- newXMLNode("sample_intensity_set", parent=peak)
+        sampleintensityset = xml_add_child(peak, 'sample_intensity_set')
         for(l in 1:nrow(experiment.samples)) {
-            samplereference <- newXMLNode("sample_reference", attrs=c("id"=experiment.samples$id[l]), parent=sampleintensityset)
-            newXMLNode("intensity", raw.data[i,samples.idx[l]], parent=samplereference)
+            samplereference = xml_add_child(sampleintensityset, 'sample_reference', id=as.character(experiment.samples$id[l]))
+            xml_add_child(samplereference, 'intensity', raw.data[i,samples.idx[l]])
         }
 
         control.idx <- match(file_path_sans_ext(controls$name), colnames(raw.data))
-        calibrationintensityset <- newXMLNode("calibration_intensity_set", parent=peak)
+        calibrationintensityset = xml_add_child(peak, 'calibration_intensity_set')
         if(length(control.idx)>0) {
             for(l in 1:nrow(controls)) {
-                calibrationreference <- newXMLNode("calibration_reference", attrs=c("id"=controls$id[l]), parent=calibrationintensityset)
-                newXMLNode("intensity", raw.data[i,control.idx[l]], parent=calibrationreference)
+                calibrationreference = xml_add_child(calibrationintensityset, 'calibration_reference', id=as.character(controls$id[l]))
+                xml_add_child(calibrationreference, 'intensity', raw.data[i,control.idx[l]])
             }
         }
 
@@ -274,26 +275,26 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
     message("Writing pathway information...")
 
-    pathwayset <- newXMLNode("pathwayset", parent=gpimp)
-
+    pathwayset = xml_add_child(doc, 'pathwayset')
+    
     pathway.compounds <- identification[which(identification$DB=="kegg"),]    
 
     for(i in seq(length = nrow(pathway.stats))) {
-        pathway <- newXMLNode("pathway", attrs=c("id"=pathway.stats$id[i]), parent=pathwayset)
-        newXMLNode("name", pathway.stats$name[i], parent=pathway)
-        newXMLNode("compound_number", pathway.stats$number.compounds[i], parent=pathway)
-        compound_in_pathwayset <- newXMLNode("compound_in_pathwayset", parent=pathway)
+        pathway = xml_add_child(pathwayset, 'pathway', id=as.character(pathway.stats$id[i]))
+        xml_add_child(pathway, 'name', as.character(pathway.stats$name[i]))
+        xml_add_child(pathway, 'compound_number', pathway.stats$number.compounds[i])
+        compound_in_pathwayset = xml_add_child(pathway, 'compound_in_pathwayset')
 
         dbid.idx <- which(
             pathway.compounds$DBID %in% identified.compounds.by.pathway[[pathway.stats$id[i]]], 
-            arr.ind=T
+            arr.ind=TRUE
             )
         lapply(
             unique(pathway.compounds[dbid.idx,'compound.id']),
             #1, 
             function(x) {
                 #newXMLNode("compound_in_pathway", attrs=c("id"=as.integer(x['compound.id'])), parent=compound_in_pathwayset)
-                newXMLNode("compound_in_pathway", attrs=c("id"=as.integer(x)), parent=compound_in_pathwayset)
+                xml_add_child(compound_in_pathwayset, 'compound_in_pathway', id=as.character(as.integer(x)))
             }
         )
     }
@@ -305,7 +306,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
        #b = newXMLNode("bar", parent = n)
      
           # suppress the <?xml ...?>
-    saveXML(doc, file=paste0("analysis_", id, ".xml"))#, prefix = '<?xml version="1.0" encoding="utf-8" ?>\n')
+    write_xml(doc, file=paste0("analysis_", id, ".xml"))
 
     #dbdisconnect(db)
 }

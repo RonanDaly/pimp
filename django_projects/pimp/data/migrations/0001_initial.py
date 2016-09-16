@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('fileupload', '__first__'),
+        ('experiments', '0002_auto_20160721_1417'),
     ]
 
     operations = [
@@ -16,6 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
+                ('analysis', models.ForeignKey(to='experiments.Analysis')),
             ],
             options={
             },
@@ -30,6 +32,7 @@ class Migration(migrations.Migration):
                 ('rt', models.DecimalField(null=True, max_digits=20, decimal_places=10, blank=True)),
                 ('polarity', models.CharField(max_length=8, null=True, blank=True)),
                 ('type', models.CharField(max_length=100, null=True, blank=True)),
+                ('dataset', models.ForeignKey(to='data.Dataset')),
             ],
             options={
                 'ordering': ['secondaryId'],
@@ -44,6 +47,8 @@ class Migration(migrations.Migration):
                 ('pValue', models.FloatField(null=True, blank=True)),
                 ('adjPvalue', models.FloatField(null=True, blank=True)),
                 ('logOdds', models.FloatField(null=True, blank=True)),
+                ('comparison', models.ForeignKey(to='experiments.Comparison')),
+                ('peak', models.ForeignKey(to='data.Peak')),
             ],
             options={
                 'ordering': ['comparison'],

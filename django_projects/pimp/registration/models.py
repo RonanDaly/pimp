@@ -3,6 +3,7 @@ import hashlib
 import random
 import re
 
+from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -94,7 +95,10 @@ class RegistrationManager(models.Manager):
             registration_profile.send_activation_email(site)
 
         return new_user
-    create_inactive_user = transaction.commit_on_success(create_inactive_user)
+    if VERSION[0] >= 1 and VERSION[1] >= 6:
+        create_inactive_user = transaction.atomic(create_inactive_user)
+    else:
+        create_inactive_user = transaction.commit_on_success(create_inactive_user)
 
     def create_profile(self, user):
         """

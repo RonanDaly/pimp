@@ -122,6 +122,7 @@ urlpatterns = patterns('',
     url(r'^licence/$', 'home.views.licence', name='licence'),
     url(r'^frank/',include('frank.urls')),
     url(r'^plate/', include('django_spaghetti.urls')),
+    url(r'^userguide/$', 'home.views.userguide', name='userguide'),
 )
 
 urlpatterns += staticfiles_urlpatterns()
