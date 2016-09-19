@@ -1,7 +1,32 @@
+Pimp.combineSingle <- function(in_files, out_file, label, ppm, rtwindow, combination) {
+	logger <- getPiMPLogger('Pimp.combineSingle')
+    mzmatch.ipeak.Combine(
+		i=paste(in_files,collapse=","),
+		o=out_file,
+		v=TRUE,
+		label=label,
+		ppm=ppm,
+		rtwindow=rtwindow,
+		combination=combination
+    )
+}
+
+Pimp.rsdSingle <- function(in_file, out_file, rej_file, rsd) {
+	logger <- getPiMPLogger('Pimp.rsdSingle')
+	mzmatch.ipeak.filter.RSDFilter(
+      i = in_file,
+      o = out_file,
+      rejected = rej_file,
+      rsd = rsd,
+      h = NULL,
+      v = TRUE
+    )
+}
+
 Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=NULL, mzmatch.filters=list(), mzmatch.outputs=list(), mzmatch.params=list(), nSlaves=0) {
 
 	#Create RSD directories if required
-	if(mzmatch.filters$rsd)	{ 
+	if(mzmatch.filters$rsd)	{
 		dir.create.ifNotExist(mzmatch.outputs$combined.rsd.filtered.folder)
 		dir.create.ifNotExist(mzmatch.outputs$combined.rsd.rejected.folder)
     }
@@ -28,7 +53,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 		group.files.idx <- which(basename(files) %in% paste0(groups[[group]], ".peakml"))
 		group.files <- files[group.files.idx]
  		#group.files <- grep(pattern=paste(groups[[group]], "\\.peakml", sep="", collapse="|"), files, value=TRUE)
- 		
+
  		##created folder for combined files
  		# group.dir <- file.path(combined.dir, group)
 
@@ -36,7 +61,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
  		# 	cat(paste("Creating directory:", group.dir, "\n"))
 
  		# dir.create(group.dir, recursive=TRUE)
- 		
+
 		combined.file <- file.path(combined.dir, paste(group, ".peakml", sep=""))
 		loginfo('Group %s', group, logger=logger)
 		combined.group.file <- .combinePeakmlFiles(files=group.files, outfile=combined.file, label=group, mzmatch.params=mzmatch.params)
@@ -69,13 +94,11 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 		}
 		loginfo("VALID %s", valid, logger=logger)
 		return(.combinePeakmlFiles(files=grouped.peakml.files[valid], outfile=mzmatch.outputs$final.combined.peakml.file, mzmatch.params=mzmatch.params, heapsize=heapsize))
-	} 
+	}
 	else {
 		file.copy(grouped.peakml.files, mzmatch.outputs$final.combined.peakml.file)
 		return(mzmatch.outputs$final.combined.peakml.file)
 	}
-
-	
 
 }
 
@@ -104,7 +127,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	return(outfile)
 }
 
-.mzmatch.ipeak.filter.RSDFilter <- function (JHeapSize = 2048, i = NULL, o = NULL, rejected = NULL, 
+.mzmatch.ipeak.filter.RSDFilter <- function (JHeapSize = 2048, i = NULL, o = NULL, rejected = NULL,
     rsd = NULL, h = NULL, v = NULL)  {
   mzmatch.ipeak.filter.RSDFilter(
     i = i,
@@ -113,7 +136,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
     rsd = rsd,
     h = h,
     v = v
-    
+
   )
 }
 
