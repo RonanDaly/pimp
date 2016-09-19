@@ -94,14 +94,34 @@ class Rpy2Pipeline(object):
         mzmatch_params = self.get_value(self.pimp_params, 'mzmatch.params')
         peakml_params = self.get_value(self.pimp_params, 'peakml.params')
         mzmatch_outputs = self.get_value(self.pimp_params, 'mzmatch.outputs')
+        mzmatch_filters = self.get_value(self.pimp_params, 'mzmatch.filters')
         n_slaves = multiprocessing.cpu_count()
 
         # still assuming that there are two polarities: pos and neg
         for polarity in self.files:
 
-            polarity_dir = self.get_polarity_folder(polarity, mzmatch_outputs)
+            # peak detection and rt correction
+            polarity_dir, combined_dir = self.create_input_directories(polarity, mzmatch_outputs)
+            print polarity, polarity_dir, combined_dir
             self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params, 
                                peakml_params, mzmatch_outputs, n_slaves)
+
+            # separate samples into peaksets for grouping            
+            self.generate_peaksets(polarity, polarity_dir, combined_dir, mzmatch_params)  
+            
+            # filter each peakset
+            peaksets = self.filter_peaksets(combined_dir, mzmatch_params)   
+
+            # combine peaksets into a single peakml file and filter it
+            final_combined_file = self.get_formatted_value(mzmatch_outputs, 'final.combined.peakml.file', 
+                                                               analysis_id=self.analysis.id, subst=polarity[0:3])  
+            final_combined_file = os.path.abspath(final_combined_file)
+            print final_combined_file                       
+            self.combine_final(peaksets, final_combined_file, mzmatch_params)            
+            filtered_final_combined_file = self.filter_final(polarity, final_combined_file, 
+                                                             mzmatch_filters, mzmatch_params, mzmatch_outputs)            
+
+            
         
         return_code = 0
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
@@ -144,6 +164,31 @@ class Rpy2Pipeline(object):
         combine_type = self.get_value(mzmatch_params, 'combination')[0]
         NULL = robjects.r("NULL")
         self.combine_peaksets(peaksets, out_file, NULL, ppm, rtwindow, combine_type)
+        
+    def filter_final(self, polarity, in_file, mzmatch_filters, mzmatch_params, mzmatch_outputs):
+        
+        noise_filter = robjects.r['Pimp.noiseFilter']        
+        apply_noise_filter = self.get_value(mzmatch_filters, 'noise')[0]
+        if apply_noise_filter:
+            noise = self.get_value(mzmatch_params, 'noise')[0]
+            out_file = self.get_formatted_value(mzmatch_outputs, 'final.combined.noise.filtered.file', 
+                                                               analysis_id=self.analysis.id, subst=polarity[0:3])  
+            out_file = os.path.abspath(out_file)
+            noise_filter(in_file, out_file, noise)
+        else:
+            out_file = in_file        
+            
+        simple_filter = robjects.r['Pimp.simpleFilter']        
+        in_file = out_file
+        filter_ppm = self.get_value(mzmatch_params, 'ppm')[0]
+        filter_minintensity = self.get_value(mzmatch_params, 'minintensity')[0]
+        filter_mindetections = self.get_value(mzmatch_params, 'mindetections')[0]
+        out_file = self.get_formatted_value(mzmatch_outputs, 'final.combined.simple.filtered.file', 
+                                                           analysis_id=self.analysis.id, subst=polarity[0:3])  
+        out_file = os.path.abspath(out_file)
+        simple_filter(in_file, out_file, filter_ppm, filter_minintensity, filter_mindetections)     
+        
+        return out_file       
         
     ############################################################
     # peak detection
