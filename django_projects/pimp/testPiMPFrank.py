@@ -1,7 +1,7 @@
 import os
 import csv
 import numpy as np
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
+#os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
 
 import django
 django.setup()

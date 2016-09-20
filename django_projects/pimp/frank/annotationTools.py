@@ -7,7 +7,7 @@ from suds.client import Client, WebFault
 import time
 import jsonpickle
 import re
-from pimp.settings_dev import BASE_DIR
+from django.conf import settings
 from subprocess import call, CalledProcessError
 import os
 from django.db.models import Max
@@ -355,14 +355,14 @@ class SIRIUSQueryTool:
             raise
         # Determine suitable names for both the query file and sirius output files
         self.query_file_name = os.path.join(
-            os.path.dirname(BASE_DIR),
+            os.path.dirname(settings.BASE_DIR),
             'pimp',
             'frank',
             'SIRIUSQueryFiles',
             str(self.annotation_query.id)+'.mgf'
         )
         self.sirius_output_file_name = os.path.join(
-            os.path.dirname(BASE_DIR),
+            os.path.dirname(settings.BASE_DIR),
             'pimp',
             'frank',
             'SIRIUSQueryFiles',
@@ -730,7 +730,7 @@ class NISTQueryTool:
         
         #Local directory name
         self.query_nist_dir = os.path.join(
-            os.path.dirname(BASE_DIR),
+            os.path.dirname(settings.BASE_DIR),
             'pimp',
             'frank',
             'NISTQueryFiles')

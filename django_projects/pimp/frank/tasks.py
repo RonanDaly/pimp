@@ -1,7 +1,7 @@
 __author__ = "Scott Greig"
 
 import rpy2.robjects as robjects
-from pimp.settings_dev import MEDIA_ROOT
+from django.conf import settings
 from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, AnnotationTool,\
     CompoundAnnotationTool, FragmentationSet, Experiment, AnnotationQuery
 from djcelery import celery
@@ -11,7 +11,6 @@ from suds.client import WebFault
 import os
 from frank.models import *
 import frank.network_sampler as ns
-from pimp.settings_dev import BASE_DIR
 import jsonpickle
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from frank.annotationTools import MassBankQueryTool, NISTQueryTool,  SIRIUSQueryTool
@@ -151,7 +150,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id):
     experiment_object = Experiment.objects.get(slug=experiment_slug)
     # From the experiment object derive the file directory of the .mzXML files
     filepath = os.path.join(
-        MEDIA_ROOT,
+        settings.MEDIA_ROOT,
         'frank',
         experiment_object.created_by.username,
         experiment_object.slug,
@@ -161,7 +160,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id):
     # Store the source function as a variable
     r_source = robjects.r['source']
     # Derive the location of the R script based on the local directory
-    location_of_script = os.path.join(BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
+    location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
     # Source the script in R
     r_source(location_of_script)
     # Store the function of the R script ('frankMSNPeakMatrix') as a variable
@@ -523,7 +522,7 @@ def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
     experiment_object = Experiment.objects.get(slug=experiment_name_slug)
     # From the experiment object derive the file directory of the .mzXML files
     filepath = os.path.join(
-        MEDIA_ROOT,
+        settings.MEDIA_ROOT,
         'frank',
         experiment_object.created_by.username,
         experiment_object.slug,
@@ -531,7 +530,7 @@ def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
     # Store the source function
     r_source = robjects.r['source']
     # Derive the source of the GCMS R script from the local install
-    location_of_script = os.path.join(BASE_DIR, 'frank', 'Frank_R', 'gcmsGeneratePeakList.R')
+    location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'gcmsGeneratePeakList.R')
     # The script is then sourced in R
     r_source(location_of_script)
     # Then store the function for extracting the peak data
