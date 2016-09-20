@@ -1,3 +1,18 @@
+Pimp.gapFilling <- function(in_file, out_file, ionisation, ppm, rtwindow) {
+	PeakML.GapFiller(filename=in_file, ionisation=ionisation, Rawpath=NULL,
+		outputfile=out_file, ppm=ppm, rtwin=rtwindow,
+		nSlaves=0, fillAll=TRUE
+	)
+}
+
+Pimp.relatedPeaks <- function(in_file, out_file, basepeaks_file, ppm, rtwindow) {
+	mzmatch.ipeak.sort.RelatedPeaks(i=in_file, v=TRUE,o=out_file,
+		basepeaks=basepeaks_file,ppm=ppm, rtwindow=rtwindow)
+}
+
+# --------------------------------------------------------
+# to be replaced by experiments.pipelines.pipeline_rpy2.py
+# --------------------------------------------------------
 Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), mzmatch.filters=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
 	logger <- getPiMPLogger('Pimp.processRawData')
 	loginfo('files: %s', files, logger=logger)

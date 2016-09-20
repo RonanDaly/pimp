@@ -1,4 +1,13 @@
-Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
+Pimp.identify.metabolites.save <- function(in_file, databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
+
+	save(in_file, databases, groups, mzmatch.outputs, mzmatch.params, polarity, file='identify.RData')
+	Pimp.identify.metabolites(in_file, databases, groups, mzmatch.outputs, mzmatch.params, polarity)
+
+}
+
+Pimp.identify.metabolites <- function(in_file, databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
+
+
 	#check file exists - which file?
 	#check databases exist - warn
 	#check stds exist
@@ -6,12 +15,12 @@ Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzma
 	data <- NULL
 	#required annotation columns
   	annot <- "identification,ppm,adduct,relation.id,relation.ship,codadw,charge"
-  	
+
   	if(length(databases) > 0) {
 	  	for(d in 1:length(databases)) {
-	  		
-	  		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file, 
-	  			database=databases[d], 
+
+	  		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file,
+	  			database=databases[d],
 	  			groups=groups,
 	  			annot=annot,
 	  			adducts=mzmatch.params[[paste("adducts", polarity, sep=".")]],
@@ -24,12 +33,12 @@ Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzma
 
    	if(!is.null(mzmatch.outputs$stds.xml.db)) {
 		parent.ion <- switch(polarity, positive = "M+H", negative = "M-H")
-		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file, 
-  			database=mzmatch.outputs$stds.xml.db, 
+		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file,
+  			database=mzmatch.outputs$stds.xml.db,
   			groups=groups,
-  			annot=annot, 
+  			annot=annot,
  			adducts=parent.ion,
-  			ppm=mzmatch.params$ppm,  			
+  			ppm=mzmatch.params$ppm,
   			rtwindow=mzmatch.params$id.rtwindow,
   			rtwindowrelative=TRUE,
   			mzmatch.outputs=mzmatch.outputs)
@@ -63,44 +72,44 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
   # 	doc <- xmlParse(database)
 
   # 	#get DB names from xml
-  # 	data[,"name"] <- sapply(	
-		# as.character(data[,"identification"]), 
+  # 	data[,"name"] <- sapply(
+		# as.character(data[,"identification"]),
 		# 	function(x,doc){
 		# 		.getNameByID(
 		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc, 
+		# 			doc=doc,
 		# 			collapse=T
 		# 		)
 		# 	},
 		# doc=doc)
 
   # 	#get DB formulae from xml
-  # 	data[,"formula"] <- sapply(	
-		# as.character(data[,"identification"]), 
+  # 	data[,"formula"] <- sapply(
+		# as.character(data[,"identification"]),
 		# 	function(x,doc){
 		# 		.getFormulaByID(
 		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc, 
+		# 			doc=doc,
 		# 			collapse=T
 		# 		)
 		# 	},
 		# doc=doc)
 
   # 	#get DB formulae from xml
-  # 	data[,"InChi"] <- sapply(	
-		# as.character(data[,"identification"]), 
+  # 	data[,"InChi"] <- sapply(
+		# as.character(data[,"identification"]),
 		# 	function(x,doc){
 		# 		.getInChiByID(
 		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc, 
+		# 			doc=doc,
 		# 			collapse=T
 		# 		)
 		# 	},
 		# doc=doc)
 
   # 	free(doc)
-  	
-  	return(data)  	
+
+  	return(data)
 }
 
 .generateIdentifiedFileName <- function(file=NULL, database=NULL) {
@@ -177,7 +186,7 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
 	if(collapse) {
 		name <- paste(name, collapse=", ")
 	}
-	
+
 	return(name)
 }
 
@@ -195,7 +204,7 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
 	if(collapse) {
 		formula <- paste(formula, collapse=", ")
 	}
-	
+
 	return(formula)
 }
 
@@ -213,6 +222,6 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
 	if(collapse) {
 		inchi <- paste(inchi, collapse=", ")
 	}
-	
+
 	return(inchi)
 }

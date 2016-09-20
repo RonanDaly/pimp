@@ -99,9 +99,12 @@ class Rpy2Pipeline(object):
 
         # still assuming that there are two polarities: pos and neg
         for polarity in self.files:
-
+            
+            format_mzmatch_outputs = robjects.r['Pimp.getFormattedMzmatchOutputs']
+            formatted_mzmatch_outputs = format_mzmatch_outputs(self.analysis.id, polarity, mzmatch_outputs)
+            
             # peak detection and rt correction
-            polarity_dir, combined_dir = self.create_input_directories(polarity, mzmatch_outputs)
+            polarity_dir, combined_dir = self.create_input_directories(polarity, formatted_mzmatch_outputs)
             print polarity, polarity_dir, combined_dir
             self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params, 
                                peakml_params, mzmatch_outputs, n_slaves)
@@ -113,16 +116,15 @@ class Rpy2Pipeline(object):
             peaksets = self.filter_peaksets(combined_dir, mzmatch_params)   
 
             # combine peaksets into a single peakml file and filter it
-            final_combined_file = self.get_formatted_value(mzmatch_outputs, 'final.combined.peakml.file', 
-                                                               analysis_id=self.analysis.id, subst=polarity[0:3])  
-            final_combined_file = os.path.abspath(final_combined_file)
-            print final_combined_file                       
-            self.combine_final(peaksets, final_combined_file, mzmatch_params)            
-            filtered_final_combined_file = self.filter_final(polarity, final_combined_file, 
-                                                             mzmatch_filters, mzmatch_params, mzmatch_outputs)            
+            out_file = self.combine_final(polarity, peaksets, mzmatch_params, formatted_mzmatch_outputs)            
+            out_file = self.filter_final(polarity, out_file, mzmatch_filters, mzmatch_params, formatted_mzmatch_outputs)            
 
+            # do gap filling
+            out_file = self.gap_filling(polarity, out_file, peakml_params, formatted_mzmatch_outputs)
             
-        
+            # do related peaks
+            out_file = self.related_peaks(polarity, out_file, mzmatch_params, formatted_mzmatch_outputs)
+            
         return_code = 0
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
         xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(self.project.id), xml_file_name)
@@ -136,7 +138,7 @@ class Rpy2Pipeline(object):
                     
         positive_files = self.get_value(self.metadata.r_files, polarity)
         xset = self.peak_detection(positive_files, xcms_params, n_slaves) 
-        rt_correction_method = self.get_formatted_value(mzmatch_params, 'rt.alignment')            
+        rt_correction_method = self.get_value(mzmatch_params, 'rt.alignment')[0]            
         fp, xseto = self.rt_correct(xset, rt_correction_method, peakml_params, mzmatch_outputs, n_slaves, True)   
         self.generate_peakml_files(xseto, fp, polarity_dir, self.analysis.id, peakml_params)  
 
@@ -158,12 +160,17 @@ class Rpy2Pipeline(object):
         peaksets = self.rsd_filter(peaksets, rsd)
         return peaksets
     
-    def combine_final(self, peaksets, out_file, mzmatch_params):
+    def combine_final(self, polarity, peaksets, mzmatch_params, mzmatch_outputs):
+        out_file = self.get_value(mzmatch_outputs, 'final.combined.peakml.file')[0]
+        out_file = os.path.abspath(out_file)
+        
         ppm = self.get_value(mzmatch_params, 'ppm')[0]
         rtwindow = self.get_value(mzmatch_params, 'rtwindow')[0]
         combine_type = self.get_value(mzmatch_params, 'combination')[0]
         NULL = robjects.r("NULL")
         self.combine_peaksets(peaksets, out_file, NULL, ppm, rtwindow, combine_type)
+        
+        return out_file
         
     def filter_final(self, polarity, in_file, mzmatch_filters, mzmatch_params, mzmatch_outputs):
         
@@ -171,8 +178,7 @@ class Rpy2Pipeline(object):
         apply_noise_filter = self.get_value(mzmatch_filters, 'noise')[0]
         if apply_noise_filter:
             noise = self.get_value(mzmatch_params, 'noise')[0]
-            out_file = self.get_formatted_value(mzmatch_outputs, 'final.combined.noise.filtered.file', 
-                                                               analysis_id=self.analysis.id, subst=polarity[0:3])  
+            out_file = self.get_value(mzmatch_outputs, 'final.combined.noise.filtered.file')[0]
             out_file = os.path.abspath(out_file)
             noise_filter(in_file, out_file, noise)
         else:
@@ -183,12 +189,39 @@ class Rpy2Pipeline(object):
         filter_ppm = self.get_value(mzmatch_params, 'ppm')[0]
         filter_minintensity = self.get_value(mzmatch_params, 'minintensity')[0]
         filter_mindetections = self.get_value(mzmatch_params, 'mindetections')[0]
-        out_file = self.get_formatted_value(mzmatch_outputs, 'final.combined.simple.filtered.file', 
-                                                           analysis_id=self.analysis.id, subst=polarity[0:3])  
+        out_file = self.get_value(mzmatch_outputs, 'final.combined.simple.filtered.file')[0]
         out_file = os.path.abspath(out_file)
         simple_filter(in_file, out_file, filter_ppm, filter_minintensity, filter_mindetections)     
         
-        return out_file       
+        return out_file      
+    
+    def gap_filling(self, polarity, in_file, peakml_params, mzmatch_outputs):
+        
+        out_file = self.get_value(mzmatch_outputs, 'final.combined.gapfilled.file')[0]
+        out_file = os.path.abspath(out_file)
+        
+        ionisation = self.get_value(peakml_params, 'ionisation')[0]
+        ppm = self.get_value(peakml_params, 'ppm')[0]
+        rtwindow = self.get_value(peakml_params, 'rtwin')[0]
+        gap_filler = robjects.r['Pimp.gapFilling']
+        gap_filler(in_file, out_file, ionisation, ppm, rtwindow)
+
+        return out_file
+
+    def related_peaks(self, polarity, in_file, mzmatch_params, mzmatch_outputs):
+        
+        out_file = self.get_value(mzmatch_outputs, 'final.combined.related.file')[0]
+        out_file = os.path.abspath(out_file)
+
+        basepeak_file = self.get_value(mzmatch_outputs, 'final.combined.basepeaks.file')[0]
+        basepeak_file = os.path.abspath(basepeak_file)
+        
+        ppm = self.get_value(mzmatch_params, 'ppm')[0]
+        rtwindow = self.get_value(mzmatch_params, 'rtwindow')[0]
+        related_peaks = robjects.r['Pimp.relatedPeaks']
+        related_peaks(in_file, out_file, basepeak_file, ppm, rtwindow)
+
+        return out_file, basepeak_file
         
     ############################################################
     # peak detection
@@ -428,22 +461,7 @@ class Rpy2Pipeline(object):
         
     def get_value(self, r_vect, key):
         return r_vect[r_vect.names.index(key)]    
-    
-    def get_formatted_value(self, r_vect, key, analysis_id=None, subst=None):
-    
-        str_vect = self.get_value(r_vect, key)
-        my_str = str_vect[0]
         
-        # replace 'analysis' with 'analysis_%d'
-        if analysis_id is not None:
-            my_str = my_str.replace('analysis', 'analysis_%d' % analysis_id)
-        
-        # replace the 'polarity' bit
-        if subst is not None:
-            my_str = my_str % subst
-    
-        return my_str             
-    
     def get_env_heap_size(self):
         xmx = getString('PIMP_JAVA_PARAMETERS', '')
         found = re.findall(r'\d+', xmx)
@@ -456,8 +474,7 @@ class Rpy2Pipeline(object):
             os.makedirs(directory) 
             
     def create_input_directories(self, polarity, mzmatch_outputs):
-        polarity_dir = self.get_formatted_value(mzmatch_outputs, 'polarity.folder', 
-                                                   analysis_id=self.analysis.id, subst=polarity[0:3])  
+        polarity_dir = self.get_value(mzmatch_outputs, 'polarity.folder')[0]
         polarity_dir = os.path.abspath(polarity_dir)
         combined_dir = os.path.join(polarity_dir, 'combined')            
         self.create_if_not_exist(polarity_dir)   

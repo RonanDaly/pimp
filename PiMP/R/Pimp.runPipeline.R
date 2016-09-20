@@ -151,6 +151,17 @@ Pimp.getAnalysisParams <- function(analysis_id) {
 
 }
 
+Pimp.getFormattedMzmatchOutputs <- function(analysis_id, polarity, mzmatch_outputs) {
+
+    mzmatch_outputs <- lapply(mzmatch_outputs, function(x) {
+        sub(paste0("^", mzmatch_outputs$analysis.folder),
+            paste0(mzmatch_outputs$analysis.folder, "_", analysis_id), x)
+    })
+    mzmatch_outputs <- lapply(mzmatch_outputs, sprintf, polarity)
+    return(mzmatch_outputs)
+
+}
+
 # TODO: this can be done in Python ..?
 Pimp.createAnalysisDir <- function(analysis_id, pimp_params) {
 
