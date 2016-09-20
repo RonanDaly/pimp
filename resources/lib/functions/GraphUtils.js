@@ -1324,7 +1324,7 @@ metExploreD3.GraphUtils = {
 						    	networkJSON+="\"mapValue\":"+JSON.stringify(mappingData.getMapValue());
 						    	networkJSON+="}";
 						    	var index = node.getMappingDatas().indexOf(mappingData);
-						    	if(index == node.getMappingDatas().length-1)
+						    	if(index != node.getMappingDatas().length-1)
 						    		networkJSON+=",";
 					   		});
 						    networkJSON+="],";	

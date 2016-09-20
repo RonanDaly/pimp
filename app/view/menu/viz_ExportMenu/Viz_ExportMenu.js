@@ -35,13 +35,14 @@ Ext.define('metExploreViz.view.menu.viz_ExportMenu.Viz_ExportMenu', {
                  reference:'exportJPG',
                  tooltip:'Export network viz as a jpeg file',
                  iconCls:'exportJpg'
-                },
-                {
-                 text: 'Export Comparison of Condition',
-                 reference:'exportComparison',
-                 tooltip:'Export Comparison of Condition as a png file',
-                 iconCls:'exportComparePng'
                 }
+            // ,
+            //     {
+            //      text: 'Export Comparison of Condition',
+            //      reference:'exportComparison',
+            //      tooltip:'Export Comparison of Condition as a png file',
+            //      iconCls:'exportComparePng'
+            //     }
         ]
 });
 

@@ -252,6 +252,12 @@ p {
   background-repeat: no-repeat;
 }
 
+.rescale {
+       background-image: url(../icons/rescale.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
 .unlink {
        background-image: url(../icons/unlink.svg);
     background-size: 100% 100%;

@@ -90,8 +90,7 @@ Ext.define('metExploreViz.view.form.selectConditionForm.SelectConditionFormContr
 				var networkVizSession = _metExploreViz.getSessionById("viz");
 				var that = this;
 
-				// If the main network is already mapped we inform the user: OK/CANCEL
-				console.log(view.lookupReference('selectCondition').getValue());	
+				// If the main network is already mapped we inform the user: OK/CANCEL	
 				
 				if(view.lookupReference('selectCondition').getValue().length>0)	
 				{
@@ -145,9 +144,11 @@ Ext.define('metExploreViz.view.form.selectConditionForm.SelectConditionFormContr
 				        }
 				    }
 			    
+					if(session.getMappingDataType()=="Flux"|| Array.isArray(session.isMapped()))
+						var container = Ext.getCmp('panel'+session.isMapped()[0].replace(".", ""));
+					else
+						var container = Ext.getCmp('panel'+session.isMapped().replace('.',''));
 
-					console.log(container);
-					var container = Ext.getCmp('panel'+session.isMapped().replace('.',''));
 					if(container!=undefined){				
 						container.close();
 						var colorStore = session.getColorMappingsSet();
@@ -203,8 +204,10 @@ Ext.define('metExploreViz.view.form.selectConditionForm.SelectConditionFormContr
 		        }
 		    }
 		    
-
-			var container = Ext.getCmp('panel'+session.isMapped().replace(".", ""));
+			if(session.getMappingDataType()=="Flux"|| Array.isArray(session.isMapped()))
+				var container = Ext.getCmp('panel'+session.isMapped()[0].replace(".", ""));
+			else
+				var container = Ext.getCmp('panel'+session.isMapped().replace(".", ""));
 			
 			if(container!=undefined){				
 				container.close();
