@@ -1490,7 +1490,7 @@ metExploreD3.GraphNode = {
 		d3.select("#viz").select("#D3viz")
             .selectAll("g.node")
             .filter(function(d){
-                return d.getId()==id;
+                return d.getDbIdentifier()==id || d.getId()==id;
             })
             .each(function(d){
                 if(!d.isSelected())

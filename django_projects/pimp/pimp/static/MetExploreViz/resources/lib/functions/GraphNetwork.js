@@ -845,7 +845,25 @@ metExploreD3.GraphNetwork = {
 			})
 			.attr("width", "50")
 			.attr("height", "50")
-			.attr("transform", "translate(10,10) scale(.5)");	
+			.attr("transform", "translate(10,10) scale(.5)");
+
+		d3
+			.select("#"+panel)
+			.select("#D3viz")
+			.append("svg:g")
+			.attr("class","buttonRescale").attr("id","buttonRescale")
+		// .on("click", metExploreD3.GraphNetwork.play)
+			.on("click", function(){
+				metExploreD3.GraphNetwork.rescale(panel);
+			})
+			.style("cursor", "hand")
+			.append("image")
+			.attr("xlink:href", function(){
+				return document.location.href.split("index.html")[0] + "resources/icons/rescale.png";
+			})
+			.attr("width", "50")
+			.attr("height", "50")
+			.attr("transform", "translate(80,10) scale(.5)");
 
 		d3
 			.select("#"+panel)
@@ -1164,6 +1182,33 @@ metExploreD3.GraphNetwork = {
 		session.setForce(force);
 	},
 
+	rescale : function(panel){
+		var graphComponentRect = d3.select("#"+panel).select("#D3viz")[0][0].getElementById('graphComponent').getBoundingClientRect();
+		var vizRect = document.getElementById(panel).getBoundingClientRect();
+		var hViz = vizRect.bottom - vizRect.top-20;
+		var hGC = graphComponentRect.bottom - graphComponentRect.top;
+		console.log(hGC);
+		var scale = metExploreD3.getScaleById(panel);
+		var zoomListener = scale.getZoom();
+
+		var newScale = hViz*zoomListener.scale()/hGC;
+		console.log(newScale);
+		scale.setZoomScale(newScale);
+
+		var wGC = graphComponentRect.right-graphComponentRect.left;
+		var hGC = graphComponentRect.bottom-graphComponentRect.top;
+
+		var hViz = vizRect.bottom - vizRect.top-20;
+		var wViz = vizRect.right - vizRect.left-20;
+		d3.select("#"+panel).select("#D3viz").select("#graphComponent")
+		var zoom = scale.getZoom();
+		zoom.scale(newScale);
+		var dcx = (wViz/2-((wViz/2)*zoom.scale()));
+		var dcy = (hViz/2-((hViz/2)*zoom.scale()));
+		zoom.translate([dcx,dcy]);
+		d3.select("#"+panel).select("#D3viz").select("#graphComponent").attr("transform", "translate("+ dcx + "," + dcy +")scale(" + newScale + ")");
+
+	},
 	initCentroids : function(){
 		//d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node").filter(function(node){return node.getPathways().length>1}).style("fill", 'red');
 
@@ -3724,6 +3769,23 @@ setTimeout(
 			.attr("width", "50")
 			.attr("height", "50")
 			.attr("transform", "translate(10,10) scale(.5)");
+
+		d3
+			.select("#"+panel)
+			.select("#D3viz")
+        	.append("svg:g")
+			.attr("class","buttonRescale").attr("id","buttonRescale")
+			.on("click", function(){
+				metExploreD3.GraphNetwork.rescale(panel);
+			})
+			.style("cursor", "hand")
+			.append("image")
+			.attr("xlink:href", function(){
+					return document.location.href.split("index.html")[0] + "resources/icons/rescale.png";
+			})
+			.attr("width", "50")
+			.attr("height", "50")
+			.attr("transform", "translate(80,10) scale(.5)");
 
 		d3
 			.select("#"+panel)
