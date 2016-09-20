@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
 
 
-	os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
+	#os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pimp.settings_dev')
 	django.setup()
 	from frank.models import Experiment,Peak,SampleFile,FragmentationSet,AnnotationQuery,CandidateAnnotation,Repository,Compound,CompoundRepository
 
