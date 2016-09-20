@@ -250,14 +250,14 @@
 			$('#metabolites_table_super_pathway_selector').select2({
 				placeholder: "Select super pathway",
 				allowClear: true,
-				data: super_pathway_list, 
+				data: super_pathway_list,
 			});
 
 			$('#metabolites_table_pathway_selector').select2({
 				placeholder: "Select pathway",
 				allowClear: true,
 				matcher: modelMatcher,
-				data: pathway_list, 
+				data: pathway_list,
 			});
 
 			var $superPathwaySelect = $("#metabolites_table_super_pathway_selector");
@@ -284,12 +284,12 @@
 					placeholder: "Select pathway",
   					allowClear: true,
   					matcher: modelMatcher,
-  					data: pathway_map[selectedSuperPathway], 
+  					data: pathway_map[selectedSuperPathway],
 				});
 				// $superPathwaySelect.select2({
 				// 	placeholder: "Select super pathway",
 				// 		allowClear: true,
-				// 		data: super_pathway_list, 
+				// 		data: super_pathway_list,
 				// });
 				// $superPathwaySelect.val(selectedSuperPathway).trigger("change");
 
@@ -310,11 +310,11 @@
 					placeholder: "Select pathway",
   					allowClear: true,
   					matcher: modelMatcher,
-  					data: pathway_list, 
+  					data: pathway_list,
 				});
 			});
 
-			
+
 
 			$pathwaySelect.on("select2:select", function (e) {
 				var selectedPathway = e.target.value;
@@ -803,21 +803,25 @@
 		            }
 	            },
 	            series: [{
+					{% with comparison|timer_start as time %}
 	                name: 'Adj. P-value > 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
-		                			{% if peak.2 > 0.05 %} 
-		                			{ 
+		                			{% if peak.2 > 0.05 %}
+		                			{
 		                				name: 'Peak {{ peak.0 }}',
 		                				x: {{ peak.1  }},
 		                				y: {{ peak.2|minuslogten }},
 		                			}{% if not forloop.last %},{% endif %}
-		                			{% endif %} 
+		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
-		                	] 
+//					{{ time|timer_end:'Non-significant peaks' }}
+					{% endwith %}
+		                	]
 		            },
 		            {
+					{% with comparison|timer_start as time %}
 	                name: 'Adj. P-value &lt; 0.05',
 	                data: [{% for peak in comparison.1 %}
 {#		                		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
@@ -830,6 +834,8 @@
 		                			{% endif %}
 {#		                		{% endwith %} #}
 		                	{% endfor %}
+//					{{ time|timer_end:'Significant peaks' }}
+					{% endwith %}
 		                	]
 		            },
             	]
@@ -1025,6 +1031,51 @@
 
 			{% for comparison in comparisons %}
 				var comparisonTable{{ comparison.id }} = $('#comparison{{ comparison.id }}-table').dataTable( {
+                    "sAjaxSource": "{% url 'get_single_comparison_table' project.id analysis.id comparison.id %}",
+                    "aoColumnDefs": [{
+                            "aTargets": [1],
+                            "sType": "formatted-lfc",
+                            "mRender": function(lfc, type, full) {
+                                var value = Number((lfc).toFixed(2))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [2],
+                            "sType": "formatted-pv",
+                            "mRender": function(pv, type, full) {
+                                var value = Number((pv).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [3],
+                            "sType": "formatted-lfc",
+                            "mRender": function(apv, type, full) {
+                                var value = Number((apv).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        },
+                        {
+                            "aTargets": [4],
+                            "sType": "formatted-lfc",
+                            "mRender": function(lo, type, full) {
+                                var value = Number((lo).toFixed(4))
+                                // var value = Math.floor(rt / 60);
+                                // var seconds = Math.round(rt % 60); // Rounded to nearest second
+                                // return rt + " ("+ minutes + " min "+ seconds + " s)";
+                                return value
+                            }
+                        }],
 					"sDom": '<"comparison-table_wrapper_toolbar"liT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
@@ -1074,7 +1125,8 @@
 			{% endfor %}
 
 			{% for comparison in comparisons %}
-			comparisonTable{{ comparison.id }}.$('tr').click( function () {
+            $('#comparison{{ comparison.id }}-table').on('click', 'tr', function() {
+			// comparisonTable{{ comparison.id }}.$('tr').click( function () {
 				// get data from the row clicked as an array
 			    var data = comparisonTable{{ comparison.id }}.fnGetData( this );
 
@@ -1251,83 +1303,228 @@
                     // Override the event to stop any action e.g. form submission
                     e.preventDefault();
 
-                    // Get the correct div to insert the chromatogram
-                    var chromatogramDiv = $(this).closest('.metabolites-chromatogram-div');
-
                     // Get the associated peak secondaryID
                     var peakID = $(this).prop('id').split("-")[1];
 
+                    // Get the correct div to insert the chromatogram
+                    // var chromatogramDiv = $(this).closest('.metabolites-chromatogram-div');
+                    var cardPlotDiv = $('#card-content-peak-'+peakID);
+
+                    var intensityPlotDiv = $('#card-intensity-'+peakID);
+
+                    var chromatogramPlotDiv = $('#card-chromatogram-'+peakID);
+
                     // Remove the button and replace with a loading image
-                    $(this).remove();
-                    var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
-                    $(loadingPan).appendTo(chromatogramDiv);
+                    // $(this).remove();
 
-                    // Make the AJAX call for the chromatogram
-                    var data = {"id": peakID, "ppm": ppm, "rtwindow": rtwindow};
-                    var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
-
-                    $.ajax({
-                        type: "GET",
-                        traditional : true,
-                        url: url,
-                        data: data,
-                        success: function(response){
-                            // Empty the chromatogramDiv
-                            chromatogramDiv.empty();
-
-                            // And fill the div with the chromatogram
-                            var chartWidth = $(chromatogramDiv).width() - 10;
-
-                            createPeaksChromatogram(chartWidth, chromatogramDiv, response);
-
-                            // Remove the loading graphic
-                            loadingPan.remove();
-                        },
-                        error: function(){
-                            alert("Error with chromatogram in metabolites tab");
+                    if (chromatogramPlotDiv.attr('data-exist') == 'true'){
+                        if (cardPlotDiv.attr('content-displayed') == 'chromatogram'){
+                            cardPlotDiv.toggle('slow');
                         }
-                    });
+                        else {
+                            intensityPlotDiv.hide();
+                            chromatogramPlotDiv.show();
+                            cardPlotDiv.attr('content-displayed','chromatogram');
+                            if (cardPlotDiv.css('display') == 'none'){
+                                cardPlotDiv.toggle('slow');
+                            }
+                        }
+                    }
+                    else {
+                        var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;display:none;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
+                        $(loadingPan).appendTo(cardPlotDiv);
+                        cardPlotDiv.show();
+                        if (cardPlotDiv.attr('content-displayed') == 'none'){
+                            loadingPan.toggle('slow');
+                        }
+                        else{
+                            intensityPlotDiv.hide();
+                            loadingPan.show();
+                        }
+                        
+                        // Make the AJAX call for the chromatogram
+                        var data = {"id": peakID, "ppm": ppm, "rtwindow": rtwindow};
+                        var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
 
+                        $.ajax({
+                            type: "GET",
+                            traditional : true,
+                            url: url,
+                            data: data,
+                            success: function(response){
+                                // Empty the chromatogramDiv
+                                // chromatogramDiv.empty();
+
+                                // And fill the div with the chromatogram
+                                var chartWidth = $(cardPlotDiv).width() - 10;
+
+                                createPeaksChromatogram(chartWidth, chromatogramPlotDiv, response);
+
+                                chromatogramPlotDiv.attr('data-exist', 'true');
+
+                                // Remove the loading graphic
+                                loadingPan.remove();
+                                // if (intensityPlotDiv.css('display') == 'none'){
+                                if (cardPlotDiv.attr('content-displayed') == 'none'){
+                                    // chromatogramPlotDiv.show();
+                                    chromatogramPlotDiv.toggle('slow');
+                                    console.log("data doesn't exist and content-displayed == none");
+                                    cardPlotDiv.attr('content-displayed','chromatogram');
+                                    // cardPlotDiv.toggle('slow');
+                                }
+                                else {
+                                    // intensityPlotDiv.hide();
+                                    chromatogramPlotDiv.show();
+                                    cardPlotDiv.attr('content-displayed','chromatogram');
+                                    console.log("content display == "+cardPlotDiv.attr('content-displayed'));
+                                    if (cardPlotDiv.css('display') == 'none'){
+                                        cardPlotDiv.toggle('slow');
+                                    }
+                                }
+                            },
+                            error: function(){
+                                alert("Error with chromatogram in metabolites tab");
+                            }
+                        });
+                    }
                 })
                 .on('click', '.metabolites-intensity-plot-btn', function(e) {
                     // Override the event to stop any action e.g. form submission
                     e.preventDefault();
 
+                    // Get the associated peak secondaryID
+                    var peakID = $(this).prop('id').split("-")[1];
+
                     // Get the correct div to insert the intensity plot
-                    var intensityPlotDiv = $(this).closest('.metabolites-intensity-plot-div');
+                    // var intensityPlotDiv = $(this).closest('.card-content');
+                    var cardPlotDiv = $('#card-content-peak-'+peakID);
+
+                    var intensityPlotDiv = $('#card-intensity-'+peakID);
+
+                    var chromatogramPlotDiv = $('#card-chromatogram-'+peakID);
+
+                    // Remove the button and replace with a loading image
+                    // $(this).remove();
+
+                    if (intensityPlotDiv.attr('data-exist') == 'true'){
+                        if (cardPlotDiv.attr('content-displayed') == 'intensity'){
+                            cardPlotDiv.toggle('slow');
+                        }
+                        else {
+                            chromatogramPlotDiv.hide();
+                            intensityPlotDiv.show();
+                            cardPlotDiv.attr('content-displayed','intensity');
+                            if (cardPlotDiv.css('display') == 'none'){
+                                cardPlotDiv.toggle('slow');
+                            }
+                        }
+                    }
+                    else {
+                        var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
+                        $(loadingPan).appendTo(cardPlotDiv);
+                        cardPlotDiv.show();
+                        if (cardPlotDiv.attr('content-displayed') == 'none'){
+                            loadingPan.toggle('slow');
+                        }
+                        else{
+                            chromatogramPlotDiv.hide();
+                            loadingPan.show();
+                        }
+                        console.log(peakID);
+                        console.log("before toggle");
+                        console.log(intensityPlotDiv);
+
+                        // Make the ajax call for the intensity plot
+                        var data = {"id": peakID};
+                        var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+                        $.ajax({
+                            type: "GET",
+                            traditional : true,
+                            url: url,
+                            data: data,
+                            success: function(response) {
+                                // Empty the intensityPlotDiv
+                                // intensityPlotDiv.empty();
+
+                                // And fill the div with the intensity plot
+                                var chartWidth = $(cardPlotDiv).width() - 10;
+                                console.log(chartWidth);
+                                averageIntensityChartFromCompound(chartWidth, intensityPlotDiv, response);
+                                intensityPlotDiv.attr('data-exist', 'true');
+
+                                // Remove the loading graphic
+                                loadingPan.remove();
+                                // if (intensityPlotDiv.css('display') == 'none'){
+                                if (cardPlotDiv.attr('content-displayed') == 'none'){
+                                    // intensityPlotDiv.show();
+                                    intensityPlotDiv.toggle('slow');
+                                    console.log("data doesn't exist and content-displayed == none");
+                                    cardPlotDiv.attr('content-displayed','intensity');
+                                    // cardPlotDiv.toggle('slow');
+                                }
+                                else {
+                                    chromatogramPlotDiv.hide();
+                                    intensityPlotDiv.show();
+                                    cardPlotDiv.attr('content-displayed','intensity');
+                                    console.log("content display == "+cardPlotDiv.attr('content-displayed'));
+                                    if (cardPlotDiv.css('display') == 'none'){
+                                        cardPlotDiv.toggle('slow');
+                                    }
+                                }
+                                
+                                // }
+                            },
+                            error: function() {
+                                alert("Error with average intensity plot in metabolites tab");
+                            }
+                        });
+                    }
+                })
+                .on('click', '.identified_peak_marker', function(e){
+
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
 
                     // Get the associated peak secondaryID
                     var peakID = $(this).prop('id').split("-")[1];
 
-                    // Remove the button and replace with a loading image
-                    $(this).remove();
-                    var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
-                    $(loadingPan).appendTo(intensityPlotDiv);
+                    // Get the note div to display
+                    var noteDiv = $('#identified-note-peak-'+peakID);
 
-                    // Make the ajax call for the intensity plot
-                    var data = {"id": peakID};
-                    var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+                    // Function that closes the note div when called
+                    function closeDiv(){
+                        noteDiv.toggle('slow');
+                    }
 
-                    $.ajax({
-                        type: "GET",
-                        traditional : true,
-                        url: url,
-                        data: data,
-                        success: function(response) {
-                            // Empty the intensityPlotDiv
-                            intensityPlotDiv.empty();
+                    // Open the note div
+                    noteDiv.toggle('slow');
 
-                            // And fill the div with the intensity plot
-                            var chartWidth = $(intensityPlotDiv).width() - 10;
-                            averageIntensityChartFromCompound(chartWidth, intensityPlotDiv, response);
+                    // Call the close div function after 4 seconds (the information doesn't need to be displayed once read - maybe annyoing for very super slow readers...)
+                    setTimeout(closeDiv, 4000);
 
-                            // Remove the loading graphic
-                            loadingPan.remove();
-                        },
-                        error: function() {
-                            alert("Error with average intensity plot in metabolites tab");
-                        }
-                    });
+                })
+                .on('click', '.annotated_compound_number', function(e){
+                    console.log("blablablabla");
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the associated peak secondaryID
+                    var peakID = $(this).prop('id').split("-")[1];
+
+                    // Get the note div to display
+                    var noteDiv = $('#annotation_number_note-'+peakID);
+
+                    // Function that closes the note div when called
+                    function closeDiv(){
+                        noteDiv.toggle('slow');
+                    }
+
+                    // Open the note div
+                    noteDiv.toggle('slow');
+
+                    // Call the close div function after 4 seconds (the information doesn't need to be displayed once read - maybe annyoing for very super slow readers...)
+                    setTimeout(closeDiv, 4000);
+
                 });
 
 			function updateMetabolitesRightPanel(rowInfo, innerSidePanel) {
@@ -1344,6 +1541,8 @@
 
                 // Structure for the compound
 
+                console.log(rowInfo);
+
                 var data = {"id":rowInfo[0]};
 
 				var url = "{% url 'get_compound_info' project.id analysis.id %}";
@@ -1355,49 +1554,89 @@
 		            data: data,
 		            success: function(response){
 		            	var database_info = {};
-		            	for (var i=2;i<response.length;i++){
+		            	for (var i=3;i<response.length;i++){
 		            		database_info[response[i][0]] = [response[i][1],response[i][2]];
 		            	}
-		            	$(evidencePanel).append('<div class="span12" style="margin-left:0px;"><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">DB</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><select class="span6 db_selector">');
+		            	$(evidencePanel).append('<div class="card"><div class="span12 card-title__click" id="compound-card-title" style="margin-left:0px;"><h5 class="right-side-title">Compound</h5><span class="card-face__title"></span></div><div class="span12 structure card-content" id="compound-card-content" style="margin-left:0px;display:none;"></div><div class="span12 compound_name" style="margin-left:0px;"></div><div class="span12" style="margin-left:0px;padding-left:13px;margin-top:10px;"><span class="span6" style="padding-top: 7px;">Database</span><select class="span4 db_selector" style="float: right;margin-right: 10px;"></select></div></div>');
 		            	for (var index in database_info){
 		            		$('.db_selector').append('<option value="'+index+'">'+index+'</option>');
 		            	}
-		            	$(evidencePanel).append('</select></div><div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Structure</h5></div><div class="span12 structure" style="margin-left:0px;"></div>');
+		            	// $(evidencePanel).append('</select></div><div class="span12 structure" style="margin-left:0px;"></div>');
                         var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading structure...</p></div>');
 		            	$(loadingPan).appendTo(evidencePanel);
 		            	var structureDom;
 		            	if ($('select.db_selector').val() == "hmdb"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="Compound structure"><span class="card-face__title"></span>');
+                            nameDom = $('<span id="compound-name">'+database_info["hmdb"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
 		            	else if ($('select.db_selector').val() == "kegg"){
-		            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="Compound structure"><span class="card-face__title"></span>');
+                            nameDom = $('<span id="compound-name">'+database_info["kegg"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
 		            	else if ($('select.db_selector').val() == "lipidmaps"){
-		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="Compound structure"><span class="card-face__title"></span>');
+                            nameDom = $('<span id="compound-name">'+database_info["lipidmaps"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
 		            	else {
 		            		structureDom = $('<p>Structure not available</p>');
+                            nameDom = $('<span id="compound-name">'+database_info["stds_db"][0]+'</span><span class="card-face__bottom"></span>');
 		            	}
+
+                        $('#compound-card-title').click(function(){
+                                $('#compound-card-content').toggle('slow');
+                            });
+                        
+                        // Add pathway card
+                        if (response[2] != null){
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title__click" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+response[2].length+'</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                            for (var i=0;i<response[2].length;i++){
+                                console.log(response[2][i]);
+                                if (i % 2 == 0){
+                                    $('#metabolite_pathway_list').append('<li>'+response[2][i]+'</li>');
+                                }
+                                else {
+                                    $('#metabolite_pathway_list').append('<li style="color: rgb(112, 158, 241);">'+response[2][i]+'</li>');
+                                }
+                            }
+                            $('#pathway-card-title').click(function(){
+                                $('#pathway-card-content').toggle('slow');
+                            });
+                        }
+                        else{
+                            $(evidencePanel).append('<div class="card"><div class="span12 card-title__click" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathways<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">0</span></h5></div><div class="span12" id="pathway-card-content" style="display:none;"><ul id="metabolite_pathway_list"></ul></div></div>');
+                        }
                         $(loadingPan).remove();
 
 		            	var structureDiv = $('.structure');
 		            	$(structureDom).appendTo($(structureDiv));
+
+                        var compoundNameDiv = $('.compound_name');
+                        $(nameDom).appendTo($(compoundNameDiv));
+
 		            	$('select.db_selector').change(function (){
 		            		$('select.db_selector').val($(this).val());
 		            		if ($(this).val() == "hmdb"){
-		            		    structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="some_text">');
+		            		    structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://structures.wishartlab.com/molecules/'+database_info["hmdb"][1]+'/image.png" alt="Compound structure"><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["hmdb"][0]+'</span><span class="card-face__bottom"></span>');
 			            	}
 			            	else if ($(this).val() == "kegg"){
-			            		structureDom = $('<img class="img-polaroid" style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="some_text">');
+			            		structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.kegg.jp/Fig/compound/'+database_info["kegg"][1]+'.gif" alt="Compound structure"><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["kegg"][0]+'</span><span class="card-face__bottom"></span>');
 			            	}
 			            	else if ($(this).val() == "lipidmaps"){
-		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="some_text">');
+		            			structureDom = $('<img style="margin: auto;float: none; display: block;" src="http://www.lipidmaps.org/data/LMSDRecord.php?Mode=LMGIFImage&LMID='+database_info["lipidmaps"][1]+'" alt="Compound structure"><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["lipidmaps"][0]+'</span><span class="card-face__bottom"></span>');
 		            		}
 			            	else {
-			            		structureDom = $('<p>Structure not available</p>');
+			            		structureDom = $('<p>Structure not available</p><span class="card-face__bottom"></span>');
+                                nameDom = $('<span id="compound-name">'+database_info["stds_db"][0]+'</span><span class="card-face__bottom"></span>');
 			            	}
+                            // $('#compound-card-content').toggle('slow');
 			            	$(structureDiv).empty();
 			            	$(structureDom).appendTo($(structureDiv));
+                            // $('#compound-card-content').toggle('slow');
+                            $(compoundNameDiv).empty();
+                            $(nameDom).appendTo($(compoundNameDiv));
 			            });
 		            },
 		            error: function(){
@@ -1419,31 +1658,42 @@
                         var peaksData = response["aaData"];
                         $.each(peaksData, function(peakDataId) {
                             // Creates a peakDiv for every peak that is associated with the compound. The id of the peakDiv is set to peak.secondaryID for ease of access. $('#evidencePanel #1')
-                            var peakDiv = $('<div class="span12 peak-div" id="peak-'+peaksData[peakDataId][0]+'" style="border-top: solid 1px gray; margin: 0px;"></div>');
+                            var peakDiv = $('<div class="card peak-div" id="peak-'+peaksData[peakDataId][0]+'"></div>');
 
                             // If there is more than one peak, add the peak number to the peakDiv
                             if (peaksData.length > 1) {
-                                peakDiv.append('<h5>Peak #'+(peakDataId + 1)+'</h5>');
+                                // If the peak identified then add the "identified PiMP icon" and the explanative note div
+                                if (peaksData[peakDataId][7] == true) {
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak #'+(peakDataId + 1)+'<span class="identified_peak_marker" id="identified_peak-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;"><img src="{{ STATIC_URL }}img/PiMP_logo_compound_id.svg" width="20" height="20" draggable="false"></span><span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="identified-note-peak-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak match the standard compound peak</span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                }
+                                else {
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak #'+(peakDataId + 1)+'<span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                }
+                            }
+                            else {
+                                // If the peak identified then add the "identified PiMP icon" and the explanative note div
+                                if (peaksData[peakDataId][7] == true) {
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak<span class="identified_peak_marker" id="identified_peak-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;"><img src="{{ STATIC_URL }}img/PiMP_logo_compound_id.svg" width="20" height="20" draggable="false"></span><span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="identified-note-peak-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak match the standard compound peak</span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                }
+                                else {
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak<span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                }
                             }
 
-                            // If the peakDiv is the last one to be made, add a border to the bottom
-                            if (peakDataId + 1 == peaksData.length) {
-                                peakDiv.css('border-bottom', 'solid 1px gray');
-                            }
+                            // Add all info about the peak - two per line - odd and even lines have different colours for clarity
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Type</strong>: '+peaksData[peakDataId][4]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>Ion</strong>: '+peaksData[peakDataId][5]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</span>');
+                            peakDiv.append('<div class="span12" style="min-height:10px;"><span class="card-face__title"></span></div>');
 
-                            // Add retention time and mass information
-                            peakDiv.append('<ul>');
-                            peakDiv.append('<li><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</li>');
-                            peakDiv.append('<li><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</li>');
-                            peakDiv.append('<li><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</li>');
-                            peakDiv.append('<li><strong>Type</strong>: '+peaksData[peakDataId][4]+'</li>');
-                            peakDiv.append('<li><strong>Ion</strong>: '+peaksData[peakDataId][5]+'</li>');
-                            peakDiv.append('<li><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</li>');
-                            peakDiv.append('</ul>');
+                            // Div where the plots are displayed
+                            peakDiv.append('<div class="span12" id="card-content-peak-'+peaksData[peakDataId][0]+'" content-displayed="none" style="margin-left:0px;display:none;"><div class="span12" data-exist="false" id="card-intensity-'+peaksData[peakDataId][0]+'" style="display:none;"></div><div class="span12" data-exist="false" id="card-chromatogram-'+peaksData[peakDataId][0]+'" style="display:none;"></div></div>');
 
-                            // Create and add divs and buttons to allow the user to load the peak chromatogram and average intensity plots
-                            peakDiv.append('<div class="metabolites-chromatogram-div"><button class="btn btn-sm metabolites-chromatogram-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/chromatogram_icon.png"/>Chromatogram</button></div>');
-                            peakDiv.append('<div class="metabolites-intensity-plot-div"><button class="btn btn-sm metabolites-intensity-plot-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/barchart_icon.png"/>Intensities</button></div>');
+                            // Add the buttons for the plots - clicks are handled in separate function using div ids
+                            peakDiv.append('<div class="span12" style="padding-bottom:14px;"><div class="card-face-footer"><span class="card-face__social metabolites-chromatogram-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/chromatogram_icon.svg" width="36" height="36" draggable="false"></span><span  class="card-face__social metabolites-intensity-plot-btn" id="peak-'+peaksData[peakDataId][0]+'"><img src="{{ STATIC_URL }}img/intensity_icon.svg" width="36" height="36" draggable="false"></span></div>');
 
                             // Finally, add the peakDiv to the evidencePanel
                             $(evidencePanel).append(peakDiv);
@@ -1472,7 +1722,7 @@
 		                // spacingRight: 20,
 		                width: chartWidth,
 		                height: 400,
-		                backgroundColor: '#f5f5f5',
+		                backgroundColor: '#FFFFFF',
 		                plotBackgroundColor: null,
 		                plotBorderWidth: null,
 		                plotShadow: false,
@@ -1644,7 +1894,8 @@
 		            chart: {
 		            	type: averageChartType,
 		            	width: chartWidth,
-		            	backgroundColor: '#f5f5f5',
+		            	// backgroundColor: '#f5f5f5',
+                        backgroundColor: '#FFFFFF',
 		                plotBackgroundColor: null,
 		                plotBorderWidth: null,
 		                plotShadow: false,
@@ -1767,7 +2018,7 @@
 			           	filename: 'intensity_comparison'
 			        },
 		            xAxis: {
-						categories: categories,
+						type: 'category',
 						labels: {
                     		rotation: -45,
                     		align: 'right'
@@ -1932,10 +2183,12 @@
 							{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
+                            <li><a href="{% url 'userguide' %}">User guide</a></li>
 							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 							{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
-							<li><a href="{% url 'registration_register' %}">Register</a></li>
+							{# <li><a href="{% url 'registration_register' %}">Register</a></li> #}
+                            <li><a href="{% url 'userguide' %}">User guide</a></li>
 							{% endif %}
 							{# <li><a href="{% url 'about' %}">About</a></li> #}
 						</ul>
@@ -1951,7 +2204,7 @@
 				<div class="row" style="height:65px;">
 					<div class="span3" style="margin-top: 14px;margin-bottom: 5px;">
 						<form class="navbar-search pull-left">
-	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;"> 
+	  						<input type="text" class="search-query" placeholder="Search" id="search" style="max-width: 150px;">
 							<img src="{{ STATIC_URL }}img/search-icon.png" alt="search" style="margin-left:10px;">
 						</form>
 					</div>
@@ -2024,295 +2277,340 @@
 		<div id="main-container" class="container" style="bottom:0px;margin:0px;width:100%;position:absolute;top:155px;z-index:6;">
 			<div class="tab-content" id="general-tab-content">
 				<div id="summary" class="tab-pane active">
-					<div class="row" style="margin:0px;">
-						<div class="span12" style="width:100%;margin:0px;">
-							<div class='home-title' style='text-align:center;background-color:whitesmoke;'>
-								<h2 style="margin-top:0px">PiMP summary report</h2>
-								<h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
-							</div>
-						</div>
-					</div>
-					<div class="row" style="margin-left:0px;">
-						<div class="row-fluid">
-							<div class="span3 bs-docs-sidebar" style="">
-									<div id="home-side-nav" class="bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="140">
-										<div class="row-fluid">
-											<div class="span12">
-												<ul  class="nav nav-list">
-												  <li class="nav-header">Navigation</li>
-												  <li class="active"><a href="#">Study</a></li>
-												  <li><a href="#">Data processing</a></li>
-												  <li><a href="#">Quality Control</a></li>
-												  <li><a href="#">Results</a></li>
-												</ul>
-											</div>
-										</div>
-									</div>
-							</div>
-							<div class="span9" style="float:right;">
-								<!-- Just for test -->
-								<div class="row-fluid">
-									<h3>Study</h3>
-									<p>A metabolomic analysis was performed on {{ sample_list|samplelistlength }} samples consisting of {{ member_list|length }} groups: {% for member in member_list %}{% if not forloop.first and not forloop.last %},{% elif forloop.last %} and{% endif %} {{ member.name }}{% endfor %}. </p>
+                    <div class="subnavtable" style="width:100%;padding:0px;text-align:center;height:40px;background-color: rgb(227, 236, 253);">
+                        <ul id="subtabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
+                            <li id="subsummary-li" class="active" style="float:left;margin:0px;height:37px;"><a href="#subsummary" style="float:left;margin:0px;">Summary</a></li>
+                            <li id="qc-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#qc" style="float:left;">Quality control</a></li>
+                            <li id="results-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#results" style="float:left;">Results</a></li>
+                        </ul>
+                    </div>
+                    <div class="container" style="bottom:0px;margin:0px;width:100%;">
+                        <div class="tab-content">
+                            <div id="subsummary" class="tab-pane active">
+            					<div class="row" style="margin:0px;">
+            						<div class="span12" style="width:100%;margin:0px;">
+            							<div class='home-title' style='text-align:center;'>
+            								<h2 style="margin-top:0px">PiMP summary report</h2>
+            								<h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+            							</div>
+            						</div>
+            					</div>
+            					<div class="row" style="margin-left:0px;">
+            						<div class="row-fluid">
+                                        <div class="row">
+                                            <div class="span2"></div>
+                    							<div class="span8">
+                    								<!-- Just for test -->
+                    								<div class="row-fluid">
+                    									<h3>Study</h3>
+                    									<p>A metabolomic analysis was performed on {{ sample_list|samplelistlength }} samples consisting of {{ member_list|length }} groups: {% for member in member_list %}{% if not forloop.first and not forloop.last %},{% elif forloop.last %} and{% endif %} {{ member.name }}{% endfor %}. </p>
 
-									{% with member_list|sampletable as sampledescriptiontable %}
-										<table class="summary-table">
-											<thead>
-										        <tr>
-										            <th style="border-top: 2px solid rgba(255, 255, 255, 0);"></th>
-										            {% for member in member_list %}
-										            <th>{{ member.name }}</th>
-										            {% endfor %}
-										        </tr>
-										    </thead>
-										    <tbody>
-										    	{% for row in sampledescriptiontable %}
-										    	<tr>
-										    		<th>Replicate {{ forloop.counter }}</th>
-										    		{% for samplename in row %}
-										    			{% if samplename %}
-										    				<td>{{ samplename }}</td>
-										    			{% else %}
-										    				<td></td>
-										    			{% endif %}
-										    		{% endfor %}
-										    	</tr>
-										    	{% endfor %}
-											</tbody>
-										</table>
-									{% endwith %}
+                    									{% with member_list|sampletable as sampledescriptiontable %}
+                    										<table class="summary-table">
+                    											<thead>
+                    										        <tr>
+                    										            <th style="border-top: 2px solid rgba(255, 255, 255, 0);"></th>
+                    										            {% for member in member_list %}
+                    										            <th>{{ member.name }}</th>
+                    										            {% endfor %}
+                    										        </tr>
+                    										    </thead>
+                    										    <tbody>
+                    										    	{% for row in sampledescriptiontable %}
+                    										    	<tr>
+                    										    		<th>Replicate {{ forloop.counter }}</th>
+                    										    		{% for samplename in row %}
+                    										    			{% if samplename %}
+                    										    				<td>{{ samplename }}</td>
+                    										    			{% else %}
+                    										    				<td></td>
+                    										    			{% endif %}
+                    										    		{% endfor %}
+                    										    	</tr>
+                    										    	{% endfor %}
+                    											</tbody>
+                    										</table>
+                    									{% endwith %}
 
-									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed:
-											{% for comparison in comparisons %}
-											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} relative to {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
-											{% endfor %}
-										</ul>
-									</p>
+                    									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed:
+                    											{% for comparison in comparisons %}
+                    											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} relative to {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
+                    											{% endfor %}
+                    										</ul>
+                    									</p>
 
 
-									<!--<div style="margin-left:30px;">
-										<h4>Description & hypothesis</h4>
-										{% if project.description %}
-										<p>{{ project.description }}</p>
-										{% else %}
-										<p>Data not available</p>
-										{% endif %}
-									</div>-->
+                    									<!--<div style="margin-left:30px;">
+                    										<h4>Description & hypothesis</h4>
+                    										{% if project.description %}
+                    										<p>{{ project.description }}</p>
+                    										{% else %}
+                    										<p>Data not available</p>
+                    										{% endif %}
+                    									</div>-->
 
-									<!--<h3>LCMS</h3>
-									<p>Samples were separated using a <b>ZIC-HILIC/ZIC-pHILIC</b> column.</p>
-									<p>The solvents used were:
-										<ul>
-											<li>A: water with 20mM ammonium carbonate.</li>
-											<li>B: acetonitrile.</li>
-										</ul>
-									</p>
-									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p>
-									<p>The chromatography system was coupled to an orbitrap <b>Exactive/Q-Exactive</b> running at <b>50,000/70,000</b> resolution in positive/negative switching mode.</p>-->
+                    									<!--<h3>LCMS</h3>
+                    									<p>Samples were separated using a <b>ZIC-HILIC/ZIC-pHILIC</b> column.</p>
+                    									<p>The solvents used were:
+                    										<ul>
+                    											<li>A: water with 20mM ammonium carbonate.</li>
+                    											<li>B: acetonitrile.</li>
+                    										</ul>
+                    									</p>
+                    									<p>The gradient ran from 20% A to 80% A in 15 minutes, with a step to 95% A for 2 minutes followed by equilibration for 7 minutes at 20% A.</p>
+                    									<p>The chromatography system was coupled to an orbitrap <b>Exactive/Q-Exactive</b> running at <b>50,000/70,000</b> resolution in positive/negative switching mode.</p>-->
 
-									<h3>Data processing</h3>
-									<p>The peaks for each sample were called and retention time corrected using the Obiwarp (Prince &amp; Marcotte&#44; 2006) algorithm.  Filtering was carried out on the basis of noise, number of values present etc.</p>
-									<!--<div style="margin-left:30px;">
-										<h4>Softwares and libraries</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Peak picking</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Retention time correction</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Filters</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-										<h4>Identification</h4>
-										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-									</div>-->
+                    									<h3>Data processing</h3>
+                    									<p>The peaks for each sample were called and retention time corrected using the Obiwarp (Prince &amp; Marcotte&#44; 2006) algorithm.  Filtering was carried out on the basis of noise, number of values present etc.</p>
 
-									<!--<h3>Normalization/transformation</h3>
-									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+                                                        <h4>Metabolic Maps</h4>
+                                                        <p>The identified and annotated metabolites mapped to {{pathway_list|length}} KEGG metabolic maps. {{pathway_list|significant_pathway_coverage}} metabolic maps had greater than 75% coverage.</p>
+                    									<!--<div style="margin-left:30px;">
+                    										<h4>Softwares and libraries</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Peak picking</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Retention time correction</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Filters</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    										<h4>Identification</h4>
+                    										<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    									</div>-->
 
-									<h3>Quality Control</h3>
-									<p>Principal Component Analysis</p>
-									<div class="" id="pca_test"></div>
+                    									<!--<h3>Normalization/transformation</h3>
+                    									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+                                                    </div>
+                                                </div>
+                                            <div class="span2"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="qc" class="tab-pane">
+                                <div class="row" style="margin:0px;">
+                                    <div class="span12" style="width:100%;margin:0px;">
+                                        <div class='home-title' style='text-align:center;'>
+                                            <h2 style="margin-top:0px">PiMP summary report</h2>
+                                            <h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-left:0px;">
+                                    <div class="row-fluid">
+                                        <div class="span2"></div>
+                                            <div class="span8" >
+                                                <!-- Just for test -->
+                                                <div class="row-fluid">
+                									<h3>Quality Control</h3>
+                									<p>Principal Component Analysis</p>
+                									<div class="" id="pca_test"></div>
 
-									<p>Total Ion Chromatograms</p>
-									{% for member in member_list %}
-									<div class="" id="tic_pos{{member.id}}"></div>
-									{% endfor %}
-									{% for member in member_list %}
-									<div class="" id="tic_neg{{member.id}}"></div>
-									{% endfor %}
+                									<p>Total Ion Chromatograms</p>
+                									{% for member in member_list %}
+                                                    <div class="row">
+                									   <div class="span12" id="tic_pos{{member.id}}"></div>
+                                                    </div>
+                									{% endfor %}
+                									{% for member in member_list %}
+                                                    <div class="row">
+                									   <div class="span12" id="tic_neg{{member.id}}"></div>
+                                                    </div>
+                									{% endfor %}
+                                                </div>
+                                            </div>
+                                        <div class="span2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="results" class="tab-pane">
+                                <div class="row" style="margin:0px;">
+                                    <div class="span12" style="width:100%;margin:0px;">
+                                        <div class='home-title' style='text-align:center;'>
+                                            <h2 style="margin-top:0px">PiMP summary report</h2>
+                                            <h3 style="margin-bottom:0px;">Project: {{ project.title }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-left:0px;">
+                                    <div class="row-fluid">
+                                        <div class="span2"></div>
+                                            <div class="span8">
+                                                <!-- Just for test -->
+                                                <div class="row-fluid">
+                									<h3>Results</h3>
+                									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
 
-									<h3>Results</h3>
-									<!-- <p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. </p> -->
+                									<h4>Identification</h4>
+                									<p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. {{ dataset|number_unique_compounds:True }} unique compounds matched to a known standard.</p>
 
-									<h4>Identification</h4>
-									<p>Following processing the peaks were annotated/identified on the basis of mass and mass/retention time match to known standards respectively. {{ dataset|number_unique_compounds:True }} unique compounds matched to a known standard.</p>
+                									<h4>Comparison</h4>
+                									<p>{{ comparisons|length }} group-wise comparisons were undertaken to identify differences (fold changes). Each fold change has associated significance statistics.  Peaks with an adjusted p-value less than 0.05 were considered significant. The tables below for each comparison show the statistically significant identified and annotated peaks along with their associated log fold changes.</p>
 
-									<h4>Comparison</h4>
-									<p>{{ comparisons|length }} group-wise comparisons were undertaken to identify differences (fold changes). Each fold change has associated significance statistics.  Peaks with an adjusted p-value less than 0.05 were considered significant. The tables below for each comparison show the statistically significant identified and annotated peaks along with their associated log fold changes.</p>
+                									{% for comparison,comparison_hits in comparison_hits_list.items %}
+                									<h5>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</h5>
 
-									{% for comparison,comparison_hits in comparison_hits_list.items %}
-									<h5>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</h5>
+                										{% if comparison_hits.0 and comparison_hits.1 %}
+                											{% if comparison_hits.0|length > 10 %}
+                												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing. The 10 most significant hits are displayed below.</p>
+                											{% else %}
+                												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                												<thead>
+                											        <tr>
+                											            <th>Compound</th>
+                											            <th>Peak</th>
+                											            <th>Log FC</th>
+                											            <th>P-Value</th>
+                											            <th>Adj. P-Value</th>
+                											            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
+                												        <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
+                											            <th>Intensity</th>
+                											        </tr>
+                											    </thead>
+                											    <tbody>
+                											    	{% for compound in comparison_hits.0|slice:":10" %}
+                											    	<tr>
+                											    		<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
+                											    		<td>{{ compound.0.peak.secondaryId }}</td>
+                											    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                											    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                											    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                											    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
+                												    	<td>{{  compound.2.1.1|floatformat:"0" }}</td>
+                											    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
+                											    	</tr>
+                											    	{% endfor %}
+                											    </tbody>
+                											</table>
+                											{% if comparison_hits.1|length > 10 %}
+                												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing. The 10 most significant hits are displayed below. Click 'Show all' to see the 50 most significant hits.</p>
+                												<div class="summary_table_container" id="summary_table_container-{{ forloop.counter }}">
+                											{% else %}
+                												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                													<thead>
+                												        <tr>
+                												            <th>Peak</th>
+                												            <th>Log FC</th>
+                												            <th>P-Value</th>
+                												            <th>Adj. P-Value</th>
+                												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
+                												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
+                												            <th>Intensity</th>
+                												        </tr>
+                												    </thead>
+                												    <tbody>
+                												    	{% for compound in comparison_hits.1|slice:":50" %}
+                												    	<tr>
+                												    		<th class="peak_id" tooltip-append-to-body="true" data-toggle="tooltip" title="Click for compounds" data-container="body">{{ compound.0.peak.secondaryId }}</th>
+                												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
+                												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
+                												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
+                												    	</tr>
+                												    	{% endfor %}
+                												    </tbody>
+                												</table>
+                											{% if comparison_hits.1|length > 10 %}
+                											</div>
+                											<p style="text-align: center;"><span class="summary_table_expand_button" id="summary_table_expand_button-{{ forloop.counter }}">Show all</span></p>
+                											{% endif %}
+                										{% elif comparison_hits.0 and not comparison_hits.1 %}
+                											{% if comparison_hits.0|length > 10 %}
+                												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
+                											{% else %}
+                												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                													<thead>
+                												        <tr>
+                												            <th>Compound</th>
+                												            <th>Peak</th>
+                												            <th>Log FC</th>
+                												            <th>P-Value</th>
+                												            <th>Adj. P-Value</th>
+                												            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
+                												            <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
+                												            <th>Intensity</th>
+                												        </tr>
+                												    </thead>
+                												    <tbody>
+                												    	{% for compound in comparison_hits.0|slice:":10" %}
+                												    	<tr>
+                													    	<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
+                												    		<td>{{ compound.0.peak.secondaryId }}</td>
+                												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                												    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                												    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                												    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
+                												    		<td>{{  compound.2.1.1|floatformat:"0" }}</td>
+                												    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
+                												    	</tr>
+                												    	{% endfor %}
+                												    </tbody>
+                												</table>
+                											<p>No statistically significant annotated peak has been found for this comparison.Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
 
-										{% if comparison_hits.0 and comparison_hits.1 %}
-											{% if comparison_hits.0|length > 10 %}
-												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
-											{% else %}
-												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-												<thead>
-											        <tr>
-											            <th>Compound</th>
-											            <th>Peak</th>
-											            <th>Log FC</th>
-											            <th>P-Value</th>
-											            <th>Adj. P-Value</th>
-											            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
-												        <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
-											            <th>Intensity</th>
-											        </tr>
-											    </thead>
-											    <tbody>
-											    	{% for compound in comparison_hits.0|slice:":10" %}
-											    	<tr>
-											    		<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
-											    		<td>{{ compound.0.peak.secondaryId }}</td>
-											    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-											    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-											    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-											    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
-												    	<td>{{  compound.2.1.1|floatformat:"0" }}</td>
-											    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
-											    	</tr>
-											    	{% endfor %}
-											    </tbody>
-											</table>
-											{% if comparison_hits.1|length > 10 %}
-												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
-												<div class="summary_table_container" id="summary_table_container-{{ forloop.counter }}">
-											{% else %}
-												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-													<thead>
-												        <tr>
-												            <th>Peak</th>
-												            <th>Log FC</th>
-												            <th>P-Value</th>
-												            <th>Adj. P-Value</th>
-												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
-												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
-												            <th>Intensity</th>
-												        </tr>
-												    </thead>
-												    <tbody>
-												    	{% for compound in comparison_hits.1 %}
-												    	<tr>
-												    		<th class="peak_id" tooltip-append-to-body="true" data-toggle="tooltip" title="Click for compounds" data-container="body">{{ compound.0.peak.secondaryId }}</th>
-												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
-												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
-												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
-												    	</tr>
-												    	{% endfor %}
-												    </tbody>
-												</table>
-											{% if comparison_hits.1|length > 10 %}
-											</div>
-											<p style="text-align: center;"><span class="summary_table_expand_button" id="summary_table_expand_button-{{ forloop.counter }}">Show all</span></p>
-											{% endif %}
-										{% elif comparison_hits.0 and not comparison_hits.1 %}
-											{% if comparison_hits.0|length > 10 %}
-												<p>{{ comparison_hits.0|length }} identified compounds are significantly changing, below is display the 10 most significant hits.</p>
-											{% else %}
-												<p>{{ comparison_hits.0|length }} identified compound{{ comparison_hits.0|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-													<thead>
-												        <tr>
-												            <th>Compound</th>
-												            <th>Peak</th>
-												            <th>Log FC</th>
-												            <th>P-Value</th>
-												            <th>Adj. P-Value</th>
-												            <th>{{ comparison_hits.0.0.2.0.0 }} intensity</th>
-												            <th>{{ comparison_hits.0.0.2.1.0 }} intensity</th>
-												            <th>Intensity</th>
-												        </tr>
-												    </thead>
-												    <tbody>
-												    	{% for compound in comparison_hits.0|slice:":10" %}
-												    	<tr>
-													    	<th>{% for name in compound.1 %}{{ name }}<br>{% endfor %}</th>
-												    		<td>{{ compound.0.peak.secondaryId }}</td>
-												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-												    		<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-												    		<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-												    		<td>{{  compound.2.0.1|floatformat:"0" }}</td>
-												    		<td>{{  compound.2.1.1|floatformat:"0" }}</td>
-												    		<td data-sparkline="{{  compound.2.0.1|floatformat:'0' }}, {{  compound.2.1.1|floatformat:'0' }} ; {{  compound.2.0.0 }} ; {{  compound.2.1.0 }} ; column"></td>
-												    	</tr>
-												    	{% endfor %}
-												    </tbody>
-												</table>
-											<p>No statistically significant annotated peak has been found for this comparison.Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+                										{% elif not comparison_hits.0 and comparison_hits.1 %}
+                										<p>No statistically significant identified compounds have been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
 
-										{% elif not comparison_hits.0 and comparison_hits.1 %}
-										<p>No statistically significant identified compounds have been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+                											{% if comparison_hits.1|length > 10 %}
+                												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
+                											{% else %}
+                												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
+                											{% endif %}
+                											<table class="summary-table">
+                													<thead>
+                												        <tr>
+                												            <th>Peak</th>
+                												            <th>Log FC</th>
+                												            <th>P-Value</th>
+                												            <th>Adj. P-Value</th>
+                												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
+                												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
+                												            <th>Intensity</th>
+                												        </tr>
+                												    </thead>
+                												    <tbody>
+                												    	{% for compound in comparison_hits.1|slice:":10" %}
+                												    	<tr>
+                												    		<th class="peak_id">{{ compound.0.peak.secondaryId }}</th>
+                												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
+                											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
+                											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
+                											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
+                												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
+                												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
+                												    	</tr>
+                												    	{% endfor %}
+                												    </tbody>
+                												</table>
 
-											{% if comparison_hits.1|length > 10 %}
-												<p>{{ comparison_hits.1|length }} annotated peaks are significantly changing, below is display the 10 most significant hits.</p>
-											{% else %}
-												<p>{{ comparison_hits.1|length }} annotated peak{{ comparison_hits.1|length|pluralize }} {{ comparison_hits.0|length|pluralize:"is,are" }} significantly changing, please see the list below.</p>
-											{% endif %}
-											<table class="summary-table">
-													<thead>
-												        <tr>
-												            <th>Peak</th>
-												            <th>Log FC</th>
-												            <th>P-Value</th>
-												            <th>Adj. P-Value</th>
-												            <th>{{ comparison_hits.1.0.1.0.0 }} intensity</th>
-												        	<th>{{ comparison_hits.1.0.1.1.0 }} intensity</th>
-												            <th>Intensity</th>
-												        </tr>
-												    </thead>
-												    <tbody>
-												    	{% for compound in comparison_hits.1|slice:":10" %}
-												    	<tr>
-												    		<th class="peak_id">{{ compound.0.peak.secondaryId }}</th>
-												    		<td>{{ compound.0.logFC|floatformat:"-2" }}</td>
-											    			<td>{{ compound.0.pValue|stringformat:".2g" }}</td>
-											    			<td>{{ compound.0.adjPvalue|stringformat:".2g" }}</td>
-											    			<td>{{  compound.1.0.1|floatformat:"0" }}</td>
-												    		<td>{{  compound.1.1.1|floatformat:"0" }}</td>
-												    		<td data-sparkline="{{  compound.1.0.1|floatformat:'0' }}, {{  compound.1.1.1|floatformat:'0' }} ; {{  compound.1.0.0 }} ; {{  compound.1.1.0 }} ; column"></td>
-												    	</tr>
-												    	{% endfor %}
-												    </tbody>
-												</table>
+                										{% else %}
+                										<p>No statistically significant change has been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
 
-										{% else %}
-										<p>No statistically significant change has been found for this comparison. Significant changes are calculated using adjusted p-values, for more information on this comparison please refer to the single comparison tab on the top right of the window.</p>
+                										{% endif %}
 
-										{% endif %}
+                									<p>The volcano plot below display significance versus fold-change on the y- and x-axes, respectively. This specific plot is constructed by plotting the negative log (base 10) of the <b>adjusted p-value</b> on the y-axis.</p>
+                									<p>For more information on the <b>p-value</b> please refer to the single comparison tab on the top right of the window</p>
+                									<div class="volcano-plot" id="comparison{{ comparison.id }}-volcano-plot"></div>
+                									{% endfor %}
 
-									<p>The volcano plot below display significance versus fold-change on the y- and x-axes, respectively. This specific plot is constructed by plotting the negative log (base 10) of the <b>adjusted p-value</b> on the y-axis.</p>
-									<p>For more information on the <b>p-value</b> please refer to the single comparison tab on the top right of the window</p>
-									<div class="volcano-plot" id="comparison{{ comparison.id }}-volcano-plot"></div>
-									{% endfor %}
-
-									<h4>Metabolic Maps</h4>
-									<p>The identified and annotated metabolites mapped to {{pathway_list|length}} KEGG metabolic maps. {{pathway_list|significant_pathway_coverage}} metabolic maps had greater than 75% coverage.</p>
-
-									<!--<h3>Disclaimer</h3>
-									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
-								</div>
-
-							</div>
-						</div>
-					</div>
+                									<!--<h3>Disclaimer</h3>
+                									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+                								</div>
+                							</div>
+                                        <div class="span2"></div>
+            						</div>
+            					</div>
+                            </div>
+                        </div>
+                    </div>
 				</div>
                 <div id="metexplore-viz" class="tab-pane hidden-tab">
                     <div class="row" style="margin:0px;height:100%;overflow: auto;margin-bottom:0px;">
@@ -2387,7 +2685,7 @@
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
 						              		<td>{{ pathway.0.id }}</td>
-						              		<td>{{ pathway.0.datasourcesuperpathway_set.first.compound_number }}</td>
+						              		<td>{{ pathway.5 }}</td>
 						              		<td>{{ pathway.2 }}</td>
 						              		<td>{{ pathway.1 }}</td>
 						              		<td>{{ pathway.3 }}</td></tr>
@@ -2406,6 +2704,7 @@
 						</div>
 					</div>
 				</div>
+				{% with comparison|timer_start as time %}
 				<div id="comparison" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
@@ -2448,6 +2747,10 @@
 						</div>
 					</div>
 				</div>
+				<!-- {{ time|timer_end:'Comparison Table' }} -->
+				{% endwith %}
+
+				{% with comparison|timer_start as time %}
 				<div id="peaks" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">
@@ -2459,7 +2762,7 @@
 
 						               	  <th rowspan="2">Peak id</th>
 						                  <th rowspan="2">Mass</th>
-						                  <th rowspan="2">RT (s)</th>
+						                  <th rowspan="2">RT</th>
 						                  {% for member in member_list %}
 						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
 						                  {% endfor %}
@@ -2485,6 +2788,10 @@
 						</div>
 					</div>
 				</div>
+				<!-- {{ time|timer_end:'Peak Table' }} -->
+				{% endwith %}
+
+				{% with comparison|timer_start as time %}
 				{% for comparison in comparison_info %}
     			<div id="comparison{{ comparison.0.id }}" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
@@ -2508,18 +2815,6 @@
 						                  <th>Log Odds</th>
 						                 </tr>
 						              </thead>
-						              <tbody>
-						              	{% for peak in comparison.1 %}
-						              	<tr><td>{{ peak.0 }}</td>
-{#						              		{% with peak.peakdtcomparison_set.all|comparisoninfo:comparison.id as compinfo %} #}
-						              		<td>{{ peak.1|floatformat:"-2" }}</td>
-						              		<td>{{ peak.3|stringformat:".2g" }}</td>
-						              		<td>{{ peak.2|stringformat:".2g" }}</td>
-						              		<td>{{ peak.4|floatformat:"-2" }}</td>
-{#						              		{% endwith %} #}
-						              	</tr>
-						                {% endfor %}
-						              </tbody>
 						            </table>
 								</div>
 							</div>
@@ -2533,6 +2828,8 @@
 					</div>
 				</div>
 				{% endfor %}
+				<!-- {{ time|timer_end:'Single Comparison Table' }} -->
+				{% endwith %}
 			</div>
 		</div>
 		<div id="full-width" class="modal container hide fade" tabindex="-1" style="top: 10%">

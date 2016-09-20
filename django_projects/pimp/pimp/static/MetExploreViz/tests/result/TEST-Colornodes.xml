@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite name="Color nodes" errors="0" tests="2" failures="0" time="6.491" timestamp="2016-04-22T17:08:10">
+  <testcase classname="Color nodes" name="should be created" time="3.713"></testcase>
+  <testcase classname="Color nodes" name="should be created" time="2.778"></testcase>
+</testsuite>

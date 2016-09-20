@@ -1,3 +1,6 @@
+:focus {outline:none !important;}
+::-moz-focus-inner {border:0 !important;}
+
 .tab-content::-webkit-scrollbar {
 height: 16px;
 overflow: visible;
@@ -141,6 +144,44 @@ background: transparent;
 	box-shadow: 0px 3px 5px rgba(0,0,0,.1);
 	z-index: 9;
 	/*border-bottom: 1px solid #e5e5e5;*/
+}
+
+.subnavtable {
+    position: relative;
+    box-shadow: 0px 1px 1px rgba(0,0,0,.1);
+    z-index: 9;
+    /*border-bottom: 1px solid #e5e5e5;*/
+}
+
+#subtabnav > li > a {
+    color: rgb(112, 158, 241);
+    border-bottom: solid 3px rgb(227, 236, 253);
+}
+
+#subtabnav > li:hover > a {
+    color: #262626;
+}
+
+#subtabnav > li:hover {
+    border-bottom: solid 3px #427fed;
+}
+
+#subtabnav > li.active {
+    border-bottom: solid 3px #427fed;
+    color: #262626;
+}
+
+#subtabnav > li.active > a {
+    color: #262626;
+    border-bottom: solid 3px #427fed;
+}
+
+#subtabnav > li > a:hover{
+    /*color: #999999;*/
+    border-bottom: solid 3px #427fed;
+    color: #262626;
+    background-color: rgb(227, 236, 253);
+
 }
 
 .tabnav > li > a {
@@ -1063,6 +1104,140 @@ a.DTTT_button_collection {
 	padding: 3px;
 }
 
+
 .tabnav > li.hidden-tab, .hidden-tab {
     display: none;
 }
+
+.card {
+    width: 95%;
+    background-color: #FFFFFF;
+    border-bottom-right-radius: 7px;
+    border-top-right-radius: 7px;
+    margin-right: 0px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-left: solid 1px #eeeeee;
+    /*border-radius: 3px 3px 0 0;*/
+    transition: opacity 0.2s;
+    -webkit-transition: opacity 0.2s;
+    box-shadow: 0px 3px 5px rgba(0,0,0,.1);
+}
+
+.card .card-title__click:hover {
+    transition: all 1.2s;
+    animation: soften 0.2s;
+    opacity: 0.8;
+    background-color: rgb(227, 236, 253);
+    cursor: pointer;
+}
+
+.card h6 {
+    display: block;
+    position: relative;
+    text-align: center;
+    margin-top: 50px;
+    font-size: 16em;
+}
+
+/*.card img {
+    position:absolute;
+    left: -100%;
+    right: -100%;
+    top: -100%;
+    bottom: -100%;
+    margin: auto; 
+    min-height: 100%;
+    min-width: 100%;
+}*/
+.compound_name {
+    padding-top: 10px;
+}
+
+#compound-name {
+    margin: 13px;
+    color: rgb(112, 158, 241);
+}
+
+.full-card {
+    position: relative;
+    transition: all 1.2s;
+}
+
+.full-card .btn-fab {
+    float: right;
+    margin-top: -28px;
+    margin-right: 14px;
+}
+
+.card-face__title:after {
+    content: "";
+    background-color: #E3EBEE;
+    width: 70px;
+    height: 1px;
+    margin: 0 auto 0 auto;
+    display: block;
+}
+
+.card-face__bottom:after {
+    content: "";
+    background-color: #E3EBEE;
+    width: 70px;
+    height: 1px;
+    margin: 10px auto 0 auto;
+    display: block;
+}
+
+.peak-info {
+    font-size: 12px;
+}
+
+.peak-info-odd {
+    color: rgb(112, 158, 241);
+}
+
+.card-face-footer {
+    left: 0;
+    right: 0;
+    position: relative;
+    text-align: center;
+    /*bottom: 14px;*/
+}
+
+.card-face__social:nth-child(1) {
+    -webkit-animation-delay: 200ms;
+    animation-delay: 200ms;
+}
+
+.card-face__social {
+    display: inline-block;
+    margin: 0 7px;
+    width: 36px;
+    height: 36px;
+    -webkit-animation: socials 1.5s;
+    animation: socials 1.5s;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+    -webkit-animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card-face__social:hover {
+    cursor: pointer;
+}
+
+.standard-note {
+    color: rgb(255, 40, 40);
+    font-size: 12px;
+}
+
+.identified_peak_marker {
+    cursor: pointer;
+}
+
+.annotated_compound_number {
+    cursor: pointer;
+}
+

@@ -1,9 +1,29 @@
 from django import template
 from compound.models import Compound
 import numpy as np
+import timeit
+import logging
+
+logger = logging.getLogger(__name__)
 
 register = template.Library()
 
+@register.filter(name='timer_start')
+def timer_start(object):
+	time = timeit.default_timer()
+	return str(time)
+
+@register.filter(name='timer_end')
+def timer_end(prev_timer, msg):
+	timer = timeit.default_timer()
+	duration = timer-float(prev_timer)
+	logger.info('Elapsed time %s = %s', msg, duration)
+	return True
+
+@register.filter(name='log_message')
+def log_message(msg):
+	logger.info('%s', msg)
+	return True
 
 @register.filter(name='database_search')
 def database_search(objects, list):

@@ -95,12 +95,12 @@ task createPiMP(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
 
 task createPiMPDB(type: Exec, dependsOn: [copyRpkg, setupProjectProperties]) {
         workingDir 'build'
-        commandLine project.ext.props.R, 'CMD', 'build',  'PiMPDB'	
+        commandLine project.ext.props.R, 'CMD', 'build',  'PiMPDB'
 }
 */
 task createVirtualEnvironment(type: PrintExec) {
 	onlyIf {
-		! file('venv').exists() 
+		! file('venv').exists()
 	}
 	commandLine 'python', 'virtualenv/virtualenv.py', '--python=python2.7', 'venv'
 }
@@ -116,7 +116,7 @@ task installFrankRequirements(type: Exec, dependsOn: createVirtualEnvironment) {
 task installPiMPPythonDependencies(dependsOn: [installPiMPRequirements, installFrankRequirements])
 
 task installPiMPRDependencies(type: Exec, dependsOn: setupProjectProperties) {
-	commandLine project.ext.props.PIMP_RSCRIPT_PATH, 'setupR.R'
+	commandLine project.ext.props.PIMP_RSCRIPT_PATH, 'setupR.R', '--args', '--bootstrap-packrat'
 }
 
 task installPiMPDependencies(dependsOn: [installPiMPPythonDependencies, installPiMPRDependencies])
@@ -126,12 +126,12 @@ task synchroniseDatabase(type: Exec, dependsOn: [installPiMPPythonDependencies, 
 	environment 'PATH', project.ext.props['PATH']
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/manage.py', 'migrate'
 }
-
+/*
 task populatePiMP (type: Exec, dependsOn: [installPiMPPythonDependencies, setupProjectProperties, synchroniseDatabase]) {
 	environment 'PATH', project.ext.props['PATH']
-	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/populate_pimp.py'
+	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/manage.py', 'populate_parameters'
 }
-
+*/
 task createSuperUser(dependsOn: [installPiMPPythonDependencies, setupProjectProperties, populatePiMP]) << {
 	def command =  ['venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', '-u', 'django_projects/pimp/setupInitialUser.py']
 	def proc = new ProcessBuilder(command)
@@ -143,7 +143,7 @@ task createSuperUser(dependsOn: [installPiMPPythonDependencies, setupProjectProp
     	proc.waitFor()
 }
 
-task setupPiMP(dependsOn: [synchroniseDatabase, populatePiMP, createSuperUser])
+task setupPiMP(dependsOn: [synchroniseDatabase, createSuperUser])
 
 task installPiMP(dependsOn: [installPiMPDependencies, setupPiMP])
 

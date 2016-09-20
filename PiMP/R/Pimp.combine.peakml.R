@@ -1,4 +1,4 @@
-Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=NULL, mzmatch.filters=list(), mzmatch.outputs=list(), nSlaves=0) {
+Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=NULL, mzmatch.filters=list(), mzmatch.outputs=list(), mzmatch.params=list(), nSlaves=0) {
 
 	#Create RSD directories if required
 	if(mzmatch.filters$rsd)	{ 
@@ -21,6 +21,8 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	#	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .export=c(".combinePeakmlFiles", ".mzmatch.ipeak.filter.RSDFilter", "mzmatch.ipeak.Combine", "files", "mzmatch.params", "mzmatch.init", "mzmatch.filters", "heapsize"), .combine='c', .verbose=TRUE) %dopar%
 	grouped.peakml.files <- foreach(group=names(groups), .packages="mzmatch.R", .combine='c') %dopar%
 	{
+		logger <- getPiMPLogger('Pimp.combine.peakml.grouped.peakml.files')
+
 		mzmatch.init(version.1=FALSE)
 		##get peakml files by group
 		group.files.idx <- which(basename(files) %in% paste0(groups[[group]], ".peakml"))
@@ -36,7 +38,7 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
  		# dir.create(group.dir, recursive=TRUE)
  		
 		combined.file <- file.path(combined.dir, paste(group, ".peakml", sep=""))
-		print(paste('Group', group))
+		loginfo('Group %s', group, logger=logger)
 		combined.group.file <- .combinePeakmlFiles(files=group.files, outfile=combined.file, label=group, mzmatch.params=mzmatch.params)
 
 		##RSD filter if required
@@ -44,8 +46,8 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 		{
 	    	filtered.file <- file.path(mzmatch.outputs$combined.rsd.filtered.folder, basename(combined.file))
     		rejected.file <- file.path(mzmatch.outputs$combined.rsd.rejected.folder, basename(combined.file))
-    		print(paste('Groupa', group))
-    		.mzmatch.ipeak.filter.RSDFilter(i=combined.group.file, o=filtered.file, rejected=rejected.file, rsd=mzmatch.params$rsd, v=T, JHeapSize=heapsize)
+    		loginfo('Groupa %s', group, logger=logger)
+    		.mzmatch.ipeak.filter.RSDFilter(i=combined.group.file, o=filtered.file, rejected=rejected.file, rsd=mzmatch.params$rsd, v=TRUE, JHeapSize=heapsize)
     		#check file exists
     		if(!file.exists(filtered.file)) stop(paste(filtered.file, "does not exist!\n"))
     	}
@@ -61,7 +63,11 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 	if(length(grouped.peakml.files) > 1) {
 		##test whether peaksets in file have peaks.  If not remove.  Samples included as zero when data read in.  Workaround for PeakML.Read.
 		valid <- validatePeaksets(files=grouped.peakml.files)
-		print(paste0("VALID", valid))
+		if ( !all(valid) ) {
+			logwarn("Some files have no peaks. They will be discarded. This will probably cause errors later when combining across modes", logger=logger)
+			logwarn("Files are %s", grouped.peakml.files[!valid], logger=logger)
+		}
+		loginfo("VALID %s", valid, logger=logger)
 		return(.combinePeakmlFiles(files=grouped.peakml.files[valid], outfile=mzmatch.outputs$final.combined.peakml.file, mzmatch.params=mzmatch.params, heapsize=heapsize))
 	} 
 	else {
@@ -74,18 +80,18 @@ Pimp.combine.peakml <- function(files=character(), groups=list(), combined.dir=N
 }
 
 .combinePeakmlFiles <- function(files=NULL, outfile=NULL, label=NULL, mzmatch.params=list(), heapsize=2048, verbose=TRUE) {
+	logger <- getPiMPLogger('Pimp.combine.peakml.combinePeakmlFiles')
 	if(length(files) == 0) stop("No data files specified.")
 	if(any(!file.exists(files))) stop(cat("The following files were not found:", files[which(!file.exists(files))], sep="\n"))
 
 	if(verbose)
 	{
-		cat("Files to be combined:\n")
-		cat(paste(files, collapse="\n"))
+		loginfo("Files to be combined: %s", files, logger=logger)
 	}
 
     mzmatch.ipeak.Combine(
 		i=paste(files,collapse=","),
-		v=T,
+		v=TRUE,
 		rtwindow=mzmatch.params$rtwindow, #rt.mins.to.secs(mzmatch.defaults$RTw), #check in secs
 		o=outfile,
 		combination=mzmatch.params$combination,

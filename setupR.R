@@ -1,5 +1,5 @@
 print('Setting repositories')
 options('repos'=list(CRAN='http://cran.rstudio.com/', Bioconductor='http://www.bioconductor.org/packages/release/bioc', PuMP='http://puma.ibls.gla.ac.uk/R'))
 print('Running Packrat init script')
-source('packrat/init.R')
+install.packages('packrat', repos='http://puma.ibls.gla.ac.uk/R')
 packrat::restore(overwrite.dirty=TRUE)

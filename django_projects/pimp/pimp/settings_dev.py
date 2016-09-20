@@ -1,21 +1,26 @@
+# Django settings for pimp project.
 import os
-
 import djcelery
+import distutils.util as du
+
 djcelery.setup_loader()
 
 CELERYD_LOG_COLOR = False
 
-TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+r_path = '/usr/local/bin'
+os.environ['PATH'] += os.pathsep + r_path
+print os.environ['PATH']
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ['PIMP_BASE_DIR'] = BASE_DIR
 
 # Set to True to enable registration
 REGISTRATION_OPEN = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '130.209.227.67']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -32,30 +37,21 @@ DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
 
 MANAGERS = ADMINS
 
+DATABASE_NAME = 'pimp_dev'
+# DATABASE_NAME = 'frank_dev'
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        # 'ENGINE': 'django.db.backends.mysql',
-        # 'NAME': 'pimp_prod',
-        'NAME': os.path.join(BASE_DIR, 'sqlite3.db'),                      # Or path to database file if using sqlite3.
+        # 'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': DATABASE_NAME,
+        # 'NAME': '/Users/yoanngloaguen/Documents/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
         'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'frank_project',
-#         'USER': 'frank_test_user',
-#         'PASSWORD': 'frankpass',
-#         'HOST': 'localhost',
-#         'PORT': '',
-#         'TEST_NAME': 'frank_test_user$test_frank_project'
-#     }
-# }
 
 AUTHENTICATION_BACKENDS = ('backends.EmailOrUsernameModelBackend','django.contrib.auth.backends.ModelBackend')
 # Local time zone for this installation. Choices can be found here:
@@ -85,10 +81,11 @@ USE_TZ = False
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
-# MEDIA_ROOT = '/opt/django/data/pimp_data/'
-# MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'pimp_data')
 
+
+#MEDIA_ROOT = '/opt/django/data/pimp_data/'
+#MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
@@ -111,7 +108,6 @@ STATICFILES_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     # '/Users/yoanngloaguen/Documents/django_projects/pimp/static/',
-    # '/opt/django/projects/django_projects/static/',
     os.path.join(os.path.dirname(__file__), 'static'),
 )
 
@@ -149,7 +145,6 @@ ROOT_URLCONF = 'pimp.urls'
 WSGI_APPLICATION = 'pimp.wsgi.application'
 
 TEMPLATE_DIRS = (
-    # '/opt/django/projects/django_projects/mytemplates',
     os.path.join(os.path.dirname(BASE_DIR), 'mytemplates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
@@ -179,16 +174,23 @@ INSTALLED_APPS = (
     'fileupload',
     'groups',
     'experiments',
-    'frank',
     'data',
     'compound',
     'djcelery',
     'gp_registration',
+    'frank',
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
-
+    'django_spaghetti',
 )
+
+SPAGHETTI_SAUCE = {
+  'apps':['auth','polls','frank','data','fileupload','projects','experiments','groups','compound'],
+  'show_fields':False,
+  'exclude':{'auth':['user']}
+}
+
 
 ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.
 
@@ -212,6 +214,11 @@ LOGGING = {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            # logging handler that outputs log messages to terminal
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG', # message level to be written to console
         }
     },
     'loggers': {
@@ -220,6 +227,21 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        '': {
+            # this sets root level logger to log debug and higher level
+            # logs to console. All other loggers inherit settings from
+            # root level logger.
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False, # this tells logger to send logging message
+                                # to its parent (will send if set to True)
+        },
+        'django.db': {
+            # django also has database level logging
+        },
     }
 }
 
+RSCRIPT_PATH = '/usr/local/bin/Rscript'
+
+PROFILE_LOG_BASE = os.path.dirname(BASE_DIR)

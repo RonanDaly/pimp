@@ -83,6 +83,8 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metabolites_table/$', 'experiments.views.get_metabolites_table', name='get_metabolites_table'),
     # ajax request to get peak table
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_peak_table/$', 'experiments.views.get_peak_table', name='get_peak_table'),
+    # ajax request to get single comparison table - comparison id is given as ajax parameter
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_single_comparison_table/(?P<comparison_id>\d+)/$', 'experiments.views.get_single_comparison_table', name='get_single_comparison_table'),
     # ajax request to get pathway map url
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_pathway_url/$', 'experiments.views.get_pathway_url', name='get_pathway_url'),
     # ajax request for peak discovery
@@ -124,6 +126,7 @@ urlpatterns = patterns('',
     #url(r'^frank/', include('frank.urls')),
     url(r'^credits/$', 'home.views.credits', name='credits'),
     url(r'^licence/$', 'home.views.licence', name='licence'),
+    url(r'^userguide/$', 'home.views.userguide', name='userguide'),
 )
 
 urlpatterns += staticfiles_urlpatterns()
