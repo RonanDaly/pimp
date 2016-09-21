@@ -7,7 +7,7 @@ Date: 2013-08-19
 Author: Glasgow Polyomics
 Maintainer: Glasgow Polyomics <polyomics@glasgow.ac.uk>
 License: What license is it under?
-Depends: R (>= 3.0.0), digest, doParallel, foreach, gptk, gtools, impute, rJava, limma, mzmatch.R, outliers, RColorBrewer, tools, XLConnect, RJSONIO, RCurl, XML, xml2
+Depends: R (>= 3.0.0), digest, doParallel, foreach, gptk, gtools, impute, rJava, limma, mzmatch.R, outliers, RColorBrewer, tools, XLConnect, RJSONIO, RCurl, XML, xml2, data.table
 Imports: logging
 Suggests: KEGGREST, devtools, RSQLite, yaml
 LazyData: yes
