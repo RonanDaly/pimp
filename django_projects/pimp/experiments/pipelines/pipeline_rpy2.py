@@ -7,8 +7,10 @@ from django.conf import settings
 from rpy2.robjects.packages import importr
 
 import numpy as np
+import pandas as pd
 from pimp.settings import getString
 import rpy2.robjects as robjects
+from rpy2.robjects import pandas2ri
 
 class Rpy2Pipeline(object):
 
@@ -43,6 +45,9 @@ class Rpy2Pipeline(object):
         }
         mzmatch_init = robjects.r['mzmatch.init']
         mzmatch_init(**args)
+        
+        # activate the conversion from pandas dataframe to r                
+        pandas2ri.activate()    
                         
     def setup(self):
         
@@ -112,12 +117,57 @@ class Rpy2Pipeline(object):
         raw_data = self.identify(polarity, out_file, databases, groups, mzmatch_params, formatted_mzmatch_outputs)        
         return raw_data, r_combi
 
+    def convert_to_dataframe(self, factors):
+
+        # get unique samples (files) in sorted order
+        all_files = set()
+        for f in factors:
+            for lev in f.levels:
+                lev_files = f.level_files[lev]
+                all_files.update(lev_files)
+        all_files = sorted(list(all_files))
+        
+        # get the levels for each sample
+        sample_levels = {}
+        for sample in all_files:
+            sample_levels[sample] = []
+        
+        for sample in all_files:
+            for factor in factors:
+                val = factor.get_level(sample)
+                sample_levels[sample].append(val)                
+        
+        # construct the dataframe
+        data = []               
+        file_type = 'sample'
+        for sample in sample_levels:
+            row = [sample]
+            row.extend(sample_levels[sample])
+            row.append(file_type)
+            print row
+            data.append(row)
+                
+        headers = ['sample']
+        for factor in factors:
+            headers.append(factor.label)
+        headers.append('file_type')
+        df = pd.DataFrame(data, columns=headers)
+
+        r_dataframe = pandas2ri.py2ri(df)
+        return df, r_dataframe
+
     def run_stats(self, raw_data_dict, analysis_id, groups_dict, factors, 
                   comparison_names, contrasts, databases, dbs, mzmatch_outputs, saveFixtures, wd):
+
+        groups = self.metadata.get_groups()        
+        df, metadata = self.convert_to_dataframe(groups)
+
+        r_factors = robjects.StrVector([f.label for f in groups])
+
 #         assert groups_dict['positive'] == groups_dict['negative']
         pimp_run_stats = robjects.r['Pimp.runStats.save']        
         pimp_run_stats(raw_data_dict['positive'], raw_data_dict['negative'], analysis_id, 
-                       groups_dict['positive'], factors,
+                       r_factors, metadata,
                        comparison_names, contrasts, databases, dbs, 
                        mzmatch_outputs, saveFixtures, wd)
 
@@ -684,5 +734,11 @@ class Factor(object):
         self.level_files[level_label] = level_files
         self.level_indices[level_label] = self.levels.index(level_label)
         
+    def get_level(self, sample):
+        for level in self.levels:
+            if sample in self.level_files[level]:
+                return level
+        return np.nan
+                
     def __repr__(self):
         return self.label + ' with ' + str(len(self.levels)) + ' levels'
