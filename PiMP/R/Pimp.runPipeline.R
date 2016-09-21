@@ -96,7 +96,7 @@ Pimp.getAnalysisParams <- function(analysis_id) {
     } else {
       DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
     }
-    
+
     dbtype = getNeededString('PIMP_DATABASE_ENGINE')
     if ( dbtype == 'django.db.backends.mysql' ) {
       DATABASE_TYPE = 'mysql'
@@ -224,20 +224,20 @@ Pimp.generateStdXml <- function(standards, databases, pimp_params, wd) {
 # -----------------------------------------------------------------------------
 
 Pimp.runStats.save <- function(raw.data.pos, raw.data.neg,
-                               analysis_id, groups, factors, contrasts, comparisonNames,
-                               databases, DBS, mzmatch_outputs, saveFixtures, wd) {
+                               analysis_id, factors, metadata, contrasts,
+                               databases, DBS, mzmatch_outputs, mzmatch_params, saveFixtures, wd) {
 
     save(raw.data.pos, raw.data.neg,
-         analysis_id, groups, factors, comparisonNames, contrasts,
-         databases, DBS, mzmatch_outputs, saveFixtures, wd,
+         analysis_id, factors, metadata, contrasts,
+         databases, DBS, mzmatch_outputs, mzmatch_params, saveFixtures, wd,
          file='runStats.RData')
 
 }
 
 Pimp.runStats <- function(raw.data.pos, raw.data.neg,
-                          analysis_id, groups, factors, contrasts, comparisonNames,
-                          databases, DBS, mzmatch_outputs, saveFixtures, wd) {
-  
+                               analysis_id, factors, metadata, contrasts, comparisonNames,
+                               databases, DBS, mzmatch_outputs, mzmatch_params, saveFixtures, wd) {
+
     setwd(wd)
     logger <- getPiMPLogger('Pimp.runStats')
     setPiMPLoggerAnalysisID(analysis_id)
