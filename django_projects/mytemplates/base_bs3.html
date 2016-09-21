@@ -93,10 +93,12 @@
 {#										<li><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></li>#}
 {#									</ul>#}
 {#							</li>#}
+                            <li><a href="{% url 'userguide' %}">User guide</a></li>
 							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 						{% else %}
 							<li><a href="{% url 'auth_login' %}">Login</a></li>
 							<!-- <li><a href="{% url 'registration_register' %}">Register</a></li> -->
+                            <li><a href="{% url 'userguide' %}">User guide</a></li>
 						{% endif %}
 {#						<li><a href="{% url 'about' %}">About</a></li>#}
 					</ul>

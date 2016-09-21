@@ -12,6 +12,7 @@ from fileupload.models import Sample
 
 from rpy2.robjects.packages import importr
 from rpy2 import robjects
+from django.template.loader import render_to_string
 
 # from django.templatetags.static import static
 import json
@@ -31,6 +32,10 @@ def chemical_library(request):
 
 def licence(request):
 	return render(request, 'licence.html', {})
+
+def userguide(request):
+	userguideString = render_to_string('userguide.md')
+	return render(request, 'userguide.html', {'userguideString':userguideString})
 	
 def polyomics_chemical_library(request):
 	# url = static('metexplore_mapping.json')

@@ -98,7 +98,7 @@ packrat/src/*
 !packrat/src/limma/
 !packrat/src/Biostrings/
 !packrat/src/KEGGREST/
-
+!packrat/src/packrat/
 # R Development Files
 *.Rout
 .Rproj.user

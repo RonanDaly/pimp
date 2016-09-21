@@ -21,3 +21,5 @@ honcho==0.7.1
 Jinja2==2.7.3
 ipython # debugging via jupyter notebook environment
 jupyter # debugging via jupyter notebook environment
+requests==2.11.1
+django_markdown2==0.3.0
