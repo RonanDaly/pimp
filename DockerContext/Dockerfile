@@ -26,7 +26,8 @@ RUN apt-get update && \
 		#libatlas3-base \
 		#libatlas-dev \
 		oracle-java8-installer \
-		rabbitmq-server && \
+		rabbitmq-server \
+		supervisor && \
 	apt-get install -y oracle-java8-set-default && \
 	apt-get install -y r-base && \
 	R CMD javareconf		
