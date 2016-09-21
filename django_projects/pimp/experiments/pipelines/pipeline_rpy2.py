@@ -18,11 +18,13 @@ class Rpy2Pipeline(object):
     # http://stackoverflow.com/questions/5707382/is-multiprocessing-with-rpy-safe            
     def __init__(self, analysis, project, saveFixtures):
 
+        # must be before metadata is initialised, otherwise pandas -> rpy2 will fail
+        self.connect_to_rpy2()
+        
         self.analysis = analysis
         self.project = project
         self.saveFixtures = saveFixtures
         self.metadata = Rpy2PipelineMetadata(analysis, project)
-        self.connect_to_rpy2()
         
     def connect_to_rpy2(self): 
 
@@ -156,20 +158,27 @@ class Rpy2Pipeline(object):
         r_dataframe = pandas2ri.py2ri(df)
         return df, r_dataframe
 
-    def run_stats(self, raw_data_dict, analysis_id, groups_dict, factors, 
-                  comparison_names, contrasts, databases, dbs, mzmatch_outputs, saveFixtures, wd):
+    def run_stats(self, raw_data_dict, groups_dict, mzmatch_outputs, mzmatch_params, save_fixtures):
+
+        analysis_id = self.analysis.id
 
         groups = self.metadata.get_groups()        
         df, metadata = self.convert_to_dataframe(groups)
 
         r_factors = robjects.StrVector([f.label for f in groups])
+        r_contrasts = self.metadata.r_contrasts
+        
+        databases = self.metadata.r_databases
+        dbs = self.metadata.r_dbs
+        
+        wd = self.working_dir
 
 #         assert groups_dict['positive'] == groups_dict['negative']
         pimp_run_stats = robjects.r['Pimp.runStats.save']        
         pimp_run_stats(raw_data_dict['positive'], raw_data_dict['negative'], analysis_id, 
-                       r_factors, metadata,
-                       comparison_names, contrasts, databases, dbs, 
-                       mzmatch_outputs, saveFixtures, wd)
+                       r_factors, metadata, r_contrasts, 
+                       databases, dbs, mzmatch_outputs, mzmatch_params, 
+                       save_fixtures, wd)
 
     def run_pipeline(self):
 
@@ -190,10 +199,7 @@ class Rpy2Pipeline(object):
             groups_dict[polarity] = groups
             
         save_fixtures = True    
-        self.run_stats(raw_data_dict, self.analysis.id, groups_dict, self.metadata.r_groups, 
-                       self.metadata.r_contrasts, self.metadata.r_names, 
-                       self.metadata.r_databases, self.metadata.r_dbs, 
-                       mzmatch_outputs, save_fixtures, self.working_dir)
+        self.run_stats(raw_data_dict, groups_dict, mzmatch_outputs, mzmatch_params, save_fixtures)        
             
         return_code = 0
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
@@ -590,7 +596,7 @@ class Rpy2PipelineMetadata(object):
         self.files = self.get_files()
         self.groups = self.get_groups()
         self.stds = self.get_standards()
-        self.contrasts, self.names = self.get_comparisons()
+        self.contrasts = self.get_comparisons()
         self.databases = self.get_databases()
         
         ##############################################
@@ -616,8 +622,7 @@ class Rpy2PipelineMetadata(object):
         self.r_stds = robjects.StrVector(self.stds)        
 
         # contrasts
-        self.r_contrasts = robjects.StrVector(self.contrasts)
-        self.r_names = robjects.StrVector(self.names)        
+        self.r_contrasts = pandas2ri.py2ri(self.contrasts)
 
         # databases
         self.r_databases = robjects.StrVector(self.databases)  
@@ -686,9 +691,17 @@ class Rpy2PipelineMetadata(object):
     
     # need to think about what data structure to store the comparisons ...
     def get_comparisons(self):
-        comparisons = ['beer1', 'beer4']
-        comparison_names = ['beer_comparison']
-        return comparisons, comparison_names
+        
+        data = []
+        data.append(['beer_colour_comparison', 'beer_colour', 'colour_dark', 0])
+        data.append(['beer_colour_comparison', 'beer_colour', 'colour_light', 1])
+        data.append(['beer_taste_comparison', 'beer_colour', 'taste_awful', 0])
+        data.append(['beer_taste_comparison', 'beer_colour', 'taste_delicious', 1])
+        data.append(['beer_taste_comparison', 'beer_colour', 'taste_okay', 1])
+        
+        headers = ['comparison', 'factor', 'level', 'group']
+        df = pd.DataFrame(data, columns=headers)
+        return df
     
     def get_databases(self):
         database_list = ['kegg', 'hmdb', 'lipidmaps', 'standard']
