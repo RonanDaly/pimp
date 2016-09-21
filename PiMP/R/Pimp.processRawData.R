@@ -11,7 +11,7 @@ Pimp.relatedPeaks <- function(in_file, out_file, basepeaks_file, ppm, rtwindow) 
 }
 
 # --------------------------------------------------------
-# to be replaced by experiments.pipelines.pipeline_rpy2.py
+# replaced by experiments.pipelines.pipeline_rpy2.py
 # --------------------------------------------------------
 Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), mzmatch.filters=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
 	logger <- getPiMPLogger('Pimp.processRawData')

@@ -67,29 +67,62 @@ class Rpy2Pipeline(object):
     
         # generate std xml
         generate_std_xml = robjects.r('Pimp.generateStdXml')
-        self.dbs = generate_std_xml(self.metadata.r_stds, self.metadata.r_databases, pimp_params, self.working_dir)
-    
-        # dump the input parameters out for R debugging
-        if self.saveFixtures:
-            dump_parameters = robjects.r['Pimp.dumpParameters']
-            dump_parameters(self.metadata.r_files, self.metadata.r_groups, self.metadata.r_stds, 
-                       self.metadata.r_names, self.metadata.r_contrasts, self.metadata.r_databases, 
-                       self.analysis.id, self.project.id, self.working_dir, 
-                       pimp_params, self.dbs)  
-            
+        output = generate_std_xml(self.metadata.r_stds, self.metadata.r_databases, pimp_params, self.working_dir)
+        self.metadata.r_dbs = output[output.names.index('DBS')]
+        self.metadata.r_databases = output[output.names.index('databases')]
+                
     ############################################################
     # pipeline methods to process raw data
     ############################################################
 
-    def run(self):
-                                                
-        # call the pipeline
-        run_pipeline = robjects.r['Pimp.runPipeline']
-    #     run_Pipeline(metadata.files, metadata.groups, metadata.stds, 
-    #                 metadata.names, metadata.contrasts, metadata.databases, 
-    #                 saveFixtures, analysis.id, project.id, working_dir,
-    #                 pimp_params, DBS)
-    
+    def process_raw_data(self, polarity, xcms_params, mzmatch_params, 
+                         peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves):
+                                                    
+        format_mzmatch_outputs = robjects.r['Pimp.getFormattedMzmatchOutputs']
+        formatted_mzmatch_outputs = format_mzmatch_outputs(self.analysis.id, polarity, mzmatch_outputs)
+        polarity_dir, combined_dir = self.create_input_directories(polarity, formatted_mzmatch_outputs)
+
+        print '------------------------------------------------'
+        print polarity, polarity_dir, combined_dir
+        print '------------------------------------------------'
+
+        # peak detection and rt correction
+        self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params, 
+                           peakml_params, mzmatch_outputs, n_slaves)
+
+        # separate samples into peaksets for grouping            
+        r_combi = self.generate_peaksets(polarity, polarity_dir, combined_dir, mzmatch_params)  
+        
+        # filter each peakset
+        peaksets = self.filter_peaksets(combined_dir, mzmatch_params)   
+
+        # combine peaksets into a single peakml file and filter it
+        out_file = self.combine_final(polarity, peaksets, mzmatch_params, formatted_mzmatch_outputs)            
+        out_file = self.filter_final(polarity, out_file, mzmatch_filters, mzmatch_params, formatted_mzmatch_outputs)            
+
+        # do gap filling
+        out_file = self.gap_filling(polarity, out_file, peakml_params, formatted_mzmatch_outputs)
+        
+        # do related peaks
+        out_file, basepeak_file = self.related_peaks(polarity, out_file, mzmatch_params, formatted_mzmatch_outputs)
+        
+        # do identification
+        databases = self.metadata.r_dbs
+        groups = r_combi
+        raw_data = self.identify(polarity, out_file, databases, groups, mzmatch_params, formatted_mzmatch_outputs)        
+        return raw_data, r_combi
+
+    def run_stats(self, raw_data_dict, analysis_id, groups_dict, factors, 
+                  comparison_names, contrasts, databases, dbs, mzmatch_outputs, saveFixtures, wd):
+#         assert groups_dict['positive'] == groups_dict['negative']
+        pimp_run_stats = robjects.r['Pimp.runStats.save']        
+        pimp_run_stats(raw_data_dict['positive'], raw_data_dict['negative'], analysis_id, 
+                       groups_dict['positive'], factors,
+                       comparison_names, contrasts, databases, dbs, 
+                       mzmatch_outputs, saveFixtures, wd)
+
+    def run_pipeline(self):
+
         xcms_params = self.get_value(self.pimp_params, 'xcms.params')            
         mzmatch_params = self.get_value(self.pimp_params, 'mzmatch.params')
         peakml_params = self.get_value(self.pimp_params, 'peakml.params')
@@ -98,32 +131,19 @@ class Rpy2Pipeline(object):
         n_slaves = multiprocessing.cpu_count()
 
         # still assuming that there are two polarities: pos and neg
-        for polarity in self.files:
+        raw_data_dict = {}
+        groups_dict = {}
+        for polarity in self.files:                
+            raw_data, groups = self.process_raw_data(polarity, xcms_params, mzmatch_params, 
+                                                  peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves)
+            raw_data_dict[polarity] = raw_data
+            groups_dict[polarity] = groups
             
-            format_mzmatch_outputs = robjects.r['Pimp.getFormattedMzmatchOutputs']
-            formatted_mzmatch_outputs = format_mzmatch_outputs(self.analysis.id, polarity, mzmatch_outputs)
-            
-            # peak detection and rt correction
-            polarity_dir, combined_dir = self.create_input_directories(polarity, formatted_mzmatch_outputs)
-            print polarity, polarity_dir, combined_dir
-            self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params, 
-                               peakml_params, mzmatch_outputs, n_slaves)
-
-            # separate samples into peaksets for grouping            
-            self.generate_peaksets(polarity, polarity_dir, combined_dir, mzmatch_params)  
-            
-            # filter each peakset
-            peaksets = self.filter_peaksets(combined_dir, mzmatch_params)   
-
-            # combine peaksets into a single peakml file and filter it
-            out_file = self.combine_final(polarity, peaksets, mzmatch_params, formatted_mzmatch_outputs)            
-            out_file = self.filter_final(polarity, out_file, mzmatch_filters, mzmatch_params, formatted_mzmatch_outputs)            
-
-            # do gap filling
-            out_file = self.gap_filling(polarity, out_file, peakml_params, formatted_mzmatch_outputs)
-            
-            # do related peaks
-            out_file = self.related_peaks(polarity, out_file, mzmatch_params, formatted_mzmatch_outputs)
+        save_fixtures = True    
+        self.run_stats(raw_data_dict, self.analysis.id, groups_dict, self.metadata.r_groups, 
+                       self.metadata.r_contrasts, self.metadata.r_names, 
+                       self.metadata.r_databases, self.metadata.r_dbs, 
+                       mzmatch_outputs, save_fixtures, self.working_dir)
             
         return_code = 0
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
@@ -136,8 +156,8 @@ class Rpy2Pipeline(object):
                       mzmatch_outputs, n_slaves):
         ''' Performs peak detection using centwave, rt alignment using xcms (optional) and generate peakml files. '''
                     
-        positive_files = self.get_value(self.metadata.r_files, polarity)
-        xset = self.peak_detection(positive_files, xcms_params, n_slaves) 
+        files = self.get_value(self.metadata.r_files, polarity)
+        xset = self.peak_detection(files, xcms_params, n_slaves) 
         rt_correction_method = self.get_value(mzmatch_params, 'rt.alignment')[0]            
         fp, xseto = self.rt_correct(xset, rt_correction_method, peakml_params, mzmatch_outputs, n_slaves, True)   
         self.generate_peakml_files(xseto, fp, polarity_dir, self.analysis.id, peakml_params)  
@@ -153,6 +173,15 @@ class Rpy2Pipeline(object):
         combine_type = self.get_value(mzmatch_params, 'combination')[0]
         
         self.combine_all(combine_info, combined_dir, combination_paths, ppm, rtwindow, combine_type)
+
+        i = 0
+        group_dict = {}
+        for i in range(len(combine_info)):
+            combi, index, factors, files = combine_info[i]
+            if len(files) > 0:
+                group_dict[combi] = robjects.StrVector(files)
+        r_combi = robjects.ListVector(group_dict)        
+        return r_combi
         
     def filter_peaksets(self, combined_dir, mzmatch_params):
         peaksets = self.list_peakml_files_in(combined_dir)
@@ -222,6 +251,21 @@ class Rpy2Pipeline(object):
         related_peaks(in_file, out_file, basepeak_file, ppm, rtwindow)
 
         return out_file, basepeak_file
+    
+    def identify(self, polarity, in_file, databases, groups, mzmatch_params, mzmatch_outputs):
+
+        args = {
+            'in_file'           : in_file,
+            'databases'         : databases,
+            'groups'            : groups,
+            'mzmatch.outputs'   : mzmatch_outputs,
+            'mzmatch.params'    : mzmatch_params,
+            'polarity'          : polarity
+        }
+
+        pimp_identify = robjects.r['Pimp.identify.metabolites']
+        raw_data = pimp_identify(**args)
+        return raw_data
         
     ############################################################
     # peak detection
@@ -319,8 +363,9 @@ class Rpy2Pipeline(object):
         # print output
         
         out_file = os.path.join(combined_dir, 'combined.tsv')
-        combine_info = self.write_combinations(factors, mat, out_file)        
-        return combine_info, combined_dir    
+        combine_info = self.write_combinations(factors, mat, out_file)   
+                     
+        return combine_info, combined_dir
         
     def populate_tree(self, parent, factors):
         depth = parent.depth + 1
@@ -354,7 +399,7 @@ class Rpy2Pipeline(object):
             i = 0
             for index, files in np.ndenumerate(mat):
     
-                combi = 'combi_%s' % i
+                combi = 'group_%s' % i
                 row = (combi, index, self.index_to_string(factors, index), list(files))
                 rows.append(row)
                 
@@ -522,6 +567,7 @@ class Rpy2PipelineMetadata(object):
 
         # databases
         self.r_databases = robjects.StrVector(self.databases)  
+        self.r_dbs = robjects.StrVector([])
 
     def get_files(self):
         file_list = {}

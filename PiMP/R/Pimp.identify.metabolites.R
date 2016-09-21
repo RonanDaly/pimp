@@ -1,12 +1,4 @@
-Pimp.identify.metabolites.save <- function(in_file, databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
-
-	save(in_file, databases, groups, mzmatch.outputs, mzmatch.params, polarity, file='identify.RData')
-	Pimp.identify.metabolites(in_file, databases, groups, mzmatch.outputs, mzmatch.params, polarity)
-
-}
-
-Pimp.identify.metabolites <- function(in_file, databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
-
+Pimp.identify.metabolites <- function(in_file=character(), databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
 
 	#check file exists - which file?
 	#check databases exist - warn
@@ -66,48 +58,6 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
 	txtfile <- .generateIdentifiedFileName(file=mzmatch.outputs$final.combined.related.id.txt, database=database)
   	mzmatch.ipeak.convert.ConvertToText(i=outfile,o=txtfile,v=TRUE,annotations=annot)
   	data <- .parseMzMatchOutput(file=txtfile, groups=groups)
-
-
-  # 	##parse xml doc
-  # 	doc <- xmlParse(database)
-
-  # 	#get DB names from xml
-  # 	data[,"name"] <- sapply(
-		# as.character(data[,"identification"]),
-		# 	function(x,doc){
-		# 		.getNameByID(
-		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc,
-		# 			collapse=T
-		# 		)
-		# 	},
-		# doc=doc)
-
-  # 	#get DB formulae from xml
-  # 	data[,"formula"] <- sapply(
-		# as.character(data[,"identification"]),
-		# 	function(x,doc){
-		# 		.getFormulaByID(
-		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc,
-		# 			collapse=T
-		# 		)
-		# 	},
-		# doc=doc)
-
-  # 	#get DB formulae from xml
-  # 	data[,"InChi"] <- sapply(
-		# as.character(data[,"identification"]),
-		# 	function(x,doc){
-		# 		.getInChiByID(
-		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc,
-		# 			collapse=T
-		# 		)
-		# 	},
-		# doc=doc)
-
-  # 	free(doc)
 
   	return(data)
 }
@@ -171,57 +121,4 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
 	}
 
 	return(raw.data)
-}
-
-.getNameByID <- function(id=character(), doc=NULL, collapse=FALSE) {
-	name <- sapply(id, function(id, doc) {
-			ns <- getNodeSet(doc,paste("//compound[./id='",id,"']/name", sep=""))
-			name <- sapply(ns, xmlValue)
-			if(length(name)==0){
-				name <- NA
-			}
-			return(name)
-		}, doc=doc
-	)
-	if(collapse) {
-		name <- paste(name, collapse=", ")
-	}
-
-	return(name)
-}
-
-.getFormulaByID <- function(id=character(), doc=NULL, collapse=FALSE) {
-	formula <- sapply(id, function(id, doc) {
-			ns <- getNodeSet(doc,paste("//compound[./id='",id,"']/formula", sep=""))
-			formula <- sapply(ns, xmlValue)
-			formula <- gsub("\\[M1\\];\\[(.*)\\]n", "\\1", formula)
-			if(length(formula)==0){
-				formula <- NA
-			}
-			return(formula)
-		}, doc=doc
-	)
-	if(collapse) {
-		formula <- paste(formula, collapse=", ")
-	}
-
-	return(formula)
-}
-
-.getInChiByID <- function(id=character(), doc=NULL, collapse=FALSE) {
-	inchi <- sapply(id, function(id, doc) {
-			ns <- getNodeSet(doc,paste("//compound[./id='",id,"']/inchi", sep=""))
-			inchi <- sapply(ns, xmlValue)
-			inchi <- gsub("\\[M1\\];\\[(.*)\\]n", "\\1", inchi)
-			if(length(formula)==0){
-				inchi <- NA
-			}
-			return(inchi)
-		}, doc=doc
-	)
-	if(collapse) {
-		inchi <- paste(inchi, collapse=", ")
-	}
-
-	return(inchi)
 }

@@ -1,11 +1,5 @@
 library()
 
-# original parameters
-# Pimp.runPipeline <- function(files=list(), groups=list(), comparisonNames=character(), contrasts=character(),
-#                             standards=character(), databases=character(), normalization="none", nSlaves=0,
-#                             reports=c("excel", "xml"), mzmatch.params, mzmatch.filters, mzmatch.outputs,
-#                             xcms.params, peakml.params, batch.correction=FALSE, verbose=TRUE, saveFixtures=FALSE, ...) {
-
 # TODO: this can be done in Python
 getNeededString = function(name) {
     Sys.getenv(name, unset=NA)
@@ -33,13 +27,6 @@ Pimp.getPimpWd <- function(project_id) {
     loginfo('Data dir: %s', DATA_DIR, logger=logger)
     loginfo('Project dir: %s', PROJECT_DIR, logger=logger)
     return(PROJECT_DIR)
-}
-
-# TODO: for debugging only ...
-Pimp.dumpParameters <- function(files, groups, standards, comparisonNames,
-                        contrasts, databases, analysis_id, project_id, wd, pimp_params, DBS) {
-    save(files, groups, standards, comparisonNames, contrasts,
-         databases, analysis_id, project_id, wd, pimp_params, DBS, file='parameters.RData')
 }
 
 # TODO: this can be done in Python
@@ -151,6 +138,7 @@ Pimp.getAnalysisParams <- function(analysis_id) {
 
 }
 
+# format mzmatch outputs to insert the analysis id and polarity into the strings
 Pimp.getFormattedMzmatchOutputs <- function(analysis_id, polarity, mzmatch_outputs) {
 
     mzmatch_outputs <- lapply(mzmatch_outputs, function(x) {
@@ -189,6 +177,7 @@ Pimp.createAnalysisDir <- function(analysis_id, pimp_params) {
 
 }
 
+# generate the full database paths and also the standard xml if needed
 Pimp.generateStdXml <- function(standards, databases, pimp_params, wd) {
 
     setwd(wd)
@@ -209,58 +198,30 @@ Pimp.generateStdXml <- function(standards, databases, pimp_params, wd) {
     if(length(DBS)!=length(databases)) {
         stop("Not all annotation databases found.")
     }
-    return(DBS)
+
+    output <- list(databases=databases, DBS=DBS)
+    return(output)
 
 }
 
-Pimp.runPipeline <- function(files, groups, standards, comparisonNames,
-    contrasts, databases, saveFixtures, analysis_id, project_id, wd,
-    pimp_params, DBS) {
+# -----------------------------------------------------------------------------
+# to check from here onwards
+# -----------------------------------------------------------------------------
 
-    setwd(wd)
-    logger <- getPiMPLogger('Pimp.runPipeline')
-    setPiMPLoggerAnalysisID(analysis_id)
+Pimp.runStats.save <- function(raw.data.pos, raw.data.neg,
+                               analysis_id, groups, factors, contrasts, comparisonNames,
+                               databases, DBS, mzmatch_outputs, saveFixtures, wd) {
 
-	normalization <- 'none'
-	reports <- 'xml'
-	batch_correction <- FALSE
-	verbose <- TRUE
-
-	# TODO: this is probably not correct ?
-	nSlaves <- ifelse(length(unlist(groups)) >= 20, 20, length(unlist(groups)))
-
-	# options(java.parameters=paste("-Xmx",1024*8,"m",sep=""))
-	# library(PiMP)
-
-	# is this still necessary???????
-	##set java to headless mode - prevents MacOS barfing in spreadsheet generation
-	.jcall("java/lang/System","S","setProperty","java.awt.headless","true")
-
-	# extract the actual parameters
-	mzmatch.params <- pimp_params$mzmatch.params
-	mzmatch.filters <- pimp_params$mzmatch.filters
-	mzmatch.outputs <- pimp_params$mzmatch.outputs
-	xcms.params <- pimp_params$xcms.params
-	peakml.params <- pimp_params$peakml.params
-
-	##
-	## Processing of raw data files
-	##
-
-	#Process mzXML files for each polarity
-	if(length(files$positive) > 0) {
-		raw.data.pos <- Pimp.processRawData(files=files$positive, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="positive", batch.correction=batch_correction, nSlaves=nSlaves)
-	}
-
-	if(length(files$negative) > 0) {
-		raw.data.neg <- Pimp.processRawData(files=files$negative, groups=groups, databases=DBS, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs, peakml.params=peakml.params, xcms.params=xcms.params, mzmatch.filters=mzmatch.filters, polarity="negative", batch.correction=batch.correction, nSlaves=nSlaves)
-	}
+    save(raw.data.pos, raw.data.neg,
+         analysis_id, groups, factors, comparisonNames, contrasts,
+         databases, DBS, mzmatch_outputs, saveFixtures, wd,
+         file='runStats.RData')
 
 }
 
 Pimp.runStats <- function(raw.data.pos, raw.data.neg,
-                          groups, comparisonNames, contrasts, databases,
-                          saveFixtures, analysis_id, wd, pimp_params, DBS) {
+                          analysis_id, groups, factors, contrasts, comparisonNames,
+                          databases, DBS, formatted_mzmatch_outputs, saveFixtures, wd) {
 
     setwd(wd)
     logger <- getPiMPLogger('Pimp.runStats')
@@ -274,7 +235,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     .jcall("java/lang/System","S","setProperty","java.awt.headless","true")
 
     # extract the actual parameters
-    mzmatch.outputs <- pimp_params$mzmatch.outputs
+    mzmatch.outputs <- formatted_mzmatch_outputs
 
     #Data are returned in data.frame with checksum as peak id.  Row bind if two polarities
     if(exists("raw.data.pos") && exists("raw.data.neg")) {
