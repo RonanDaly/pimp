@@ -20,8 +20,7 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=True):
 
     pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
     pipeline.setup()
-
-    return_code, xml_file_path = pipeline.run()
+    return_code, xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
 
     if os.path.exists(xml_file_path):
@@ -32,7 +31,7 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=True):
     else:
         analysis.status = 'Error'
         analysis.save(update_fields=['status'])
-        # send_email(analysis, project, user, False) REMEMBER TO UNCOMMENT THIS
+        send_email(analysis, project, user, False)
 
     success = True if return_code == 0 else False
     return success

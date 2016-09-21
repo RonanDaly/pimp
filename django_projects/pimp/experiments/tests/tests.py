@@ -252,35 +252,31 @@ def create_database(fixture_dir, env,
     # 5. group the samples into conditions
     #######################################################
 
-    group_name = 'beer_taste'                                     # --> feature
-    attribute_names = ['delicious', 'not_bad', 'bad', 'awful']    # --> feature values
+    group_name = 'beer_smell'                        # --> feature
+    attribute_names = ['smell_good', 'smell_bad']    # --> feature values
     conditions = create_grouping(group_name, attribute_names)
 
-    taste_delicious = conditions['delicious']
-    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer1_1)
-    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer1_2)
-    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer1_3)
-    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer2_1)
-    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer2_2)
-    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer2_3)
+    smell_good = conditions['smell_good']
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer1_1)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer1_2)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer1_3)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer2_1)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer2_2)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer2_3)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer3_1)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer3_2)
+    SampleAttribute.objects.create(attribute=smell_good, sample=beer3_3)
 
-    taste_not_bad = conditions['not_bad']
-    SampleAttribute.objects.create(attribute=taste_not_bad, sample=beer3_1)
-    SampleAttribute.objects.create(attribute=taste_not_bad, sample=beer3_2)
-    SampleAttribute.objects.create(attribute=taste_not_bad, sample=beer3_3)
-
-    taste_bad = conditions['bad']
-    SampleAttribute.objects.create(attribute=taste_bad, sample=beer4_1)
-
-    taste_awful = conditions['awful']
-    SampleAttribute.objects.create(attribute=taste_awful, sample=beer4_2)
-    SampleAttribute.objects.create(attribute=taste_awful, sample=beer4_3)
+    smell_bad = conditions['smell_bad']
+    SampleAttribute.objects.create(attribute=smell_bad, sample=beer4_1)
+    SampleAttribute.objects.create(attribute=smell_bad, sample=beer4_2)
+    SampleAttribute.objects.create(attribute=smell_bad, sample=beer4_3)
 
     group_name = 'beer_colour'
-    attribute_names = ['dark', 'light']
+    attribute_names = ['colour_dark', 'colour_light']
     conditions = create_grouping(group_name, attribute_names)
 
-    colour_dark = conditions['dark']
+    colour_dark = conditions['colour_dark']
     SampleAttribute.objects.create(attribute=colour_dark, sample=beer1_1)
     SampleAttribute.objects.create(attribute=colour_dark, sample=beer1_2)
     SampleAttribute.objects.create(attribute=colour_dark, sample=beer1_3)
@@ -288,13 +284,35 @@ def create_database(fixture_dir, env,
     SampleAttribute.objects.create(attribute=colour_dark, sample=beer2_2)
     SampleAttribute.objects.create(attribute=colour_dark, sample=beer2_3)
 
-    colour_light = conditions['light']
+    colour_light = conditions['colour_light']
     SampleAttribute.objects.create(attribute=colour_light, sample=beer3_1)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer3_2)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer3_3)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer4_1)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer4_2)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer4_3)
+    
+    group_name = 'beer_taste'
+    attribute_names = ['taste_delicious', 'taste_okay', 'taste_awful']
+    conditions = create_grouping(group_name, attribute_names)
+
+    taste_delicious = conditions['taste_delicious']
+    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer1_1)
+    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer1_2)
+    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer1_3)
+    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer2_1)
+    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer2_2)
+    SampleAttribute.objects.create(attribute=taste_delicious, sample=beer2_3)
+
+    taste_okay = conditions['taste_okay']
+    SampleAttribute.objects.create(attribute=taste_okay, sample=beer3_1)
+    SampleAttribute.objects.create(attribute=taste_okay, sample=beer3_2)
+    SampleAttribute.objects.create(attribute=taste_okay, sample=beer3_3)
+
+    taste_awful = conditions['taste_awful']
+    SampleAttribute.objects.create(attribute=taste_awful, sample=beer4_1)
+    SampleAttribute.objects.create(attribute=taste_awful, sample=beer4_2)
+    SampleAttribute.objects.create(attribute=taste_awful, sample=beer4_3)
 
     #######################################################
     # 6. create a new experiment and analysis
@@ -329,8 +347,7 @@ def create_database(fixture_dir, env,
     # lowest group is the control
     ac0 = AttributeComparison(group=0, attribute=taste_awful, comparison=comparison)
     ac1 = AttributeComparison(group=1, attribute=taste_delicious, comparison=comparison)
-    ac2 = AttributeComparison(group=1, attribute=taste_not_bad, comparison=comparison)
-    ac3 = AttributeComparison(group=2, attribute=taste_bad, comparison=comparison)
+    ac2 = AttributeComparison(group=1, attribute=taste_okay, comparison=comparison)
     ac0.save()
     ac1.save()
     ac2.save()

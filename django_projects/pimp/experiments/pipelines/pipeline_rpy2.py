@@ -28,7 +28,7 @@ class Rpy2Pipeline(object):
         print 'Setup rpy2 connection'
         print '******************************************'
         
-        packrat_lib_path = '/Users/joewandy/git/pimp/packrat/lib/x86_64-apple-darwin15.5.0/3.3.1/'
+        packrat_lib_path = self.get_env_packrat_lib_path()
         set_lib_path = robjects.r['.libPaths']
         set_lib_path(packrat_lib_path)
 
@@ -133,7 +133,7 @@ class Rpy2Pipeline(object):
         # still assuming that there are two polarities: pos and neg
         raw_data_dict = {}
         groups_dict = {}
-        for polarity in self.files:                
+        for polarity in self.metadata.files:                
             raw_data, groups = self.process_raw_data(polarity, xcms_params, mzmatch_params, 
                                                   peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves)
             raw_data_dict[polarity] = raw_data
@@ -512,6 +512,10 @@ class Rpy2Pipeline(object):
         found = re.findall(r'\d+', xmx)
         heapsize = int(found[0])
         return heapsize
+
+    def get_env_packrat_lib_path(self):
+        packrat_lib_path = getString('R_LIBS_USER', '')
+        return packrat_lib_path
         
     def create_if_not_exist(self, directory):
         if not os.path.exists(directory):

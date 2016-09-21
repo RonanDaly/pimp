@@ -221,7 +221,7 @@ Pimp.runStats.save <- function(raw.data.pos, raw.data.neg,
 
 Pimp.runStats <- function(raw.data.pos, raw.data.neg,
                           analysis_id, groups, factors, contrasts, comparisonNames,
-                          databases, DBS, formatted_mzmatch_outputs, saveFixtures, wd) {
+                          databases, DBS, mzmatch_outputs, saveFixtures, wd) {
 
     setwd(wd)
     logger <- getPiMPLogger('Pimp.runStats')
@@ -235,7 +235,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     .jcall("java/lang/System","S","setProperty","java.awt.headless","true")
 
     # extract the actual parameters
-    mzmatch.outputs <- formatted_mzmatch_outputs
+    mzmatch.outputs <- mzmatch_outputs
 
     #Data are returned in data.frame with checksum as peak id.  Row bind if two polarities
     if(exists("raw.data.pos") && exists("raw.data.neg")) {
