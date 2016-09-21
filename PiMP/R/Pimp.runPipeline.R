@@ -90,13 +90,28 @@ Pimp.getAnalysisParams <- function(analysis_id) {
     setPiMPLoggerAnalysisID(analysis_id)
 
     library(PiMPDB)
+    DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
+    if ( DATABASE_FILENAME == '' )  {
+      DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
+    } else {
+      DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
+    }
+    
+    dbtype = getNeededString('PIMP_DATABASE_ENGINE')
+    if ( dbtype == 'django.db.backends.mysql' ) {
+      DATABASE_TYPE = 'mysql'
+    } else if ( dbtype == 'django.db.backends.sqlite3' ) {
+      DATABASE_TYPE = 'sqlite'
+    } else {
+      stop(paste('The database type', dbtype, 'is not recognised'))
+    }
     db <- new("PiMPDB",
-              dbuser='root',
-              dbpassword='p01y0m1c5',
-              dbname='iss_146',
-              dbhost='localhost',
-              dbport=3306,
-              dbtype='mysql'
+              dbuser=getString('PIMP_DATABASE_USER', ''),
+              dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
+              dbname=DATABASE_NAME,
+              dbhost=getString('PIMP_DATABASE_HOST', ''),
+              dbport=getInteger('PIMP_DATABASE_PORT', 0),
+              dbtype=DATABASE_TYPE
     )
     pimp.params = getDefaultSettings()
 
