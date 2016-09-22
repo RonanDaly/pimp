@@ -232,6 +232,11 @@ Pimp.runStats.save <- function(raw.data.pos, raw.data.neg,
          databases, DBS, mzmatch_outputs, mzmatch_params, saveFixtures, wd,
          file='runStats.RData')
 
+    Pimp.runStats <- function(raw.data.pos, raw.data.neg,
+                                analysis_id, factors, metadata, contrasts, comparisonNames,
+                                databases, DBS, mzmatch_outputs, mzmatch_params, saveFixtures, wd)
+
+
 }
 
 Pimp.runStats <- function(raw.data.pos, raw.data.neg,
