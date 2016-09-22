@@ -4,13 +4,17 @@ import re
 import shutil
 
 from django.conf import settings
+from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 
+from experiments.models import Comparison, Database
+from fileupload.models import Sample, Picture, CalibrationSample
+from groups.models import Group
 import numpy as np
 import pandas as pd
 from pimp.settings import getString
 import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri
+
 
 class Rpy2Pipeline(object):
 
@@ -146,7 +150,6 @@ class Rpy2Pipeline(object):
             row = [sample]
             row.extend(sample_levels[sample])
             row.append(file_type)
-            print row
             data.append(row)
                 
         headers = ['sample']
@@ -592,6 +595,7 @@ class Rpy2PipelineMetadata(object):
         
         self.analysis = analysis
         self.project = project
+        self.experiment = self.analysis.experiment
 
         self.files = self.get_files()
         self.groups = self.get_groups()
@@ -628,20 +632,31 @@ class Rpy2PipelineMetadata(object):
         self.r_databases = robjects.StrVector(self.databases)  
         self.r_dbs = robjects.StrVector([])
 
+    def remove_first_two(self, path):
+        tokens = path.split('/')
+        new_path = '/'.join(tokens[2:])
+        return new_path
+        
+    def strip_project_from_path(self, path_list):
+        processed = []
+        for path in path_list:
+            if type(path) is tuple:
+                first = self.remove_first_two(path[0])
+                second = self.remove_first_two(path[1])
+                new_path = (first, second)
+            else:
+                new_path = self.remove_first_two(path)
+            processed.append(new_path)
+        return processed
+
     def get_files(self):
+        samples = Sample.objects.filter(attribute__comparison__experiment = self.experiment.id).distinct()
+        pos_samples = Picture.objects.filter(posdata__sample__in=samples).values_list('file', flat=True)
+        neg_samples = Picture.objects.filter(negdata__sample__in=samples).values_list('file', flat=True)
+                
         file_list = {}
-        file_list['positive'] = [
-            'samples/POS/Beer_4_full1.mzXML', 'samples/POS/Beer_4_full2.mzXML', 'samples/POS/Beer_4_full3.mzXML',
-            'samples/POS/Beer_1_full1.mzXML', 'samples/POS/Beer_1_full2.mzXML', 'samples/POS/Beer_1_full3.mzXML',
-            'samples/POS/Beer_2_full1.mzXML', 'samples/POS/Beer_2_full2.mzXML', 'samples/POS/Beer_2_full3.mzXML',
-            'samples/POS/Beer_3_full1.mzXML', 'samples/POS/Beer_3_full2.mzXML', 'samples/POS/Beer_3_full3.mzXML'
-        ]
-        file_list['negative'] = [
-            'samples/NEG/Beer_4_full1.mzXML', 'samples/NEG/Beer_4_full2.mzXML', 'samples/NEG/Beer_4_full3.mzXML',
-            'samples/NEG/Beer_1_full1.mzXML', 'samples/NEG/Beer_1_full2.mzXML', 'samples/NEG/Beer_1_full3.mzXML',
-            'samples/NEG/Beer_2_full1.mzXML', 'samples/NEG/Beer_2_full2.mzXML', 'samples/NEG/Beer_2_full3.mzXML',
-            'samples/NEG/Beer_3_full1.mzXML', 'samples/NEG/Beer_3_full2.mzXML', 'samples/NEG/Beer_3_full3.mzXML'
-        ]
+        file_list['positive'] = self.strip_project_from_path(pos_samples)
+        file_list['negative'] = self.strip_project_from_path(neg_samples)
         return file_list
     
     def get_short_names(self, polarity):
@@ -655,57 +670,68 @@ class Rpy2PipelineMetadata(object):
         return short_names
         
     def get_groups(self):
+        res = Group.objects.filter(attribute__comparison__experiment = self.experiment).values_list(
+            'name','attribute__name','attribute__sample__name')
+        data = [row for row in res]
+        
+        headers = ['factor', 'level', 'sample']
+        df = pd.DataFrame(data, columns=headers)
 
         factors = []
+        fs = df.factor.unique()
+        for f_label in fs:
 
-        f1 = Factor('beer_smell')
-        f1.add_level('smell_good', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3',
-                                    'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3',
-                                    'Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
-        f1.add_level('smell_bad', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
-        factors.append(f1)
+            f_label = f_label.encode('ascii','ignore')
 
-        f2 = Factor('beer_colour')
-        f2.add_level('colour_dark', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
-                              'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
-        f2.add_level('colour_light', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3', 
-                               'Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
-        factors.append(f2)
+            # create Factor based on the dataframe values
+            factor = Factor(f_label)
+            factor_df = df.loc[df['factor'] == f_label]
+            levels = factor_df.level.unique()
 
-        f1 = Factor('beer_taste')
-        f1.add_level('taste_delicious', ['Beer_1_full1', 'Beer_1_full2', 'Beer_1_full3', 
-                                   'Beer_2_full1', 'Beer_2_full2', 'Beer_2_full3'])
-        f1.add_level('taste_okay', ['Beer_3_full1', 'Beer_3_full2', 'Beer_3_full3'])
-        f1.add_level('taste_awful', ['Beer_4_full1', 'Beer_4_full2', 'Beer_4_full3'])
-        factors.append(f1)
-        
+            # get the samples in each level            
+            for level_label in levels:
+
+                level_label = level_label.encode('ascii','ignore')
+                level_df = factor_df.loc[factor_df['level'] == level_label]
+                samples = level_df[['sample']].values.flatten().tolist()
+                
+                # strip the extension from samples
+                processed = []
+                for samp in samples:
+                    filename, file_extension = os.path.splitext(samp)
+                    processed.append(filename)
+                
+                factor.add_level(level_label, processed)
+
+            factors.append(factor)
+
         return factors
-        
+            
     def get_standards(self):
-        standard_list = [
-            'calibration_samples/standard/Std1_1_20150422_150810.csv',
-            'calibration_samples/standard/Std2_1_20150422_150711.csv',
-            'calibration_samples/standard/Std3_1_20150422_150553.csv'
-        ]
-        return standard_list
+        standards = CalibrationSample.objects.filter(project=self.project, attribute__name='standard').values_list(
+            'standardFile__data__file', flat=True)
+        standard_list = self.strip_project_from_path(standards)
+        return standard_list       
     
-    # need to think about what data structure to store the comparisons ...
+    def get_calibration_samples(self, samp_type):
+        # type is either 'blank' or 'qc'
+        cal = CalibrationSample.objects.filter(project=self.project, attribute__name=samp_type).values_list(
+            'standardFile__posdata__file', 'standardFile__negdata__file')
+        cal_list = self.strip_project_from_path(cal)        
+        return cal_list
+    
     def get_comparisons(self):
+        comparisons = Comparison.objects.filter(experiment=self.experiment).values_list(
+            'name', 'attribute__group__name', 'attribute__name', 'attributecomparison__group')
         
-        data = []
-        data.append(['beer_colour_comparison', 'beer_colour', 'colour_dark', 0])
-        data.append(['beer_colour_comparison', 'beer_colour', 'colour_light', 1])
-        data.append(['beer_taste_comparison', 'beer_colour', 'taste_awful', 0])
-        data.append(['beer_taste_comparison', 'beer_colour', 'taste_delicious', 1])
-        data.append(['beer_taste_comparison', 'beer_colour', 'taste_okay', 1])
-        
+        data = [list(row) for row in comparisons]
         headers = ['comparison', 'factor', 'level', 'group']
         df = pd.DataFrame(data, columns=headers)
         return df
     
     def get_databases(self):
-        database_list = ['kegg', 'hmdb', 'lipidmaps', 'standard']
-        return database_list
+        databases = Database.objects.filter(params__analysis=self.analysis).values_list('name', flat=True)
+        return list(databases)
         
 class Tree(object):
     
