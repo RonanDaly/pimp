@@ -291,10 +291,10 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     ##
 
     #Remove analysis samples from data for statistical analysis
-    data.groups <- groups[!names(groups) %in% c("QC", "Blank", "Standard")]
+    sample.metadata = metadata[metadata$filetype == 'Sample',]
 
     #Preprocess raw data for statistical analysis. Keep BP plus those matching to STD, set 0s to NA
-    preprocessed <- .preProcessRawData(raw.data=raw.data, groups=data.groups)
+    preprocessed <- .preProcessRawData(raw.data=raw.data, sample.metadata, factors, minintensity = mzmatch.params$minintensity)
 
     #Normalization if required. Default is "none"
     norm.data <- Pimp.normalize(preprocessed$data, method=normalization)
@@ -367,7 +367,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
 
 }
 
-.preProcessRawData <- function(raw.data=data.frame(), groups=list(), minintensity=NULL) {
+.preProcessRawData <- function(raw.data=data.frame(), sample.metadata, factorNames, minintensity=NULL) {
   if ( is.numeric(minintensity) ) {
     low_level = minintensity
   } else {
@@ -375,7 +375,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
   }
 
 	##select only columns of samples of interest i.e. no QC, blanks, stds
-	intensities.idx <- match(as.character(unlist(groups)), colnames(raw.data))
+  intensities.idx = match(row.names(sample.metadata), colnames(raw.data))
 
 	#get rows containing basepeaks or match to standard
 	basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
@@ -383,7 +383,9 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
 
 	# If _all_ the replicates in a group are NA or 0, then replace with low level
 	# Else leave alone
-	for (group in groups) {
+	smd = as.data.table(sample.metadata, keep.rownames=TRUE)
+	count = smd[, list(Rows=list(.I)), by = eval(factorNames)]
+	for (group in count$Rows) {
 	  for (i in 1:nrow(raw.data)) {
 	    if ( all(raw.data[i,group] == 0 | is.na(raw.data[i,group])) ) {
 	      raw.data[i,group] = low_level

@@ -224,6 +224,10 @@ Version: 1.17.1
 Hash: 97cb6f6293cd18d17df77a6383cc6763
 Requires: bitops
 
+Package: chron
+Source: PuMP
+Version: 2.3-47
+
 Package: cluster
 Source: PuMP
 Version: 2.0.3
@@ -250,6 +254,11 @@ Version: 1.9.1
 Hash: 894e4e2f04fb749f786f15cf01181a0c
 Requires: curl, digest, evaluate, git2r, httr, jsonlite, memoise,
     roxygen2, rstudioapi, rversions, whisker
+
+Package: data.table
+Source: PuMP
+Version: 1.9.6
+Requires: chron
 
 Package: dichromat
 Source: PuMP
