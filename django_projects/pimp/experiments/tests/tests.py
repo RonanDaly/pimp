@@ -328,29 +328,20 @@ def create_database(fixture_dir, env,
     # 7. set up comparisons
     #######################################################
 
-    # set up a simple comparison
-
     comparison = Comparison(name='beer_colour_comparison', experiment=experiment)
     comparison.save()
-
     # lowest group is the control
     ac0 = AttributeComparison(group=0, attribute=colour_dark, comparison=comparison)
     ac1 = AttributeComparison(group=1, attribute=colour_light, comparison=comparison)
     ac0.save()
     ac1.save()
 
-    # set up a more complicated comparison
-
     comparison = Comparison(name='beer_taste_comparison', experiment=experiment)
     comparison.save()
-
-    # lowest group is the control
     ac0 = AttributeComparison(group=0, attribute=taste_awful, comparison=comparison)
     ac1 = AttributeComparison(group=1, attribute=taste_delicious, comparison=comparison)
-    ac2 = AttributeComparison(group=1, attribute=taste_okay, comparison=comparison)
     ac0.save()
     ac1.save()
-    ac2.save()
 
     #######################################################
     # 8. Run the R analysis pipeline

@@ -223,12 +223,13 @@ def experiment(request, project_id):
                 logger.info("attribute id : %s", id_attribute_1)
                 attribute_1 = Attribute.objects.get(id=id_attribute_1)
                 logger.info("attribute found : %s", attribute_1)
-                attribute_comp = AttributeComparison(control=False, attribute=attribute_1, comparison=comparison)
+                attribute_comp = AttributeComparison(group=1, attribute=attribute_1, comparison=comparison)
                 attribute_comp.save()
 
                 id_attribute_2 = form.cleaned_data['attribute2']
                 attribute_2 = Attribute.objects.get(id=id_attribute_2)
-                attribute_comp = AttributeComparison(control=True, attribute=attribute_2, comparison=comparison)
+                # smallest group is the control
+                attribute_comp = AttributeComparison(group=0, attribute=attribute_2, comparison=comparison)
                 attribute_comp.save()
             return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
     else:
@@ -656,7 +657,7 @@ def get_single_comparison_table(request, project_id, analysis_id, comparison_id)
 @login_required
 # @profile("analysis_result.prof")
 def analysis_result(request, project_id, analysis_id):
-    
+
     if request.method == 'GET':
 
         try:
@@ -666,7 +667,7 @@ def analysis_result(request, project_id, analysis_id):
             raise Http404
 
         start = timeit.default_timer()
-        
+
         comparisons = analysis.experiment.comparison_set.all().order_by('id')
         list(comparisons)
         dataset = analysis.dataset_set.all()[0]
@@ -684,7 +685,7 @@ def analysis_result(request, project_id, analysis_id):
         pca_info, explained_variance = get_pca(analysis, s, sample_list, member_list)
         pca_stop = timeit.default_timer()
         logger.info("PCA -- END")
-        
+
         ########################## Best hits comparison ############################
         logger.info("Best hits comparison -- START")
         comp_start = timeit.default_timer()
@@ -785,13 +786,13 @@ def get_pathway_url(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 def get_samples_and_attributes(comparisons):
-    
+
     ######## Old query for members ########
     # member_set = set()
     # for comparison in comparisons:
     #     member_set = member_set.union(set(comparison.attribute.all()))
-    # member_list = list(member_set)    
-    
+    # member_list = list(member_set)
+
     ######## New query for members ########
     s = Sample.objects.filter(
         attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
@@ -799,7 +800,7 @@ def get_samples_and_attributes(comparisons):
 
     member_list = list(Attribute.objects.filter(comparison=comparisons).distinct().order_by('id'))
     logger.info('Member list: %s' % member_list)
-    
+
     sample_member_hash = {}
     sample_list = []
     for member in member_list:
@@ -808,11 +809,11 @@ def get_samples_and_attributes(comparisons):
             sample_member_hash[sample] = member_list.index(member)
     logger.debug("sample member hash: %s", sample_member_hash)
     logger.debug("sample list: %s", sample_list)
-    
+
     return s, member_list, sample_list
 
 def get_pca(analysis, s, sample_list, member_list):
-    
+
     pca_table = []
     for sample in s:
         pca_table.append(
@@ -849,20 +850,20 @@ def get_pca(analysis, s, sample_list, member_list):
         j += 1
     pca_info.append(pca_data_point)
     logger.debug("pca_series: %s", pca_data_point)
-    
+
     return pca_info, explained_variance
 
 def get_best_hits_comparison(dataset, comparisons, s):
-    
+
     # cache peakdt' intensity values from all samples for use later
     peakdtsample_intensity = {}
     for sample in s:
         pdts = sample.peakdtsample_set.all().values()
         for pdt in pdts:
             key = (pdt['peak_id'], pdt['sample_id'])
-            peakdtsample_intensity[key] = pdt['intensity'] 
-    logger.info("len(peakdtsample_intensity): %d", len(peakdtsample_intensity))    
-    
+            peakdtsample_intensity[key] = pdt['intensity']
+    logger.info("len(peakdtsample_intensity): %d", len(peakdtsample_intensity))
+
     comparison_hits_list = {}
 
     for c in comparisons:
@@ -886,7 +887,7 @@ def get_best_hits_comparison(dataset, comparisons, s):
             else:
                 peakdtcomparison_compound_name[pdtc][1].append(pdtc.compound_name)
 
-        # build the comparison table for identified compounds        
+        # build the comparison table for identified compounds
         identified_info_list = []
         member_list = list(set(c.attribute.all()))
         member_list_map = dict()
@@ -900,16 +901,16 @@ def get_best_hits_comparison(dataset, comparisons, s):
             compound_name = value[1]
             intensities = get_intensities_values(identified_compound, peakdtsample_intensity, member_list_map)
             identified_info_list.append([identified_compound, compound_name, intensities])
-     
+
         # build the comparison table for annotated compounds
         annotated_info_list = []
         for annotated_compound in annotated_peakdtcomparisonList:
             intensities = get_intensities_values(annotated_compound, peakdtsample_intensity, member_list_map)
             annotated_info_list.append([annotated_compound, intensities])
-     
+
         comparison_hits = [identified_info_list, annotated_info_list]
         comparison_hits_list[c] = comparison_hits
-        
+
     return comparison_hits_list
 
 def get_intensities_values(peakdtcomparison, peakdtsample_intensity, member_list_map):
@@ -942,7 +943,7 @@ def get_intensities_values(peakdtcomparison, peakdtsample_intensity, member_list
     return data
 
 def get_comparison_info_list(dataset, comparisons):
-    
+
     peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison__in=list(comparisons),
                                                dataset=dataset).distinct()
     new_query_start = timeit.default_timer()
@@ -964,7 +965,7 @@ def get_comparison_info_list(dataset, comparisons):
     return peak_comparison_list, comparison_info, all_comparison_info
 
 def get_potential_hits(analysis, comparisons):
-    
+
     potential_hits = []
 #     peaks = Peak.objects.filter(dataset__analysis=analysis)
 #     for peak in peaks:
@@ -978,7 +979,7 @@ def get_potential_hits(analysis, comparisons):
     return potential_hits
 
 def get_superpathway():
-    
+
     super_pathways = SuperPathway.objects.all().prefetch_related('datasourcesuperpathway_set__pathway')
     super_pathways_list = []
     for i in super_pathways:
