@@ -231,10 +231,12 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     ##
 
     #Remove analysis samples from data for statistical analysis
-    sample.metadata = metadata[metadata$filetype == 'Sample',]
+    row.names(metadata) = metadata$sample
+    metadata$sample = NULL
+    sample.metadata = metadata[metadata$file_type == 'sample',]
 
     #Preprocess raw data for statistical analysis. Keep BP plus those matching to STD, set 0s to NA
-    preprocessed <- .preProcessRawData(raw.data=raw.data, sample.metadata, factors, minintensity = mzmatch.params$minintensity)
+    preprocessed <- .preProcessRawData(raw.data=raw.data, sample.metadata, factors, minintensity = mzmatch_params$minintensity)
 
     #Normalization if required. Default is "none"
     norm.data <- Pimp.normalize(preprocessed$data, method=normalization)
@@ -248,12 +250,12 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     ##
 
     ##differential analysis using ebayes
-    diff.stats <- Pimp.statistics.differential(data=norm.data, groups=data.groups, contrasts=contrasts, method="ebayes", repblock=NULL)
-    toptables <- lapply(1:ncol(diff.stats$contrasts), function(i){topTable(diff.stats, coef=i, genelist=data.frame(Mass=preprocessed$Mass, RT=preprocessed$RT), number=length(diff.stats$coef[,1]), confint=TRUE)})      #[,c("Mass", "RT", "logFC","P.Value","adj.P.Val")]
-    names(toptables) <- comparisonNames
+    diff.stats <- Pimp.statistics.differential(data=norm.data, contrasts=contrasts, method="ebayes", repblock=NULL)
+    toptables <- lapply(diff.stats, function(fit){topTable(fit, coef=1, genelist=data.frame(Mass=preprocessed$Mass, RT=preprocessed$RT), number=length(fit$coef[,1]), confint=TRUE)})      #[,c("Mass", "RT", "logFC","P.Value","adj.P.Val")]
+    names(toptables) <- names(diff.stats)
 
     #pca plot coloured by groups
-    pca <- Pimp.statistics.pca(data=norm.data, groups=data.groups, file="pca.svg")
+    pca <- Pimp.statistics.pca(data=norm.data, sample.metadata=sample.metadata, factorNames = factors, file="pca.svg")
 
     ##
     ## Output
@@ -276,9 +278,9 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     }
 
     #excel
-    if("excel" %in% reports) {
-        Pimp.exportToExcel(databases=databases, stds.db=mzmatch.outputs$stds.xml.db, raw.data=raw.data, groups=data.groups, identification=identification, preprocessed=preprocessed, diff.stats=diff.stats, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, compound.ids=compound.ids, compound.std.ids=compound.std.ids, compound.info=compound.info)
-    }
+    #if("excel" %in% reports) {
+    #    Pimp.exportToExcel(databases=databases, stds.db=mzmatch.outputs$stds.xml.db, raw.data=raw.data, groups=data.groups, identification=identification, preprocessed=preprocessed, diff.stats=diff.stats, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, compound.ids=compound.ids, compound.std.ids=compound.std.ids, compound.info=compound.info)
+    #}
 
     message("XML Reports")
 

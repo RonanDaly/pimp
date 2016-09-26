@@ -779,7 +779,6 @@ class Rpy2PipelineMetadata(object):
     def get_comparisons(self):
         comparisons = Comparison.objects.filter(experiment=self.experiment).values_list(
             'name', 'attribute__group__name', 'attribute__name', 'attributecomparison__group')
-        
         data = [list(row) for row in comparisons]
         headers = ['comparison', 'factor', 'level', 'group']
         df = pd.DataFrame(data, columns=headers)
