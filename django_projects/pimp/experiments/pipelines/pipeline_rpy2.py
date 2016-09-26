@@ -695,9 +695,9 @@ class Rpy2PipelineMetadata(object):
         data = []
         data.append(['beer_colour_comparison', 'beer_colour', 'colour_dark', 0])
         data.append(['beer_colour_comparison', 'beer_colour', 'colour_light', 1])
-        data.append(['beer_taste_comparison', 'beer_colour', 'taste_awful', 0])
-        data.append(['beer_taste_comparison', 'beer_colour', 'taste_delicious', 1])
-        data.append(['beer_taste_comparison', 'beer_colour', 'taste_okay', 1])
+        data.append(['beer_taste_comparison', 'beer_taste', 'taste_awful', 0])
+        data.append(['beer_taste_comparison', 'beer_taste', 'taste_delicious', 1])
+        data.append(['beer_taste_comparison', 'beer_taste', 'taste_okay', 1])
         
         headers = ['comparison', 'factor', 'level', 'group']
         df = pd.DataFrame(data, columns=headers)
