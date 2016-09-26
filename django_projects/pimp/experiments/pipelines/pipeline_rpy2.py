@@ -12,11 +12,22 @@ from fileupload.models import Sample, Picture, CalibrationSample
 from groups.models import Group
 import numpy as np
 import pandas as pd
-from pimp.settings import getString
+from pimp.settings import getString, getNeededString
 import rpy2.robjects as robjects
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Rpy2Pipeline(object):
+    """
+    New pipeline entirely controlled from Python
+    
+    TODO: remove all database calls from the R side. Many methods in setup() can be pythonised.
+    TODO: include blanks (and qc?) during the data processing too!! 
+    TODO: generate_combinations() needlessly complex??
+    TODO: do we need a new Factor class?
+    """
 
     # read and think about this:
     # http://stackoverflow.com/questions/5707382/is-multiprocessing-with-rpy-safe            
@@ -32,9 +43,9 @@ class Rpy2Pipeline(object):
         
     def connect_to_rpy2(self): 
 
-        print '******************************************'
-        print 'Setup rpy2 connection'
-        print '******************************************'
+        logger.info('******************************************')
+        logger.info('Setup rpy2 connection')
+        logger.info('******************************************')
         
         packrat_lib_path = self.get_env_packrat_lib_path()
         set_lib_path = robjects.r['.libPaths']
@@ -56,32 +67,76 @@ class Rpy2Pipeline(object):
         pandas2ri.activate()    
                         
     def setup(self):
-        
-        print 'Setup called'
-        
-        # TODO: we could do this in Python ..
-        get_pimp_wd = robjects.r['Pimp.getPimpWd']
-        self.working_dir = get_pimp_wd(self.project.id)
-    
-        # TODO: we could do this in Python ??
-        validate_input = robjects.r['Pimp.validateInput']
-        validate_input(self.analysis.id, self.metadata.r_files, self.metadata.r_groups, self.working_dir)
-    
-        # TODO: we could do this in Python !!
-        get_analysis_params = robjects.r['Pimp.getAnalysisParams']
-        self.pimp_params = get_analysis_params(self.analysis.id)
-        
-        # create analysis dir
-        create_analysis_dir = robjects.r['Pimp.createAnalysisDir']        
-        # pimp_params$mzmatch.outputs will be updated inside to point to the right analysis folder
-        pimp_params = create_analysis_dir(self.analysis.id, self.pimp_params)
+                
+        self.working_dir = self.get_pimp_wd(self.project.id)
+        self.validate_input()
+        self.pimp_params = self.get_analysis_params(self.analysis.id)
+        self.pimp_params = self.create_analysis_dir(self.analysis.id, self.pimp_params)
     
         # generate std xml
         generate_std_xml = robjects.r('Pimp.generateStdXml')
-        output = generate_std_xml(self.metadata.r_stds, self.metadata.r_databases, pimp_params, self.working_dir)
+        output = generate_std_xml(self.metadata.r_stds, self.metadata.r_databases, self.pimp_params, self.working_dir)
         self.metadata.r_dbs = output[output.names.index('DBS')]
         self.metadata.r_databases = output[output.names.index('databases')]
-                
+        
+    def get_pimp_wd(self, project_id):        
+        
+        base_dir = getNeededString('PIMP_BASE_DIR')
+        defined_media_root = os.path.join(base_dir, '..', 'pimp_data')
+        media_root = getString('PIMP_MEDIA_ROOT', defined_media_root)
+        data_dir = os.path.join(media_root, 'projects')
+        project_dir = os.path.join(data_dir, str(project_id))
+
+        logger.info('Data dir: %s', data_dir)
+        logger.info('Project dir: %s', project_dir)        
+        
+        return project_dir        
+    
+    def validate_input(self):
+
+        pos_files = self.metadata.files['positive']
+        neg_files = self.metadata.files['negative']
+        all_files = list(pos_files)
+        all_files.extend(neg_files)
+        logger.debug('all_files %s', all_files)        
+        logger.debug('working_dir %s', self.working_dir)        
+
+        # check that all the input files are there
+        for f_name in all_files:
+            f_path = os.path.join(self.working_dir, f_name)
+            assert os.path.isfile(f_path)
+
+        # validate that pos and neg files are of the same length and are consistent    
+        assert len(pos_files) == len(neg_files)
+        for f in range(len(pos_files)):
+            pos = os.path.basename(pos_files[f])
+            neg = os.path.basename(neg_files[f])
+            assert pos == neg        
+
+        # check that all samples in groups have corresponding file
+        unique_files = set()
+        for f in all_files:
+            basename = os.path.basename(f)
+            front, ext = os.path.splitext(basename)
+            unique_files.add(front)
+            
+        for factor in self.metadata.groups:
+            for level in factor.levels:
+                files = factor.level_files[level]
+                for f in files:
+                    assert f in unique_files        
+        
+    def get_analysis_params(self, analysis_id):
+        get_analysis_params = robjects.r['Pimp.getAnalysisParams']
+        pimp_params = get_analysis_params(analysis_id)
+        return pimp_params
+    
+    def create_analysis_dir(self, analysis_id, pimp_params):
+        create_analysis_dir = robjects.r['Pimp.createAnalysisDir']        
+        # pimp_params$mzmatch.outputs will be updated inside to point to the right analysis folder
+        pimp_params = create_analysis_dir(analysis_id, pimp_params)
+        return pimp_params
+
     ############################################################
     # pipeline methods to process raw data
     ############################################################
@@ -93,9 +148,9 @@ class Rpy2Pipeline(object):
         formatted_mzmatch_outputs = format_mzmatch_outputs(self.analysis.id, polarity, mzmatch_outputs)
         polarity_dir, combined_dir = self.create_input_directories(polarity, formatted_mzmatch_outputs)
 
-        print '------------------------------------------------'
-        print polarity, polarity_dir, combined_dir
-        print '------------------------------------------------'
+        logger.info('------------------------------------------')
+        logger.info(polarity, polarity_dir, combined_dir)
+        logger.info('------------------------------------------')        
 
         # peak detection and rt correction
         self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params, 
@@ -393,7 +448,7 @@ class Rpy2Pipeline(object):
             peakml_files.append(outfile)            
         
         for i in range(len(peakml_files)):
-            print 'Now creating %s' % peakml_files[i]
+            logger.debug('Now creating %s' % peakml_files[i])
             write_peakml(xseto[i], outputfile=peakml_files[i], ionisation=ionisation, 
                          addscans=add_scans, writeRejected=write_rejected, 
                          ApodisationFilter=apodisation_filter, ppm=ppm)    
@@ -405,21 +460,21 @@ class Rpy2Pipeline(object):
     def generate_combinations(self, polarity, combined_dir):
                                 
         factors = self.metadata.get_groups()        
-        print factors
+        logger.debug(factors)
         dims = []
         for f in factors:
-            print f.label
+            logger.debug(f.label)
             for lev in f.levels:
-                print ' -', lev, f.level_files[lev]
+                logger.debug(' -', lev, f.level_files[lev])
             dims.append(len(f.levels))             
 
         mat = np.empty(dims, dtype=object)
-        print mat.shape
+        logger.debug(mat.shape)
         parent = Tree(None, 'root', -1, None)
         parent.level_files = set(self.metadata.get_short_names(polarity))
         self.populate_tree(parent, factors)
         output = self.print_tree(parent, mat, [])
-        # print output
+        logger.debug(output)
         
         out_file = os.path.join(combined_dir, 'combined.tsv')
         combine_info = self.write_combinations(factors, mat, out_file)   
@@ -481,7 +536,7 @@ class Rpy2Pipeline(object):
         to_process = []
         for row in combine_info:
     
-            print row
+            logger.debug(row)
             combi_label, coord, description, files = row
     
             one_combination = os.path.join(combined_dir, combi_label)
@@ -512,11 +567,11 @@ class Rpy2Pipeline(object):
             combine_label, coord, description, files = combine_info[i]
             one_combination = combination_paths[i]
             if len(files) > 0:
-                print 'Processing', one_combination
+                logger.info('Processing', one_combination)
                 self.combine_single_combi(one_combination, combined_dir, combine_label, 
                                combine_ppm, combine_rtwindow, combine_type)                                    
             else:
-                print 'Nothing to combine in', one_combination
+                logger.info('Nothing to combine in', one_combination)
          
     def combine_single_combi(self, one_combination, combined_dir, label, 
                             ppm, rtwindow, combine_type):
@@ -573,12 +628,12 @@ class Rpy2Pipeline(object):
         return heapsize
 
     def get_env_packrat_lib_path(self):
-        packrat_lib_path = getString('R_LIBS_USER', '')
+        packrat_lib_path = getNeededString('R_LIBS_USER')
         return packrat_lib_path
         
     def create_if_not_exist(self, directory):
         if not os.path.exists(directory):
-            print 'Creating %s' % directory
+            logger.info('Creating %s' % directory)
             os.makedirs(directory) 
             
     def create_input_directories(self, polarity, mzmatch_outputs):
@@ -681,6 +736,7 @@ class Rpy2PipelineMetadata(object):
         fs = df.factor.unique()
         for f_label in fs:
 
+            # get rid of utf8 encoding
             f_label = f_label.encode('ascii','ignore')
 
             # create Factor based on the dataframe values
@@ -764,7 +820,7 @@ class Factor(object):
     
     def __init__(self, factor_label):
         self.label = factor_label
-        self.levels = []
+        self.levels = [] # ordering is important
         self.level_indices = {}
         self.level_files = {}
         
