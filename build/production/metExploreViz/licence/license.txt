@@ -1,0 +1,62 @@
+This file is part of MetExploreViz 
+ 
+Copyright (c) 2016 INRA 
+ 
+Contact: http://metexplore.toulouse.inra.fr/metexploreViz/doc/contact 
+ 
+GNU General Public License Usage 
+This file may be used under the terms of the GNU General Public License version 3.0 as 
+published by the Free Software Foundation and appearing in the file LICENSE included in the 
+packaging of this file. 
+ 
+Please review the following information to ensure the GNU General Public License version 3.0 
+requirements will be met: http://www.gnu.org/copyleft/gpl.html. 
+ 
+If you are unsure which license is appropriate for your use, please contact us 
+at http://metexplore.toulouse.inra.fr/metexploreViz/doc/contact 
+ 
+Version: 1 Build date: 2016-05-30 9:10:37 
+MetExploreViz - JavaScript Library
+Copyright (c) 2016, INRA
+All rights reserved.
+metexplore@toulouse.inra.fr 
+
+http://metexplore.toulouse.inra.fr/metexploreViz/doc/license
+
+Open Source License
+------------------------------------------------------------------------------------------
+This version of MetExploreViz is licensed under the terms of the Open Source GPL 3.0 license. 
+
+http://www.gnu.org/licenses/gpl.html
+
+Third Party Content
+------------------------------------------------------------------------------------------
+The following third party software is distributed with MetExploreViz and is 
+provided under other licenses and/or has source available from other locations. 
+
+Library: Ext JS
+License: GPL v3 License
+Location: https://www.sencha.com/
+
+Library: D3.js
+License: The BSD 3-Clause License
+Location: http://d3js.org/
+
+Library: Graph Dracula JavaScript Framework
+License: MIT License
+Location: http://graphdracula.net/
+
+Library: jQuery JavaScript Library v1.5.2
+License: MIT, BSD, and GPL Licenses
+Location: http://jquery.com/
+ 
+Library: JavaScript Color Picker 1.4.4
+License: GNU Lesser General Public License
+Location: http://jscolor.com/
+
+--
+
+THIS SOFTWARE IS DISTRIBUTED "AS-IS" WITHOUT ANY WARRANTIES, CONDITIONS AND REPRESENTATIONS WHETHER EXPRESS OR IMPLIED,
+INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES AND CONDITIONS OF MERCHANTABILITY, MERCHANTABLE QUALITY, FITNESS FOR A
+PARTICULAR PURPOSE, DURABILITY, NON-INFRINGEMENT, PERFORMANCE AND THOSE ARISING BY STATUTE OR FROM CUSTOM OR USAGE OF TRADE
+OR COURSE OF DEALING.

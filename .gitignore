@@ -4,3 +4,4 @@ sass
 # ---> ExtJs
 .architect
 build/
+node_modules/
