@@ -2,6 +2,7 @@
 import os
 import djcelery
 import distutils.util as du
+import uuid
 
 djcelery.setup_loader()
 
@@ -37,20 +38,25 @@ DEFAULT_FROM_EMAIL = 'wwcrc-gp-noreply@glasgow.ac.uk'
 
 MANAGERS = ADMINS
 
-DATABASE_NAME = 'frank_dev'
+DATABASE_NAME = '/Users/Karen/pimp/django_projects/pimp/sqlite3_frank.db'
+# DATABASE_NAME = 'frank_dev'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        #'ENGINE': 'django.db.backends.mysql',
         'NAME': DATABASE_NAME,
-        # 'NAME': '/Users/yoanngloaguen/Documents/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
+        #'NAME': '/Users/Karen/pimp/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
+        #'USER': 'root',                      # Not used with sqlite3.
+        #'PASSWORD': 'p01y0m1c5',                  # Not used with sqlite3.
+        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+
+os.environ['PIMP_DATABASE_NAME'] = DATABASE_NAME
+os.environ['PIMP_DATABASE_ENGINE'] = 'django.db.backends.sqlite3'
+os.environ['R_LIBS_USER'] = '/Users/Karen/pimp/packrat/lib/x86_64-apple-darwin15.5.0/3.3.1'
 
 AUTHENTICATION_BACKENDS = ('backends.EmailOrUsernameModelBackend','django.contrib.auth.backends.ModelBackend')
 # Local time zone for this installation. Choices can be found here:
@@ -80,8 +86,15 @@ USE_TZ = False
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 # MEDIA_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/media/'
-MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'pimp_data')
-
+TESTING = False
+randomUUID = str(uuid.uuid4())
+TEST_MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'TESTDATA_' + randomUUID)
+NORMAL_MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'pimp_data')
+if TESTING:
+    MEDIA_ROOT = TEST_MEDIA_ROOT
+else:
+    MEDIA_ROOT = NORMAL_MEDIA_ROOT
+os.environ['PIMP_MEDIA_ROOT'] = MEDIA_ROOT
 
 #MEDIA_ROOT = '/opt/django/data/pimp_data/'
 #MEDIA_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/media/'
@@ -217,8 +230,10 @@ LOGGING = {
         'console': {
             # logging handler that outputs log messages to terminal
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG', # message level to be written to console
-        }                 
+        #    'level': 'DEBUG', # message level to be written to console
+            'level': 'ERROR', # message level to be written to console
+        
+        }
     },
     'loggers': {
         'django.request': {
@@ -237,7 +252,7 @@ LOGGING = {
         },
         'django.db': {
             # django also has database level logging
-        },                
+        },
     }
 }
 
