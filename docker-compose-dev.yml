@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+    pimp:
+        build:
+            context: DockerContext
+            dockerfile: Dockerfile.dev
+        volumes:
+            - .:/home/pimp/pimp

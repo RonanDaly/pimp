@@ -33,6 +33,8 @@ RUN apt-get update && \
 	R CMD javareconf		
 
 RUN groupadd pimp && useradd -g pimp -m pimp
+VOLUME /home/pimp/static
+VOLUME /home/pimp/media
 #ADD pwiz-bin-windows-x86-vc100-release-3_0_5655.tar.bz2 /home/ransom/
 #COPY winetricks /home/pimp/
 #WORKDIR /home/pimp
