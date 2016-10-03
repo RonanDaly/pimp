@@ -365,15 +365,20 @@
                 });
 
 				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-				updateRightPanel(rowInfo, headerInfo, innerSidePanel);
+				updatePathwayRightPanel(rowInfo, headerInfo, innerSidePanel);
 
-				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+				// var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+                var kegg = $('<div class="span12" style="padding-bottom:14px;"><div class="card-face-footer"><span class="card-face__social" id="kegg-map-icon"><img src="{{ STATIC_URL }}img/pathway_icon.svg" width="36" height="36" draggable="false"></span></div>')
+
 				var data = calculPathwayCoverage(rowInfo, headerInfo);
-				var chartWidth = $(innerSidePanel).find('.span12').width()-10;
-				var chart1 = $('<div class="span12" style="margin-left:0px;">');
+				// var chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				// var chart1 = $('<div class="span12" style="margin-left:0px;">');
+                var chartWidth = $('#card-content-pathway-coverage').width()-10;
+                var chart1 = $('#card-content-pathway-coverage');
 				pieChart(chartWidth, chart1, data, 400);
-				$(kegg).appendTo($(innerSidePanel));
-				$(chart1).appendTo($(innerSidePanel));
+				// $(kegg).appendTo($(innerSidePanel));
+                $(kegg).appendTo($('#kegg-btn-div'));
+				// $(chart1).appendTo($(innerSidePanel));
 
 				$('#kegg-map-icon').click(function() {
 					var $modal = $('#full-width');
@@ -1266,7 +1271,7 @@
 		            chart: {
 		            	width: chartWidth,
 		            	height: height,
-		            	backgroundColor: '#f5f5f5',
+		            	backgroundColor: '#FFFFFF',
 		                plotBackgroundColor: null,
 		                plotBorderWidth: null,
 		                plotShadow: false
@@ -1968,7 +1973,8 @@
 
 			function updateRightPanel(rowInfo, header, innerSidePanel){
 				$(innerSidePanel).empty();
-				var newDom = "";
+				var newDom = '<div class="span12"><h3 class="right-side-title">Evidence</h3></div>';
+                console.log('dans la fonction');
 				for (var i=0;i<rowInfo.length;i++){
 					if (header[i] == "Coverage"){
 						newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'%</p></div>';
@@ -1979,6 +1985,23 @@
 				}
 				$(newDom).appendTo($(innerSidePanel));
 			}
+
+            function updatePathwayRightPanel(rowInfo, header, innerSidePanel){
+                $(innerSidePanel).empty();
+                var newDom = '<div class="span12"><h3 class="right-side-title">Evidence</h3></div>';
+                console.log('dans la fonction pathway');
+                newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathway</h5><span class="card-face__title"></span></div><div class="span12 pathway_name" style="margin-left:0px;"><span id="pathway-name">'+ rowInfo[0] +'</span><span class="card-face__bottom"></span></div><div class="span12" id="kegg-btn-div" style="margin-left:0px;padding-left:13px;margin-top:10px;"></div></div>';
+                newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Coverage<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+rowInfo[5]+'%</span></h5><span class="card-face__title"></span></div><div class="span12" id="card-content-pathway-coverage" style="margin-left:0px;"></div></div>';
+                // for (var i=0;i<rowInfo.length;i++){
+                //     if (header[i] == "Coverage"){
+                //         newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'%</p></div>';
+                //     }
+                //     else {
+                //     newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'</p></div>';
+                //     }
+                // }
+                $(newDom).appendTo($(innerSidePanel));
+            }
 
 			function averagePopUp(categories, average, errorBar){
 				var $modal = $("#full-width");

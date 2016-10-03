@@ -1161,6 +1161,15 @@ a.DTTT_button_collection {
     color: rgb(112, 158, 241);
 }
 
+.pathway_name {
+    padding-top: 10px;
+}
+
+#pathway-name {
+    margin: 13px;
+    color: rgb(112, 158, 241);
+}
+
 .full-card {
     position: relative;
     transition: all 1.2s;

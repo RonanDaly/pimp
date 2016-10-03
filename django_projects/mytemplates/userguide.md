@@ -6,6 +6,10 @@
 
 *For space and portability reasons, PiMP relies on centroided single polarity data in the MzXML format. If you are unable to convert your data into MzXML, please look at this guide (click here).*
 
+*PiMP supports all latest web browser, however features are primarily developed using Google Chrome, we strongly advise users to use this web browser for optimal experience. Chrome can be downloaded <a href="https://www.google.com/chrome/" target="_blank" title="Chrome">here</a>.*
+
+---
+
 ## Logging in to PiMP:
 
 To log in to PiMP, go to: [PiMP Homepage](http:/polyomics.mvls.gla.ac.uk/accounts/login/, "PiMP")
@@ -40,6 +44,8 @@ Once you have these things available, please click on ‘Create Project’.
 <img src="{% static 'userguide/img/Create_Project_Button.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
+---
+
 ## Create Project:
 
 To create your project, first give it a title, then a description. The description is useful as it allows you to tag your projects so they are easily browsable. Then click 'Create project'.
@@ -48,6 +54,8 @@ To create your project, first give it a title, then a description. The descripti
 <p class="centered">
 <img src="{% static 'userguide/img/Create_project_dialog.png' %}" class="img-thumbnail" alt="Profile page" width="20%" style="float:none;margin:auto;">
 </p>
+
+---
 
 ## Project Administration:
 
@@ -58,7 +66,9 @@ In ‘Project Administration’, you can add users to your project (via the ‘a
 <img src="{% static 'userguide/img/project_administration.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
-  Once you have performed any desired administration in this page, enter calibration samples by clicking on the ‘Calibration Samples’ tab.
+Once you have performed any desired administration in this page, enter calibration samples by clicking on the ‘Calibration Samples’ tab.
+
+---
 
 ## Calibration Samples:
 
@@ -70,6 +80,8 @@ To successfully enter a metabolomics experiment, you must first provide a group 
 </p>
 
 To upload any of the files, click on the blue button with an up arrow in the Available Samples box. A new window will appear allowing you to drag and drop your files for upload.
+
+---
 
 ## Upload File (calibration data):
 
@@ -105,9 +117,13 @@ You can use the 'search' box to free text filter the file list.
 
 Once all of the files have been uploaded and assigned, click the ‘Sample Management’ tab.
 
+---
+
 ## Sample Management:
 
 To begin uploading files, click the blue ‘upload files’ button in the ‘Samples’ box.  Once your samples are uploaded, you can apply an experimental design by clicking on the ‘Create’ button.
+
+---
 
 ## Experimental Design:
 
@@ -117,6 +133,8 @@ Currently, PiMP supports experiments defined by discrete categories. Thus experi
 <p class="centered">
 <img src="{% static 'userguide/img/experiment_definition.png' %}" class="img-thumbnail" alt="Profile page" width="40%" style="float:none;margin:auto;">
 </p>
+
+---
 
 ## Assign Samples:
 
@@ -144,6 +162,8 @@ You may provide an experiment name, and define the comparisons to be made. A com
 ## Upload File (samples):
 Simply drag and drop the sample MzXML files into the box below, then click the green ‘start upload’ button. MzXML files must be uploaded in pairs: both a positive ionization mode and negative ionization mode version of each file. The pair of files must have the same name. Once a pair is uploaded, this is denoted by + - symbols next to the filename.
 
+---
+
 # Results
 
 Once your analysis is completed, it will appear in your 'My Projects' page with a green 'Finished' label in your project card.
@@ -160,6 +180,8 @@ Click on 'Access Result' to load the data into your browser. A loading screen wi
 <img src="{% static 'userguide/img/loading_screen.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
+---
+
 ## Data Environment:
 
 The first page that loads once you select a completed analysis is the Summary Report.
@@ -171,9 +193,13 @@ The PiMP Summary Report displays a summary of the key information from the study
 <img src="{% static 'userguide/img/Summary_page.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
+---
+
 ### Data Processing
 
 Data Processing describes the algorithms applied to the data, with references.
+
+---
 
 ### Quality control
 
@@ -197,6 +223,8 @@ Total ion chromatograms give an overview of the total detected masses from the i
 <img src="{% static 'userguide/img/TIC.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
+---
+
 # Results
 
 ## Summary Page
@@ -208,6 +236,8 @@ Results provides a summary of the key findings from the data for each comparison
 <img src="{% static 'userguide/img/results.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
+---
+
 ### Volcano Plots
 
 Next, a volcano plot graphs fold change vs significance, such that the most significant and highest magnitude changes are in the top left and right of the graph. This graph is also interactive and the points can be clicked on to obtain more information about each peak.
@@ -216,6 +246,8 @@ Next, a volcano plot graphs fold change vs significance, such that the most sign
 <p class="centered">
 <img src="{% static 'userguide/img/volcano.png' %}" class="img-thumbnail" alt="Profile page" width="40%" style="float:none;margin:auto;">
 </p>
+
+---
 
 ## Metabolites Tab
 
@@ -250,7 +282,23 @@ A single peak often can be matched to a single empirical formula, but each formu
 
 Each metabolite can also match several peaks, as several different structures with the same empirical formula may elute during the chromatographic separation (i.e. they will have different retention times), or may occur in multiple polarities (i.e. both positive and negative). For this reason, each 'evidence tab' may have more than one peak associated with it.
 
-*Again, for compounds matched by retention time and mass to a standard, this will be assigned to Peak 1. **IS THIS RIGHT??** *
+---
+
+> *Evidence panel Tips*
+
+> * Peaks matched by retention time and mass to a standard are indicated by this icon  <img src="{% static 'userguide/img/PiMP_logo_compound_id.svg' %}" alt="Profile page" width="20px" style="float:none;margin:auto;">.
+
+> * The number on the top right corner of the 'peak card' indicates the number of other compounds annotated by this peak.
+
+> * A single click on the 'pathway card' gives access to the list of pathways where the metabolite is found.
+
+> * A single click on the title of the 'compound card' gives access to the compound structure.
+
+> * All cards once expanded can collapsed for better readability
+
+> * All graphics in the evidence panel can be downloaded in different formats by clicking on <img src="{% static 'userguide/img/figure_download_icon.png' %}" class="img-thumbnail" alt="Profile page" width="30px" style="float:none;margin:auto;"> in the top right corner.
+
+---
 
 ## Metabolic Maps Tab
 
