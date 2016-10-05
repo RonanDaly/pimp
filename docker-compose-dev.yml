@@ -7,3 +7,9 @@ services:
             dockerfile: Dockerfile.dev
         volumes:
             - .:/home/pimp/pimp
+    mysql:
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+        env_file:
+            DockerContext/docker.env
+        image: mysql:5.7.15

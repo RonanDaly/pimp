@@ -33,6 +33,7 @@ RUN apt-get update && \
 	R CMD javareconf		
 
 RUN groupadd pimp && useradd -g pimp -m pimp
+RUN ln -s /home/pimp/pimp/pimp.conf /etc/supervisor/conf.d/pimp.conf
 VOLUME /home/pimp/static
 VOLUME /home/pimp/media
 #ADD pwiz-bin-windows-x86-vc100-release-3_0_5655.tar.bz2 /home/ransom/
