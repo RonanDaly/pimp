@@ -114,6 +114,7 @@
 		var peak_table_url = "{% url 'get_peak_table' project.id analysis.id %}";
 		var averageChartType = 'column';
 		var peakChromatogramsGraph = false;
+        var pathwayCoverageData = null;
 
 		function modelMatcher (params, data) {
 		  data.parentText = data.parentText || "";
@@ -370,12 +371,12 @@
 				// var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
                 var kegg = $('<div class="span12" style="padding-bottom:14px;"><div class="card-face-footer"><span class="card-face__social" id="kegg-map-icon"><img src="{{ STATIC_URL }}img/pathway_icon.svg" width="36" height="36" draggable="false"></span></div>')
 
-				var data = calculPathwayCoverage(rowInfo, headerInfo);
+				pathwayCoverageData = calculPathwayCoverage(rowInfo, headerInfo);
 				// var chartWidth = $(innerSidePanel).find('.span12').width()-10;
 				// var chart1 = $('<div class="span12" style="margin-left:0px;">');
                 var chartWidth = $('#card-content-pathway-coverage').width()-10;
                 var chart1 = $('#card-content-pathway-coverage');
-				pieChart(chartWidth, chart1, data, 400);
+				// pieChart(chartWidth, chart1, data, 400);
 				// $(kegg).appendTo($(innerSidePanel));
                 $(kegg).appendTo($('#kegg-btn-div'));
 				// $(chart1).appendTo($(innerSidePanel));
@@ -1533,6 +1534,35 @@
                     setTimeout(closeDiv, 4000);
 
                 })
+                .on('click', '.pathway-coverage-btn', function(e) {
+                    // Create pie chart for the pathway coverage or hide it if already displayed
+
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the div to display the chart
+                    var pieChartDiv = $('#card-content-pathway-coverage');
+
+                    // if the chart exist then hide or show it (depending on its current state)
+                    if (pieChartDiv.attr('data-exist') == 'true'){
+                        pieChartDiv.toggle('slow');
+                    }
+                    // else create the chart and display it
+                    else {
+                        var chartWidth = $('#card-content-pathway-coverage').width()-10;
+
+                        // Create pie chart with the data stored in a global variable 'pathwayCoverageData'
+                        pieChart(chartWidth, pieChartDiv, pathwayCoverageData, 400);
+
+                        // Change the attribute of the div to know that chart now exists (no need to recreate it in the future)
+                        pieChartDiv.attr('data-exist', 'true');
+                        
+                        // Display the chart using slide down of the div
+                        pieChartDiv.toggle('slow');
+                    }
+
+
+                })
                 .on('click', '.peak-metabolites-chromatogram-btn', function(e) {
                     // Creates the chromatogram, which is used to replace the associated button
 
@@ -2192,7 +2222,7 @@
                 console.log('dans la fonction pathway');
                 newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathway</h5><span class="card-face__title"></span></div><div class="span12 pathway_name" style="margin-left:0px;"><span id="pathway-name">'+ rowInfo[0] +'</span><span class="card-face__bottom"></span></div><div class="span12" id="kegg-btn-div" style="margin-left:0px;padding-left:13px;margin-top:10px;"></div></div>';
                 
-                newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Coverage<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+rowInfo[5]+'%</span></h5><span class="card-face__title"></span></div><div class="span12" id="card-content-pathway-coverage" style="margin-left:0px;"></div></div>';
+                newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Coverage<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+rowInfo[5]+'%</span></h5><span class="card-face__title"></span></div><div class="span12" id="card-content-pathway-coverage" data-exist="false" style="margin-left:0px;display:none;"></div><div class="span12" style="padding-bottom:14px;margin-top: 10px;"><div class="card-face-footer"><span class="card-face__social pathway-coverage-btn"><img src="{{ STATIC_URL }}img/pie_chart.svg" width="36" height="36" draggable="false"></span></div></div>';
 
                 $(newDom).appendTo($(innerSidePanel));
             }
