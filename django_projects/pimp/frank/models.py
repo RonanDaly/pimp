@@ -141,21 +141,22 @@ class ExperimentalCondition(models.Model):
     """
     Model class defining an experimental condition in the experiment.
     """
-
-    name = models.CharField(max_length=250, blank=False, unique=True)
+    name = models.CharField(max_length=250, blank=False)
     description = models.CharField(max_length=250)
     experiment = models.ForeignKey(Experiment)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(default='')
+
 
     def save(self, *args, **kwargs):
         """
         Method overriding the 'Model' superclass save method
         :param args:    Arguments passed to the save method
         :param kwargs:  Keyword arguments passed to the save method
-        """
+         """
 
-        # The slug field is populated with the name of the experimental condition
-        self.slug = slugify(self.name)
+        # The slug field is populated with the id of the ExperimentalCondition
+        super(ExperimentalCondition, self).save(*args, **kwargs)
+        self.slug = self.id
         super(ExperimentalCondition, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -573,4 +574,4 @@ class PimpAnalysisFrankFs(models.Model):
 	frank_fs = models.ForeignKey(FragmentationSet)
 	status = models.CharField(max_length = 500)
 	def __unicode__(self):
-		return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name
+	    return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name
