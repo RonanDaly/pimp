@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 
 from data.models import Peak as PimpPeak
 from experiments.models import Analysis as PimpAnalysis
+from projects.models import Project as PimpProject
 
 """
  The default Django User model provides the following attributes:
@@ -83,7 +84,7 @@ class Experiment(models.Model):
     Model class containing the details of the experiment. Analogous to a PiMP project.
     """
 
-    title = models.CharField(max_length=250, blank=False, unique=True)
+    title = models.CharField(max_length=250, blank=False)
     description = models.CharField(max_length=250)
     created_by = models.ForeignKey(User, related_name="experiment_creator")
     time_created = models.DateTimeField(auto_now=True)
@@ -107,9 +108,12 @@ class Experiment(models.Model):
         :param kwargs:  Any keyword arguments passed to the save method
         """
 
-        # The slug is simply the title of the experiment
-        self.slug = slugify(self.title)
+        # The slug is simply the experiment id.
         super(Experiment, self).save(*args, **kwargs)
+        self.slug = self.id
+        super(Experiment, self).save(*args, **kwargs)
+
+
 
     def __unicode__(self):
         """
@@ -173,7 +177,7 @@ class Sample(models.Model):
     Model class defining an instance of an experimental sample
     """
 
-    name = models.CharField(max_length=250, blank=False, unique=True)
+    name = models.CharField(max_length=250, blank=False)
     description = models.CharField(max_length=250, blank=False)
     experimental_condition = models.ForeignKey(ExperimentalCondition)
     organism = models.CharField(max_length=250)
@@ -186,9 +190,12 @@ class Sample(models.Model):
         :param kwargs:  Keyword arguments passed to the save method
         """
 
-        # The slug field is populated with the sample name
-        self.slug = slugify(self.name)
+        # The slug field is populated with the primary key, id.
+
         super(Sample, self).save(*args, **kwargs)
+        self.slug = self.id
+        super(Sample, self).save(*args, **kwargs)
+
 
     def __unicode__(self):
         """
@@ -223,7 +230,7 @@ class FragmentationSet(models.Model):
     Model instance to define the collection of peaks derived from the sample files of an experiment
     """
 
-    name = models.CharField(max_length=250, unique=True)
+    name = models.CharField(max_length=250)
     experiment = models.ForeignKey(Experiment)
     time_created = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=250, choices=ANALYSIS_STATUS, default='Submitted')
@@ -236,8 +243,10 @@ class FragmentationSet(models.Model):
         :param kwargs:  The keyword argument passed to the save method
         """
 
-        # The slug is simply the name of the FragmentationSet instance
-        self.slug = slugify(self.name)
+        # The slug is the id of the FragmentationSet instance
+
+        super(FragmentationSet, self).save(*args, **kwargs)
+        self.slug = self.id
         super(FragmentationSet, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -254,7 +263,7 @@ class AnnotationQuery(models.Model):
     Model class defining a query made to one of the Annotation Tools - termed 'Annotation Query'
     """
 
-    name = models.CharField(max_length=250, unique=True)
+    name = models.CharField(max_length=250)
     fragmentation_set = models.ForeignKey(FragmentationSet)
     time_created = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=250, choices=ANALYSIS_STATUS, default='Defined')
@@ -273,8 +282,9 @@ class AnnotationQuery(models.Model):
         :param kwargs:  Keyword arguments passed to the save method
         """
 
-        # The slug is simply the name of the AnnotationQuery instance
-        self.slug = slugify(self.name)
+        # The slug is the id of the AnnotationQuery instance
+        super(AnnotationQuery, self).save(*args, **kwargs)
+        self.slug = self.id
         super(AnnotationQuery, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -566,6 +576,15 @@ class PimpFrankPeakLink(models.Model):
 
     def __unicode__(self):
         return "Pimp: {}, Frank: {}".format(self.pimp_peak.mass,self.frank_peak.mass)
+
+class PimpProjectFrankExp(models.Model):
+
+    #Model to link the PiMP project with a FrAnk Experiment
+    pimp_project = models.ForeignKey(PimpProject, unique=True)
+    frank_expt = models.ForeignKey(Experiment)
+
+    def __unicode__(self):
+        return self.pimp_project.name + "<-->" + self.frank_expt.name
 
 
 class PimpAnalysisFrankFs(models.Model):
