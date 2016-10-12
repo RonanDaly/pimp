@@ -79,6 +79,24 @@ def _get_upload_file_name(instance, filename):
     return upload_location
 
 
+
+def alternativeSave(MyModel, self, *args, **kwargs):
+
+    """
+    A save method to use when we use the id as the slug
+    We need to save twice but don't want to write to the DB twice
+    - therefore force-insert is removed from **kwargs for the second save (kwargsUpdate)
+    """
+    super(MyModel, self).save(*args, **kwargs)
+    self.slug = self.id
+    kwargsUpdate = dict(kwargs)
+    kwargsUpdate['force_update'] = True
+    if 'force_insert' in kwargsUpdate:
+        del kwargsUpdate['force_insert']
+    super(MyModel, self).save(*args, **kwargsUpdate)
+    print "I have just saved"
+
+
 class Experiment(models.Model):
     """
     Model class containing the details of the experiment. Analogous to a PiMP project.
@@ -91,7 +109,7 @@ class Experiment(models.Model):
     ionisation_method = models.CharField(max_length=250, choices=IONISATION_PROTOCOLS)
     detection_method = models.ForeignKey('ExperimentalProtocol')
     users = models.ManyToManyField(User, through='UserExperiment', through_fields=('experiment', 'user'))
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(default='')
 
     """
     For integration, this model could be integrated with the PiMP Project model
@@ -103,15 +121,11 @@ class Experiment(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Override the existing save method to update the slugfield to reflect the experiment name
+        Override the existing save method to update the slugfield to reflect the id this requires an alternative save
         :param args:    Any arguments passed to the save method
         :param kwargs:  Any keyword arguments passed to the save method
         """
-
-        # The slug is simply the experiment id.
-        super(Experiment, self).save(*args, **kwargs)
-        self.slug = self.id
-        super(Experiment, self).save(*args, **kwargs)
+        alternativeSave(Experiment, self, *args, **kwargs)
 
 
 
@@ -157,11 +171,8 @@ class ExperimentalCondition(models.Model):
         :param args:    Arguments passed to the save method
         :param kwargs:  Keyword arguments passed to the save method
          """
+        alternativeSave(ExperimentalCondition, self, *args, **kwargs)
 
-        # The slug field is populated with the id of the ExperimentalCondition
-        super(ExperimentalCondition, self).save(*args, **kwargs)
-        self.slug = self.id
-        super(ExperimentalCondition, self).save(*args, **kwargs)
 
     def __unicode__(self):
         """
@@ -181,7 +192,7 @@ class Sample(models.Model):
     description = models.CharField(max_length=250, blank=False)
     experimental_condition = models.ForeignKey(ExperimentalCondition)
     organism = models.CharField(max_length=250)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(default='')
 
     def save(self, *args, **kwargs):
         """
@@ -192,9 +203,8 @@ class Sample(models.Model):
 
         # The slug field is populated with the primary key, id.
 
-        super(Sample, self).save(*args, **kwargs)
-        self.slug = self.id
-        super(Sample, self).save(*args, **kwargs)
+        alternativeSave(Sample, self, *args, **kwargs)
+
 
 
     def __unicode__(self):
@@ -234,7 +244,7 @@ class FragmentationSet(models.Model):
     experiment = models.ForeignKey(Experiment)
     time_created = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=250, choices=ANALYSIS_STATUS, default='Submitted')
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(default='')
 
     def save(self, *args, **kwargs):
         """
@@ -245,9 +255,7 @@ class FragmentationSet(models.Model):
 
         # The slug is the id of the FragmentationSet instance
 
-        super(FragmentationSet, self).save(*args, **kwargs)
-        self.slug = self.id
-        super(FragmentationSet, self).save(*args, **kwargs)
+        alternativeSave(FragmentationSet, self, *args, **kwargs)
 
     def __unicode__(self):
         """
@@ -283,9 +291,7 @@ class AnnotationQuery(models.Model):
         """
 
         # The slug is the id of the AnnotationQuery instance
-        super(AnnotationQuery, self).save(*args, **kwargs)
-        self.slug = self.id
-        super(AnnotationQuery, self).save(*args, **kwargs)
+        alternativeSave(AnnotationQuery, self, *args, **kwargs)
 
     def __unicode__(self):
         """
@@ -306,7 +312,7 @@ class AnnotationTool (models.Model):
     default_params = models.CharField(max_length=500)
     # The tool's default parameters are a jsonpickle dict of any default params required by the tool
     # such as filepaths etc.
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(default='')
 
     def save(self, *args, **kwargs):
         """

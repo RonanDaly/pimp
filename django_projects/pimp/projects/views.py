@@ -9,6 +9,15 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from data.models import Analysis
 
+#For Frank Integration
+
+from frank.models import PimpProjectFrankExp
+from frank.models import Experiment as FrankExperiment
+from frank.models import ExperimentalCondition as FrankExpCondition
+from frank.models import FragmentationSet
+from frank.models import ExperimentalProtocol
+
+
 
 from groups.models import Attribute, Group
 
@@ -78,6 +87,20 @@ def newproject(request):
 			name = user.username
 			new_project = Project.objects.create(title=title, description=description, user_owner=user, created=created, modified=created)
 			new_user_project = UserProject.objects.create(user=user, project=new_project, date_joined=created, permission="admin")
+
+			#Set up initial Frank integration objects
+			#New experiment currently has ionisation and detection_methods hard coded in.
+
+			#Get LCMS method for detection (id=1)
+			frank_detect_method = ExperimentalProtocol.objects.get(id=1)
+
+			expt_name ="Pimp-"+title+"-created"
+			frank_experiment = FrankExperiment.objects.create(title=title, description=description, created_by=user, ionisation_method="ESI", detection_method=frank_detect_method)
+			frank_expt_condition = FrankExpCondition.objects.create(name=expt_name, description="Pimp generated condition", experiment =frank_experiment)
+
+			frag_title = title+"Fragments"
+			fragmentation_set = FragmentationSet.objects.create(name=frag_title, experiment = frank_experiment)
+
 			request.session['new_project'] = True
 			print request.session['new_project']
 			# return redirect('project-summary')
