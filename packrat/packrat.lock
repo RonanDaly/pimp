@@ -90,7 +90,7 @@ Package: PiMP
 Source: source
 Version: 0.1-3
 Hash: d97575e999e6334ac3e1c093b5c07e98
-Requires: RColorBrewer, RCurl, RJSONIO, XLConnect, XML, digest,
+Requires: RColorBrewer, RCurl, RJSONIO, XML, digest,
     doParallel, foreach, gptk, gtools, impute, limma, logging,
     mzmatch.R, outliers, rJava
 SourcePath: ./PiMP
@@ -179,18 +179,6 @@ Source: PuMP
 Version: 0.8.3
 Hash: b3ebf1353f8ef7f8a36cf61ac8f5ddb0
 Requires: BiocGenerics
-
-Package: XLConnect
-Source: PuMP
-Version: 0.2-11
-Hash: 9671b8bb38db7af753ee09ad7bc7b546
-Requires: XLConnectJars, rJava
-
-Package: XLConnectJars
-Source: PuMP
-Version: 0.2-9
-Hash: c3a7ea4d67acc15d861409bb55b753dc
-Requires: rJava
 
 Package: XML
 Source: PuMP

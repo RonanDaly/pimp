@@ -66,7 +66,7 @@ Compilation tools and libraries are needed by some of the dependencies in the sy
 
 4. **(Ubuntu)** Install various libraries.
 
-        $ sudo apt-get install libmysqlclient-dev libxml2-dev libxslt1-dev libcurl4-openssl-dev libssl-dev libnetcdf-dev
+        $ sudo apt-get install libmysqlclient-dev libxml2-dev libxslt1-dev libcurl4-openssl-dev libssl-dev libnetcdf-dev libfreetype6-dev libatlas-base-dev libpython-dev
 
 5. **(Fedora)** Install various libraries.
 
