@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+    pimp:
+        image: pimp-dev
+        build:
+            context: DockerDevContext
+        volumes:
+            - .:/home/pimp/pimp
+        working_dir: /home/pimp/pimp/django_projects/pimp
+        command: ./collect_start_pimp.sh
+    nginx:
+        volumes:
+            - ./DockerNginxContext/nginx.debug.conf:/etc/nginx/nginx.conf
+        command: /bin/bash -c "envsubst < /etc/nginx/conf.d/pimp.conf.template > /etc/nginx/conf.d/pimp.conf && nginx-debug -g 'daemon off;'"
+

@@ -1,6 +1,0 @@
-FROM pimp-base
-MAINTAINER Rónán Daly <Ronan.Daly@glasgow.ac.uk>
-
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get install -y iputils-ping dnsutils vim curl less git
-

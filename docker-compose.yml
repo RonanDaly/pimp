@@ -1,14 +1,42 @@
 version: '2'
-#env_file: .env
-
 
 services:
     pimp:
+        image: pimp:${PIMP_VERSION}
         build: .
-#		depends_on:
-#		 - mysql
-#                 - nginx
-#	mysql:
-#		image: mysql:5.7.15
-#	nginx:
-#		image: nginx:1.11.4
+        container_name: pimp
+        hostname: pimp
+        environment:
+            - PIMP_DATABASE_HOST=mysql
+            - PYTHONUNBUFFERED=1
+            - MYSQL_DATABASE
+            - MYSQL_USER
+            - MYSQL_PASSWORD
+        depends_on:
+            - mysql
+    mysql:
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_DATABASE
+            - MYSQL_USER
+            - MYSQL_PASSWORD
+        image: mysql:${MYSQL_VERSION}
+        container_name: mysql
+        hostname: mysql
+    nginx:
+        container_name: nginx
+        hostname: nginx
+        volumes_from:
+            - pimp
+        image: nginx-pimp:${NGINX_VERSION}
+        build:
+            context: DockerNginxContext
+        environment:
+            - PIMP_HOSTNAME=pimp
+            - EXTERNAL_HOSTNAME
+            - EXTERNAL_HOST_AND_PORT
+        command: /bin/bash -c "envsubst < /etc/nginx/conf.d/pimp.conf.template > /etc/nginx/conf.d/pimp.conf && nginx -g 'daemon off;'"
+        depends_on:
+            - pimp
+        ports:
+            - "${EXTERNAL_PORT}:80"

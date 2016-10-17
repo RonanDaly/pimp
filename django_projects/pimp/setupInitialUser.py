@@ -7,7 +7,7 @@ django.setup()
 
 from django.contrib.auth.models import User
 
-if __name__ == '__main__':
+if not User.objects.all().exists() and __name__ == '__main__':
     if 'PIMP_INITIAL_USERNAME' not in os.environ:
         os.environ['PIMP_INITIAL_USERNAME'] = raw_input('Username: ')
     if 'PIMP_INITIAL_EMAIL_ADDRESS' not in os.environ:

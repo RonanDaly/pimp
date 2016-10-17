@@ -5,6 +5,6 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
         apt-get install -y iputils-ping dnsutils vim curl less git
 # The pimp source needs to be available at /home/pimp/pimp by this point
-WORKDIR /home/pimp/pimp
 USER pimp
-RUN setup_docker.sh
+WORKDIR /home/pimp/pimp/django_projects/pimp
+RUN collectstatic.sh
