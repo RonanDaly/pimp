@@ -6,6 +6,7 @@ server {
 server {
         listen 80;
         server_name     ${EXTERNAL_HOSTNAME};
+        error_log /var/log/nginx/error.log ${NGINX_ERROR_LOGLEVEL};
         location = /favicon.ico  {
                 root /home/pimp/static/css/images   ;
         }
