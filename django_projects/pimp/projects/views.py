@@ -11,11 +11,12 @@ from data.models import Analysis
 
 #For Frank Integration
 
-from frank.models import PimpProjectFrankExp
+from frank.models import PimpProjectFrankExp, ExperimentalProtocol
 from frank.models import Experiment as FrankExperiment
 from frank.models import ExperimentalCondition as FrankExpCondition
 from frank.models import FragmentationSet
-from frank.models import ExperimentalProtocol
+from frank.models import Sample as FrankSample
+
 
 
 
@@ -96,10 +97,21 @@ def newproject(request):
 
 			expt_name ="Pimp-"+title+"-created"
 			frank_experiment = FrankExperiment.objects.create(title=title, description=description, created_by=user, ionisation_method="ESI", detection_method=frank_detect_method)
-			frank_expt_condition = FrankExpCondition.objects.create(name=expt_name, description="Pimp generated condition", experiment =frank_experiment)
+			frank_experimental_condition = FrankExpCondition.objects.create(name=expt_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
 
+			#Create the sample file here as the name is auto-generated
+
+			sample_name ="Pimp-"+title+"-Frank"
+			sample_desc="Frank sample loaded with Pimp project "+title
+			FrankSample.objects.create(experimental_condition = frank_experimental_condition, name=sample_name, description=sample_desc)
+
+			#Create the fragmention set that will be linked to the Experiement
 			frag_title = title+"Fragments"
-			fragmentation_set = FragmentationSet.objects.create(name=frag_title, experiment = frank_experiment)
+			FragmentationSet.objects.create(name=frag_title, experiment=frank_experiment)
+
+			#Set up the link between Experiment and Project
+
+			PimpProjectFrankExp.objects.create(pimp_project=new_project, frank_expt=frank_experiment)
 
 			request.session['new_project'] = True
 			print request.session['new_project']
@@ -564,9 +576,29 @@ def detail(request, project_id):
 		samples = project.sample_set.all()
 		# projfiles = project.projfile_set.all()
 		calibrationsamples = project.calibrationsample_set.all()
+
+		#A trail to get to the Frank sample files without changing the Pimp code too much.
+		pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+		frank_experiment = pimpFrankLink.frank_expt
+		print "the experiment is", frank_experiment
+		frank_expt_condition = frank_experiment.experimentalcondition_set.all()[0]
+		print "the condition is", frank_expt_condition
+		frank_sample = frank_expt_condition.sample_set.all()[0]
+		print "the Frank sample is", frank_sample
+
+		#frank_samplefiles = frank_sample.samplefile_set.all()
+
+		#This is a list of the sample files to pass to detail.
+		#fragfiles = list(frank_samplefiles)
+
+
 		projfileattributes = []
 		comparisons = []
 		experiments = []
+
+
+		print "Frank sample is", frank_sample
+
 		for sample in samples:
 			if sample.attribute_set.all():
 				attributeSet = set(attributes).union(set(sample.attribute_set.all()))
@@ -587,9 +619,8 @@ def detail(request, project_id):
 				projfileattSet = set(projfileattributes).union(set(projfile.attribute_set.all()))
 				projfileattributes = list(projfileattSet)
 		# print "projfile attribute : ",projfileattributes
-
-
-		return render(request, 'project/detail.html', {'project': project, 'permission':permission, 'groups':groups, 'projfileattributes':projfileattributes, 'experiments':experiments})
+		print "At the end of the detail view"
+		return render(request, 'project/detail.html', {'project': project, 'permission':permission, 'groups':groups, 'projfileattributes':projfileattributes, 'experiments':experiments, 'frank_sample':frank_sample})
 
 def sampleDelete(request, project_id):
 	if request.method == 'POST':
@@ -604,6 +635,21 @@ def sampleDelete(request, project_id):
 			raise Http404
 		files = project.picture_set.all()
 		return render(request, 'project/delete_samples.html', {'project': project, 'permission':permission})
+
+def fragmentFileDelete(request, project_id):
+	if request.method == 'POST':
+		# nothing
+		pass
+	else:
+		try:
+			project = Project.objects.get(pk=project_id)
+			user = request.user
+			permission = project.userproject_set.get(user=user).permission
+		except Project.DoesNotExist:
+			raise Http404
+		return render(request, 'project/delete_fragfile.html', {'project': project, 'permission':permission})
+
+
 
 def projectFileDelete(request, project_id):
 	if request.method == 'POST':

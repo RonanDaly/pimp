@@ -222,9 +222,14 @@ class SampleFile(models.Model):
     """
 
     name = models.CharField(max_length=250, blank=False)
-    polarity = models.CharField(max_length=250, choices=FILE_TYPES)
+    polarity = models.CharField(max_length=250)
     sample = models.ForeignKey(Sample, blank=False)
     address = models.FileField(upload_to=_get_upload_file_name, max_length=500)
+
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('upload-new-fragFile',)
 
     def __unicode__(self):
         """
@@ -590,7 +595,7 @@ class PimpProjectFrankExp(models.Model):
     frank_expt = models.ForeignKey(Experiment)
 
     def __unicode__(self):
-        return self.pimp_project.name + "<-->" + self.frank_expt.name
+        return self.pimp_project.title + "<-->" + self.frank_expt.title
 
 
 class PimpAnalysisFrankFs(models.Model):
@@ -599,4 +604,4 @@ class PimpAnalysisFrankFs(models.Model):
 	frank_fs = models.ForeignKey(FragmentationSet)
 	status = models.CharField(max_length = 500)
 	def __unicode__(self):
-	    return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name
+	    return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.title

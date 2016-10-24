@@ -121,19 +121,28 @@ $(function () {
                 console.log('Total size: ' + totalSize);
             });
         });
-
+        //KMcL: Adding new file type to be accepted
         if (url.split("/")[url.split("/").length-2] == "projectfile"){
             console.log("hihi");
             $('#fileupload').fileupload('option', {
-                acceptFileTypes: /(\.|\/)(mzxml|csv)$/i,
+                acceptFileTypes: /(\.|\/)(mzxml|mzML|csv)$/i,
                 sequentialUploads: true,
             });
         }
 
+        //KMcL: Adding the fragment file to be accepted
+        if (url.split("/")[url.split("/").length-2] == "fragmentfile"){
+            console.log("hihi");
+            $('#fileupload').fileupload('option', {
+                acceptFileTypes: /(\.|\/)(mzxml|mzML)$/i,
+                sequentialUploads: true,
+            });
+        }
+        //KMcL: Adding mzML here too.
         if (url.split("/")[url.split("/").length-2] == "new"){
             console.log("hihi");
             $('#fileupload').fileupload('option', {
-                acceptFileTypes: /(\.|\/)(mzxml)$/i,
+                acceptFileTypes: /(\.|\/)(mzxml|mzML)$/i,
                 sequentialUploads: true,
             });
             // $('#fileupload').fileupload({maxChunkSize: 100000})

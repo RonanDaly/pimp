@@ -113,6 +113,7 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/samples/delete', 'projects.views.sampleDelete', name='delete-sample'),
     # delete project file
     url(r'^accounts/project/(?P<project_id>\d+)/projectfiles/delete', 'projects.views.projectFileDelete', name='delete-projectfile'),
+    url(r'^accounts/project/(?P<project_id>\d+)/fragmentfiles/delete','projects.views.fragmentFileDelete', name='delete-fragmentfile'),
     url(r'^accounts/project/(?P<project_id>\d+)/remove_user_project/(?P<user_id>\d+)/','projects.views.removeUserProject',name='remove_user_project'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', 'projects.views.groupcreation', name='create_goupe'),
     #url(r'^accounts/project/(?P<project_id>\d+)/group/', include('groups.urls')),

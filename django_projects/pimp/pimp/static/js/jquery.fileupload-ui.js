@@ -11,6 +11,7 @@
 
 /*jslint nomen: true, unparam: true, regexp: true */
 /*global define, window, document, URL, webkitURL, FileReader */
+/*Am I editing the correct file*/
 var sucessList = new Array();
 var abortList = new Array();
 
@@ -95,6 +96,7 @@ var abortList = new Array();
                 var that = $(this).data('fileupload'),
                     options = that.options,
                     files = data.files;
+                console.log('Files are' + JSON.stringify(files))
                 $(this).fileupload('process', data).done(function () {
                     that._adjustMaxNumberOfFiles(-files.length);
                     data.isAdjusted = true;
@@ -104,6 +106,7 @@ var abortList = new Array();
                         options.prependFiles ? 'prepend' : 'append'
                     ](data.context);
                     that._renderPreviews(files, data.context);
+                    console.log('The context data is' + data.context)
                     that._forceReflow(data.context);
                     that._transition(data.context).done(
                         function () {
@@ -147,6 +150,7 @@ var abortList = new Array();
             done: function (e, data) {
                 var that = $(this).data('fileupload'),
                     template;
+                    console.log("json data done " + JSON.stringify(data));
                 if (data.context) {
                     data.context.each(function (index) {
                         var file = ($.isArray(data.result) &&
@@ -194,8 +198,11 @@ var abortList = new Array();
                     data.context.each(function (index) {
                         if (data.errorThrown !== 'abort') {
                             var file = data.files[index];
+                            console.log("data jqxhr: " + data.jqxhr);
+                            console.log("file : " + file.name);
+                            console.log("data error is " + data.errorThrown)
                             file.error = file.error || data.errorThrown ||
-                                true;
+                                true;                      
                             console.log("abort : " + file.name);
                             that._transition($(this)).done(
                                 function () {

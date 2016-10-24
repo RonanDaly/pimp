@@ -24,11 +24,22 @@ from xml.sax.handler import ContentHandler
 # import PiMP settings
 from django.conf import settings
 
+#Import models from FrAnk
+
+from frank.models import SampleFile
+from frank.models import PimpProjectFrankExp
+
+#Import logging details
+import logging
+logger = logging.getLogger(__name__)
+
+
 def response_mimetype(request):
     if "application/json" in request.META['HTTP_ACCEPT']:
         return "application/json"
     else:
         return "text/plain"
+
 
 class MyContentHandler(ContentHandler):
     def __init__(self):
@@ -221,6 +232,174 @@ class PictureCreateView(CreateView):
         print "works bien encore laaaaaaaaaaaaaaa!"
         return response
 
+#New class to handle the fragment file view.
+
+
+class FragfileCreateView(CreateView):
+    model = Picture
+    form = FileForm
+
+
+    def dispatch(self, *args, **kwargs):
+        self.project = get_object_or_404(Project, pk=kwargs['project_id'])
+        print "In the dispatch method"
+        return super(FragfileCreateView, self).dispatch(*args, **kwargs)
+
+    def get_context_data(self, *args, **kwargs):
+        context_data = super(FragfileCreateView, self).get_context_data(
+            *args, **kwargs)
+
+        print "context_data: ", context_data
+        print "session_data: ", self.request.session
+        print "user: ", self.request.user
+
+        user = self.request.user
+
+        # Add for space limitation - the following code is used to calculate how much space is left to restrict the upload size
+        #KMcL: Currently this is not taking the fragment files into account - need to consider this.
+
+        owned_projects = Project.objects.filter(user_owner=user)
+        calibration_samples = ProjFile.objects.filter(project__in=owned_projects).order_by('project__id')
+        samples = Picture.objects.filter(project__in=owned_projects).order_by('project__id')
+
+        storage_taken = {'samples': 0, 'calibration_samples': 0}
+
+        for calibration_sample in calibration_samples:
+            storage_taken['calibration_samples'] += calibration_sample.file.size
+        for sample in samples:
+            storage_taken['samples'] += sample.file.size
+
+        total_storage = 53687091200
+
+        storage_used = storage_taken['calibration_samples'] + storage_taken['samples']
+        storage_remaining = int(float(total_storage) - storage_used)
+
+        print "In frank definition storage_used: ", storage_used
+        print "In Frank definition storage_remaining: ", storage_remaining
+
+
+        #Haven't calculated the storage size here, not sure if we should.
+        context_data.update({'project': self.project,'storage_remaining': storage_remaining})
+        print "Fragment Context data is", context_data
+        return context_data
+
+    def findpolarity(self, file):
+        tree = etree.parse(file)
+        handler = MyContentHandler()
+        lxml.sax.saxify(tree, handler)
+        return handler.polarity
+
+    # Get the polarity in a format suitable for the frAnk Samplefile.
+    def getfragpolarity(self, polarity):
+
+        if polarity == "-":
+            frag_pol = "Negative"
+        elif polarity == "+":
+            frag_pol = "Positive"
+        else:
+            print "Error in polarity file"
+
+        return frag_pol
+
+
+    def form_valid(self, form):
+
+        pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=self.project)
+        print pimpFrankLink
+        frank_experiment = pimpFrankLink.frank_expt
+        print frank_experiment
+        frank_expt_condition = frank_experiment.experimentalcondition_set.all()[0]
+        print frank_expt_condition
+        fragment_sample = frank_expt_condition.sample_set.all()[0]
+        print fragment_sample
+
+        """The way we are setting up FrAnk in Pimp should assure that there is only one unique Sample for each project
+        this sample can then have many samplefiles asscoiated with it.
+        """
+
+        samples = [samplefile.name for samplefile in fragment_sample.samplefile_set.all()]
+
+
+        print "The samples are ", samples
+        self.project.modified = datetime.datetime.now()
+        self.project.save()
+
+        file = self.request.FILES['file']
+
+        print "Name of the fragment file is", file.name
+
+        polarity = self.findpolarity(file)
+        print "The file polarity is ", polarity
+
+        # If we don't have the sample file
+        # Can I just change this to a get or create statement - get if it doesn't exist?
+
+        print "Test condition is" , file.name.replace(" ", "_")
+        if file.name.replace(" ", "_") not in samples:
+
+            print "fragmentation files doesn't exist"
+
+            #Assign polarity first as Frank uses this to store the files in the folders.
+
+
+            frag_pol =self.getfragpolarity(polarity)
+
+            #Create samplefile object
+
+            fragment_file = SampleFile.objects.create(sample=fragment_sample, name=file.name, address=file, polarity=frag_pol)
+
+
+            print "Frank SampleFile polarity is ", fragment_file.polarity
+
+        # Else we have the sample file already loaded and only want to upload if the polarity is different.
+
+        else:
+
+            print "A file with this name already exists"
+
+            file_name = file.name.replace(" ", "_")
+            stored_files = SampleFile.objects.filter(sample=fragment_sample, name=file_name)
+
+
+            #For all of the stored_files check the polairty & if we don't have that file create the sample file
+
+            file_found =False
+
+            frag_pol = self.getfragpolarity(polarity)
+            #Check if the same file already exists.
+
+            for stored_file in stored_files:
+
+            #If the polarity of the stored file matched that of the uploaded file then we have found the file.
+
+                if stored_file.polarity==frag_pol:
+                    file_found =True
+
+            print "The file already existed? ", file_found
+
+            #If the same file does not already exist.
+            if not file_found:
+
+                print "A file of this polarity does not exist"
+                #Create a new samplefile object
+                fragment_file = SampleFile.objects.create(sample=fragment_sample, name=file.name, address=file, polarity=frag_pol)
+
+            else:
+
+                fragment_file = SampleFile.objects.get(sample=fragment_sample, polarity=frag_pol, name=file.name)
+                logging.info("A file of that name and polarity all ready exists, ignoring and returning ", fragment_file.name)
+
+
+
+        data = [{"name": file.name, "url": settings.MEDIA_URL + str(fragment_file.name), "thumbnail_url": settings.MEDIA_URL + str(fragment_sample.name),"delete_url": reverse("upload-fragFile-delete", args=[self.project.id, fragment_sample.id]),"delete_type": "DELETE"}]
+
+        response = JSONResponse(data, {}, response_mimetype(self.request))
+        response['Content-Disposition'] = 'inline; filename=files.json'
+        print "At the end of the fragment create view"
+        return response
+
+
+
 class ProjfileCreateView(CreateView):
     model = ProjFile
     form = FileForm
@@ -318,7 +497,7 @@ class ProjfileCreateView(CreateView):
                 print "calibration sample saved"
 
             elif file.name.split(".")[1:][0].upper() == "CSV":
-                print "this is mzxml file"
+                print "this is csv file"
                 self.object = ProjFile.objects.create(project=self.project)
                 # polarity = self.findpolarity(file)
                 self.object.file.save(file.name, file)
@@ -434,6 +613,33 @@ class ProjfileDeleteView(DeleteView):
             return response
         else:
             return HttpResponseRedirect('/upload/new/projectfile/')
+
+class FragfileDeleteView(DeleteView):
+    model = SampleFile
+
+    def dispatch(self, *args, **kwargs):
+        self.project = get_object_or_404(Project, pk=kwargs['project_id'])
+        return super(FragfileDeleteView, self).dispatch(*args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """
+        This does not actually delete the file, only the database record.  But
+        that is easy to implement.
+        """
+        self.project.modified = datetime.datetime.now()
+        self.project.save()
+        print "in delete"
+        self.object = self.get_object()
+        print "delete : ",self.object
+        self.object.delete()
+        if request.is_ajax():
+            response = JSONResponse(True, {}, response_mimetype(self.request))
+            response['Content-Disposition'] = 'inline; filename=files.json'
+            return response
+        else:
+            return HttpResponseRedirect('/upload/new/fragmentfile/')
+
+
 
 class JSONResponse(HttpResponse):
     """JSON response class."""
