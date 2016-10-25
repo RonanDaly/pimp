@@ -2861,7 +2861,6 @@ $(document).ready(function() {
 	</div>
 
 
-
 <div class="tab-pane" id="fragmentation-data" style="background-color: rgb(253, 253, 253);">
 	<!hr class="soften">
 		<div class="row-fluid">
@@ -2885,9 +2884,9 @@ $(document).ready(function() {
 									<div class="span4 center-text"style="min-height:10px;">
 										<p class="text-in-table">Polarity</p>
 									</div>
-									<div class="span4 center-text" style="min-height:10px;">
+									<!-- <div class="span4 center-text" style="min-height:10px;">
 										<p class="text-in-table">TIC</p>
-									</div>
+									</div> -->
 								</div>
 								<div class="row-fluid">
 									<div class="tab-content">
@@ -2895,12 +2894,15 @@ $(document).ready(function() {
 											{% for samplefile in frank_sample.samplefile_set.all %}
 											<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
 												<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
-													<p class="text-in-table introduction_text">{{samplefile.name|truncatechars:20 }}</p>
+													<p class="text-in-table introduction_text">{{ samplefile.name|truncatechars:20 }}</p>
 												</div>
-												
-												<!--div class="span4 center-text" style="min-height:10px;">
+												<div class="span4 center-text"style="min-height:10px;">
+
+													<p class="text-in-table introduction_text">{% if samplefile.polarity == "Positive" %}+{% endif %}{% if samplefile.polarity == "Negative" %}-{% endif %}</p>
+												</div>
+												<!-- <div class="span4 center-text" style="min-height:10px;">
 													<p class="text-in-table introduction_text"><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}-sample" href="#" title="TIC viewer" data-placement="left" role="button" data-toggle="modal"></a></p>
-												</div-->
+												</div> -->
 											</div>
 		  									{% endfor %}
 		  								</div>

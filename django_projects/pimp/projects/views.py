@@ -101,7 +101,7 @@ def newproject(request):
 
 			#Create the sample file here as the name is auto-generated
 
-			sample_name ="Pimp-"+title+"-Frank"
+			sample_name =title+"-fragments"
 			sample_desc="Frank sample loaded with Pimp project "+title
 			FrankSample.objects.create(experimental_condition = frank_experimental_condition, name=sample_name, description=sample_desc)
 
