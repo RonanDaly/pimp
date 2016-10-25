@@ -5,8 +5,8 @@ source django_projects/pimp/.env
 set +a
 python virtualenv/virtualenv.py --python=python2.7 venv
 source venv/bin/activate
-pip install -r django_projects/requirements.txt
-pip install -r django_projects/requirements_frank.txt
+pip install --no-cache-dir -r django_projects/requirements.txt
+pip install --no-cache-dir -r django_projects/requirements_frank.txt
 ${PIMP_RSCRIPT_PATH} setupR.R --args --bootstrap-packrat
-cd django_projects/pimp
-honcho run python manage.py collectstatic --noinput --link
+
+rm -r PiMP PiMPDB packrat/src/*

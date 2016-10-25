@@ -20,17 +20,23 @@ RUN apt-get update && \
 		libfreetype6-dev \
 		libatlas-base-dev \
 		libpython-dev \
+        libreadline-dev \
 		#Needed for nloptr in R; problem with self downloading
 		libnlopt-dev \
+        pkg-config \
 		#cmake \ # Needed for PySide
 		#libatlas3-base \
 		#libatlas-dev \
+        # Needed for javareconf
+        build-essential \
+        python-minimal \
 		oracle-java8-installer \
-		rabbitmq-server \
-		supervisor && \
+		rabbitmq-server && \
+		#supervisor && \
 	apt-get install -y oracle-java8-set-default && \
 	apt-get install -y r-base && \
-	R CMD javareconf		
+    rm -rf /var/lib/apt/lists/* && \
+	R CMD javareconf
 
 RUN groupadd pimp && useradd -g pimp -m pimp
 RUN mkdir /home/pimp/static /home/pimp/media

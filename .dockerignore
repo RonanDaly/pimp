@@ -1,0 +1,6 @@
+Dockerfile
+.dockerignore
+.git
+**/*.mzXML
+django_projects/pimp/fixtures
+django_projects/pimp/frank/TestingFiles
