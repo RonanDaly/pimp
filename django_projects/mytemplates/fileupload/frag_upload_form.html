@@ -25,7 +25,7 @@
                     <i class="icon-ban-circle icon-white"></i>
                     <span>Cancel upload</span>
                 </button>
-                <button type="button" class="btn btn-danger delete">
+                <button type="button" disabled class="btn btn-danger delete">
                     <i class="icon-trash icon-white"></i>
                     <span>Delete files</span>
                 </button>
@@ -109,7 +109,6 @@
     <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Finish</a>
   </div>
 </div>
-
 <div id="myModalEmpty" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -119,14 +118,14 @@
   </div>
   <div class="modal-footer">
     <button class="btn" data-dismiss="modal" aria-hidden="true">Continue</button>
-    {% if new_project %}
-    <a class="btn btn-primary" href="{% url 'projfile_attribute' project.id %}">Finish</a>
-    {% else %}
     <a class="btn btn-primary" href="{% url 'project_detail' project.id %}">Finish</a>
-    {% endif %}
   </div>
 </div>
-{% upload_js %}
+
+
+
+
+{% upload_js False %}
 
 <!script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"><!/script>
 <!link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/bootstrap/css/bootstrap2.css" media="screen"/>

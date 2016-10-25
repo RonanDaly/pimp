@@ -301,8 +301,7 @@ class FragfileCreateView(CreateView):
 
         return frag_pol
 
-
-    def form_valid(self, form):
+    def getfragsample(self):
 
         pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=self.project)
         print pimpFrankLink
@@ -312,6 +311,13 @@ class FragfileCreateView(CreateView):
         print frank_expt_condition
         fragment_sample = frank_expt_condition.sample_set.all()[0]
         print fragment_sample
+
+        return fragment_sample
+
+
+    def form_valid(self, form):
+
+        fragment_sample = self.getfragsample()
 
         """The way we are setting up FrAnk in Pimp should assure that there is only one unique Sample for each project
         this sample can then have many samplefiles asscoiated with it.
@@ -387,7 +393,7 @@ class FragfileCreateView(CreateView):
             else:
 
                 fragment_file = SampleFile.objects.get(sample=fragment_sample, polarity=frag_pol, name=file.name)
-                logging.info("A file of that name and polarity all ready exists, ignoring and returning ", fragment_file.name)
+                print "A file of that name and polarity all ready exists, ignoring and returning ", fragment_file.name
 
 
 
@@ -628,7 +634,7 @@ class FragfileDeleteView(DeleteView):
         """
         self.project.modified = datetime.datetime.now()
         self.project.save()
-        print "in delete"
+        print "in fragmentfile delete"
         self.object = self.get_object()
         print "delete : ",self.object
         self.object.delete()
