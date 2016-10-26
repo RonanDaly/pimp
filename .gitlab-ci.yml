@@ -1,0 +1,9 @@
+stages:
+  - build
+  - push
+
+pimp-base:
+    script:
+        - cd DockerBaseContext
+        - docker-compose build pimp-base
+    stage: build
