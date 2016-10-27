@@ -2,13 +2,13 @@ stages:
   - build
   - push
 
-pimp-base:
-    script:
-        - cd DockerBaseContext
-        - docker-compose build pimp-base
-    #stage: build
+#pimp-base:
+#    script:
+#        - cd DockerBaseContext
+#        - docker-compose build pimp-base
+#    stage: build
 
-test:
+test-pimp:
     script:
-        - set | grep -i http
+        - 'set | grep -i http'
     stage: build
