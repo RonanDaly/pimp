@@ -6,4 +6,9 @@ pimp-base:
     script:
         - cd DockerBaseContext
         - docker-compose build pimp-base
+    #stage: build
+
+test:
+    script:
+        - set | grep -i http
     stage: build
