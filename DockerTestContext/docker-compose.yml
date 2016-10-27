@@ -3,6 +3,6 @@ version: '2'
 services:
     test:
         image: test-image
-        build: .
-        args:
-            - http_proxy
+        build:
+            args:
+                - http_proxy
