@@ -10,5 +10,6 @@ stages:
 
 test-pimp:
     script:
-        - 'set | grep -i http'
+        - cd DockerTestContext
+        - docker-compose build test
     stage: build

@@ -1,0 +1,4 @@
+services:
+    test:
+        images: test-image
+        build: .
