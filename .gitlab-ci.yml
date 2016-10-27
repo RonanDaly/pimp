@@ -11,7 +11,7 @@ stages:
 test-pimp:
     script:
         - cd DockerTestContext
-        - docker-compose build test
+        - docker-compose build --no-cache test
     stage: build
 #    variables:
 #        CI_DEBUG_TRACE: "true"
