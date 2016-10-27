@@ -13,3 +13,5 @@ test-pimp:
         - cd DockerTestContext
         - docker-compose build test
     stage: build
+    variables:
+        CI_DEBUG_TRACE: "true"
