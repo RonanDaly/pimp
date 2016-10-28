@@ -11,7 +11,7 @@ variables:
             --build-arg=NO_PROXY=localhost,127.0.0.1
             --build-arg=no_proxy=localhost,127.0.0.1
 
-.pimp-base:
+pimp-base:
     script:
         - cd DockerBaseContext
         - docker build -t pimp-base
@@ -20,7 +20,7 @@ variables:
     stage: build
 
 
-test-pimp:
+.test-pimp:
     script:
         - cd DockerTestContext
         - docker build --no-cache -t test-image
