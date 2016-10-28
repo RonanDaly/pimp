@@ -11,7 +11,13 @@ stages:
 test-pimp:
     script:
         - cd DockerTestContext
-        - docker-compose build --no-cache test
+        - docker build --no-cache -t test-image
+            --build-arg=http_proxy=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=HTTP_PROXY=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=https_proxy=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=HTTPS_PROXY=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=NO_PROXY=localhost,127.0.0.1
+            .
     stage: build
 #    variables:
 #        CI_DEBUG_TRACE: "true"
