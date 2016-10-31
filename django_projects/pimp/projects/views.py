@@ -14,7 +14,7 @@ from data.models import Analysis
 from frank.models import PimpProjectFrankExp, ExperimentalProtocol
 from frank.models import Experiment as FrankExperiment
 from frank.models import ExperimentalCondition as FrankExpCondition
-from frank.models import FragmentationSet
+from frank.models import FragmentationSet, UserExperiment
 from frank.models import Sample as FrankSample
 
 
@@ -98,6 +98,11 @@ def newproject(request):
 			expt_name ="Pimp-"+title+"-created"
 			frank_experiment = FrankExperiment.objects.create(title=title, description=description, created_by=user, ionisation_method="ESI", detection_method=frank_detect_method)
 			frank_experimental_condition = FrankExpCondition.objects.create(name=expt_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
+
+			#Create user experiment for Frank so that it can be used as a stand alone.
+
+			UserExperiment.objects.create(user=user, exeriment= frank_experiment)
+
 
 			#Create the sample file here as the name is auto-generated
 

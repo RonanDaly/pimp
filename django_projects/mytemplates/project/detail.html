@@ -2870,7 +2870,7 @@ $(document).ready(function() {
 			<div class="row-fluid">
 				<div class="span6 white-span" id="white-span-summary">
 					<div class="row-fluid">
-						<div class="span6 description-span"><h4>Samples in {{frank_sample.name }} set </h4></div>
+						<div class="span6 description-span"><h4>Files loaded for {{frank_sample.name }} </h4></div>
 						{% ifnotequal permission 'read' %}
 						<div class="span6 span-btn"><a class="btn btn-primary btn-create-project" href="{% url 'upload-new-fragFile' project.id %}"><i class="icon-upload icon-white"></i> Upload files</a></div>
 						{% endifnotequal %}
