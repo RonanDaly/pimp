@@ -30,6 +30,7 @@ RUN apt-get update && \
         # Needed for javareconf
         build-essential \
         python-minimal \
+        mysql-client-5.7 \
 		oracle-java8-installer \
 		rabbitmq-server && \
 		#supervisor && \
@@ -39,7 +40,6 @@ RUN apt-get update && \
 	R CMD javareconf
 
 RUN groupadd pimp && useradd -g pimp -m pimp
-RUN mkdir /home/pimp/static /home/pimp/media
+RUN mkdir /home/pimp/static /home/pimp/media /home/pimp/backups
 RUN chown -R pimp:pimp /home/pimp
-VOLUME /home/pimp/static /home/pimp/media
-
+VOLUME /home/pimp/static /home/pimp/media /home/pimp/backups

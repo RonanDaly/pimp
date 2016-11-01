@@ -24,4 +24,4 @@ ENV MYSQL_DATABASE=
 ENV MYSQL_USER=
 ENV MYSQL_PASSWORD=
 RUN ./collectstatic.sh
-CMD start_pimp.sh
+CMD ./start_pimp.sh

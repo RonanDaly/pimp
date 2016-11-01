@@ -4,5 +4,5 @@ services:
     logging:
         logging:
             options:
-                max-size: 10m
-                max-file: 9
+                max-size: '10m'
+                max-file: '9'

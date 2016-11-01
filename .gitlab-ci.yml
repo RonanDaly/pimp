@@ -1,6 +1,8 @@
 stages:
-  - build
-  - push
+  - build1
+  - build2
+  - squash
+  - packaging
 
 variables:
     PROXY_SETTINGS: >
@@ -17,8 +19,49 @@ pimp-base:
         - docker build -t pimp-base
             $PROXY_SETTINGS
             .
-    stage: build
+    stage: build1
 
+nginx-pimp:
+    script:
+        - cd DockerNginxContext
+        - docker build -t nginx-pimp
+            $PROXY_SETTINGS
+            .
+    stage: build1
+
+pimp:
+    script:
+        - docker build -t pimp
+            $PROXY_SETTINGS
+            .
+    stage: build2
+
+squash-image:
+    script:
+        - docker-squash -t pimp:squashed pimp
+    stage: squash
+
+.package:
+    script:
+        - sed -e "s/:tagname:/$CI_BUILD_TAG/g" .env.template > .env
+    only:
+        - tags
+    artifacts:
+        paths:
+            - .env
+            - docker-compose.yml
+    stage: packaging
+
+.deploy:
+    script:
+        - docker login FIXME
+        - docker tag pimp:squashed docker.tcrc.gla.ac.uk/pimp:$CI_BUILD_TAG
+        - docker push docker.tcrc.gla.ac.uk/pimp:$CI_BUILD_TAG
+        - docker tag nginx-pimp docker.tcrc.gla.ac.uk/nginx-pimp:$CI_BUILD_TAG
+        - docker push docker.tcrc.gla.ac.uk/nginx-pimp:$CI_BUILD_TAG
+    stage: packaging
+    only:
+        - tags
 
 .test-pimp:
     script:
@@ -26,7 +69,8 @@ pimp-base:
         - docker build --no-cache -t test-image
             $PROXY_SETTINGS
             .
-    stage: build
+    stage: build1
+
 
 #    variables:
 #        CI_DEBUG_TRACE: "true"

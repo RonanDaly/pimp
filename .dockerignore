@@ -3,4 +3,5 @@ Dockerfile
 .git
 **/*.mzXML
 django_projects/pimp/fixtures
+!django_projects/pimp/fixtures/kegg_pathway_superPathway.csv
 django_projects/pimp/frank/TestingFiles
