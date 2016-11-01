@@ -327,6 +327,7 @@ def start_analysis(request, project_id):
                 analysis.submited = datetime.datetime.now()
                 analysis.save(update_fields=['submited'])
 
+                #Start the R pipeline for pimp
                 r = tasks.start_pimp_pipeline.delay(analysis, project, user)
                 # r = tasks.start_pimp_pipeline.delay(comparison_name, file_list, group_list, standards, databases)
                 # print r.get()

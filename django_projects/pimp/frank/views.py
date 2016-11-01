@@ -792,13 +792,13 @@ def create_fragmentation_set(request, experiment_name_slug):
             # A fragmentation set cannot be made if the there are no sample files uploaded
             # for the experiment
             # Try and check whether sample files have been uploaded
+            # SampleFile -> Sample -> experimental_condition -> experiment - KmcL
             source_files = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
             num_source_files = len(source_files)
             # As long as sample files have been uploaded then the fragmentation set can
             # be added to the database
             if num_source_files > 0:
-                new_fragmentation_set.save()
-                # Begin the background process of deriving the peaks from the sample files
+                new_fragmentation_set.save()              # Begin the background process of deriving the peaks from the sample files
                 input_peak_list_to_database(experiment_name_slug, new_fragmentation_set.id)
                 # Render the experiment page, which should display the new fragmentation set
                 context_dict = get_experiment_summary_context_dict(experiment_name_slug)
@@ -816,6 +816,7 @@ def create_fragmentation_set(request, experiment_name_slug):
             return render(request, 'frank/create_fragmentation_set.html', context_dict)
     else:
         # If the request was a Get request, then create a new form
+
         fragment_set_form = FragmentationSetForm()
         # Render the new form on the 'create_fragmentation_set' page
         context_dict = get_create_fragmentation_set_context_dict(experiment_name_slug, fragment_set_form)
@@ -1096,12 +1097,14 @@ run in the background.
 """
 
 
-def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id):
+def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id, ms1_peaks=None):
 
     """
     Method to start the extraction of peaks from the uploaded mzXML data files
     :param experiment_name_slug: A string containing the unique slug of an experiment
     :param fragmentation_set_id: Integer id of the fragmentation set
+    :param ms1_peaks: Table of MS1 peaks
+    ms1_peaks will be none if this method is called from Frank, and will have a dataframe from Pimp
     """
 
     experiment = Experiment.objects.get(slug=experiment_name_slug)
@@ -1109,7 +1112,7 @@ def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id):
     experiment_type = experiment.detection_method.name
     if experiment_type == 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition':
         # Run the LCMS-DDA peak extraction task in the background
-        tasks.msn_generate_peak_list.delay(experiment_name_slug, fragmentation_set_id)
+        tasks.msn_generate_peak_list.delay(experiment_name_slug, fragmentation_set_id, ms1_peaks)
     elif experiment_type == 'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation':
         tasks.gcms_generate_peak_list.delay(experiment_name_slug, fragmentation_set_id)
         # Run the LCMS-DDA peak extraction task in the background

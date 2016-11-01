@@ -25,6 +25,9 @@ from data.models import Peak as PimpPeak
 from data.models import Dataset
 
 from MS2LDA.lda_for_fragments import Ms2Lda
+from fileupload.views import findpolarity
+import pandas as pd
+from rpy2.robjects import pandas2ri
 
 @celery.task
 def runNetworkSampler(annotation_query_id):
@@ -137,13 +140,14 @@ def runNetworkSampler(annotation_query_id):
 
 
 @celery.task
-def msn_generate_peak_list(experiment_slug, fragmentation_set_id):
+def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
 
     """
     Method to extract peak data from a collection of sample files
     :param experiment_slug: Integer id of the experiment from which the files orginate
     :param fragmentation_set_id:    Integer id of the fragmentation set to be populated
     :return: True   Boolean value denoting the completion of the task
+    Passing the MS1 peaks from Pimp when they are run together.
     """
 
     # Determine the directory of the experiment
@@ -159,18 +163,57 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id):
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
     # Store the source function as a variable
     r_source = robjects.r['source']
-    # Derive the location of the R script based on the local directory
-    location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
-    # Source the script in R
-    r_source(location_of_script)
-    # Store the function of the R script ('frankMSNPeakMatrix') as a variable
-    r_frank_msn_peak_matrix = robjects.globalenv['frankMSnPeakMatrix']
+    # If no MS1 peaks were passed in, the ms1_peak parameter is set to NULL for rpy2
+    if ms1_peaks is None:
+        location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
+        r_source(location_of_script)
+        r_frank_pimp_prepare = robjects.globalenv['frankMSnPeakMatrix']
+
+    #Else there are MS1 peaks
+    else:
+        location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankPimpPrepare.R')
+        r_source(location_of_script)
+        r_frank_pimp_prepare = robjects.globalenv['frankPimpPrepare']
+
+    # Function of an R script if the fragments were passed from Pimp
+
     # Update the status of the task for the user
     fragmentation_set_object.status = 'Processing'
     fragmentation_set_object.save()
+
     # The script can then be run by passing the root directory of the experiment to the R script
-    # The script goes through the hierarchy and finds all mxXML files for processing
-    output = r_frank_msn_peak_matrix(source_directory=filepath)
+    # The script goes through the hierarchy and finds all mzXML files for processing
+    # The script should also take ms1_peaks and mzMl files when run from Pimp.
+
+    #Find out the polarity of the files and pass in a dataframe to represent the relationship
+
+    file_pol_dict = {}
+    for f in os.listdir(filepath):
+        if f.endswith(".mzML"):
+            path = os.path.join(filepath, f)
+            pol = findpolarity(path)
+
+            if pol == "+":
+                polarity = "positive"
+            elif pol is "-":
+                polarity = "negative"
+            file_pol_dict[f] = polarity
+
+    print "the file polarity mapping is", file_pol_dict
+
+    #Put dictionary into dataframe for passing to R
+    df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
+    pandas2ri.activate()
+    f_pol_df = pandas2ri.py2ri(df)
+    print "The polarity_dataframe is", f_pol_df
+
+    #If no MS1 peaks, generate the peak matrix for Frank
+    if ms1_peaks is None:
+        output = r_frank_pimp_prepare(filepath)
+    #Else there are MS1 peaks and we want to prepare the files for Method 3
+    else:
+        output = r_frank_pimp_prepare(filepath, ms1_peaks, f_pol_df)
+
     try:
         # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
         # into the database.

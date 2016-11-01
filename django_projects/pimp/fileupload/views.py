@@ -1,3 +1,4 @@
+
 # import PiMP specific models and form
 from fileupload.models import Picture, ProjFile, SampleFileGroup, Sample, StandardFileGroup, CalibrationSample
 from fileupload.forms import FileForm
@@ -39,6 +40,14 @@ def response_mimetype(request):
         return "application/json"
     else:
         return "text/plain"
+
+
+def findpolarity(file):
+    tree = etree.parse(file)
+    handler = MyContentHandler()
+    lxml.sax.saxify(tree, handler)
+    return handler.polarity
+
 
 
 class MyContentHandler(ContentHandler):

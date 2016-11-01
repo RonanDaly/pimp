@@ -3,6 +3,8 @@ from djcelery import celery
 # import rpy2.robjects as robjects
 import os
 import subprocess
+import pandas as pd
+from rpy2.robjects import pandas2ri
 import re
 from fileupload.models import Sample, CalibrationSample
 from experiments.models import Comparison, Analysis
@@ -16,6 +18,11 @@ from django.template.loader import render_to_string
 from django.db import connection;
 ##### JUST FOR SCOTT ALTERNATIVE CODE
 import rpy2.robjects as robjects
+
+from frank.models import PimpProjectFrankExp, FragmentationSet
+from frank.models import SampleFile as FrankSampleFile
+from frank.views import input_peak_list_to_database
+
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +188,20 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     # pimp = importr('PiMP')
     # runPipeline = robjects.r['Pimp.runPipeline']
     # runPipeline(files=files, groups=groups, contrasts=contrasts, standards=standards, databases=databases, nSlaves=15)
-    
+
+    # Extra calls for running Frank.
+
+    pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+    frank_experiment = pimpFrankLink.frank_expt
+    print "Pimp tasks Experiment ", frank_experiment
+    fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
+    print "Pimp Tasks FragSet ", fragmentation_set
+    fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
+    num_fragment_files = len(fragment_files)
+
+
+    logger.info('There are %s' % num_fragment_files, 'fragment files to be processed and are: %s' % fragment_files)
+
     r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'),
                       str(analysis.id), str(saveFixtures)]
     r_command = " ".join(r_command_list)
@@ -200,6 +220,30 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
 
     if os.path.exists(xml_file_path):
         populate_database(xml_file_path)
+
+        # Start the R pipeline for Frank passing in the Pimp MS1 peaks.
+        if num_fragment_files > 0:
+
+            print "Producing a dataframe from the MS1 peaks"
+            #Get the MS1 peaks associated with this analysis
+            ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("mass","rt","polarity")
+
+            #Put the data into a dataFrame format in order to be passed to R.
+            data = []
+            for mass, rt, polarity in ms1_peaks:
+                value = (float(mass), float(rt), polarity)
+                data.append(value)
+            df = pd.DataFrame(data, columns=['mz', 'rt', 'polarity'])
+            pandas2ri.activate()
+            ms1_df = pandas2ri.py2ri(df)
+            print "The ms1 peak_dataframe is", ms1_df
+
+            # Extract the peaks for the fragmentation files using Frank and the ms1 peaks
+            input_peak_list_to_database(frank_experiment.slug, fragmentation_set.slug, ms1_df)
+            print "Running the input peak list from Pimp"
+
+            #Get all of the peaks associated with this analysis
+
         analysis.status = 'Finished'
         analysis.save(update_fields=['status'])
         send_email(analysis, project, user, True)
