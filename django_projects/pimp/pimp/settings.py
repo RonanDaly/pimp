@@ -235,6 +235,7 @@ INSTALLED_APPS = (
     'gp_registration',
     'frank',
     'django_markdown2',
+    'dbbackup',
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
@@ -300,3 +301,8 @@ FIXTURE_DIRS = (
 )
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
+DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
+DBBACKUP_STORAGE_OPTIONS = {'location': getString('PIMP_BACKUP_LOCATION', os.path.join(os.path.dirname(BASE_DIR), 'backups'))}
+DBBACKUP_CLEANUP_KEEP=2
+DBBACKUP_CLEANUP_KEEP_MEDIA=2
