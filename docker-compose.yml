@@ -2,7 +2,7 @@ version: '2'
 
 services:
     pimp:
-        image: pimp:${PIMP_VERSION}
+        image: ${PIMP_IMAGE}
         build: .
         container_name: pimp
         hostname: pimp
@@ -23,7 +23,7 @@ services:
             - MYSQL_DATABASE
             - MYSQL_USER
             - MYSQL_PASSWORD
-        image: mysql:${MYSQL_VERSION}
+        image: ${MYSQL_IMAGE}
         container_name: mysql
         hostname: mysql
         extends:
@@ -34,7 +34,7 @@ services:
         hostname: nginx
         volumes_from:
             - pimp
-        image: nginx-pimp:${NGINX_VERSION}
+        image: ${NGINX_IMAGE}
         build:
             context: DockerNginxContext
         environment:
@@ -50,16 +50,3 @@ services:
         extends:
             file: common.yml
             service: logging
-    backup:
-        image: tutumcloud/mysql-backup
-        environment:
-            - MYSQL_HOST=mysql
-            - MYSQL_PORT=3306
-            - MYSQL_USER=pimp
-            - MYSQL_PASS=${MYSQL_PASSWORD}
-            - MYSQL_DB=pimp
-            - CRON_TIME
-            - MAX_BACKUPS=30
-        depends_on:
-            - mysql
-
