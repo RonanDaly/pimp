@@ -229,11 +229,12 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
             ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("mass","rt","polarity")
 
             #Put the data into a dataFrame format in order to be passed to R.
+            #Intensity set to 0.25 until we decide what should be done with it.
             data = []
             for mass, rt, polarity in ms1_peaks:
-                value = (float(mass), float(rt), polarity)
+                value = (float(mass), float(rt), 0.25, polarity)
                 data.append(value)
-            df = pd.DataFrame(data, columns=['mz', 'rt', 'polarity'])
+            df = pd.DataFrame(data, columns=['mz', 'rt', 'intensity', 'polarity'])
             pandas2ri.activate()
             ms1_df = pandas2ri.py2ri(df)
             print "The ms1 peak_dataframe is", ms1_df
