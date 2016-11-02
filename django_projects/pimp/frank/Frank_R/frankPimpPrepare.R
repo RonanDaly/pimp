@@ -25,7 +25,7 @@ frankPimpPrepare <- function (source_directory, ms1_peaks, file_pol_df){
     frags <- rbind(frags, new_frags)
   }
 
- print ('Fragmenst returned from method 3')
+ print ('Fragments returned from method 3')
  print (frags)
 
 

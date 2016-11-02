@@ -197,7 +197,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
                 polarity = "positive"
             elif pol is "-":
                 polarity = "negative"
-            file_pol_dict[f] = polarity
+            file_pol_dict[path] = polarity
 
     print "the file polarity mapping is", file_pol_dict
 
