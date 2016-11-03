@@ -35,8 +35,6 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
     peak_info <- peak_info[with(peak_info, order(mz)), ]
     row.names(peak_info) <- NULL
 
-    print(.libPaths())
-
     # open fragmentation file
     RMassBank::RmbDefaultSettings()
     f <- openMSfile(fragmentation_file)
@@ -188,6 +186,10 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
     #print(paste(c("total_ms1_accepted=", total_ms1_accepted, "/", num_ms1_peaks), collapse=""))
     peaks <- peaks[-1, ] # delete first row of all NAs
     print ("end of method 3")
+
+
+
+
     return(peaks)
 
 }

@@ -46,5 +46,6 @@ frankMSnPeakMatrix <- function (source_directory){
   sampleList <- peaks[, 'Sample']
   sourcePeakList <- factor(sampleList, labels = sourcefiles)
   peaks[, "SourceFile"] <- sourcePeakList
+  print (head(peaks))
   return (peaks)
 }
