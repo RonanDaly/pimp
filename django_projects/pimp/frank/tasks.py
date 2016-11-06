@@ -149,16 +149,36 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     :return: True   Boolean value denoting the completion of the task
     Passing the MS1 peaks from Pimp when they are run together.
     """
-
+    print ('In MSN generate peak list')
     # Determine the directory of the experiment
     experiment_object = Experiment.objects.get(slug=experiment_slug)
     # From the experiment object derive the file directory of the .mzXML files
-    filepath = os.path.join(
+    print ('Experiment object')
+    print (experiment_object)
+    #If the MS1 peaks don't exist, don't touch this but not sure how it works as Frank seems to store differently.
+    if ms1_peaks is None:
+        filepath = os.path.join(
         settings.MEDIA_ROOT,
         'frank',
         experiment_object.created_by.username,
         experiment_object.slug,
     )
+
+    else:
+        experimental_condition = ExperimentalCondition.objects.filter(experiment=experiment_object)[0]
+        print "EXP "+str(experimental_condition)
+        sample = Sample.objects.filter(experimental_condition=experimental_condition)[0]
+        print "sample "+str(sample)
+        filepath = os.path.join(
+            settings.MEDIA_ROOT,
+            'frank',
+            experiment_object.created_by.username,
+            experiment_object.slug,
+            experimental_condition.slug,
+            sample.slug
+        )
+
+    print (filepath)
     # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
     # Store the source function as a variable
@@ -188,18 +208,29 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     #Find out the polarity of the files and pass in a dataframe to represent the relationship
 
     file_pol_dict = {}
-    for f in os.listdir(filepath):
-        if f.endswith(".mzML"):
-            path = os.path.join(filepath, f)
-            pol = findpolarity(path)
+    polarites = {"Positive", "Negative"}
 
-            if pol == "+":
-                polarity = "positive"
-            elif pol is "-":
-                polarity = "negative"
-            file_pol_dict[path] = polarity
+    for p in polarites:
+        print 'Polarity = ' + str(p)
+        if os.path.join(filepath, p):
+            polarity_fp = os.path.join(filepath, p)
+            print polarity_fp
+
+            for f in os.listdir(polarity_fp):
+                if f.endswith(".mzML"):
+                    path = os.path.join(polarity_fp, f)
+                    pol = findpolarity(path)
+                    if pol == "+":
+                        polarity = "positive"
+                    elif pol is "-":
+                        polarity = "negative"
+                    file_pol_dict[path] = polarity
+        else:
+            print 'no file of polarity' +str(p)
+
 
     print "the file polarity mapping is", file_pol_dict
+
 
     #Put dictionary into dataframe for passing to R
     df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
@@ -217,7 +248,10 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     try:
         # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
         # into the database.
-        peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
+
+        #Pass the experiment name slug in order to grab the experiment.
+        peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
+        #peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
         # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
         peak_generator.populate_database_peaks()
         # Upon completion the status of the fragmentation set is updated, to inform the user of completion

@@ -1,11 +1,12 @@
 __author__ = 'Scott Greig'
 
-from frank.models import Peak, SampleFile, FragmentationSet, Experiment, ExperimentalCondition, Sample
+from frank.models import Peak, SampleFile, FragmentationSet, PimpFrankPeakLink, Experiment
 from decimal import *
 from abc import ABCMeta, abstractmethod
 import rpy2.robjects as robjects
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.exceptions import ValidationError
+from data.models import Peak as PimpPeak
 
 
 class PeakBuilder:
@@ -33,13 +34,15 @@ class MSNPeakBuilder(PeakBuilder):
     Inherits from the Abstract PeakBuilder class
     """
 
-    def __init__(self, r_dataframe, fragmentation_set_id):
+    def __init__(self, r_dataframe, fragmentation_set_id, experiment_slug):
         """
         Constructor for the msnPeakBuilder. Validates all input required for the populating of peak database
         :param r_dataframe: The output of the R script (a dataframe). An rpy2.robjects dataframe.
         :param fragmentation_set_id: The unique database 'id' of the FragmentationSet to be populated
         :return: None
         """
+        # Assume that this is not from Method 3 ar the start.
+        self.from_method_3 = False
 
         # Ensure correct argument types are passed
         if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) is False:
@@ -68,6 +71,16 @@ class MSNPeakBuilder(PeakBuilder):
         self.retention_time_vector = r_dataframe.rx2('rt')
         self.mz_ratio_vector = r_dataframe.rx2('mz')
         self.intensity_vector = r_dataframe.rx2('intensity')
+
+        self.experiment = Experiment.objects.get(slug=experiment_slug)
+
+        # If we pass in pimpID as a row in the dataframe, it came from method 3
+        if 'pimpID' in r_dataframe.colnames:
+            # A vector to store the related pimp_peak IDs for pimp/frank integration.
+            self.ms1_peak_id_vector = r_dataframe.rx2('pimpID')
+            self.from_method_3 = True
+            print("MS1 peaks came from Pimp")
+
         # sample_file_vector contains the 'name' (not filepath) of the source file from which the peak was derived
         # e.g. "Beer3_Top10_POS.mzXML"
         self.sample_file_vector = r_dataframe.rx2('SourceFile')
@@ -110,10 +123,19 @@ class MSNPeakBuilder(PeakBuilder):
                     self._create_a_peak(peak_array_index, parent_peak_object)
                 except ValidationError:
                     raise
+
+                    # # If the data comes from method 3
+                    # if self.from_method_3:
+                    #     # Link the parent peak object to the MS1 peak in Frank from which it came
+                    #     self._link_frank_pimp_peaks()
+                    #     print ('Finished linking peaks')
+
         # Else ignore the peak
         # Here peaks without any precursor ion are ignored, however,
         # the recursive method _get_parent_peak() will follow the hierarchy
         # of precursor ions, creating those that have fragments associated with them
+        print 'This is from method 3' + str(self.from_method_3)
+
         print 'Finished populating peaks...'
         return True
 
@@ -140,6 +162,9 @@ class MSNPeakBuilder(PeakBuilder):
                 if int(self.peak_ID_vector[peak_number]) == parent_id_from_r:
                     array_index_of_parent_ion = peak_number
                     break
+                if self.from_method_3:
+                    pimp_id = self.ms1_peak_id_vector[array_index_of_parent_ion]
+
             # The parent_peak may itself have a precursor
             # Now the parent's precursor peak id used in the R dataframe can be derived
             parent_precursor_peak_id_in_r = int(self.parent_peak_id_vector[array_index_of_parent_ion])
@@ -163,13 +188,28 @@ class MSNPeakBuilder(PeakBuilder):
         :return newly_created_peak: The created Peak model object
         """
 
+        fragment_files = SampleFile.objects.filter(sample__experimental_condition__experiment=self.experiment)
+        print "The fragment files are" + str(fragment_files)
+
         # If valid parameters then create the peak model instance
-        sample_file_name = self.sample_file_vector.levels[self.sample_file_vector[peak_array_index]-1]
-        peak_source_file = self.sample_files.get(name=sample_file_name)
+        sample_file_name = self.sample_file_vector.levels[self.sample_file_vector[peak_array_index] - 1]
+        print "The sample file name is" + str(sample_file_name)
+        peak_source_file = fragment_files.get(name=sample_file_name)
         peak_mass = self.mz_ratio_vector[peak_array_index]
         peak_retention_time = self.retention_time_vector[peak_array_index]
         peak_intensity = self.intensity_vector[peak_array_index]
         peak_msn_level = int(self.msn_level_vector[peak_array_index])
+
+        print "peak level is" + str(peak_msn_level)
+        if peak_msn_level == 1:
+            print 'Parent peak and MS1 ID is:'
+            ms1_id = self.ms1_peak_id_vector[peak_array_index]
+            print ms1_id
+
+        if peak_msn_level > 1:
+            print 'not parent peak and MS1 ID is'
+            print self.ms1_peak_id_vector[peak_array_index]
+
         try:
             newly_created_peak = Peak.objects.create(
                 source_file=peak_source_file,
@@ -180,10 +220,33 @@ class MSNPeakBuilder(PeakBuilder):
                 msn_level=peak_msn_level,
                 fragmentation_set=self.fragmentation_set,
             )
+
             self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
+            # If we have a parent peak link it back to Pimp
+            if peak_msn_level == 1:
+                print ("we are linking")
+                self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
+
         except ValidationError:
             raise
+
         return newly_created_peak
+
+    def _link_frank_pimp_peaks(self, frank_parent, pimp_ms1):
+
+        ms1_peak = PimpPeak.objects.get(id=pimp_ms1)
+
+        print ms1_peak.mass
+        print ms1_peak.id
+        print frank_parent.mass
+        print frank_parent.id
+
+        #     If a peak has an pimpID i.e it is not "None" .
+        #     then this is an MS1 peak and should be linked directly to
+        #     # a Pimp peak object
+
+        pimp_frank_link = PimpFrankPeakLink.objects.create(pimp_peak=ms1_peak, frank_peak=frank_parent)
+        print "The link is" + str(pimp_frank_link)
 
 
 class GCMSPeakBuilder(PeakBuilder):
@@ -209,7 +272,7 @@ class GCMSPeakBuilder(PeakBuilder):
         for field in required_fields:
             if field not in output_file_list.colnames:
                 raise ValueError(
-                    'Invalid R dataframe - column \''+field+'\' is required'
+                    'Invalid R dataframe - column \'' + field + '\' is required'
                 )
         # Ensure value of fragmentation set is valid
         try:
@@ -239,12 +302,12 @@ class GCMSPeakBuilder(PeakBuilder):
         """
 
         print 'Populating Database peaks...'
-        print 'Number of source files = '+str(self.number_of_source_files)
+        print 'Number of source files = ' + str(self.number_of_source_files)
         for index in range(0, self.number_of_source_files):
             # Index must be decreased by 1 due to the indexing used in R (starts at 1, not the conventional 0)
-            directory_of_mzxml_file = self.source_files_vector.levels[self.source_files_vector[index]-1]
-            print 'Processing Peaks From '+directory_of_mzxml_file
-            directory_of_output_txt_file = self.peak_list_files_vector.levels[self.peak_list_files_vector[index]-1]
+            directory_of_mzxml_file = self.source_files_vector.levels[self.source_files_vector[index] - 1]
+            print 'Processing Peaks From ' + directory_of_mzxml_file
+            directory_of_output_txt_file = self.peak_list_files_vector.levels[self.peak_list_files_vector[index] - 1]
             # Group the peaks into a dictionary
             try:
                 grouped_peaks = self._group_peaks(directory_of_output_txt_file, directory_of_mzxml_file)

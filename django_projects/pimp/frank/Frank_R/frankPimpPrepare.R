@@ -23,7 +23,7 @@ frankPimpPrepare <- function (source_directory, ms1_peaks, file_pol_df){
     #sourcePeakList <- factor(sampleList, labels = sourcefiles)
     #peaks[, "SourceFile"] <- sourcePeakList
 
-    print ('Head and tail of all Fragments returned from method 3')
+    print ('Head and tail Fragments returned from method 3')
     print (head(peaks))
     print (tail(peaks))
     return (peaks)
@@ -66,8 +66,7 @@ runPolarityGroups <- function (ms1_df, frag_pol_df, pol){
         sourcePeakList <- factor(sampleList, labels = sourcefiles)
         frags[, "SourceFile"] <- sourcePeakList
 
-        print ("Method 3 returning head of peaks")
-        print (head(frags))
+        print ("returning a single polarity from method 3")
     }
   return(frags)
 }

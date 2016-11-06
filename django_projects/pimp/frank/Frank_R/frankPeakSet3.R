@@ -31,7 +31,7 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
     #Data from MS1 file
     peak_info <- as.data.frame(MS1file)
 
-    # sort by mz
+    # sort the peak_info file by mz
     peak_info <- peak_info[with(peak_info, order(mz)), ]
     row.names(peak_info) <- NULL
 
@@ -46,6 +46,8 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
     np_mz <- peak_info$mz
 
     np_intensity <- peak_info$int
+
+    pimp_id <- peak_info$pimp_id
 
     # get the MS/MS
     print("Finding MS/MS peaks")
@@ -98,7 +100,7 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
 
     # make an empty dataframe
     peaks_colnames <- c("peakID", "MSnParentPeakID", "msLevel", "rt", "mz", "intensity",
-                        "Sample", "GroupPeakMSn", "CollisionEnergy")
+                        "Sample", "GroupPeakMSn", "CollisionEnergy","pimpID")
     peaks <- data.frame(t(rep(NA, length(peaks_colnames))))
     colnames(peaks) <- peaks_colnames
 
@@ -145,17 +147,23 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
         }
 
         # append MS1 info
+        # Add the MS1 peak id from the DB
         peak_id <- peak_id + 1
         ms1_parent_peak_id <- 0
         ms1_level <- 1
         ms1_rt <- np_rt[i]
         ms1_mz <- np_mz[i]
         ms1_intensity <- np_intensity[i]
+        pimpid <- pimp_id[i]
+
+        #cat("the pimpID at this stage is", pimpid, "\n")
+
         new_row <- c(peak_id, ms1_parent_peak_id, ms1_level, ms1_rt, ms1_mz, ms1_intensity,
-                     sample_idx, group_peak_msn, collision_energy)
+                     sample_idx, group_peak_msn, collision_energy, pimpid)
         peaks <- rbind(peaks, new_row)
 
         # set the ms2 info
+        pimpid = "None"
         ms2_parent_peakids <- rep(peak_id, num_ms2)
         ms2_peakid_start <- peak_id+1
         ms2_peakid_end <- ms2_peakid_start + num_ms2-1
@@ -173,9 +181,9 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
         ms2_energy <- rep(0, num_ms2)
 
         # append MS2 info
-        ms2_df <- data.frame(ms2_peakids, ms2_parent_peakids, ms2_levels,
+        ms2_df <- data.frame( ms2_peakids, ms2_parent_peakids, ms2_levels,
                              ms2_rts, ms2_masses, ms2_intensities,
-                             ms2_samples, ms2_group, ms2_energy)
+                             ms2_samples, ms2_group, ms2_energy, pimpid)
         colnames(ms2_df) <- peaks_colnames
         peaks <- rbind(peaks, ms2_df)
 
@@ -186,9 +194,6 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
     #print(paste(c("total_ms1_accepted=", total_ms1_accepted, "/", num_ms1_peaks), collapse=""))
     peaks <- peaks[-1, ] # delete first row of all NAs
     print ("end of method 3")
-
-
-
 
     return(peaks)
 
