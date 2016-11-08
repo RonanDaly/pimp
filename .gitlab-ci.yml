@@ -41,7 +41,7 @@ squash-image:
         - docker-squash -t pimp:squashed pimp
     stage: squash
 
-.package:
+package:
     script:
         - sed -e "s/:tagname:/$CI_BUILD_TAG/g" .env.template > .env
     only:
@@ -52,13 +52,13 @@ squash-image:
             - docker-compose.yml
     stage: packaging
 
-.deploy:
+deploy:
     script:
-        - docker login FIXME
-        - docker tag pimp:squashed docker.tcrc.gla.ac.uk/pimp:$CI_BUILD_TAG
-        - docker push docker.tcrc.gla.ac.uk/pimp:$CI_BUILD_TAG
-        - docker tag nginx-pimp docker.tcrc.gla.ac.uk/nginx-pimp:$CI_BUILD_TAG
-        - docker push docker.tcrc.gla.ac.uk/nginx-pimp:$CI_BUILD_TAG
+        - docker login -u admin -p $DOCKER_REGISTRY_PASSWORD xzibit.tcrc.gla.ac.uk:5000
+        - docker tag pimp:squashed xzibit.tcrc.gla.ac.uk:5000/pimp/pimp:$CI_BUILD_TAG
+        - docker push xzibit.tcrc.gla.ac.uk:5000/pimp/pimp:$CI_BUILD_TAG
+        - docker tag nginx-pimp xzibit.tcrc.gla.ac.uk:5000/pimp/nginx-pimp:$CI_BUILD_TAG
+        - docker push xzibit.tcrc.gla.ac.uk:5000/pimp/nginx-pimp:$CI_BUILD_TAG
     stage: packaging
     only:
         - tags
