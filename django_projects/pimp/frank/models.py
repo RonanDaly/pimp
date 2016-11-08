@@ -604,4 +604,4 @@ class PimpAnalysisFrankFs(models.Model):
 	frank_fs = models.ForeignKey(FragmentationSet)
 	status = models.CharField(max_length = 500)
 	def __unicode__(self):
-	    return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.title
+	    return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name

@@ -153,8 +153,6 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     # Determine the directory of the experiment
     experiment_object = Experiment.objects.get(slug=experiment_slug)
     # From the experiment object derive the file directory of the .mzXML files
-    print ('Experiment object')
-    print (experiment_object)
     #If the MS1 peaks don't exist, don't touch this but not sure how it works as Frank seems to store differently.
     if ms1_peaks is None:
         filepath = os.path.join(
@@ -164,7 +162,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
         experiment_object.slug,
     )
 
-    else:
+    else: #This path needs to be different for passing to method 3
         experimental_condition = ExperimentalCondition.objects.filter(experiment=experiment_object)[0]
         print "EXP "+str(experimental_condition)
         sample = Sample.objects.filter(experimental_condition=experimental_condition)[0]
@@ -205,29 +203,40 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     # The script goes through the hierarchy and finds all mzXML files for processing
     # The script should also take ms1_peaks and mzMl files when run from Pimp.
 
-    #Find out the polarity of the files and pass in a dataframe to represent the relationship
+    #Find out the polarity of the file and pass in a dataframe to represent the relationship
+    #This tells us which files and polarites have been added for the fragments
 
     file_pol_dict = {}
-    polarites = {"Positive", "Negative"}
 
-    for p in polarites:
-        print 'Polarity = ' + str(p)
-        if os.path.join(filepath, p):
-            polarity_fp = os.path.join(filepath, p)
-            print polarity_fp
+    polarity_vector = ms1_peaks.rx2('polarity')
+    print type(polarity_vector.levels[0])
+    p = polarity_vector.levels[0] #The polarity of the MS1 peaks
 
-            for f in os.listdir(polarity_fp):
-                if f.endswith(".mzML"):
-                    path = os.path.join(polarity_fp, f)
-                    pol = findpolarity(path)
-                    if pol == "+":
-                        polarity = "positive"
-                    elif pol is "-":
-                        polarity = "negative"
-                    file_pol_dict[path] = polarity
+    print "the polarity is " + p
+    if p == "positive":
+        print ("P is positive")
+        pol_dir = "Positive"
+    elif p == "negative":
+        pol_dir = "Negative"
+    else:
+        print "we have a polarity issue"
+
+    print 'Polarity = ' + str(pol_dir)
+    if os.path.join(filepath, pol_dir):
+        polarity_fp = os.path.join(filepath, pol_dir)
+        print polarity_fp
+
+        for f in os.listdir(polarity_fp):
+            if f.endswith(".mzML"):
+                path = os.path.join(polarity_fp, f)
+                pol = findpolarity(path)
+                if pol == "+":
+                    polarity = "positive"
+                elif pol is "-":
+                    polarity = "negative"
+                file_pol_dict[path] = polarity
         else:
-            print 'no file of polarity' +str(p)
-
+            print 'no file of polarity' + str(p)
 
     print "the file polarity mapping is", file_pol_dict
 

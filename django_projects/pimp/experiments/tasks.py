@@ -19,7 +19,7 @@ from django.db import connection;
 ##### JUST FOR SCOTT ALTERNATIVE CODE
 import rpy2.robjects as robjects
 
-from frank.models import PimpProjectFrankExp, FragmentationSet
+from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
 from frank.models import SampleFile as FrankSampleFile
 from frank.views import input_peak_list_to_database
 
@@ -198,6 +198,9 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     print "Pimp Tasks FragSet ", fragmentation_set
     fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
     num_fragment_files = len(fragment_files)
+    #Link the Frank fragment set and the pimp analysis set
+    PimpAnalysisFrankFs.get_or_create(pimp_analysis=analysis,frank_fs=fragmentation_set)
+
 
 
     logger.info('There are %s' % num_fragment_files, 'fragment files to be processed and are: %s' % fragment_files)
@@ -235,15 +238,22 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
                 value = (id, float(mass), float(rt), -0.25, polarity)
                 data.append(value)
             df = pd.DataFrame(data, columns=['pimp_id', 'mz', 'rt', 'intensity', 'polarity'])
-            pandas2ri.activate()
-            ms1_df = pandas2ri.py2ri(df)
-            print "The ms1 peak_dataframe is", ms1_df
 
-            # Extract the peaks for the fragmentation files using Frank and the ms1 peaks
-            input_peak_list_to_database(frank_experiment.slug, fragmentation_set.slug, ms1_df)
-            print "Running the input peak list from Pimp"
+            #Get the polarities for the MS1 peaks and run through Frank
+            polarities = df.polarity.unique()
+            print polarities
 
-            #Get all of the peaks associated with this analysis
+            for p in polarities:
+
+                df_pol = df[df.polarity == p]
+                pandas2ri.activate()
+                ms1_df_pol = pandas2ri.py2ri(df_pol)
+
+                # Extract the peaks for the fragmentation files using Frank and the ms1 peaks
+                #Possibly do this twice for each polarity..??
+
+                input_peak_list_to_database(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol)
+                print "Running the input peak list from Pimp for " + str(p)
 
         analysis.status = 'Finished'
         analysis.save(update_fields=['status'])

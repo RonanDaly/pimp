@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 import rpy2.robjects as robjects
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from data.models import Peak as PimpPeak
 
 
@@ -43,6 +44,13 @@ class MSNPeakBuilder(PeakBuilder):
         """
         # Assume that this is not from Method 3 ar the start.
         self.from_method_3 = False
+
+        print ("The head of the R data frame is")
+        head_df = robjects.r['head']
+        print(head_df(r_dataframe, 50))
+        print ("The tail of the R data frame is")
+        tail_df = robjects.r['tail']
+        print(tail_df(r_dataframe, 50))
 
         # Ensure correct argument types are passed
         if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) is False:
@@ -193,7 +201,7 @@ class MSNPeakBuilder(PeakBuilder):
 
         # If valid parameters then create the peak model instance
         sample_file_name = self.sample_file_vector.levels[self.sample_file_vector[peak_array_index] - 1]
-        print "The sample file name is" + str(sample_file_name)
+        print "The sample file name is " + str(sample_file_name)
         peak_source_file = fragment_files.get(name=sample_file_name)
         peak_mass = self.mz_ratio_vector[peak_array_index]
         peak_retention_time = self.retention_time_vector[peak_array_index]
@@ -223,12 +231,15 @@ class MSNPeakBuilder(PeakBuilder):
 
             self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
             # If we have a parent peak link it back to Pimp
+            #KMCL: This should only be created if it doesn't already exist.
             if peak_msn_level == 1:
                 print ("we are linking")
                 self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
 
         except ValidationError:
             raise
+        except IntegrityError:
+            print 'Cannot insert'
 
         return newly_created_peak
 
@@ -245,7 +256,8 @@ class MSNPeakBuilder(PeakBuilder):
         #     then this is an MS1 peak and should be linked directly to
         #     # a Pimp peak object
 
-        pimp_frank_link = PimpFrankPeakLink.objects.create(pimp_peak=ms1_peak, frank_peak=frank_parent)
+        #Only create if it doesn't already exist.
+        pimp_frank_link = PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
         print "The link is" + str(pimp_frank_link)
 
 
