@@ -54,6 +54,7 @@ package:
 
 deploy:
     script:
+        - export
         - docker login -u admin -p $DOCKER_REGISTRY_PASSWORD xzibit.tcrc.gla.ac.uk:5000
         - docker tag pimp:squashed xzibit.tcrc.gla.ac.uk:5000/pimp/pimp:$CI_BUILD_TAG
         - docker push xzibit.tcrc.gla.ac.uk:5000/pimp/pimp:$CI_BUILD_TAG
