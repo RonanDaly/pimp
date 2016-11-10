@@ -3,7 +3,6 @@ version: '2'
 services:
     pimp:
         image: ${PIMP_IMAGE}
-        build: .
         container_name: pimp
         hostname: pimp
         environment:
@@ -35,8 +34,6 @@ services:
         volumes_from:
             - pimp
         image: ${NGINX_IMAGE}
-        build:
-            context: DockerNginxContext
         environment:
             - PIMP_HOSTNAME=pimp
             - EXTERNAL_HOSTNAME

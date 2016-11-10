@@ -50,6 +50,7 @@ package:
         paths:
             - .env
             - docker-compose.yml
+            - common.yml
     stage: packaging
 
 deploy:
