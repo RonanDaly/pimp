@@ -3,7 +3,6 @@ version: '2'
 services:
     pimp:
         image: ${PIMP_IMAGE}
-        container_name: pimp
         hostname: pimp
         environment:
             - PIMP_DATABASE_HOST=mysql
@@ -23,13 +22,11 @@ services:
             - MYSQL_USER
             - MYSQL_PASSWORD
         image: ${MYSQL_IMAGE}
-        container_name: mysql
         hostname: mysql
         extends:
             file: common.yml
             service: logging
     nginx:
-        container_name: nginx
         hostname: nginx
         volumes_from:
             - pimp
@@ -43,7 +40,7 @@ services:
         depends_on:
             - pimp
         ports:
-            - "${EXTERNAL_PORT}:80"
+            - "${EXTERNAL_PORT}:8080"
         extends:
             file: common.yml
             service: logging
