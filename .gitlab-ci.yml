@@ -40,6 +40,8 @@ squash-image:
     script:
         - docker-squash -t pimp:squashed pimp
     stage: squash
+    only:
+        - tags
 
 package:
     script:
