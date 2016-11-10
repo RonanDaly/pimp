@@ -42,4 +42,3 @@ RUN apt-get update && \
 RUN groupadd pimp && useradd -g pimp -m pimp
 RUN mkdir /home/pimp/static /home/pimp/media /home/pimp/backups
 RUN chown -R pimp:pimp /home/pimp
-VOLUME /home/pimp/static /home/pimp/media /home/pimp/backups
