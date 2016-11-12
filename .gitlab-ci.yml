@@ -1,4 +1,5 @@
 stages:
+  - prebuild
   - build1
   - build2
   - squash
@@ -74,6 +75,10 @@ deploy:
             .
     stage: build1
 
+fetch-lfs:
+    script:
+        - git lfs pull
+    stage: prebuild
 
 #    variables:
 #        CI_DEBUG_TRACE: "true"
