@@ -134,7 +134,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 
 		// Section divs creation
 
-		var rightPanelPreferencesContent = $('<h3 style="margin-left:10px;">Right panel</h3><h4 style="margin-left:10px;">Default display</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="rightPanelSummaryCheck" type="radio" name="right_panel_preference" value="summary" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Summary</span></div><div class="span6" style="margin-left:10px;"><input id="rightPanelDetailsCheck" type="radio" name="right_panel_preference" value="details" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Details</span></div></div><h4 style="margin-left:10px;">Intensity comparison chart export</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="enableIntensityExport" type="radio" name="intensity_export_preference" value="true" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Enable</span></div><div class="span6" style="margin-left:10px;"><input id="disableIntensityExport" type="radio" name="intensity_export_preference" value="false" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Disable</span></div></div><h4 style="margin-bottom: 20px;margin-left:10px;">Peak chromatograms graph display:</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="peakChromatogramEnabled" type="radio" name="peak_chrom_display" value="true" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Enable</span></div><div class="span6" style="margin-left:10px;"><input id="peakChromatogramDisabled" type="radio" name="peak_chrom_display" value="false" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Disable</span></div></div>');
+		// var rightPanelPreferencesContent = $('<h3 style="margin-left:10px;">Right panel</h3><h4 style="margin-left:10px;">Default display</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="rightPanelSummaryCheck" type="radio" name="right_panel_preference" value="summary" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Summary</span></div><div class="span6" style="margin-left:10px;"><input id="rightPanelDetailsCheck" type="radio" name="right_panel_preference" value="details" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Details</span></div></div><h4 style="margin-left:10px;">Intensity comparison chart export</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="enableIntensityExport" type="radio" name="intensity_export_preference" value="true" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Enable</span></div><div class="span6" style="margin-left:10px;"><input id="disableIntensityExport" type="radio" name="intensity_export_preference" value="false" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Disable</span></div></div><h4 style="margin-bottom: 20px;margin-left:10px;">Peak chromatograms graph display:</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="peakChromatogramEnabled" type="radio" name="peak_chrom_display" value="true" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Enable</span></div><div class="span6" style="margin-left:10px;"><input id="peakChromatogramDisabled" type="radio" name="peak_chrom_display" value="false" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Disable</span></div></div>');
 
 		var peakChromatogramsContent = $('<h3 style="margin-left:10px;">Peak chromatograms</h3><div class="row" style="margin-left:0px;"><div class="span6" style="margin-left:10px;"><h4 style="margin-bottom: 20px;">Retention time window (s): <span id="rtwindow_span">'+rtwindow+'</span></h4><span style="font-weight:bold;margin-right:12px;">15</span><input id="rt_window_slider" type="text" class="span2" value="" data-slider-min="15" data-slider-max="180" data-slider-step="5" data-slider-value="'+rtwindow+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">180</span></div><div class="span6" style="margin-left:10px;"><h4 style="margin-bottom: 20px;">Mass window (ppm): <span id="ppm_span">'+ppm+'</span></h4><span style="font-weight: bold;margin-right: 12px;">1</span><input id="ppm_slider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="'+ppm+'" data-slider-selection="before"><span style="font-weight: bold;margin-left: 12px;">5</span></div>');
 
@@ -144,7 +144,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 
 		var columnChartPreferenceDiv = $('<div class="span12" style="margin-left:10px;"></div>');
 
-		var columnChartPreferenceContent = '<h4 style="margin-bottom: 20px;margin-left:10px;">Point index:</h4>';
+		var columnChartPreferenceContent = '<h4 style="margin-bottom: 20px;margin-left:10px;">Column index:</h4>';
 
 		var chartTypePreferenceContent = $('<div class="row" style="margin-left:10px;"><h4 style="margin-bottom: 20px;">Chart type:</h4><div class="row" style="margin-left:0px;margin-bottom: 15px;"><div class="span6" style="margin-left:10px;"><input id="columnTypeChart" type="radio" name="type_chart_preference" value="column" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Column</span></div><div class="span6" style="margin-left:10px;"><input id="lineTypeChart" type="radio" name="type_chart_preference" value="line" style="margin-bottom: 3px;margin-top:0px;"><span style="font-weight: bold;margin-left:12px;margin-right:12px;">Line</span></div></div></div>');
 
@@ -168,16 +168,16 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
 
 		// Add right panel preference section to window's body
 
-		$(rightPanelPreferencesContent).appendTo($(modalBody));
+		// $(rightPanelPreferencesContent).appendTo($(modalBody));
 
 		// Set values
 
-		if (rightPanelPreference == "summary"){
-			$('#rightPanelSummaryCheck').prop('checked', true);
-		}
-		else {
-			$('#rightPanelDetailsCheck').prop('checked', true);
-		}
+		// if (rightPanelPreference == "summary"){
+		// 	$('#rightPanelSummaryCheck').prop('checked', true);
+		// }
+		// else {
+		// 	$('#rightPanelDetailsCheck').prop('checked', true);
+		// }
 
 		if (averageExport == true){
 			$('#enableIntensityExport').prop('checked', true);

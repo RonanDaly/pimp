@@ -99,7 +99,7 @@
 		<script type="text/javascript">
 		var oTable;
 		var giRedraw = false;
-		var averageExport = false;
+		var averageExport = true;
 		var ppm = 3;
 		var rtwindow = 120;
 		var rightPanelPreference = "summary";
@@ -113,7 +113,7 @@
 		var metabolites_table_url = "{% url 'get_metabolites_table' project.id analysis.id %}";
 		var peak_table_url = "{% url 'get_peak_table' project.id analysis.id %}";
 		var averageChartType = 'column';
-		var peakChromatogramsGraph = false;
+		var peakChromatogramsGraph = true;
         var pathwayCoverageData = null;
 
 		function modelMatcher (params, data) {
