@@ -10,6 +10,11 @@ services:
             - MYSQL_DATABASE
             - MYSQL_USER
             - MYSQL_PASSWORD
+            - PIMP_INITIAL_USERNAME
+            - PIMP_INITIAL_EMAIL_ADDRESS
+            - PIMP_INITIAL_PASSWORD
+            - PIMP_INITIAL_FIRST_NAME
+            - PIMP_INITIAL_LAST_NAME
         depends_on:
             - mysql
         extends:
