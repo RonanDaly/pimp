@@ -3,7 +3,6 @@ version: '2'
 services:
     pimp:
         image: ${PIMP_IMAGE}
-        build: .
         hostname: pimp
         environment:
             - PIMP_DATABASE_HOST=mysql
@@ -16,11 +15,12 @@ services:
             - PIMP_INITIAL_PASSWORD
             - PIMP_INITIAL_FIRST_NAME
             - PIMP_INITIAL_LAST_NAME
-            - PIMP_DEBUG
-            - PIMP_LOG_LEVEL
         extends:
             file: common.yml
             service: logging
+        volumes:
+            - media:/home/pimp/media
+            - backups:/home/pimp/backups
     mysql:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -34,3 +34,6 @@ services:
             service: logging
         command: mysqld --range_optimizer_max_mem_size=0
 
+volumes:
+        media:
+        backups:

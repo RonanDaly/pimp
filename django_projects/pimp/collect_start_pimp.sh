@@ -2,4 +2,4 @@
 
 source ../../venv/bin/activate
 honcho run python manage.py collectstatic --noinput --link
-exec ./start_pimp.sh
+exec ./start_pimp_prod.sh

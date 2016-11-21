@@ -50,10 +50,13 @@ package:
     only:
         - tags
     artifacts:
+        name: pimp-$CI_BUILD_TAG
         paths:
             - .env
             - docker-compose.yml
+            - docker-compose.override.yml
             - common.yml
+            - DockerNginxContext
     stage: packaging
 
 deploy:

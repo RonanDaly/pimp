@@ -5,3 +5,8 @@ Dockerfile
 django_projects/pimp/fixtures
 !django_projects/pimp/fixtures/kegg_pathway_superPathway.csv
 django_projects/pimp/frank/TestingFiles
+packrat/lib
+packrat/src
+!packrat/src/packrat/packrat_0.4.7-1.tar.gz
+venv
+

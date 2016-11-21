@@ -59,19 +59,20 @@ class Pathway(models.Model):
         identifiedSecondaryIds = Compound.objects.filter(identified='True', peak__dataset=dataset).distinct().values_list('secondaryId', flat=True)
 
         logger.info('Number of pathways %d', len(pathways))
+        compounds = set(Compound.objects.filter(peak__dataset=dataset))
         pathway_list = []
         for pathway in pathways:
             identified_compounds = defaultdict(list)
             annotated_compounds = defaultdict(list)
             for dssp in pathway.datasourcesuperpathway_set.all():
-                for cp in dssp.compoundpathway_set.all():
-                    compound = cp.compound
-                    if compound.peak.dataset == dataset:
-                        for ro in compound.repositorycompounds:
-                            if compound.identified == 'True':
-                                identified_compounds[ro.identifier].append(compound.peak_id)
-                            elif compound.identified == 'False' and compound.secondaryId not in identifiedSecondaryIds:
-                                annotated_compounds[ro.identifier].append(compound.peak_id)
+                cp_compounds = [cp.compound for cp in dssp.compoundpathway_set.all()]
+                good_compounds = set(cp_compounds) & compounds
+                for compound in good_compounds:
+                    for ro in compound.repositorycompounds:
+                        if compound.identified == 'True':
+                            identified_compounds[ro.identifier].append(compound.peak_id)
+                        elif compound.identified == 'False' and compound.secondaryId not in identifiedSecondaryIds:
+                            annotated_compounds[ro.identifier].append(compound.peak_id)
             info = [pathway, len(identified_compounds), len(annotated_compounds),
                     round(((len(identified_compounds) + len(annotated_compounds)) / float(pathway.datasourcesuperpathway_set.all()[0].compound_number)) * 100, 2),
                     [identified_compounds.keys(), annotated_compounds.keys()],
