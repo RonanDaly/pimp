@@ -59,14 +59,14 @@ class Pathway(models.Model):
         identifiedSecondaryIds = Compound.objects.filter(identified='True', peak__dataset=dataset).distinct().values_list('secondaryId', flat=True)
 
         logger.info('Number of pathways %d', len(pathways))
-        compounds = set(Compound.objects.filter(peak__dataset=dataset))
+        compound_ids = set([c.id for c in Compound.objects.filter(peak__dataset=dataset)])
         pathway_list = []
         for pathway in pathways:
             identified_compounds = defaultdict(list)
             annotated_compounds = defaultdict(list)
             for dssp in pathway.datasourcesuperpathway_set.all():
                 cp_compounds = [cp.compound for cp in dssp.compoundpathway_set.all()]
-                good_compounds = set(cp_compounds) & compounds
+                good_compounds = [c for c in cp_compounds if c.id in compound_ids]
                 for compound in good_compounds:
                     for ro in compound.repositorycompounds:
                         if compound.identified == 'True':
