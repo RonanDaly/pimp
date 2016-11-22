@@ -1,0 +1,30 @@
+version: '2'
+
+services:
+    pimp:
+        volumes:
+            - media:/home/pimp/media
+            - backups:/home/pimp/backups
+    nginx:
+        hostname: nginx
+        image: ${NGINX_IMAGE}
+        build: DockerNginxContext
+        environment:
+            - PIMP_HOSTNAME=pimp
+            - EXTERNAL_HOSTNAME
+            - EXTERNAL_HOST_AND_PORT
+            - NGINX_ERROR_LOGLEVEL
+        command: /bin/bash -c "envsubst < /etc/nginx/conf.d/pimp.conf.template > /etc/nginx/conf.d/pimp.conf && nginx -g 'daemon off;'"
+        ports:
+            - "${EXTERNAL_PORT}:8080"
+        extends:
+            file: common.yml
+            service: logging
+        volumes_from:
+            - pimp
+        depends_on:
+            - pimp
+
+volumes:
+    backups:
+    media:

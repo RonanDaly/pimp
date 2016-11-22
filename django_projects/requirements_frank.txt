@@ -20,7 +20,7 @@ numpy==1.9.2
 pbr==1.3.0
 Pillow==2.9.0
 pyparsing==2.0.3
-PySide==1.2.2
+#PySide==1.2.2
 python-dateutil==2.4.2
 pytz==2015.4
 rpy2==2.7.7

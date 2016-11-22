@@ -350,7 +350,7 @@ def create_database(fixture_dir, env,
     transaction.commit() # commit to the test db so it can be picked up by R
     success = False
     with env:
-        logger.info('Using %s as database', env['PIMP_DATABASE_NAME'])
+        logger.info('Using %s as database', settings.ACTUAL_DATABASE)
         #print 'Using %s as database' % env['PIMP_DATABASE_NAME']
         success = start_pimp_pipeline(analysis, project, user, True)
     return success, project, experiment, analysis

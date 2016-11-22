@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+    pimp:
+        volumes:
+            - ..:/home/pimp/pimp
+            - ./media:/home/pimp/media
+        command: ./start_pimp_dev.sh
+        ports:
+            - "${EXTERNAL_PORT}:8000"
+    mysql:
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./mysql:/var/lib/mysql
