@@ -1,4 +1,4 @@
-Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), ...) {
+Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), sample.metadata, contrasts, ...) {
     logger <- getPiMPLogger('Pimp.exportToXML')
 
     if(is.null(id)) {
@@ -97,16 +97,23 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
     member.comparison.set = xml_add_child(settings, "member_comparison_set")
 
-    experiment.comparisons <- getExperimentComparisons(db, experiment_id)
-    for(i in nrow(experiment.comparisons)) {
-        contrasts <- experiment.comparisons$contrast
-        cntrls <- experiment.comparisons$control
-        con = unlist(strsplit(cntrls, ','))
-        if ( con[1] == '0' ) {
-            cont = unlist(strsplit(contrasts, ','))
-            contrasts = paste0(cont[2], ',', cont[1])
-            experiment.comparisons$contrast[i] <- contrasts
-        }
+    #experiment.comparisons <- getExperimentComparisons(db, experiment_id)
+    #for(i in nrow(experiment.comparisons)) {
+    #    contrasts <- experiment.comparisons$contrast
+    #    cntrls <- experiment.comparisons$control
+    #    con = unlist(strsplit(cntrls, ','))
+    #    if ( con[1] == '0' ) {
+    #        cont = unlist(strsplit(contrasts, ','))
+    #        contrasts = paste0(cont[2], ',', cont[1])
+    #        experiment.comparisons$contrast[i] <- contrasts
+    #    }
+    #}
+    
+    for (comparison in unique(contrasts$comparison)) {
+      comparison_id = contrasts[contrasts$comparison == comparison,'id'][1]
+      factor = contrasts[contrasts$comparison == comparison,'factor'][1]
+      member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(comparison_id))
+      comparison.members = [contrasts$factor == factor,'level'
     }
 
     for(i in 1:nrow(experiment.comparisons)) {

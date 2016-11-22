@@ -1,13 +1,14 @@
-Pimp.statistics.pca <- function(data=matrix(), groups=list(), file=NULL) {
+Pimp.statistics.pca <- function(data=matrix(), sample.metadata, factorNames, file=NULL) {
 	if(!is.null(file)) {
 		svg(filename = file, width=8, height=7)
 	}
 
+  smd = as.data.table(sample.metadata, keep.rownames=TRUE)
+  count = smd[, list(Rows=list(.I)), by = eval(factorNames)]
+  data <- data[,row.names(sample.metadata)]
+  
 	##order groups/data.frame alphabetically
-	groups <- groups[mixedsort(names(groups))]
-	data <- data[,as.character(unlist(groups))]
-
-	colors <- .groupColors(data, groups)
+	colors <- .groupColors(data, count)
 	pca <- prcomp(t(na.omit(data)))#, center=TRUE) ##scale=?
 	#variance <- pca$sdev^2
 
@@ -40,16 +41,16 @@ Pimp.statistics.pca <- function(data=matrix(), groups=list(), file=NULL) {
 			#dev.off ()
 }
 
-.groupColors = function(data, groups) {
-	#sample.group <- sapply(colnames(data), function(x, g){grep(paste("\\b",x,"\\b",sep=""),g, fixed=TRUE)}, g=groups)
-	sample.group <- sapply(colnames(data), function(x, g){grep(paste("\\b",x,"\\b",sep=""),g)}, g=groups)
-	#group.names <- mixedsort(names(groups)[unique(sample.group)])
-	group.names <- names(groups)
-
+.groupColors = function(data, count) {
+  
+  group.names = apply(count[,factors,with=FALSE], 1, function(x) paste(x, collapse=','))
+  rows = count$Rows
+  names(rows) = seq_len(length(rows))
+  sample.group = as.numeric(reverseSplit(rows))
+  
 	if(length(group.names) < 10) {
 		colors <- brewer.pal(9, "Set1")
-	}
-	else {
+	} else {
 		colors <- rainbow(length(group.names))
 	}
 	
