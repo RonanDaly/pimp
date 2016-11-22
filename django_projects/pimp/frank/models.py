@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
 import os
-from pimp.settings_dev import MEDIA_ROOT
+from django.conf import settings
 from django.db.models import Max
 from django.core.exceptions import ValidationError
 
@@ -52,7 +52,7 @@ def _get_upload_file_name(instance, filename):
     experimental_condition_object = sample_object.experimental_condition
     experiment_object = experimental_condition_object.experiment
     # The directory of the file upload is concatinated to the root directory
-    filepath = os.path.join(MEDIA_ROOT,
+    filepath = os.path.join(settings.MEDIA_ROOT,
                             'frank',
                             experiment_object.created_by.username,
                             experiment_object.slug,

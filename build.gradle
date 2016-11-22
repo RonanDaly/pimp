@@ -132,7 +132,7 @@ task populatePiMP (type: Exec, dependsOn: [installPiMPPythonDependencies, setupP
 	commandLine 'venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', 'django_projects/pimp/manage.py', 'populate_parameters'
 }
 */
-task createSuperUser(dependsOn: [installPiMPPythonDependencies, setupProjectProperties, populatePiMP]) << {
+task createSuperUser(dependsOn: [installPiMPPythonDependencies, setupProjectProperties]) << {
 	def command =  ['venv/bin/honcho', '-e', 'django_projects/pimp/.env', 'run', 'venv/bin/python2.7', '-u', 'django_projects/pimp/setupInitialUser.py']
 	def proc = new ProcessBuilder(command)
         	.redirectOutput(ProcessBuilder.Redirect.INHERIT)

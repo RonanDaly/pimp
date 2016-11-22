@@ -1,0 +1,87 @@
+stages:
+  - prebuild
+  - build1
+  - build2
+  - squash
+  - packaging
+
+variables:
+    PROXY_SETTINGS: >
+            --build-arg=http_proxy=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=HTTP_PROXY=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=https_proxy=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=HTTPS_PROXY=http://wwwcache.gla.ac.uk:8080/
+            --build-arg=NO_PROXY=localhost,127.0.0.1
+            --build-arg=no_proxy=localhost,127.0.0.1
+
+pimp-base:
+    script:
+        - cd DockerBaseContext
+        - docker build -t pimp-base
+            $PROXY_SETTINGS
+            .
+    stage: build1
+
+nginx-pimp:
+    script:
+        - cd DockerNginxContext
+        - docker build -t nginx-pimp
+            $PROXY_SETTINGS
+            .
+    stage: build1
+
+pimp:
+    script:
+        - docker build -t pimp
+            $PROXY_SETTINGS
+            .
+    stage: build2
+
+squash-image:
+    script:
+        - docker-squash -t pimp:squashed pimp
+    stage: squash
+    only:
+        - tags
+
+package:
+    script:
+        - sed -e "s/:tagname:/$CI_BUILD_TAG/g" .env.template > .env
+    only:
+        - tags
+    artifacts:
+        name: pimp-$CI_BUILD_TAG
+        paths:
+            - .env
+            - docker-compose.yml
+            - docker-compose.override.yml
+            - common.yml
+            - DockerNginxContext
+    stage: packaging
+
+deploy:
+    script:
+        - docker login -u admin -p $DOCKER_REGISTRY_PASSWORD docker.tcrc.gla.ac.uk:443
+        - docker tag pimp:squashed docker.tcrc.gla.ac.uk:443/pimp/pimp:$CI_BUILD_TAG
+        - docker push docker.tcrc.gla.ac.uk:443/pimp/pimp:$CI_BUILD_TAG
+        - docker tag nginx-pimp docker.tcrc.gla.ac.uk:443/pimp/nginx-pimp:$CI_BUILD_TAG
+        - docker push docker.tcrc.gla.ac.uk:443/pimp/nginx-pimp:$CI_BUILD_TAG
+    stage: packaging
+    only:
+        - tags
+
+.test-pimp:
+    script:
+        - cd DockerTestContext
+        - docker build --no-cache -t test-image
+            $PROXY_SETTINGS
+            .
+    stage: build1
+
+fetch-lfs:
+    script:
+        - git lfs pull
+    stage: prebuild
+
+#    variables:
+#        CI_DEBUG_TRACE: "true"

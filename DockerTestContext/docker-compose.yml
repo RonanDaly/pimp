@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+    test:
+        image: test-image
+        build:
+            context: .
+            args:
+                - http_proxy

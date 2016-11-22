@@ -201,12 +201,16 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     if os.path.exists(xml_file_path):
         populate_database(xml_file_path)
         analysis.status = 'Finished'
-        analysis.save(update_fields=['status'])
-        send_email(analysis, project, user, True)
+        analysis_succeeded = True
     else:
         analysis.status = 'Error'
-        analysis.save(update_fields=['status'])
-        send_email(analysis, project, user, False)
+        analysis_succeeded = False
+
+    analysis.save(update_fields=['status'])
+    try:
+        send_email(analysis, project, user, analysis_succeeded)
+    except Exception as e:
+        logger.info('Sending email failed: %s', e)
 
     success = True if return_code == 0 else False
     return success

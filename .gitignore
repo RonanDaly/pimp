@@ -92,12 +92,6 @@ venv
 .env
 packrat/lib*/
 packrat/src/*
-!packrat/src/S4Vectors/
-!packrat/src/IRanges/
-!packrat/src/AnnotationDbi/
-!packrat/src/limma/
-!packrat/src/Biostrings/
-!packrat/src/KEGGREST/
 !packrat/src/packrat/
 # R Development Files
 *.Rout
@@ -106,3 +100,6 @@ packrat/src/*
 .Rhistory
 .Rprofile
 .RData
+# DockerDev Files
+DockerDevContext/media
+DockerDevContext/mysql

@@ -10,7 +10,7 @@ from django.template.defaultfilters import slugify
 from django.core.urlresolvers import reverse
 from django.utils import unittest
 from django.test.client import Client
-from pimp.settings_dev import BASE_DIR, MEDIA_ROOT
+from django.conf import settings
 import os
 from django.core.files import File
 import populate_pimp as population_script
@@ -146,7 +146,7 @@ def remove_previous_uploads(sample_object, polarity, file_name):
     """
 
     intended_upload_path = os.path.join(
-        MEDIA_ROOT,
+        settings.MEDIA_ROOT,
         'frank',
         sample_object.experimental_condition.experiment.created_by.username,
         sample_object.experimental_condition.experiment.slug,
@@ -171,14 +171,14 @@ def create_lcms_test_experiment_with_files():
     create_test_user()
     first_sample = create_sample()
     test_file1 = os.path.join(
-        BASE_DIR,
+        settings.BASE_DIR,
         'frank',
         'TestingFiles',
         'LCMS_Files',
         'STD_MIX1_NEG_60stepped_1E5_Top5.mzXML',
     )
     test_file2 = os.path.join(
-        BASE_DIR,
+        settings.BASE_DIR,
         'frank',
         'TestingFiles',
         'LCMS_Files',
@@ -223,7 +223,7 @@ def create_gcms_test_experiment_with_files():
         name='GCMSSample',
     )[0]
     test_file1 = os.path.join(
-        BASE_DIR,
+        settings.BASE_DIR,
         'frank',
         'TestingFiles',
         'GCMS_Files',
@@ -726,13 +726,13 @@ class AddSampleFileViewTest(TestCase):
         self.file_name_invalid = 'Invalid.txt'
         # Determine the paths for the test files to be uploaded
         self.file_for_upload_filepath = os.path.join(
-            BASE_DIR,
+            settings.BASE_DIR,
             'frank',
             'TestingFiles',
             self.file_name_valid,
         )
         self.invalid_file_for_upload_filepath = os.path.join(
-            BASE_DIR,
+            settings.BASE_DIR,
             'frank',
             'TestingFiles',
             self.file_name_invalid,
