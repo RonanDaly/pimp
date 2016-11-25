@@ -96,14 +96,17 @@ def newproject(request):
 			frank_detect_method = ExperimentalProtocol.objects.get(id=1)
 
 			expt_name ="Pimp-"+title+"-created"
-			frank_experiment = FrankExperiment.objects.create(title=title, description=description, created_by=user, ionisation_method="ESI", detection_method=frank_detect_method)
-			frank_experimental_condition = FrankExpCondition.objects.create(name=expt_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
+
+			frank_experiment = FrankExperiment.objects.create(title=expt_name, description=description, created_by=user, ionisation_method="ESI", detection_method=frank_detect_method)
+			exCond_name =title+"-ExCond"
+
+			frank_experimental_condition = FrankExpCondition.objects.create(name=exCond_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
 
 			#Create user experiment for Frank so that it can be used as a stand alone.
+			print "creating userexperiment"
+			UserExperiment.objects.create(user=user, experiment=frank_experiment)
 
-			UserExperiment.objects.create(user=user, exeriment= frank_experiment)
-
-
+			print "created user experiment"
 			#Create the sample file here as the name is auto-generated
 
 			sample_name =title+"-fragments"
@@ -111,7 +114,7 @@ def newproject(request):
 			FrankSample.objects.create(experimental_condition = frank_experimental_condition, name=sample_name, description=sample_desc)
 
 			#Create the fragmention set that will be linked to the Experiement
-			frag_title = title+"Fragments"
+			frag_title = title+"fragSet"
 			FragmentationSet.objects.create(name=frag_title, experiment=frank_experiment)
 
 			#Set up the link between Experiment and Project

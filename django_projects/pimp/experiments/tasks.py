@@ -241,7 +241,6 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
 
             #Get the polarities for the MS1 peaks and run through Frank
             polarities = df.polarity.unique()
-            print polarities
 
             for p in polarities:
 
@@ -251,9 +250,8 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
 
                 # Extract the peaks for the fragmentation files using Frank and the ms1 peaks
                 #Possibly do this twice for each polarity..??
-
+                print "Running the input peak list from Pimp for " + str(p) + " data"
                 input_peak_list_to_database(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol)
-                print "Running the input peak list from Pimp for " + str(p)
 
         analysis.status = 'Finished'
         analysis.save(update_fields=['status'])
