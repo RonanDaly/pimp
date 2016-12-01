@@ -20,11 +20,6 @@ Ext.define('metExploreViz.view.menu.viz_ColorMenu.Viz_ColorMenu', {
            // <-- submenu by nested config object
         items: [
             {
-                text: 'Invert colors',
-                checked: false,
-                reference:'invertColors',
-                iconCls:'invertColor'
-            }, {
                 text: 'Display in black and white',
                 checked: false,
                 reference:'blackWhite',

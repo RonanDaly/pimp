@@ -65,29 +65,11 @@ Ext.define('metExploreViz.view.menu.viz_ColorMenu.Viz_ColorMenuController', {
 			scope:me
 		});
 
-		view.lookupReference('invertColors').on({
-			click : me.invertColors,
-			scope : me
-		});
-
         view.lookupReference('blackWhite').on({
 			click : me.blackWhite,
 			scope : me
 		});
 	},
-	invertColors: function (item, checked){
-        var me 		= this;
-
-        if(item.checked){
-			d3.select("#viz").select("#D3viz")
-				.classed("invertColorViz", true); 
-        }
-        else
-        {
-			d3.select("#viz").select("#D3viz")
-				.classed("invertColorViz", false); 
-		}
-    },
 	blackWhite: function (item, checked){
         var me 		= this;
 

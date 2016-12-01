@@ -16,11 +16,18 @@ Ext.define('metExploreViz.view.menu.viz_MiningMenu.Viz_MiningMenuController', {
 			},
 	  		scope:me
      	});
+
+     	if(metExploreD3.Features.isEnabled('algorithm')){
+			view.lookupReference('vizAlgorithmMenuID').setHidden(false);
+		}
      	
-		view.lookupReference('highlightSubnetwork').on({
-			click : me.highlightSubnetwork,
-			scope : me
-		});
+	    if(metExploreD3.Features.isEnabled('highlightSubnetwork', "max")){
+			view.lookupReference('highlightSubnetwork').setHidden(false);
+			view.lookupReference('highlightSubnetwork').on({
+				click : me.highlightSubnetwork,
+				scope : me
+			});
+	    }	
 		
 		view.lookupReference('keepOnlySubnetwork').on({
 			click : me.keepOnlySubnetwork,

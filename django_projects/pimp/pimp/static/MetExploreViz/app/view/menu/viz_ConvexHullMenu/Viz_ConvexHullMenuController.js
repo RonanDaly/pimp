@@ -105,6 +105,10 @@ Ext.define('metExploreViz.view.menu.viz_ConvexHullMenu.Viz_ConvexHullMenuControl
 		s_GeneralStyle.setDisplayConvexhulls(component);
 		metExploreD3.GraphLink.displayConvexhulls('viz');
 		metExploreD3.GraphNetwork.tick('viz');	
+
+		s_GeneralStyle.setDisplayCaption(component);
+		metExploreD3.GraphCaption.majCaption();
+		
 		metExploreD3.fireEvent("vizIdDrawing", "enableMakeClusters");
 	},
     hideComponents : function(){
@@ -118,6 +122,10 @@ Ext.define('metExploreViz.view.menu.viz_ConvexHullMenu.Viz_ConvexHullMenuControl
 		s_GeneralStyle.setDisplayConvexhulls(false);
 		metExploreD3.GraphLink.displayConvexhulls('viz');
 		metExploreD3.GraphNetwork.tick('viz');	
+
+		s_GeneralStyle.setDisplayCaption(false);
+		metExploreD3.GraphCaption.majCaption();
+
 		metExploreD3.fireEvent("generalStyleForm", "setGeneralStyle");
 		metExploreD3.fireEvent("vizIdDrawing", "disableMakeClusters");
 	}
