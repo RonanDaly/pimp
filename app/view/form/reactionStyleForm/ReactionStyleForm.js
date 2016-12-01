@@ -29,6 +29,7 @@ Ext.define('metExploreViz.view.form.reactionStyleForm.ReactionStyleForm', {
         reference:'chooseStrokeColorReaction',
         xtype:'panel',
         margin:'5 5 5 5',
+        hidden:true,
         layout:{
            type:'hbox',
            align:'stretch'

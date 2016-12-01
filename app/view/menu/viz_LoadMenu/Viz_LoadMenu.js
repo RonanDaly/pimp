@@ -22,14 +22,14 @@ Ext.define('metExploreViz.view.menu.viz_LoadMenu.Viz_LoadMenu', {
             text: 'Load network from json file',
             reference:'loadNetworkFromJSON',
             tooltip:'Load network from json file',
-            iconCls:'loadData'
+            iconCls:'importToRsxFromJSON'
         }
         ,
         {
             text: 'Load network from website',
             reference:'loadNetworkFromWebsite',
             tooltip:'Load network from website',
-            iconCls:'loadData',
+            iconCls:'importToRsxFromWS',
             disabled:true,
             hidden:false
         }

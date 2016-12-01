@@ -151,7 +151,6 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
 		var nbCond = storeCond.getCount();
 		if(nbCond>=1)
             comboCond.setDisabled(false);
-
         comboCond.setValue(storeCond[0]);
 
 		var selectConditionType = Ext.getCmp('selectConditionType');
@@ -167,8 +166,8 @@ Ext.define('metExploreViz.view.form.selectMapping.SelectMappingController', {
  			else
  			{
 				selectConditionType.setValue(selectConditionType.getStore().first()); 
-				comboCond.setValue(storeCond.first());   
- 				
+				//comboCond.setValue(storeCond.first());  
+       
  				comboCond.setDisabled(false);
  				selectConditionType.setDisabled(false);
  			}
