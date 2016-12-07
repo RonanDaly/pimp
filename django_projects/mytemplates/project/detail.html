@@ -1898,6 +1898,7 @@ $(document).ready(function() {
   		e.preventDefault();
   		
   		var url = "{% url 'start_analysis' project.id %}";
+  		var action = $(this);
 
   		analysis = $(this).attr('id').split("_")[1];
   		console.log("analysis_id: "+analysis);
@@ -1945,6 +1946,11 @@ $(document).ready(function() {
 	            	}
             	}
             	else {
+            		$(action).empty();
+            		var status = $('#analysis_status_'+analysis);
+            		console.log(status);
+            		$(status).text('Submitted');
+            		$(status).css('color','rgb(75, 122, 195)');
             		$(modalLabel).text("Analysis submitted");
             		$(modalBody).text(response["message"]);
             	}
@@ -2770,7 +2776,7 @@ $(document).ready(function() {
 												<p class="text-in-table introduction_text">{% if analysis.submited %}{{ analysis.submited|truncatewords:"1"|slice:":-3" }}{% endif %}</p>
 											</div>
 											<div class="span2 center-text" style="min-height:10px;">
-												<p class="text-in-table introduction_text" {% ifequal analysis.status 'Finished' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal analysis.status 'Ready' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Submitted' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Processing' %}style="color: rgb(213, 170, 60);"{% endifequal %}{% ifequal analysis.status 'Error' %}style="color: rgb(232, 45, 45);"{% endifequal %}>{{ analysis.status }}</p>
+												<p class="text-in-table introduction_text" id="analysis_status_{{ analysis.id }}" {% ifequal analysis.status 'Finished' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal analysis.status 'Ready' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Submitted' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Processing' %}style="color: rgb(213, 170, 60);"{% endifequal %}{% ifequal analysis.status 'Error' %}style="color: rgb(232, 45, 45);"{% endifequal %}>{{ analysis.status }}</p>
 												{% for f in analysis.pimpanalysisfrankfs_set.all %}
 														<p style="font-size:13px; padding-top: 10px"><i>FrAnK: {{ f.frank_fs.name }} ({{f.status}})</i></p>
 												{% endfor %}
@@ -2857,11 +2863,10 @@ $(document).ready(function() {
 		</div>
 		<div style="float:right;">
         	<a class="btn btn-primary btnPrevious" >Previous</a>
+        	<a class="btn btn-primary btnNext" >Next</a>
         </div>
 	</div>
-
-
-<div class="tab-pane" id="fragmentation-data" style="background-color: rgb(253, 253, 253);">
+	<div class="tab-pane" id="fragmentation-data" style="background-color: rgb(253, 253, 253);">
 	<!hr class="soften">
 		<div class="row-fluid">
 		<div class="span8 paddingleft"><h3>Fragmentation Data</h3></div>
@@ -2923,7 +2928,6 @@ $(document).ready(function() {
 		</div>
 		<div style="float:right;">
 			<a class="btn btn-primary btnPrevious" >Previous</a>
-			<a class="btn btn-primary btnNext" >Next</a>
 		</div>
 	</div>
  
