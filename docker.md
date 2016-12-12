@@ -30,7 +30,13 @@ to the DockerBaseContext directory and run:
 This will build the pimp-base image that is used later.
 
 ### Building and running the Development stack ###
-Change to the DockerDevContext and run:
+Change to the DockerDevContext and copy the ```example.env``` file to ```.env```.
+This then needs to be edited to reflect preferences, e.g. port number and
+initial user information
+
+    $ cp example.env .env
+
+Then run:
 
     $ docker-compose build
     $ docker-compose run pimp bash
