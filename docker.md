@@ -51,6 +51,7 @@ and install the correct R and Python dependencies, which will take a while.
 When this is done:
 
     $ cd django_projects/pimp
+    $ source ../../venv/bin/activate
     $ honcho run python manage.py migrate
     $ honcho run python setupInitialUser.py
 
