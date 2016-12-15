@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from frank.annotationTools import MassBankQueryTool, NISTQueryTool,  SIRIUSQueryTool
 from urllib2 import URLError
 import datetime
+from decimal import *
 import pandas as pd
 import numpy as np
 
@@ -28,6 +29,76 @@ from MS2LDA.lda_for_fragments import Ms2Lda
 from fileupload.views import findpolarity
 import pandas as pd
 from rpy2.robjects import pandas2ri
+
+
+#Return the correct annotation Tool given it's name slug.
+def get_annotation_tool(name):
+
+    annotation_tool = AnnotationTool.objects.get(slug=name)
+    return annotation_tool
+
+#Create and return annotation query given the correct parameters
+def get_annotation_query(fragSet, name, tool_name, params):
+
+    annotation_query, created = created = AnnotationQuery.objects.get_or_create(
+        name=fragSet.name+name,
+        fragmentation_set=fragSet,
+        annotation_tool=get_annotation_tool(tool_name),
+        annotation_tool_params=jsonpickle.encode(params))
+
+    return annotation_query
+
+# Method to run a set of default annotations and set the preferred annotations to the highest
+# confidence level (clean methods) - currently used for PiMP/FrAnK intergration
+@celery.task
+def run_default_annotations(fragSet, user):
+
+    print "In default annotations"
+    # Parameters for nist annotation tool
+    default_params_nist = {"search_type": "G",
+                      "library": ["nist_msms", "nist_msms2"],
+                      "max_hits": 10}
+    #Create nist_query
+    nist_query = get_annotation_query(fragSet, "-NistQ", "nist", default_params_nist)
+
+    #Run the nist search for annotations
+    print "running Nist from default"
+    nist_batch_search(nist_query.id)
+
+    #Create a precursor mass query using the annotations from the NIST search
+    pre_default_params = {"parents": [str(nist_query.id)],
+                          "positive_transforms": ["M+H"],
+                          "negative_transforms": ["M-H"],
+                          "mass_tol": 5}
+    precursor_query = get_annotation_query(fragSet, "-preFQ", "precursor-mass-filter", pre_default_params)
+
+    #Run the precursor mass filter to remove any results that differ from the m/z by a certain threshold
+    print "running precursor mass query from default"
+    precursor_mass_filter(precursor_query.id)
+
+    #Create a relationship between the parent and child annotations
+    AnnotationQueryHierarchy.objects.create(
+                        parent_annotation_query=nist_query,
+                        subquery_annotation_query=precursor_query)
+
+    #Create a run to remove duplicate annotations for a peak, setting the preferred annotation automatically
+    clean_default_params = {}
+    clean_default_params['parents'] = [str(precursor_query.id)]
+    clean_default_params['preferred_threshold'] = Decimal(50)
+    clean_default_params['delete_original'] = False
+    clean_default_params['do_preferred'] = True
+    clean_default_params['collapse_multiple'] = True
+
+    clean_query = get_annotation_query(fragSet, "-cleanQ", "clean-annotations", clean_default_params)
+    clean_filter(clean_query.id, user)
+
+
+    # Create a relationship between the parent and child annotations
+    AnnotationQueryHierarchy.objects.create(
+        parent_annotation_query=precursor_query,
+        subquery_annotation_query=clean_query)
+
+    print "end default annotations"
 
 @celery.task
 def runNetworkSampler(annotation_query_id):
@@ -235,6 +306,8 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
                 elif pol is "-":
                     polarity = "negative"
                 file_pol_dict[path] = polarity
+            else:
+                print 'no file of mzML type here'
         else:
             print 'no file of polarity' + str(p)
 
@@ -343,6 +416,7 @@ def nist_batch_search(annotation_query_id):
     """
 
     # Get the annotation object to be performed and update the process status for the user
+    print "In the Nist batch search"
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
     annotation_query.save()
@@ -374,6 +448,7 @@ def nist_batch_search(annotation_query_id):
         print warning.message
         annotation_query.status = 'Completed with Errors'
     annotation_query.save()
+    print "Completed the NIST batch serach"
 
 """
 SIRIUS details added by Karen
@@ -469,6 +544,7 @@ NEGATIVE_TRANSFORMATIONS = {
 def precursor_mass_filter(annotation_query_id):
     # Runs a filter on the annotations
     import math
+    print 'In the precursor mass-filter tool'
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
     annotation_query.save()
@@ -516,17 +592,18 @@ def precursor_mass_filter(annotation_query_id):
 
     annotation_query.status="Completed Successfully"
     annotation_query.save()
+    print "At the end of the Precursor tool, saved,"
 
 """
 End of additions by Simon Rogers
 """
-
 
 @celery.task
 def clean_filter(annotation_query_id,user):
     # This cleans a set of annotations by only keeping one annotation for each compound for each peak
     # and only keeping annotations above a threshold
     # the highest confidence annotation (abover the threshold) is set as the preferred annotation)
+    print ("In the clean filter tool")
     annotation_query = AnnotationQuery.objects.get(id=annotation_query_id)
     annotation_query.status = 'Processing'
     annotation_query.save()
@@ -559,6 +636,7 @@ def clean_filter(annotation_query_id,user):
                     this_annotation.instrument_type = annotation.instrument_type
                     this_annotation.collision_energy = annotation.collision_energy
                     this_annotation.save()
+                    print "Saving preferred annotation"
                     if this_annotation.confidence > best_annotation.confidence:
                         best_annotation = this_annotation
 
@@ -584,8 +662,9 @@ def clean_filter(annotation_query_id,user):
             peak.preferred_candidate_updated_date = datetime.datetime.now()
             peak.save()
 
-        annotation_query.status = 'Completed Successfully'
-        annotation_query.save()
+    annotation_query.status = 'Completed Successfully'
+    annotation_query.save()
+    print ("At the end of the clean filter tool")
 
 
 

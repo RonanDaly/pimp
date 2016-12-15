@@ -1,5 +1,5 @@
 __author__ = 'Scott Greig'
-
+from djcelery import celery
 from django.shortcuts import render,redirect
 from frank.models import *
 from frank.forms import *
@@ -1096,8 +1096,11 @@ Typically, these relate to the background processes but are not themselves
 run in the background.
 """
 
-
 def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id, ms1_peaks=None):
+    taskSignature = input_peak_list_to_database_signature(experiment_name_slug, fragmentation_set_id, ms1_peaks)
+    taskSignature.apply_async()
+
+def input_peak_list_to_database_signature(experiment_name_slug, fragmentation_set_id, ms1_peaks=None):
 
     """
     Method to start the extraction of peaks from the uploaded mzXML data files
@@ -1112,10 +1115,11 @@ def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id, ms1_
     experiment_type = experiment.detection_method.name
     if experiment_type == 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition':
         # Run the LCMS-DDA peak extraction task in the background
-        tasks.msn_generate_peak_list.delay(experiment_name_slug, fragmentation_set_id, ms1_peaks)
+        retval = tasks.msn_generate_peak_list.si(experiment_name_slug, fragmentation_set_id, ms1_peaks)
     elif experiment_type == 'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation':
-        tasks.gcms_generate_peak_list.delay(experiment_name_slug, fragmentation_set_id)
+        retval = tasks.gcms_generate_peak_list.si(experiment_name_slug, fragmentation_set_id)
         # Run the LCMS-DDA peak extraction task in the background
+    return retval
 
 
 def generate_annotations(annotation_query_object,user = None):
@@ -1511,7 +1515,7 @@ def connect(request,pimp_project_id,pimp_analysis_id):
             chosen_frag_set = fs_form.cleaned_data['fragmentation_sets']
             rt_tol = fs_form.cleaned_data['rt_tolerance']
             mass_tol = fs_form.cleaned_data['mass_tolerance']
-            link = PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis = analysis,frank_fs = chosen_frag_set,status = 'Processing')[0]
+            link = PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis = analysis,frank_fs = chosen_frag_set,status='Processing')[0]
             tasks.simple_pimp_frank_linker.delay(pimp_analysis_id,chosen_frag_set.id,mass_tol,rt_tol,link.id)
         url = '/accounts/project/{}'.format(project.id)
         return redirect(url)

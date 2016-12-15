@@ -142,7 +142,7 @@ class MSNPeakBuilder(PeakBuilder):
         # Here peaks without any precursor ion are ignored, however,
         # the recursive method _get_parent_peak() will follow the hierarchy
         # of precursor ions, creating those that have fragments associated with them
-        print 'This is from method 3' + str(self.from_method_3)
+        print 'This is from method 3 ' + str(self.from_method_3)
 
         print 'Finished populating peaks...'
         return True
@@ -240,6 +240,7 @@ class MSNPeakBuilder(PeakBuilder):
             raise
         except IntegrityError:
             print 'Cannot insert'
+            raise
 
         return newly_created_peak
 

@@ -22,8 +22,6 @@ run_create_peak_method_3 <- function(MS1file, fragmentation_file) {
     print ('In method 3')
     peak_info <- MS1file
 
-    print ('the peak info is')
-    print (head(peak_info))
     print ('the fragmentation file is')
     print (fragmentation_file)
 

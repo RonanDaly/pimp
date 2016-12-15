@@ -1,4 +1,6 @@
 from djcelery import celery
+from celery import chain
+from celery import signature
 # from rpy2.robjects.packages import importr
 # import rpy2.robjects as robjects
 import os
@@ -21,8 +23,8 @@ import rpy2.robjects as robjects
 
 from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
 from frank.models import SampleFile as FrankSampleFile
-from frank.views import input_peak_list_to_database
-
+from frank.views import input_peak_list_to_database_signature
+from frank.tasks import run_default_annotations
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +155,7 @@ def send_email(analysis, project, user, success):
         html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)        
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
-    msg.send()    
+    msg.send()
 
 @celery.task
 def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
@@ -199,17 +201,15 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
     fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
     num_fragment_files = len(fragment_files)
     #Link the Frank fragment set and the pimp analysis set
-    PimpAnalysisFrankFs.get_or_create(pimp_analysis=analysis,frank_fs=fragmentation_set)
-
-
+    PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis,frank_fs=fragmentation_set)
 
     logger.info('There are %s' % num_fragment_files, 'fragment files to be processed and are: %s' % fragment_files)
 
     r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'),
                       str(analysis.id), str(saveFixtures)]
     r_command = " ".join(r_command_list)
-    logger.info('r_command is %s' % r_command)    
-    
+    logger.info('r_command is %s' % r_command)
+
     analysis.status = 'Processing'
     analysis.save(update_fields=['status'])
     connection.close()
@@ -227,7 +227,6 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
         # Start the R pipeline for Frank passing in the Pimp MS1 peaks.
         if num_fragment_files > 0:
 
-            print "Producing a dataframe from the MS1 peaks"
             #Get the MS1 peaks associated with this analysis
             ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("id","mass","rt","polarity")
 
@@ -242,16 +241,26 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
             #Get the polarities for the MS1 peaks and run through Frank
             polarities = df.polarity.unique()
 
+            tasks = []
             for p in polarities:
 
                 df_pol = df[df.polarity == p]
                 pandas2ri.activate()
                 ms1_df_pol = pandas2ri.py2ri(df_pol)
 
-                # Extract the peaks for the fragmentation files using Frank and the ms1 peaks
-                #Possibly do this twice for each polarity..??
-                print "Running the input peak list from Pimp for " + str(p) + " data"
-                input_peak_list_to_database(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol)
+                # Append tasks to extract the peaks for the fragmentation files using Frank and the ms1 peaks
+                tasks.append(input_peak_list_to_database_signature(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol))
+
+            #If we have fragmentation files then we can create an AnnotationQuery and subsequently run the tools.
+            #Add the default annotations method to run after the DB is populated
+
+            print type(run_default_annotations)
+            tasks.append(run_default_annotations.si(fragmentation_set, user))
+
+            #Run the tasks in a chain
+            logger.info("Running the Peak extraction, DB population and default annotations")
+            chain(tasks)()
+            logger.info("Finished processing the fragments for this run")
 
         analysis.status = 'Finished'
         analysis.save(update_fields=['status'])

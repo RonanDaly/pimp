@@ -94,7 +94,6 @@ def alternativeSave(MyModel, self, *args, **kwargs):
     if 'force_insert' in kwargsUpdate:
         del kwargsUpdate['force_insert']
     super(MyModel, self).save(*args, **kwargsUpdate)
-    print "I have just saved"
 
 
 class Experiment(models.Model):
