@@ -140,8 +140,7 @@ setMethod("getExperimentComparisons", "PiMPDB", function(object, experiment.id) 
                     	  "where experiments_comparison.id = experiments_attributecomparison.comparison_id",
                     	  "and experiments_attributecomparison.attribute_id = groups_attribute.id",
                     	  "and experiments_comparison.experiment_id = %d",
-                    	  "group by comparison_id",
-                    	  "order by experiments_attributecomparison.control DESC"),
+                    	  "group by comparison_id"),
                     	  bind=experiment.id)
 
     return(comparisons)
