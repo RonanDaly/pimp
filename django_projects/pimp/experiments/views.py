@@ -564,6 +564,7 @@ def get_frank_annotations(peak_ids):
             # TODO: shouldn't write the link inside here !!
             annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
         # elif ms2_peaks_count > 0:
+        #Move this to the template and return the value only KMcL.
         else:
             annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + 'Annotate in FrAnK' + '</a>'
 
@@ -624,7 +625,7 @@ def get_metabolite_info(request, project_id, analysis_id):
                 standard_peak = False
             # print comp.adduct," ",comp.ppm
 
-            frank_annot = frank_annotations[peak.id] if peak.id in frank_annotations else 'None'
+            frank_annot = frank_annotations[peak.id] if peak.id in frank_annotations else 'No Fragments'
             peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)),
                                str(round(peak.mass, 4)), str(peak.polarity),
                                str(peak.type), str(comp.adduct),
@@ -694,11 +695,7 @@ def get_peak_table(request, project_id, analysis_id):
             [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
                 peakgroup] +
             [str(peakgroup[0].peak.polarity)] +
-            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[0].peak.id in frank_annotations else 'None'] for peakgroup in pp]
-
-
-
-        print "SIMON", len(p),len(data),len(pp)
+            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[0].peak.id in frank_annotations else 'No Fragments'] for peakgroup in pp]
 
         response = simplejson.dumps({"aaData": data})
 
