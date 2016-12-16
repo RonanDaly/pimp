@@ -2789,7 +2789,7 @@
 						                  <th rowspan="2">Mass</th>
 						                  <th rowspan="2">RT</th>
 						                  {% for member in member_list %}
-						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
+						                  <th rowspan="1" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }} (intensity) </th>
 						                  {% endfor %}
 						                  <th rowspan="2">Polarity</th>
 						                  <th rowspan="2">FrAnK Annotation</th>

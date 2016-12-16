@@ -2841,7 +2841,7 @@ $(document).ready(function() {
 												<p class="text-in-table introduction_text" id="analysis_status_{{ analysis.id }}" {% ifequal analysis.status 'Finished' %}style="color: rgb(59, 182, 59);"{% endifequal %}{% ifequal analysis.status 'Ready' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Submitted' %}style="color: rgb(75, 122, 195);"{% endifequal %}{% ifequal analysis.status 'Processing' %}style="color: rgb(213, 170, 60);"{% endifequal %}{% ifequal analysis.status 'Error' %}style="color: rgb(232, 45, 45);"{% endifequal %}>{{ analysis.status }}</p>
 												{% for f in analysis.pimpanalysisfrankfs_set.all %}
 														<!--p style="font-size:13px; padding-top: 10px"><i>FrAnK: {{ f.frank_fs.name }} ({{f.status}})</i></p>-->
-														<p style="font-size:13px; padding-top: 10px"><i>Default Fragments ({{ f.frank_fs.name }} ) {{ analysis.status }} with FrAnK </i></p>
+														<p style="font-size:13px; padding-top: 10px"><i>Default Annotations ({{ f.frank_fs.name }} ) {{ analysis.status }} with FrAnK </i></p>
 												{% endfor %}
 											</div>
 											<div class="span2 center-text" style="min-height:10px;padding-top: 4px;">
