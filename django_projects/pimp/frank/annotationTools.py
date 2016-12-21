@@ -1040,9 +1040,6 @@ class NISTQueryTool:
                             if CS.is_valid():
                                 csid = CS.get_csid()
                                 compound_name = CS.get_cs_name()
-
-                                print "Got some CS data"
-
                             else:
                                 csid = None
 
@@ -1101,7 +1098,6 @@ class ChemSpiderQueryTool:
     def __init__(self, identifier):
 
         self.inchikey = identifier
-        print "ChemSpider identifier is ", identifier
 
         csresults = self.cs.search(identifier)  # search DB using the inchiKey
         # If there is a result from chemSpider
