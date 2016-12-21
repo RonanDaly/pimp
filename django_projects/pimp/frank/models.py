@@ -345,14 +345,46 @@ class Compound(models.Model):
 
     name = models.CharField(max_length=250)
     formula = models.CharField(max_length=250)
-    exact_mass = models.DecimalField(decimal_places=10, max_digits=20)
+    exact_mass = models.DecimalField(decimal_places=10, max_digits=20, null=True)
     # Inchikey included to improve compatability with PiMP, however, it should be noted that
     # at present this unique identifier is not returned by any of the existing implemented tools
     inchikey = models.CharField(max_length=500, null=True)
+    #csid from the ChemSpider DB
+    csid = models.CharField(max_length=500, null=True)
     # cas_code is returned from NIST spectral search and therefore has been stored
     cas_code = models.CharField(max_length=500, null=True)
+    # Human Metabolome Database (HMDB) ID
+    hmdb_id = models.CharField(max_length=500, null=True)
     annotation_tool = models.ManyToManyField(AnnotationTool, through='CompoundAnnotationTool')
     slug = models.SlugField(unique=True)
+
+    def get_image_url(self):
+
+        if self.csid:
+
+            return 'http://www.chemspider.com/ImagesHandler.ashx?id=' + self.csid
+        else:
+            return None
+
+    image_url = property(get_image_url)
+
+    def get_cs_url(self):
+
+        if self.csid:
+            return 'http://www.chemspider.com/Chemical-Structure.' + self.csid + '.html'
+        else:
+            return None
+
+    cs_url = property(get_cs_url)
+
+    def get_hmdb_url(self):
+
+        if self.hmdb_id:
+            return 'http://www.hmdb.ca/metabolites/' + self.hmdb_id
+        else:
+            return None
+
+    hmdb_url = property(get_cs_url)
 
     def save(self, *args, **kwargs):
         """

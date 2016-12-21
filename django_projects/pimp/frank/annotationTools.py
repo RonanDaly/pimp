@@ -23,6 +23,11 @@ import pprint
 
 
 
+from chemspipy import ChemSpider
+
+
+
+
 MASS_OF_AN_PROTON = 1.00727645199076
 
 
@@ -1024,6 +1029,23 @@ class NISTQueryTool:
                         compound_mass = Decimal(re.findall('Mw: (.*?);', annotation_description, re.DOTALL)[0])
                         # And the unique identifier NIST uses to identify the compound
                         compound_annotation_tool_identifier = re.findall('Id: (\d+).', annotation_description)[0]
+
+                        #Addition of ChemSpider data from compound cas if it exists
+
+                        if compound_cas is not None:
+
+                            CS = ChemSpiderQueryTool(compound_cas)
+
+                            # If chemSpider returns a results get the new name and ID
+                            if CS.is_valid():
+                                csid = CS.get_csid()
+                                compound_name = CS.get_cs_name()
+
+                                print "Got some CS data"
+
+                            else:
+                                csid = None
+
                         try:
                             # Try to add the compound to the database
                             compound_object = Compound.objects.get_or_create(
@@ -1031,6 +1053,7 @@ class NISTQueryTool:
                                 exact_mass=compound_mass,
                                 name=compound_name,
                                 cas_code=compound_cas,
+                                csid =csid
                             )[0]
                             # And form the association with the NIST Annotation Tool
                             compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
@@ -1069,3 +1092,56 @@ class NISTQueryTool:
             if input_file.closed is False:
                 input_file.close()
         return True
+
+
+class ChemSpiderQueryTool:
+    cs = ChemSpider('8f40d3ca-3119-4b9c-be8f-c9d18ef6131c')
+
+    # CAn search with inchikey but also with the CAS-codes when they are availiable.
+    def __init__(self, identifier):
+
+        self.inchikey = identifier
+        print "ChemSpider identifier is ", identifier
+
+        csresults = self.cs.search(identifier)  # search DB using the inchiKey
+        # If there is a result from chemSpider
+        if csresults:
+            self.c = csresults[0]  # Take the first compound as the result, should be unique.
+        else:
+            self.c = None
+
+    # Get a dictionary of chemSpider data if required: Possibly delete this.
+    def get_ChemSpider_data(self):
+
+        # Collect data to return - can be added to later on if required.
+        CS_data = {
+            'CSID': self.c.csid,
+            'image_url': self.c.image_url,
+            'name': self.c.common_name
+        }
+
+        # Allows a check of whether chemSpider returns anything useful.
+
+    def is_valid(self):
+
+        if self.c is not None:
+            return True
+        else:
+            return False
+
+    def get_csid(self):
+
+        return self.c.csid
+
+    def get_cs_name(self):
+
+        return self.c.common_name
+
+    def get_cs_image_url(self):
+
+        return self.c.image_url
+
+    def get_cs_image(self):
+
+        return self.c.image
+
