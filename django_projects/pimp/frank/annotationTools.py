@@ -1038,8 +1038,12 @@ class NISTQueryTool:
 
                             # If chemSpider returns a results get the new name and ID
                             if CS.is_valid():
-                                csid = CS.get_csid()
-                                compound_name = CS.get_cs_name()
+                                try:
+                                    csid = CS.get_csid()
+                                    compound_name = CS.get_cs_name()
+                                except:
+                                    print "Compound name error for ChemSpider, ignoring"
+                                    pass
                             else:
                                 csid = None
 
@@ -1099,13 +1103,16 @@ class ChemSpiderQueryTool:
 
         self.inchikey = identifier
 
-        csresults = self.cs.search(identifier)  # search DB using the inchiKey
+        print "the identifier is " + identifier
+
+        csresults = self.cs.search("'" + identifier + "'")  # search DB using the inchiKey
         # If there is a result from chemSpider
         if csresults:
             self.c = csresults[0]  # Take the first compound as the result, should be unique.
         else:
             self.c = None
 
+        print self.c
     # Get a dictionary of chemSpider data if required: Possibly delete this.
     def get_ChemSpider_data(self):
 
