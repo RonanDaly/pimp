@@ -1,0 +1,38 @@
+version: '2'
+
+services:
+    pimp:
+        image: ${PIMP_IMAGE}
+        build: .
+        hostname: pimp
+        environment:
+            - PIMP_DATABASE_HOST=mysql
+            - PYTHONUNBUFFERED=1
+            - MYSQL_DATABASE
+            - MYSQL_USER
+            - MYSQL_PASSWORD
+            - PIMP_INITIAL_USERNAME
+            - PIMP_INITIAL_EMAIL_ADDRESS
+            - PIMP_INITIAL_PASSWORD
+            - PIMP_INITIAL_FIRST_NAME
+            - PIMP_INITIAL_LAST_NAME
+            - PIMP_DEBUG
+            - PIMP_LOG_LEVEL
+        extends:
+            file: common.yml
+            service: logging
+        depends_on:
+        - mysql
+    mysql:
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_DATABASE
+            - MYSQL_USER
+            - MYSQL_PASSWORD
+        image: ${MYSQL_IMAGE}
+        hostname: mysql
+        extends:
+            file: common.yml
+            service: logging
+        command: mysqld --range_optimizer_max_mem_size=0
+

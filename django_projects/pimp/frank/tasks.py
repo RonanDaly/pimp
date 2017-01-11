@@ -56,7 +56,7 @@ def run_default_annotations(fragSet, user):
     print "In default annotations"
     # Parameters for nist annotation tool
     default_params_nist = {"search_type": "G",
-                      "library": ["nist_msms", "nist_msms2"],
+                      "library": ["nist_msms", "nist_msms2", "massbank_msms"],
                       "max_hits": 10}
     #Create nist_query
     nist_query = get_annotation_query(fragSet, "-NistQ", "nist", default_params_nist)

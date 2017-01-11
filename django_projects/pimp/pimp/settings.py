@@ -62,28 +62,37 @@ MANAGERS = ADMINS
 TESTING = 'test' in sys.argv
 randomUUID = str(uuid.uuid4())
 
-DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', None)
-if DATABASE_FILENAME is None:
-    DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
+PIMP_DATABASE_ENGINE = getNeededString('PIMP_DATABASE_ENGINE')
+
+if PIMP_DATABASE_ENGINE == 'django.db.backends.mysql':
+    PIMP_DATABASE_NAME = getNeededString('MYSQL_DATABASE')
+    PIMP_DATABASE_USER = getNeededString('MYSQL_USER')
+    PIMP_DATABASE_PASSWORD = getNeededString('MYSQL_PASSWORD')
     TEST_DATABASE_NAME = 'TESTDB_' + randomUUID
-else:
-    DATABASE_NAME = os.path.join(BASE_DIR, DATABASE_FILENAME)
+    if TESTING:
+        os.environ['MYSQL_DATABASE'] = TEST_DATABASE_NAME
+elif PIMP_DATABASE_ENGINE == 'django.db.backends.sqlite3':
+    SQLITE_DATABASE_FILENAME = getNeededString('SQLITE_DATABASE_FILENAME')
+    PIMP_DATABASE_NAME = os.path.join(BASE_DIR, SQLITE_DATABASE_FILENAME)
+    PIMP_DATABASE_USER = ''
+    PIMP_DATABASE_PASSWORD = ''
     TEST_DATABASE_NAME = os.path.join(BASE_DIR, 'TESTDB_' + randomUUID + '.db')
+    if TESTING:
+        os.environ['SQLITE_DATABASE_FILENAME'] = 'TESTDB_' + randomUUID + '.db'
 
 if TESTING:
-    os.environ['PIMP_DATABASE_NAME'] = TEST_DATABASE_NAME
+    ACTUAL_DATABASE = TEST_DATABASE_NAME
 else:
-    os.environ['PIMP_DATABASE_NAME'] = DATABASE_NAME
-os.environ.pop('PIMP_DATABASE_FILENAME', None)
+    ACTUAL_DATABASE = PIMP_DATABASE_NAME
 
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': getNeededString('PIMP_DATABASE_ENGINE'),
-        'NAME': DATABASE_NAME,
+        'ENGINE': PIMP_DATABASE_ENGINE,
+        'NAME': PIMP_DATABASE_NAME,
         # 'NAME': '/Users/yoanngloaguen/Documents/django_projects/pimp/sqlite3.db',                      # Or path to database file if using sqlite3.
-        'USER': getString('PIMP_DATABASE_USER', ''),                      # Not used with sqlite3.
-        'PASSWORD': getString('PIMP_DATABASE_PASSWORD', ''),                  # Not used with sqlite3.
+        'USER': PIMP_DATABASE_USER,                      # Not used with sqlite3.
+        'PASSWORD': PIMP_DATABASE_PASSWORD,                  # Not used with sqlite3.
         'HOST': getString('PIMP_DATABASE_HOST', ''),                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': getString('PIMP_DATABASE_PORT', ''),                      # Set to empty string for default. Not used with sqlite3.
         'TEST' : {
@@ -140,7 +149,7 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) + '/static/'
+STATIC_ROOT = getString('PIMP_STATIC_ROOT', os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) + '/static/')
 #STATIC_ROOT = '/Users/yoanngloaguen/Documents/ideomWebSite/static/'
 
 # URL prefix for static files.
@@ -226,6 +235,7 @@ INSTALLED_APPS = (
     'gp_registration',
     'frank',
     'django_markdown2',
+    'dbbackup',
     # 'south',
     #'sorl.thumbnail',
     #'multiuploader',
@@ -291,3 +301,8 @@ FIXTURE_DIRS = (
 )
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': getString('PIMP_BACKUP_LOCATION', os.path.join(os.path.dirname(BASE_DIR), 'backups'))}
+DBBACKUP_CLEANUP_KEEP=2
+DBBACKUP_CLEANUP_KEEP_MEDIA=2
