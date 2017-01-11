@@ -361,7 +361,6 @@ class Compound(models.Model):
     def get_image_url(self):
 
         if self.csid:
-
             return 'http://www.chemspider.com/ImagesHandler.ashx?id=' + self.csid
         else:
             return None

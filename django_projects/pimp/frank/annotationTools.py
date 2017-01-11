@@ -21,8 +21,6 @@ import shutil
 import json
 import pprint
 
-
-
 from chemspipy import ChemSpider
 
 
@@ -984,6 +982,9 @@ class NISTQueryTool:
                 # Open the NIST output file
                 current_parent_peak = None
                 # For each line which does not begin in a comment (in NIST.txt this is indicated by '>')
+                cs = ChemSpiderQueryTool()
+                #Set up a dictionary to check if we have the CSID for a particular CAS code.
+                seen_before = {}
                 for line in (line for line in input_file if not line.startswith('>')):
                     try:
                         # Due to use of wine,'NIST' uses a distinct encoding which alters the greek letters
@@ -1031,31 +1032,45 @@ class NISTQueryTool:
                         compound_annotation_tool_identifier = re.findall('Id: (\d+).', annotation_description)[0]
 
                         #Addition of ChemSpider data from compound cas if it exists
+                        #If we have seen the compound before we have not look at the DB again.
 
+                        csid = None
                         if compound_cas is not None:
 
-                            CS = ChemSpiderQueryTool(compound_cas)
+                            # If we have looked for the csid of the compound before
+                            #Get the CSID from the dictionary
 
-                            # If chemSpider returns a results get the new name and ID
-                            if CS.is_valid():
+                            if compound_cas in seen_before:
+                                csid = seen_before[compound_cas]
+                                print "the CSID from seen_before is ", csid
+
+                            #Else look search ChemSpider for the details.
+                            else:
+                                csresult = cs.search(compound_cas)
+
+                            if csresult is not None:
                                 try:
-                                    csid = CS.get_csid()
-                                    compound_name = CS.get_cs_name()
+                                    csid = csresult.csid
+                                    compound_name = csresult.common_name
+                                    seen_before[compound_cas] = csid
                                 except:
                                     print "Compound name error for ChemSpider, ignoring"
                                     pass
-                            else:
-                                csid = None
+                        print "the final CSID is ", csid
+
 
                         try:
-                            # Try to add the compound to the database
+                            # Try to add the compound to the database (all of these are true to create compound)
                             compound_object = Compound.objects.get_or_create(
                                 formula=compound_formula,
                                 exact_mass=compound_mass,
                                 name=compound_name,
-                                cas_code=compound_cas,
-                                csid =csid
+                                cas_code=compound_cas
                             )[0]
+
+                            #Update the csid for the object if we have it - don't use to Get as it won't always be added.
+                            compound_object.csid = csid
+
                             # And form the association with the NIST Annotation Tool
                             compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
                                 compound=compound_object,
@@ -1096,55 +1111,50 @@ class NISTQueryTool:
 
 
 class ChemSpiderQueryTool:
-    cs = ChemSpider('8f40d3ca-3119-4b9c-be8f-c9d18ef6131c')
 
     # CAn search with inchikey but also with the CAS-codes when they are availiable.
-    def __init__(self, identifier):
+    def __init__(self):
+        self.cs = ChemSpider('8f40d3ca-3119-4b9c-be8f-c9d18ef6131c')
 
-        self.inchikey = identifier
+    def search(self, identifier):
 
         print "the identifier is " + identifier
 
-        csresults = self.cs.search("'" + identifier + "'")  # search DB using the inchiKey
+        csresults = self.cs.search("'" + identifier + "'")  # search DB using the cas-code
         # If there is a result from chemSpider
         if csresults:
-            self.c = csresults[0]  # Take the first compound as the result, should be unique.
+            csresult = csresults[0]  # Take the first compound as the result, should be unique.
         else:
-            self.c = None
+            csresult = None
 
-        print self.c
-    # Get a dictionary of chemSpider data if required: Possibly delete this.
-    def get_ChemSpider_data(self):
+        return csresult
 
-        # Collect data to return - can be added to later on if required.
-        CS_data = {
-            'CSID': self.c.csid,
-            'image_url': self.c.image_url,
-            'name': self.c.common_name
-        }
 
-        # Allows a check of whether chemSpider returns anything useful.
+    # # Get a dictionary of chemSpider data if required: Possibly delete this.
+    # def get_ChemSpider_data(self):
+    #
+    #     # Collect data to return - can be added to later on if required.
+    #     CS_data = {
+    #         'CSID': self.c.csid,
+    #         'image_url': self.c.image_url,
+    #         'name': self.c.common_name
+    #     }
+    #
+    #     # Allows a check of whether chemSpider returns anything useful.
 
-    def is_valid(self):
-
-        if self.c is not None:
-            return True
-        else:
-            return False
-
-    def get_csid(self):
-
-        return self.c.csid
-
-    def get_cs_name(self):
-
-        return self.c.common_name
-
-    def get_cs_image_url(self):
-
-        return self.c.image_url
-
-    def get_cs_image(self):
-
-        return self.c.image
+    # def get_csid(self):
+    #
+    #     return self.c.csid
+    #
+    # def get_cs_name(self):
+    #
+    #     return self.c.common_name
+    #
+    # def get_cs_image_url(self):
+    #
+    #     return self.c.image_url
+    #
+    # def get_cs_image(self):
+    #
+    #     return self.c.image
 

@@ -255,12 +255,12 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
             #Add the default annotations method to run after the DB is populated
 
             print type(run_default_annotations)
-            tasks.append(run_default_annotations.si(fragmentation_set, user))
-
+            tasks.append(run_default_annotations.si(fragmentation_set, analysis.id, user))
+            print "here"
             #Run the tasks in a chain
-            logger.info("Running the Peak extraction, DB population and default annotations")
+            print "Running the Peak extraction, DB population and default annotations"
             chain(tasks)()
-            logger.info("Finished processing the fragments for this run")
+            print "Finished processing the fragments for this run"
 
         analysis.status = 'Finished'
         analysis_succeeded = True

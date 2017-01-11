@@ -38,10 +38,10 @@ def get_annotation_tool(name):
     return annotation_tool
 
 #Create and return annotation query given the correct parameters
-def get_annotation_query(fragSet, name, tool_name, params):
+def get_annotation_query(fragSet, name, tool_name, analysis_id, params):
 
     annotation_query, created = created = AnnotationQuery.objects.get_or_create(
-        name=fragSet.name+name,
+        name=fragSet.name+name+analysis_id,
         fragmentation_set=fragSet,
         annotation_tool=get_annotation_tool(tool_name),
         annotation_tool_params=jsonpickle.encode(params))
@@ -51,7 +51,7 @@ def get_annotation_query(fragSet, name, tool_name, params):
 # Method to run a set of default annotations and set the preferred annotations to the highest
 # confidence level (clean methods) - currently used for PiMP/FrAnK intergration
 @celery.task
-def run_default_annotations(fragSet, user):
+def run_default_annotations(fragSet, analysis_id, user):
 
     print "In default annotations"
     # Parameters for nist annotation tool
@@ -59,7 +59,7 @@ def run_default_annotations(fragSet, user):
                       "library": ["nist_msms", "nist_msms2", "massbank_msms"],
                       "max_hits": 10}
     #Create nist_query
-    nist_query = get_annotation_query(fragSet, "-NistQ", "nist", default_params_nist)
+    nist_query = get_annotation_query(fragSet, "-NistQ", "nist", analysis_id, default_params_nist)
 
     #Run the nist search for annotations
     print "running Nist from default"

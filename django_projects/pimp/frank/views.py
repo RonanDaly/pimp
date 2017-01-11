@@ -1138,6 +1138,7 @@ def generate_annotations(annotation_query_object,user = None):
         tasks.sirius_batch_search.delay(annotation_query_object.id)
     elif annotation_tool.name == 'NIST':
         # If NIST is to be queried, run the batch service as a background process
+        #tasks.nist_batch_search.delay(annotation_query_object.id)
         tasks.nist_batch_search(annotation_query_object.id)
     elif annotation_tool.name == 'Network Sampler':
         tasks.runNetworkSampler(annotation_query_object.id)
