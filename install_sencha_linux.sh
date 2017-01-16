@@ -1,6 +1,8 @@
 #!/bin/bash
 
-curl --create-dirs -o sencha_install/sencha-cmd.run.zip http://cdn.sencha.com/cmd/6.2.1/no-jre/SenchaCmd-6.2.1-linux-amd64.sh.zip
+#curl --create-dirs -o sencha_install/sencha-cmd.run.zip http://cdn.sencha.com/cmd/6.2.1/no-jre/SenchaCmd-6.2.1-linux-amd64.sh.zip
+mkdir sencha_install
+wget -O sencha_install/sencha-cmd.run.zip http://cdn.sencha.com/cmd/6.2.1/no-jre/SenchaCmd-6.2.1-linux-amd64.sh.zip
 unzip -p sencha_install/sencha-cmd.run.zip > sencha_install/sencha-cmd.run
 
 # Install Sencha Cmd
