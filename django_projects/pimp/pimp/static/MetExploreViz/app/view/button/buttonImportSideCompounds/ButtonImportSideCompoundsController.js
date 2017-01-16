@@ -27,6 +27,7 @@ Ext.define('metExploreViz.view.button.buttonImportSideCompounds.ButtonImportSide
 	* Load data from file and launch setting of SC 
 	*/
 	loadData : function(tabTxt) {
+		tabTxt = tabTxt.replace(/\r/g, "");
 	    var sideCompounds = tabTxt.split('\n');
 	    var find = metExploreD3.GraphNode.loadSideCompounds(sideCompounds);
 

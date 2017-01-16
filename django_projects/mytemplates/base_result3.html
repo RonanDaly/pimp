@@ -50,6 +50,7 @@
 		<script type="text/javascript" src="{{ STATIC_URL }}js/pimp_analysis_results_components.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}js/gp_chart.js"></script>
 		<script type="text/javascript" src="{{ STATIC_URL }}select2-4.0.1/select2.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}metExploreViz/metexploreviz.js" charset="utf-8">  </script>
 
 		<audio id="marseillaise" src="{{ STATIC_URL }}other/marseillaise.wav" preload="auto"></audio>
     	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
@@ -98,7 +99,7 @@
 		<script type="text/javascript">
 		var oTable;
 		var giRedraw = false;
-		var averageExport = false;
+		var averageExport = true;
 		var ppm = 3;
 		var rtwindow = 120;
 		var rightPanelPreference = "summary";
@@ -106,10 +107,14 @@
 		var right_panel = true;
 		var staticUrl = "{{ STATIC_URL }}";
 		var metexploreInfoUrl = "{% url 'get_metexplore_info' project.id analysis.id %}";
+        var metexploreBiosourceUrl = "{% url 'get_metexplore_biosource' project.id analysis.id %}";
+        var networkUrl = "{% url 'get_metexplore_network' project.id analysis.id %}";
+        var metPathwayUrl = "{% url 'get_metexplore_pathways' project.id analysis.id %}";
 		var metabolites_table_url = "{% url 'get_metabolites_table' project.id analysis.id %}";
 		var peak_table_url = "{% url 'get_peak_table' project.id analysis.id %}";
 		var averageChartType = 'column';
-		var peakChromatogramsGraph = false;
+		var peakChromatogramsGraph = true;
+        var pathwayCoverageData = null;
 
 		function modelMatcher (params, data) {
 		  data.parentText = data.parentText || "";
@@ -230,6 +235,9 @@
 
 
 		$(document).ready(function() {
+
+            // $('#metexplore-li').hide();
+            // $('#metexplore-viz').hide();
 
 			// ***********************************************************************************************
 			// ********************************** Sparkline plot generation **********************************
@@ -358,15 +366,20 @@
                 });
 
 				var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-				updateRightPanel(rowInfo, headerInfo, innerSidePanel);
+				updatePathwayRightPanel(rowInfo, headerInfo, innerSidePanel);
 
-				var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
-				var data = calculPathwayCoverage(rowInfo, headerInfo);
-				var chartWidth = $(innerSidePanel).find('.span12').width()-10;
-				var chart1 = $('<div class="span12" style="margin-left:0px;">');
-				pieChart(chartWidth, chart1, data, 400);
-				$(kegg).appendTo($(innerSidePanel));
-				$(chart1).appendTo($(innerSidePanel));
+				// var kegg = $('<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">Kegg map</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><img id="kegg-map-icon" src="{{ STATIC_URL }}img/metabolic-map-icon.png" alt="tools"></div>');
+                var kegg = $('<div class="span12" style="padding-bottom:14px;"><div class="card-face-footer"><span class="card-face__social" id="kegg-map-icon"><img src="{{ STATIC_URL }}img/pathway_icon.svg" width="36" height="36" draggable="false"></span></div>')
+
+				pathwayCoverageData = calculPathwayCoverage(rowInfo, headerInfo);
+				// var chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				// var chart1 = $('<div class="span12" style="margin-left:0px;">');
+                var chartWidth = $('#card-content-pathway-coverage').width()-10;
+                var chart1 = $('#card-content-pathway-coverage');
+				// pieChart(chartWidth, chart1, data, 400);
+				// $(kegg).appendTo($(innerSidePanel));
+                $(kegg).appendTo($('#kegg-btn-div'));
+				// $(chart1).appendTo($(innerSidePanel));
 
 				$('#kegg-map-icon').click(function() {
 					var $modal = $('#full-width');
@@ -472,64 +485,66 @@
                 var rowInfo = [data[0], data[1], data[2], data[data.length - 1]];
 
                 var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
-                updateRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
+                updatePeakRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
 
-                var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
-				$(loadingPan).appendTo($(innerSidePanel));
-				var ajax_data = {"id":rowInfo[0]};
+                // The following code is commented as the card system is now in place for the peak tab, needs to be deleted
 
-				var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+    //             var loadingPan = $('<div class="span12" style="margin-left:0px;cursor:progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align:center;margin:auto;"><p style="text-align:center;">Loading peaks...</p></div>');
+				// $(loadingPan).appendTo($(innerSidePanel));
+				// var ajax_data = {"id":rowInfo[0]};
 
-				$.ajax({
-					type: "GET",
-					traditional : true,
-		            url: url,
-		            // async: false,
-		            data: ajax_data,
-		            success: function(response){
-		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-						var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
+				// var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
 
-						averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
-						$(loadingPan).before($(averageIntensityChart));
+				// $.ajax({
+				// 	type: "GET",
+				// 	traditional : true,
+		  //           url: url,
+		  //           // async: false,
+		  //           data: ajax_data,
+		  //           success: function(response){
+		  //           	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				// 		var averageIntensityChart = $('<div class="span12" style="margin-left:0px;"></div>');
 
-						averageChart = true;
-						if (averageChart && peaksChart){
-							$(loadingPan).remove();
-						}
-		            },
-		            error: function(){
-		        		alert("Error");
-		        	}
-		        });
+				// 		averageIntensityChartFromCompound(chartWidth, averageIntensityChart, response);
+				// 		$(loadingPan).before($(averageIntensityChart));
+
+				// 		averageChart = true;
+				// 		if (averageChart && peaksChart){
+				// 			$(loadingPan).remove();
+				// 		}
+		  //           },
+		  //           error: function(){
+		  //       		alert("Error");
+		  //       	}
+		  //       });
 				// Debug uncomment from here
-		        var data = {"id":rowInfo[0],"ppm":ppm,"rtwindow":rtwindow};
+		  //       var data = {"id":rowInfo[0],"ppm":ppm,"rtwindow":rtwindow};
 
-				var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
+				// var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
 
-				$.ajax({
-					type: "GET",
-					traditional : true,
-		            url: url,
-		            // async: false,
-		            data: data,
-		            success: function(response){
-		            	chartWidth = $(innerSidePanel).find('.span12').width()-10;
-						var peakChart = $('<div class="span12" style="margin-left:0px;"></div>');
+				// $.ajax({
+				// 	type: "GET",
+				// 	traditional : true,
+		  //           url: url,
+		  //           // async: false,
+		  //           data: data,
+		  //           success: function(response){
+		  //           	chartWidth = $(innerSidePanel).find('.span12').width()-10;
+				// 		var peakChart = $('<div class="span12" style="margin-left:0px;"></div>');
 
-						createPeaksChromatogram(chartWidth, peakChart, response);
+				// 		createPeaksChromatogram(chartWidth, peakChart, response);
 
-						$(loadingPan).before($(peakChart));
+				// 		$(loadingPan).before($(peakChart));
 
-						peaksChart = true;
-						if (averageChart && peaksChart){
-							$(loadingPan).remove();
-						}
-		            },
-		            error: function(){
-		        		alert("Error");
-		        	}
-		        });
+				// 		peaksChart = true;
+				// 		if (averageChart && peaksChart){
+				// 			$(loadingPan).remove();
+				// 		}
+		  //           },
+		  //           error: function(){
+		  //       		alert("Error");
+		  //       	}
+		  //       });
 				// Debug uncomment to here
 			});
 
@@ -1259,7 +1274,7 @@
 		            chart: {
 		            	width: chartWidth,
 		            	height: height,
-		            	backgroundColor: '#f5f5f5',
+		            	backgroundColor: '#FFFFFF',
 		                plotBackgroundColor: null,
 		                plotBorderWidth: null,
 		                plotShadow: false
@@ -1518,6 +1533,218 @@
                     // Call the close div function after 4 seconds (the information doesn't need to be displayed once read - maybe annyoing for very super slow readers...)
                     setTimeout(closeDiv, 4000);
 
+                })
+                .on('click', '.pathway-coverage-btn', function(e) {
+                    // Create pie chart for the pathway coverage or hide it if already displayed
+
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the div to display the chart
+                    var pieChartDiv = $('#card-content-pathway-coverage');
+
+                    // if the chart exist then hide or show it (depending on its current state)
+                    if (pieChartDiv.attr('data-exist') == 'true'){
+                        pieChartDiv.toggle('slow');
+                    }
+                    // else create the chart and display it
+                    else {
+                        var chartWidth = $('#card-content-pathway-coverage').width()-10;
+
+                        // Create pie chart with the data stored in a global variable 'pathwayCoverageData'
+                        pieChart(chartWidth, pieChartDiv, pathwayCoverageData, 400);
+
+                        // Change the attribute of the div to know that chart now exists (no need to recreate it in the future)
+                        pieChartDiv.attr('data-exist', 'true');
+                        
+                        // Display the chart using slide down of the div
+                        pieChartDiv.toggle('slow');
+                    }
+
+
+                })
+                .on('click', '.peak-metabolites-chromatogram-btn', function(e) {
+                    // Creates the chromatogram, which is used to replace the associated button
+
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the associated peak secondaryID
+                    var peakID = $(this).prop('id').split("-")[1];
+
+                    // Get the correct div to insert the chromatogram
+                    // var chromatogramDiv = $(this).closest('.metabolites-chromatogram-div');
+                    var cardPlotDiv = $('#peakcard-content-peak-'+peakID);
+
+                    var intensityPlotDiv = $('#peakcard-intensity-'+peakID);
+
+                    var chromatogramPlotDiv = $('#peakcard-chromatogram-'+peakID);
+
+                    // Remove the button and replace with a loading image
+                    // $(this).remove();
+
+                    if (chromatogramPlotDiv.attr('data-exist') == 'true'){
+                        if (cardPlotDiv.attr('content-displayed') == 'chromatogram'){
+                            cardPlotDiv.toggle('slow');
+                        }
+                        else {
+                            intensityPlotDiv.hide();
+                            chromatogramPlotDiv.show();
+                            cardPlotDiv.attr('content-displayed','chromatogram');
+                            if (cardPlotDiv.css('display') == 'none'){
+                                cardPlotDiv.toggle('slow');
+                            }
+                        }
+                    }
+                    else {
+                        var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;display:none;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
+                        $(loadingPan).appendTo(cardPlotDiv);
+                        cardPlotDiv.show();
+                        if (cardPlotDiv.attr('content-displayed') == 'none'){
+                            loadingPan.toggle('slow');
+                        }
+                        else{
+                            intensityPlotDiv.hide();
+                            loadingPan.show();
+                        }
+                        
+                        // Make the AJAX call for the chromatogram
+                        var data = {"id": peakID, "ppm": ppm, "rtwindow": rtwindow};
+                        var url = "{% url 'get_peaks_from_peak_id' project.id analysis.id %}";
+
+                        $.ajax({
+                            type: "GET",
+                            traditional : true,
+                            url: url,
+                            data: data,
+                            success: function(response){
+                                // Empty the chromatogramDiv
+                                // chromatogramDiv.empty();
+
+                                // And fill the div with the chromatogram
+                                var chartWidth = $(cardPlotDiv).width() - 10;
+
+                                createPeaksChromatogram(chartWidth, chromatogramPlotDiv, response);
+
+                                chromatogramPlotDiv.attr('data-exist', 'true');
+
+                                // Remove the loading graphic
+                                loadingPan.remove();
+                                // if (intensityPlotDiv.css('display') == 'none'){
+                                if (cardPlotDiv.attr('content-displayed') == 'none'){
+                                    // chromatogramPlotDiv.show();
+                                    chromatogramPlotDiv.toggle('slow');
+                                    console.log("data doesn't exist and content-displayed == none");
+                                    cardPlotDiv.attr('content-displayed','chromatogram');
+                                    // cardPlotDiv.toggle('slow');
+                                }
+                                else {
+                                    // intensityPlotDiv.hide();
+                                    chromatogramPlotDiv.show();
+                                    cardPlotDiv.attr('content-displayed','chromatogram');
+                                    console.log("content display == "+cardPlotDiv.attr('content-displayed'));
+                                    if (cardPlotDiv.css('display') == 'none'){
+                                        cardPlotDiv.toggle('slow');
+                                    }
+                                }
+                            },
+                            error: function(){
+                                alert("Error with chromatogram in metabolites tab");
+                            }
+                        });
+                    }
+                })
+                .on('click', '.peak-metabolites-intensity-plot-btn', function(e) {
+                    // Override the event to stop any action e.g. form submission
+                    e.preventDefault();
+
+                    // Get the associated peak secondaryID
+                    var peakID = $(this).prop('id').split("-")[1];
+
+                    // Get the correct div to insert the intensity plot
+                    // var intensityPlotDiv = $(this).closest('.card-content');
+                    var cardPlotDiv = $('#peakcard-content-peak-'+peakID);
+
+                    var intensityPlotDiv = $('#peakcard-intensity-'+peakID);
+
+                    var chromatogramPlotDiv = $('#peakcard-chromatogram-'+peakID);
+
+                    // Remove the button and replace with a loading image
+                    // $(this).remove();
+
+                    if (intensityPlotDiv.attr('data-exist') == 'true'){
+                        if (cardPlotDiv.attr('content-displayed') == 'intensity'){
+                            cardPlotDiv.toggle('slow');
+                        }
+                        else {
+                            chromatogramPlotDiv.hide();
+                            intensityPlotDiv.show();
+                            cardPlotDiv.attr('content-displayed','intensity');
+                            if (cardPlotDiv.css('display') == 'none'){
+                                cardPlotDiv.toggle('slow');
+                            }
+                        }
+                    }
+                    else {
+                        var loadingPan = $('<div class="span12" style="margin-left: 0px; margin-top: 20px; cursor: progress;"><img src="{{ STATIC_URL }}img/Poly-logo_speed4.gif" alt="loading" style="text-align: center; margin: auto;"><p style="text-align: center;">Loading chromatogram...</p></div>');
+                        $(loadingPan).appendTo(cardPlotDiv);
+                        cardPlotDiv.show();
+                        if (cardPlotDiv.attr('content-displayed') == 'none'){
+                            loadingPan.toggle('slow');
+                        }
+                        else{
+                            chromatogramPlotDiv.hide();
+                            loadingPan.show();
+                        }
+                        console.log(peakID);
+                        console.log("before toggle");
+                        console.log(intensityPlotDiv);
+
+                        // Make the ajax call for the intensity plot
+                        var data = {"id": peakID};
+                        var url = "{% url 'get_peak_info_peak_id' project.id analysis.id %}";
+                        $.ajax({
+                            type: "GET",
+                            traditional : true,
+                            url: url,
+                            data: data,
+                            success: function(response) {
+                                // Empty the intensityPlotDiv
+                                // intensityPlotDiv.empty();
+
+                                // And fill the div with the intensity plot
+                                var chartWidth = $(cardPlotDiv).width() - 10;
+                                console.log(chartWidth);
+                                averageIntensityChartFromCompound(chartWidth, intensityPlotDiv, response);
+                                intensityPlotDiv.attr('data-exist', 'true');
+
+                                // Remove the loading graphic
+                                loadingPan.remove();
+                                // if (intensityPlotDiv.css('display') == 'none'){
+                                if (cardPlotDiv.attr('content-displayed') == 'none'){
+                                    // intensityPlotDiv.show();
+                                    intensityPlotDiv.toggle('slow');
+                                    console.log("data doesn't exist and content-displayed == none");
+                                    cardPlotDiv.attr('content-displayed','intensity');
+                                    // cardPlotDiv.toggle('slow');
+                                }
+                                else {
+                                    chromatogramPlotDiv.hide();
+                                    intensityPlotDiv.show();
+                                    cardPlotDiv.attr('content-displayed','intensity');
+                                    console.log("content display == "+cardPlotDiv.attr('content-displayed'));
+                                    if (cardPlotDiv.css('display') == 'none'){
+                                        cardPlotDiv.toggle('slow');
+                                    }
+                                }
+                                
+                                // }
+                            },
+                            error: function() {
+                                alert("Error with average intensity plot in metabolites tab");
+                            }
+                        });
+                    }
                 });
 
 			function updateMetabolitesRightPanel(rowInfo, innerSidePanel) {
@@ -1528,7 +1755,7 @@
 				var averageChart = false;
 				var peaksChart = false;
 				var newEvidenceDom = '';
-				var evidencePanel = $('<div class="span12" id="metabolitesSideEvidencePanel"><h3 class="right-side-title">Evidence</h3></div>');
+				var evidencePanel = $('<div class="span12" id="metabolitesSideEvidencePanel"><h3 class="right-side-title evidence-title">Evidence</h3></div>');
 
 				$(evidencePanel).appendTo($(innerSidePanel));
 
@@ -1657,19 +1884,19 @@
                             if (peaksData.length > 1) {
                                 // If the peak identified then add the "identified PiMP icon" and the explanative note div
                                 if (peaksData[peakDataId][7] == true) {
-                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak #'+(peakDataId + 1)+'<span class="identified_peak_marker" id="identified_peak-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;"><img src="{{ STATIC_URL }}img/PiMP_logo_compound_id.svg" width="20" height="20" draggable="false"></span><span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="identified-note-peak-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak match the standard compound peak</span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak #'+(peakDataId + 1)+'<span class="identified_peak_marker" id="identified_peak-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;"><img src="{{ STATIC_URL }}img/PiMP_logo_compound_id.svg" width="20" height="20" draggable="false"></span><span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="identified-note-peak-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak matches the standard compound peak</span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotates '+peaksData[peakDataId][8]+' other compounds</span></div>');
                                 }
                                 else {
-                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak #'+(peakDataId + 1)+'<span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak #'+(peakDataId + 1)+'<span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotates '+peaksData[peakDataId][8]+' other compounds</span></div>');
                                 }
                             }
                             else {
                                 // If the peak identified then add the "identified PiMP icon" and the explanative note div
                                 if (peaksData[peakDataId][7] == true) {
-                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak<span class="identified_peak_marker" id="identified_peak-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;"><img src="{{ STATIC_URL }}img/PiMP_logo_compound_id.svg" width="20" height="20" draggable="false"></span><span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="identified-note-peak-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak match the standard compound peak</span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak<span class="identified_peak_marker" id="identified_peak-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;"><img src="{{ STATIC_URL }}img/PiMP_logo_compound_id.svg" width="20" height="20" draggable="false"></span><span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="identified-note-peak-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak matches the standard compound peak</span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotates '+peaksData[peakDataId][8]+' other compounds</span></div>');
                                 }
                                 else {
-                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak<span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotate '+peaksData[peakDataId][8]+' other compounds</span></div>');
+                                    peakDiv.append('<div class="span12 card-title" id="peak-card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak<span class="annotated_compound_number" id="annotated_compound_number-'+peaksData[peakDataId][0]+'" style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+peaksData[peakDataId][8]+'</span></h5><span class="card-face__title"></span></div><div class="span12" id="annotation_number_note-'+peaksData[peakDataId][0]+'" style="display:none;"><span class="span12 standard-note" style="padding-top: 8px;line-height: 12px;padding-right: 5px;">This peak annotates '+peaksData[peakDataId][8]+' other compounds</span></div>');
                                 }
                             }
 
@@ -1961,7 +2188,8 @@
 
 			function updateRightPanel(rowInfo, header, innerSidePanel){
 				$(innerSidePanel).empty();
-				var newDom = "";
+				var newDom = '<div class="span12"><h3 class="right-side-title">Evidence</h3></div>';
+                console.log('dans la fonction');
 				for (var i=0;i<rowInfo.length;i++){
 					if (header[i] == "Coverage"){
 						newDom += '<div class="span12" style="margin-left:0px;"><h5 class="right-side-title">'+header[i]+'</h5></div><div class="span12" style="margin-left:0px;padding-left:13px;"><p>'+rowInfo[i]+'%</p></div>';
@@ -1972,6 +2200,32 @@
 				}
 				$(newDom).appendTo($(innerSidePanel));
 			}
+
+            function updatePeakRightPanel(rowInfo, header, innerSidePanel){
+                $(innerSidePanel).empty();
+                var newDom = '<div class="span12"><h3 class="right-side-title evidence-title">Evidence</h3></div>';
+                console.log('dans la fonction pathway');
+                newDom += '<div class="card"><div class="span12 card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak</h5><span class="card-face__title"></span></div><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Id</strong>: '+ rowInfo[0] +'</span><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+ rowInfo[2] +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Mass</strong>: '+ rowInfo[1] +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+ rowInfo[3] +'</span><div class="span12" style="min-height:10px;margin-left:0px"><span class="card-face__title"></span></div>';
+
+                // Div where the plots are displayed
+                newDom += '<div class="span12" id="peakcard-content-peak-'+ rowInfo[0] +'" content-displayed="none" style="margin-left:0px;display:none;"><div class="span12" data-exist="false" id="peakcard-intensity-'+ rowInfo[0] +'" style="display:none;"></div><div class="span12" data-exist="false" id="peakcard-chromatogram-'+ rowInfo[0] +'" style="display:none;"></div></div>';
+
+                // Add the buttons for the plots - clicks are handled in separate function using div ids
+                newDom += '<div class="span12" style="padding-bottom:14px;"><div class="card-face-footer"><span class="card-face__social peak-metabolites-chromatogram-btn" id="peak-'+ rowInfo[0] +'"><img src="{{ STATIC_URL }}img/chromatogram_icon.svg" width="36" height="36" draggable="false"></span><span  class="card-face__social peak-metabolites-intensity-plot-btn" id="peak-'+ rowInfo[0] +'"><img src="{{ STATIC_URL }}img/intensity_icon.svg" width="36" height="36" draggable="false"></span></div></div>';
+
+                $(newDom).appendTo($(innerSidePanel));
+            }
+
+            function updatePathwayRightPanel(rowInfo, header, innerSidePanel){
+                $(innerSidePanel).empty();
+                var newDom = '<div class="span12"><h3 class="right-side-title evidence-title">Evidence</h3></div>';
+                console.log('dans la fonction pathway');
+                newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Pathway</h5><span class="card-face__title"></span></div><div class="span12 pathway_name" style="margin-left:0px;"><span id="pathway-name">'+ rowInfo[0] +'</span><span class="card-face__bottom"></span></div><div class="span12" id="kegg-btn-div" style="margin-left:0px;padding-left:13px;margin-top:10px;"></div></div>';
+                
+                newDom += '<div class="card"><div class="span12 card-title" id="pathway-card-title" style="margin-left:0px;"><h5 class="right-side-title">Coverage<span style="float:right;margin-right:10px;color: rgb(112, 158, 241);">'+rowInfo[5]+'%</span></h5><span class="card-face__title"></span></div><div class="span12" id="card-content-pathway-coverage" data-exist="false" style="margin-left:0px;display:none;"></div><div class="span12" style="padding-bottom:14px;margin-top: 10px;"><div class="card-face-footer"><span class="card-face__social pathway-coverage-btn"><img src="{{ STATIC_URL }}img/pie_chart.svg" width="36" height="36" draggable="false"></span></div></div>';
+
+                $(newDom).appendTo($(innerSidePanel));
+            }
 
 			function averagePopUp(categories, average, errorBar){
 				var $modal = $("#full-width");
@@ -2225,6 +2479,7 @@
 				<div id="tool_button"><img src="{{ STATIC_URL }}img/tool_icon.png" alt="tools"><span id="tool_button_text">Tools</span><img src="{{ STATIC_URL }}img/down4-25.png" alt="tools"></div>
 				<ul id="tabnav" class="nav navbar-nav tabnav" style="margin:0px;float:none;display:inline-block;height:40px;">
 					<li id="summary-li" class="active" style="float:left;margin:0px;height:37px;"><a href="#summary" style="float:left;margin:0px;">Summary</a></li>
+                    <li id="metexplore-li" style="float:left;margin:0px;height:37px;margin-left:20px;" class="hidden-tab"><a href="#metexplore-viz" style="float:left;margin:0px;">Network</a></li>
 					<li id="metabolites-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#metabolites" style="float:left;">Metabolites</a></li>
 					<li id="pathway-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#pathway" style="float:left;">Metabolic Maps</a></li>
 					<li id="comparison-li" style="float:left;margin:0px;height:37px;margin-left:20px;"><a href="#comparison" style="float:left;">Comparison</a></li>
@@ -2259,6 +2514,8 @@
 				</div> -->
 				<!-- <div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">MetExplore</span></div>
 				</div> -->
+                <div class="inner_button" id="metexplore"><div style="padding-top:10px"><img src="{{ STATIC_URL }}img/Logo_Metexplore_20px.png" alt="tools" ><span id="tool_button_text">Network analysis</span></div>
+                </div>
 				<div class="side_footer">
 					<!-- <span id="tool_button_text">Privacy</span><span id="tool_button_text">Credits</span> -->
 				</div>
@@ -2602,6 +2859,14 @@
                         </div>
                     </div>
 				</div>
+                <div id="metexplore-viz" class="tab-pane hidden-tab">
+                    <div class="row" style="margin:0px;height:100%;overflow: auto;margin-bottom:0px;">
+                        <div class="span12" style="width:100%;margin:0px;height:100%;">
+                            <div id="metexplore-container" style="height: 100%;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 				<div id="metabolites" class="tab-pane">
 					<div class="row" style="margin-left:0px;height:100%;overflow: auto;margin-bottom:0px;">
 						<div class="myspan9" style="height:100%;">

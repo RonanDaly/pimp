@@ -25,6 +25,16 @@ Ext.define('metExploreViz.view.menu.viz_DrawingMenu.Viz_DrawingMenu', {
                  iconCls:'delete-sideCompounds'
              },
              {
+                text: 'Layout', 
+                scale: 'large',
+                menu:{id:'vizIdLayoutMenu',xtype: 'vizLayoutMenu'},
+                id:'vizLayoutMenuID',
+                reference:'vizLayoutMenuID',
+                padding:'0 0 0 0',
+                iconCls:'drawhierarchicallayout',
+                hidden:true
+             },
+             {
                  text: 'Duplicate side compounds',
                  reference:'duplicateSideCompounds',
                  tooltip:'Duplicate metabolites annotated as side compounds',
@@ -38,15 +48,6 @@ Ext.define('metExploreViz.view.menu.viz_DrawingMenu.Viz_DrawingMenu', {
                 reference:'vizColorMenuID',
                 padding:'0 0 0 0',
                 iconCls:'color'
-             },
-             {
-                text: 'Caption', 
-                scale: 'large',
-                menu:{id:'vizIdCaptionMenu',xtype: 'vizCaptionMenu'},
-                id:'vizCaptionMenuID',
-                reference:'vizCaptionMenuID',
-                padding:'0 0 0 0',
-                iconCls:'list'
              },
              {
                  text: 'Draw closer substrates/products',

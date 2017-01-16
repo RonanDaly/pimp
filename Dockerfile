@@ -19,6 +19,7 @@ USER root
 COPY . /home/pimp/pimp/
 RUN chown -R pimp:pimp /home/pimp
 USER pimp
+RUN ./install_run_sencha_linux.sh
 WORKDIR /home/pimp/pimp/django_projects/pimp
 ENV MYSQL_DATABASE=
 ENV MYSQL_USER=

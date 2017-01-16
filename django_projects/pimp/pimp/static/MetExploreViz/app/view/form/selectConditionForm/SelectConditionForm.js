@@ -62,6 +62,22 @@ Ext.define('metExploreViz.view.form.selectConditionForm.SelectConditionForm', {
             }
         ]
     },
+    {
+
+        margin:'10 0 0 5',
+        xtype      : 'fieldcontainer',
+        defaultType: 'checkboxfield',
+        reference : 'valueonarrow', 
+        hidden : true,
+        items: [
+            {
+                boxLabel  : 'Show values on arrows',
+                name      : 'valueonarrow',
+                inputValue: true,
+                id        : 'valueonarrowCheck'
+            }
+        ]
+    },
     {   
         border:false,
         id:'chooseCondition',

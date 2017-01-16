@@ -1,4 +1,5 @@
-# ---> ExtJs
-.architect
+.idea
+node_modules/
 build/
-
+bootstrap.json
+sass/

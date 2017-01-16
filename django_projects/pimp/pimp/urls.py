@@ -73,6 +73,12 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_compounds_from_peak_id/$', 'experiments.views.get_compounds_from_peak_id', name='get_compounds_from_peak_id'),
     # ajax request to get info for MetExplpore
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_info/$', 'experiments.views.get_metexplore_info', name='get_metexplore_info'),
+    # ajax request to get MetExplore biosource list through the webservice
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_biosource/$', 'experiments.views.get_metexplore_biosource', name='get_metexplore_biosource'),
+    # ajax request to get MetExplore network through the webservice
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_network/$', 'experiments.views.get_metexplore_network', name='get_metexplore_network'),
+    # ajax request to get MetExplore network through the webservice
+    url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metexplore_pathway/$', 'experiments.views.get_metexplore_pathways', name='get_metexplore_pathways'),
     # ajax request to get identification table
     url(r'^accounts/project/(?P<project_id>\d+)/analysis/(?P<analysis_id>\d+)/get_metabolites_table/$', 'experiments.views.get_metabolites_table', name='get_metabolites_table'),
     # ajax request to get peak table

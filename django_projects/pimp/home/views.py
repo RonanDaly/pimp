@@ -14,6 +14,8 @@ from rpy2.robjects.packages import importr
 from rpy2 import robjects
 from django.template.loader import render_to_string
 
+
+
 # from django.templatetags.static import static
 import json
 
@@ -35,6 +37,8 @@ def licence(request):
 
 def userguide(request):
 	userguideString = render_to_string('userguide.md')
+	#with open("output.md", "w") as text_file:
+	#	text_file.write(userguideString.encode('utf-8'))
 	return render(request, 'userguide.html', {'userguideString':userguideString})
 	
 def polyomics_chemical_library(request):

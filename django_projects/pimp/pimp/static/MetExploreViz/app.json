@@ -7,7 +7,7 @@
     /**
      * The version of the application.
      */
-    "version": "1.0.0.0",
+    "version": "1.2.0.5",
 
     /**
      * The relative path to the application's markup file (html, jsp, asp, etc.).
@@ -225,8 +225,7 @@
             "bundle": true
         },
         {
-            "path": "metexploreviz.js",
-            "bundle": true
+            "path": "metexploreviz.js"
         },
         {
             "path": "resources/lib/d3.js/d3.min.js",
@@ -328,6 +327,10 @@
         },
         {
             "path": "resources/lib/functions/GraphNetwork.js",
+            "bundle": true
+        },
+        {
+            "path": "resources/lib/functions/Features.js",
             "bundle": true
         },
         {
@@ -643,7 +646,7 @@
      * deltas between updates.
      */
     
-    "archivePath": "archive",
+    "archivePath": "archive"
     
 
 
@@ -695,5 +698,5 @@
      * Uniquely generated id for this application, used as prefix for localStorage keys.
      * Normally you should never change this value.
      */
-    "id": "c2a09d62-4072-4cd8-93fd-00718ff8a8f2"
+    // "id": "c2a09d62-4072-4cd8-93fd-00718ff8a8f2"
 }

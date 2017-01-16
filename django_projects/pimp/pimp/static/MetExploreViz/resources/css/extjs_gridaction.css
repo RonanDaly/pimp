@@ -183,7 +183,22 @@ p {
     background-image:url(../icons/folder_go.png);
 }
 .info {
-    background-image:url(../icons/information.png);
+    background-image:url(../icons/info.svg);
+    background-size: 100% 100%;
+    background-position: 0% 0%;
+    background-repeat: no-repeat;
+}
+.help {
+    background-image:url(../icons/help.svg);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
+.documentation {
+    background-image:url(../icons/documentation.png);
+    background-size: 100% 100%;
+    background-position: 0% 0%;
+    background-repeat: no-repeat;
 }
 .cart {
     background-image:url(../icons/cart.png);
@@ -191,8 +206,8 @@ p {
 .del {
      background-image: url(../icons/delete.svg);
     background-size: 100% 100%;
-  background-position: 0% 0%;
-  background-repeat: no-repeat;
+    background-position: 0% 0%;
+    background-repeat: no-repeat;
 }
 .logoViz {
      background-image: url(../icons/metexplore-logo.svg);
@@ -244,6 +259,31 @@ p {
   background-position: 0% 0%;
   background-repeat: no-repeat;
 }
+.removeNode {
+       background-image: url(../icons/removeNode.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
+.importToRsxFromJSON {
+       background-image: url(../icons/importToRsxFromJSON.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
+.importToRsxFromWS {
+       background-image: url(../icons/importToRsxFromWS.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
+
+.drawhierarchicallayout {
+       background-image: url(../icons/drawhierarchicallayout.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
 
 .handcursor {
        background-image: url(../icons/handcursor.svg);
@@ -252,8 +292,21 @@ p {
   background-repeat: no-repeat;
 }
 
+.rescale {
+       background-image: url(../icons/rescale.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
 .unlink {
        background-image: url(../icons/unlink.svg);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+}
+
+.lock_font_awesome {
+       background-image: url(../icons/lock_font_awesome.svg);
     background-size: 100% 100%;
   background-position: 0% 0%;
   background-repeat: no-repeat;
@@ -354,7 +407,12 @@ p {
   background-position: 0% 0%;
   background-repeat: no-repeat; 
 }
-
+.neighbours{
+    background-image: url(../icons/neighbours.png);
+    background-size: 100% 100%;
+  background-position: 0% 0%;
+  background-repeat: no-repeat; 
+}
 .removeMetabolites {
     background-image: url(../icons/removeMetabolites.svg);
     background-size: 100% 100%;
@@ -493,6 +551,13 @@ p {
 
 .open {
     background-image: url(../icons/open2.svg);
+    background-size: 100% 100%;
+    background-position: 0% 0%;
+    background-repeat: no-repeat;
+}
+
+.edit {
+    background-image: url(../icons/pencil.svg);
     background-size: 100% 100%;
   	background-position: 0% 0%;
     background-repeat: no-repeat;
