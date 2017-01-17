@@ -778,10 +778,11 @@ class Rpy2PipelineMetadata(object):
     
     def get_comparisons(self):
         comparisons = Comparison.objects.filter(experiment=self.experiment).values_list(
-            'id', 'name', 'attribute__group__name', 'attribute__name', 'attributecomparison__group')
+            'id', 'name', 'attribute__id', 'attribute__group__name', 'attribute__name', 'attributecomparison__group')
         data = [list(row) for row in comparisons]
-        headers = ['id', 'comparison', 'factor', 'level', 'group']
+        headers = ['id', 'comparison', 'attribute_id', 'factor', 'level', 'group']
         df = pd.DataFrame(data, columns=headers)
+        df['level'] = df['level'].astype(str)
         return df
     
     def get_databases(self):
