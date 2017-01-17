@@ -113,14 +113,15 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
       comparison_id = contrasts[contrasts$comparison == comparison,'id'][1]
       factor = contrasts[contrasts$comparison == comparison,'factor'][1]
       member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(comparison_id))
-      comparison.members = [contrasts$factor == factor,'level'
+      comparison.members = contrasts[contrasts$factor == factor,'attribute_id']
+      sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
     }
 
-    for(i in 1:nrow(experiment.comparisons)) {
-        member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(experiment.comparisons$id[i]))
-        comparison.members <- getExperimentComparisonMembers(db, experiment.comparisons$id[i])
-        sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
-    }
+    #for(i in 1:nrow(experiment.comparisons)) {
+    #    member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(experiment.comparisons$id[i]))
+    #    comparison.members <- getExperimentComparisonMembers(db, experiment.comparisons$id[i])
+    #    sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
+    #}
 
 
     ##parameters

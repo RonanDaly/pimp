@@ -298,7 +298,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
                 save(analysis_id, raw.data, identification, toptables, pathway.stats,
                      identified.compounds.by.pathway, db, file=file.path('tests', 'fixtures', 'Pimp.exportToXML.Robj_fixture'))
             }
-            Pimp.exportToXML(id=analysis_id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, db=db)
+            Pimp.exportToXML(id=analysis_id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, contrasts=contrasts, db=db)
         }
     }
 
