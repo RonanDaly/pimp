@@ -149,7 +149,7 @@ class Rpy2Pipeline(object):
         polarity_dir, combined_dir = self.create_input_directories(polarity, formatted_mzmatch_outputs)
 
         logger.info('------------------------------------------')
-        logger.info(polarity, polarity_dir, combined_dir)
+        logger.info('%s %s %s', polarity, polarity_dir, combined_dir)
         logger.info('------------------------------------------')        
 
         # peak detection and rt correction
@@ -465,7 +465,7 @@ class Rpy2Pipeline(object):
         for f in factors:
             logger.debug(f.label)
             for lev in f.levels:
-                logger.debug(' -', lev, f.level_files[lev])
+                logger.debug('- %s %s', lev, f.level_files[lev])
             dims.append(len(f.levels))             
 
         mat = np.empty(dims, dtype=object)
@@ -567,11 +567,11 @@ class Rpy2Pipeline(object):
             combine_label, coord, description, files = combine_info[i]
             one_combination = combination_paths[i]
             if len(files) > 0:
-                logger.info('Processing', one_combination)
+                logger.info('Processing %s', one_combination)
                 self.combine_single_combi(one_combination, combined_dir, combine_label, 
                                combine_ppm, combine_rtwindow, combine_type)                                    
             else:
-                logger.info('Nothing to combine in', one_combination)
+                logger.info('Nothing to combine in %s', one_combination)
          
     def combine_single_combi(self, one_combination, combined_dir, label, 
                             ppm, rtwindow, combine_type):
