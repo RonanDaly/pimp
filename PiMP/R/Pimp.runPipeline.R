@@ -26,29 +26,29 @@ Pimp.getAnalysisParams <- function(analysis_id) {
     setPiMPLoggerAnalysisID(analysis_id)
 
     library(PiMPDB)
-    DATABASE_FILENAME = getString('PIMP_DATABASE_FILENAME', '')
-    if ( DATABASE_FILENAME == '' )  {
-      DATABASE_NAME = getNeededString('PIMP_DATABASE_NAME')
-    } else {
-      DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), DATABASE_FILENAME)
-    }
-
     dbtype = getNeededString('PIMP_DATABASE_ENGINE')
     if ( dbtype == 'django.db.backends.mysql' ) {
-      DATABASE_TYPE = 'mysql'
+        DATABASE_TYPE = 'mysql'
+        PIMP_DATABASE_NAME = getNeededString('MYSQL_DATABASE')
+        PIMP_DATABASE_USER = getNeededString('MYSQL_USER')
+        PIMP_DATABASE_PASSWORD = getNeededString('MYSQL_PASSWORD')
     } else if ( dbtype == 'django.db.backends.sqlite3' ) {
-      DATABASE_TYPE = 'sqlite'
+        DATABASE_TYPE = 'sqlite'
+        PIMP_DATABASE_NAME = file.path(getNeededString('PIMP_BASE_DIR'), getNeededString('SQLITE_DATABASE_FILENAME'))
+        PIMP_DATABASE_USER = ''
+        PIMP_DATABASE_PASSWORD = ''
     } else {
-      stop(paste('The database type', dbtype, 'is not recognised'))
+        stop(paste('The database type', dbtype, 'is not recognised'))
     }
+
     db <- new("PiMPDB",
-              dbuser=getString('PIMP_DATABASE_USER', ''),
-              dbpassword=getString('PIMP_DATABASE_PASSWORD', ''),
-              dbname=DATABASE_NAME,
-              dbhost=getString('PIMP_DATABASE_HOST', ''),
-              dbport=getInteger('PIMP_DATABASE_PORT', 0),
-              dbtype=DATABASE_TYPE
-    )
+        dbuser=PIMP_DATABASE_USER,
+        dbpassword=PIMP_DATABASE_PASSWORD,
+        dbname=PIMP_DATABASE_NAME,
+        dbhost=getString('PIMP_DATABASE_HOST', ''),
+        dbport=getInteger('PIMP_DATABASE_PORT', 0),
+        dbtype=DATABASE_TYPE
+	)
     pimp.params = getDefaultSettings()
 
     analysis.params <- getAnalysisParameters(db, analysis_id)
@@ -102,10 +102,12 @@ Pimp.getFormattedMzmatchOutputs <- function(analysis_id, polarity, mzmatch_outpu
 }
 
 # TODO: this can be done in Python ..?
-Pimp.createAnalysisDir <- function(analysis_id, pimp_params) {
+Pimp.createAnalysisDir <- function(analysis_id, pimp_params, working_dir) {
 
     logger <- getPiMPLogger('Pimp.createAnalysisDir')
     setPiMPLoggerAnalysisID(analysis_id)
+    loginfo('Setting working dir to %s: ', working_dir, logger=logger)
+    setwd(working_dir)
     mzmatch.outputs <- pimp_params$mzmatch.outputs
 
     ##create analysis directory
@@ -131,6 +133,8 @@ Pimp.createAnalysisDir <- function(analysis_id, pimp_params) {
 # generate the full database paths and also the standard xml if needed
 Pimp.generateStdXml <- function(standards, databases, pimp_params, wd) {
 
+    logger <- getPiMPLogger('Pimp.generateStdXml')
+    loginfo('Setting working directory to %s', wd, logger=logger)
     setwd(wd)
     mzmatch.outputs <- pimp_params$mzmatch.outputs
 

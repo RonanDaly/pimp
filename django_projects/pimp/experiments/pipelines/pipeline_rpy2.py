@@ -134,7 +134,7 @@ class Rpy2Pipeline(object):
     def create_analysis_dir(self, analysis_id, pimp_params):
         create_analysis_dir = robjects.r['Pimp.createAnalysisDir']        
         # pimp_params$mzmatch.outputs will be updated inside to point to the right analysis folder
-        pimp_params = create_analysis_dir(analysis_id, pimp_params)
+        pimp_params = create_analysis_dir(analysis_id, pimp_params, self.working_dir)
         return pimp_params
 
     ############################################################
