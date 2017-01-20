@@ -240,7 +240,7 @@ class Rpy2Pipeline(object):
 
     def run_pipeline(self):
 
-        xcms_params = self.get_value(self.pimp_params, 'xcms.params')            
+        xcms_params = self.get_value(self.pimp_params, 'xcms.params')
         mzmatch_params = self.get_value(self.pimp_params, 'mzmatch.params')
         peakml_params = self.get_value(self.pimp_params, 'peakml.params')
         mzmatch_outputs = self.get_value(self.pimp_params, 'mzmatch.outputs')
@@ -725,8 +725,8 @@ class Rpy2PipelineMetadata(object):
         return short_names
         
     def get_groups(self):
-        res = Group.objects.filter(attribute__comparison__experiment = self.experiment).values_list(
-            'name','attribute__name','attribute__sample__name')
+        groups = Group.objects.filter(attribute__comparison__experiment = self.experiment).distinct()
+        res = Group.objects.filter(id__in=groups).values_list('name','attribute__name','attribute__sample__name')
         data = [row for row in res]
         
         headers = ['factor', 'level', 'sample']

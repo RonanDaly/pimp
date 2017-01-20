@@ -22,17 +22,21 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=True):
     pipeline.setup()
     return_code, xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
+    fileExists = os.path.exists(xml_file_path)
 
-    if os.path.exists(xml_file_path):
+    if fileExists:
+        logger.info('Populating database')
         populate_database(xml_file_path)
         analysis.status = 'Finished'
-        analysis.save(update_fields=['status'])
-        send_email(analysis, project, user, True)
     else:
+        logger.info('XML file does not exist')
         analysis.status = 'Error'
-        analysis.save(update_fields=['status'])
-        send_email(analysis, project, user, False)
 
+    analysis.save(update_fields=['status'])
+    try:
+        send_email(analysis, project, user, fileExists)
+    except Exception as e:
+        logger.warning('Problem sending email: %s', repr(e))
     success = True if return_code == 0 else False
     return success
 

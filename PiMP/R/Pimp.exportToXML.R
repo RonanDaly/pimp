@@ -1,5 +1,6 @@
-Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), sample.metadata, contrasts, ...) {
+Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), sample.metadata, contrasts, db, ...) {
     logger <- getPiMPLogger('Pimp.exportToXML')
+    logger$info('Exporting to XML')
 
     if(is.null(id)) {
         stop("No analysis id found.")
@@ -14,7 +15,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     }
 
     if(!exists("db")) {
-        warn("No database connection.  Unable to create XML file.")
+        logging::logwarn("No database connection.  Unable to create XML file.", logger=logger)
         return()
     }
     
@@ -247,12 +248,14 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
             # }
         }
 
-            #comparisons            
-        for(k in 1:nrow(experiment.comparisons)) {
-            tt <- toptables[[experiment.comparisons$name[k]]]
+            #comparisons
+        lev = unique(as.character(contrasts$comparison))
+        ids = unique(as.character(contrasts$id))
+        for(k in 1:length(lev)) {
+            tt <- toptables[[lev[k]]]
             peak.idx <- match(peak.id, rownames(tt))
             if(!is.na(peak.idx) && !is.na(tt$P.Value[peak.idx])){
-                comparison = xml_add_child(comparisonset, 'comparison', id=as.character(experiment.comparisons$id[k]))
+                comparison = xml_add_child(comparisonset, 'comparison', id=as.character(ids[k]))
                 xml_add_child(comparison, 'logfc', tt$logFC[peak.idx])
                 xml_add_child(comparison, 'pvalue', tt$P.Value[peak.idx])
                 xml_add_child(comparison, 'adjpvalue', tt$adj.P.Val[peak.idx])

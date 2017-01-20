@@ -19,12 +19,7 @@ getInteger = function(name, default) {
     return(as.numeric(value))
 }
 
-# TODO: this can be done in Python
-Pimp.getAnalysisParams <- function(analysis_id) {
-
-    logger <- getPiMPLogger('Pimp.getAnalysisParams')
-    setPiMPLoggerAnalysisID(analysis_id)
-
+getDatabaseConnection <- function() {
     library(PiMPDB)
     dbtype = getNeededString('PIMP_DATABASE_ENGINE')
     if ( dbtype == 'django.db.backends.mysql' ) {
@@ -49,6 +44,16 @@ Pimp.getAnalysisParams <- function(analysis_id) {
         dbport=getInteger('PIMP_DATABASE_PORT', 0),
         dbtype=DATABASE_TYPE
 	)
+	return(db)
+}
+
+# TODO: this can be done in Python
+Pimp.getAnalysisParams <- function(analysis_id) {
+
+    logger <- getPiMPLogger('Pimp.getAnalysisParams')
+    setPiMPLoggerAnalysisID(analysis_id)
+
+    db = getDatabaseConnection()
     pimp.params = getDefaultSettings()
 
     analysis.params <- getAnalysisParameters(db, analysis_id)
@@ -237,7 +242,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     #Remove analysis samples from data for statistical analysis
     row.names(metadata) = metadata$sample
     metadata$sample = NULL
-    sample.metadata = metadata[metadata$file_type == 'sample',]
+    sample.metadata = metadata[na.omit(match(colnames(raw.data), row.names(metadata))),]
 
     #Preprocess raw data for statistical analysis. Keep BP plus those matching to STD, set 0s to NA
     preprocessed <- .preProcessRawData(raw.data=raw.data, sample.metadata, factors, minintensity = mzmatch_params$minintensity)
@@ -254,7 +259,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     ##
 
     ##differential analysis using ebayes
-    diff.stats <- Pimp.statistics.differential(data=norm.data, contrasts=contrasts, method="ebayes", repblock=NULL)
+    diff.stats <- Pimp.statistics.differential(data=norm.data, contrasts=contrasts, method="ebayes", sample.metadata=sample.metadata, repblock=NULL)
     toptables <- lapply(diff.stats, function(fit){topTable(fit, coef=1, genelist=data.frame(Mass=preprocessed$Mass, RT=preprocessed$RT), number=length(fit$coef[,1]), confint=TRUE)})      #[,c("Mass", "RT", "logFC","P.Value","adj.P.Val")]
     names(toptables) <- names(diff.stats)
 
@@ -289,6 +294,8 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     message("XML Reports")
 
     if("xml" %in% reports) {
+        logger$info('Getting database connection')
+        db = getDatabaseConnection()
         if(!exists("db")) {
             warning("No database connection.  Unable to generate XML file.")
         }
@@ -300,7 +307,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
                 logger$info('Saving Pimp.exportToXML.Robj_fixture')
                 dir.create(file.path('tests', 'fixtures'), recursive=TRUE)
                 save(analysis_id, raw.data, identification, toptables, pathway.stats,
-                     identified.compounds.by.pathway, db, file=file.path('tests', 'fixtures', 'Pimp.exportToXML.Robj_fixture'))
+                     identified.compounds.by.pathway, contrasts, file=file.path('tests', 'fixtures', 'Pimp.exportToXML.Robj_fixture'))
             }
             Pimp.exportToXML(id=analysis_id, raw.data=raw.data, identification=identification, toptables=toptables, pathway.stats=pathway.stats, identified.compounds.by.pathway=identified.compounds.by.pathway, contrasts=contrasts, db=db)
         }

@@ -15,7 +15,7 @@ makeContrastString <- function(contrast) {
 }
 
 
-Pimp.statistics.differential <- function(data=matrix(), contrasts=NULL, method="ebayes", repblock=NULL) {
+Pimp.statistics.differential <- function(data=matrix(), contrasts=NULL, method="ebayes", sample.metadata, repblock=NULL) {
 
 	method <- match.arg(method)
 
@@ -35,7 +35,7 @@ Pimp.statistics.differential <- function(data=matrix(), contrasts=NULL, method="
 	  stopifnot( length(factorName) == 1 )
 	  stopifnot( length(unique(contrast$group)) == 2 )
 	  
-	  if( !all.equal(colnames(data), as.character(rownames(sample.metadata))) )
+	  if( !isTRUE(all.equal(colnames(data), as.character(rownames(sample.metadata)))) )
 	    stop("Sample order in data and groups.matrix objects do not match.")
 	  if(method=="ebayes") {
 	      combined.classvector <- sample.metadata[,factorName]

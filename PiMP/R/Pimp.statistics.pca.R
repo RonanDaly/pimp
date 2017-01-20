@@ -8,7 +8,7 @@ Pimp.statistics.pca <- function(data=matrix(), sample.metadata, factorNames, fil
   data <- data[,row.names(sample.metadata)]
   
 	##order groups/data.frame alphabetically
-	colors <- .groupColors(data, count)
+	colors <- .groupColors(data, count, factorNames)
 	pca <- prcomp(t(na.omit(data)))#, center=TRUE) ##scale=?
 	#variance <- pca$sdev^2
 
@@ -41,7 +41,7 @@ Pimp.statistics.pca <- function(data=matrix(), sample.metadata, factorNames, fil
 			#dev.off ()
 }
 
-.groupColors = function(data, count) {
+.groupColors = function(data, count, factors) {
   
   group.names = apply(count[,factors,with=FALSE], 1, function(x) paste(x, collapse=','))
   rows = count$Rows
