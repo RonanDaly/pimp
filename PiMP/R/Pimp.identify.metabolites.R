@@ -1,4 +1,5 @@
-Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
+Pimp.identify.metabolites <- function(in_file=character(), databases=character(), groups=list(), mzmatch.outputs=list(), mzmatch.params=list(), polarity=character()) {
+
 	#check file exists - which file?
 	#check databases exist - warn
 	#check stds exist
@@ -6,12 +7,12 @@ Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzma
 	data <- NULL
 	#required annotation columns
   	annot <- "identification,ppm,adduct,relation.id,relation.ship,codadw,charge"
-  	
+
   	if(length(databases) > 0) {
 	  	for(d in 1:length(databases)) {
-	  		
-	  		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file, 
-	  			database=databases[d], 
+
+	  		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file,
+	  			database=databases[d],
 	  			groups=groups,
 	  			annot=annot,
 	  			adducts=mzmatch.params[[paste("adducts", polarity, sep=".")]],
@@ -24,12 +25,12 @@ Pimp.identify.metabolites <- function(databases=character(), groups=list(), mzma
 
    	if(!is.null(mzmatch.outputs$stds.xml.db)) {
 		parent.ion <- switch(polarity, positive = "M+H", negative = "M-H")
-		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file, 
-  			database=mzmatch.outputs$stds.xml.db, 
+		db.df <- Pimp.identify.metabolites.by.db(file=mzmatch.outputs$final.combined.related.file,
+  			database=mzmatch.outputs$stds.xml.db,
   			groups=groups,
-  			annot=annot, 
+  			annot=annot,
  			adducts=parent.ion,
-  			ppm=mzmatch.params$ppm,  			
+  			ppm=mzmatch.params$ppm,
   			rtwindow=mzmatch.params$id.rtwindow,
   			rtwindowrelative=TRUE,
   			mzmatch.outputs=mzmatch.outputs)
@@ -58,49 +59,7 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
   	mzmatch.ipeak.convert.ConvertToText(i=outfile,o=txtfile,v=TRUE,annotations=annot)
   	data <- .parseMzMatchOutput(file=txtfile, groups=groups)
 
-
-  # 	##parse xml doc
-  # 	doc <- xmlParse(database)
-
-  # 	#get DB names from xml
-  # 	data[,"name"] <- sapply(	
-		# as.character(data[,"identification"]), 
-		# 	function(x,doc){
-		# 		.getNameByID(
-		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc, 
-		# 			collapse=T
-		# 		)
-		# 	},
-		# doc=doc)
-
-  # 	#get DB formulae from xml
-  # 	data[,"formula"] <- sapply(	
-		# as.character(data[,"identification"]), 
-		# 	function(x,doc){
-		# 		.getFormulaByID(
-		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc, 
-		# 			collapse=T
-		# 		)
-		# 	},
-		# doc=doc)
-
-  # 	#get DB formulae from xml
-  # 	data[,"InChi"] <- sapply(	
-		# as.character(data[,"identification"]), 
-		# 	function(x,doc){
-		# 		.getInChiByID(
-		# 			id=unlist(strsplit(x, ",\\s+", perl=T)),
-		# 			doc=doc, 
-		# 			collapse=T
-		# 		)
-		# 	},
-		# doc=doc)
-
-  # 	free(doc)
-  	
-  	return(data)  	
+  	return(data)
 }
 
 .generateIdentifiedFileName <- function(file=NULL, database=NULL) {
@@ -162,57 +121,4 @@ Pimp.identify.metabolites.by.db <- function(file=NULL, database=NULL, groups=lis
 	}
 
 	return(raw.data)
-}
-
-.getNameByID <- function(id=character(), doc=NULL, collapse=FALSE) {
-	name <- sapply(id, function(id, doc) {
-			ns <- getNodeSet(doc,paste("//compound[./id='",id,"']/name", sep=""))
-			name <- sapply(ns, xmlValue)
-			if(length(name)==0){
-				name <- NA
-			}
-			return(name)
-		}, doc=doc
-	)
-	if(collapse) {
-		name <- paste(name, collapse=", ")
-	}
-	
-	return(name)
-}
-
-.getFormulaByID <- function(id=character(), doc=NULL, collapse=FALSE) {
-	formula <- sapply(id, function(id, doc) {
-			ns <- getNodeSet(doc,paste("//compound[./id='",id,"']/formula", sep=""))
-			formula <- sapply(ns, xmlValue)
-			formula <- gsub("\\[M1\\];\\[(.*)\\]n", "\\1", formula)
-			if(length(formula)==0){
-				formula <- NA
-			}
-			return(formula)
-		}, doc=doc
-	)
-	if(collapse) {
-		formula <- paste(formula, collapse=", ")
-	}
-	
-	return(formula)
-}
-
-.getInChiByID <- function(id=character(), doc=NULL, collapse=FALSE) {
-	inchi <- sapply(id, function(id, doc) {
-			ns <- getNodeSet(doc,paste("//compound[./id='",id,"']/inchi", sep=""))
-			inchi <- sapply(ns, xmlValue)
-			inchi <- gsub("\\[M1\\];\\[(.*)\\]n", "\\1", inchi)
-			if(length(formula)==0){
-				inchi <- NA
-			}
-			return(inchi)
-		}, doc=doc
-	)
-	if(collapse) {
-		inchi <- paste(inchi, collapse=", ")
-	}
-	
-	return(inchi)
 }

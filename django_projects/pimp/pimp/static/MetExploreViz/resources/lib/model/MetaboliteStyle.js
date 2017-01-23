@@ -103,18 +103,22 @@ MetaboliteStyle.prototype = {
     getDisplayLabel:function(node, label)
     {
         var displayedLabel;
-        switch(label) {
-            case "name":
-                displayedLabel = node.getName();
-                break;
-            case "dbIdentifier":
-                displayedLabel = node.getDbIdentifier();
-                break;
-            default:
+        if (node.getLabel()!=undefined) displayedLabel = node.getLabel();
+        else
+        {
+            switch(label) {
+                case "name":
+                    displayedLabel = node.getName();
+                    break;
+                case "dbIdentifier":
+                    displayedLabel = node.getDbIdentifier();
+                    break;
+                default:
+                    displayedLabel = node.getName();
+            }
+            if(displayedLabel == undefined)
                 displayedLabel = node.getName();
         }
-        if(displayedLabel == undefined)
-            displayedLabel = node.getName();
         
         return displayedLabel;
     }

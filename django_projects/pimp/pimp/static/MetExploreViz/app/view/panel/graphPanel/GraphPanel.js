@@ -13,8 +13,9 @@ Ext.define("metExploreViz.view.panel.graphPanel.GraphPanel",{
         'metExploreViz.view.menu.viz_ImportMenu.Viz_ImportMenu',
         'metExploreViz.view.menu.viz_DrawingMenu.Viz_DrawingMenu',
         'metExploreViz.view.menu.viz_ConvexHullMenu.Viz_ConvexHullMenu',
-        'metExploreViz.view.menu.viz_CaptionMenu.Viz_CaptionMenu',
         'metExploreViz.view.menu.viz_ColorMenu.Viz_ColorMenu',
+        'metExploreViz.view.menu.viz_LayoutMenu.Viz_LayoutMenu',
+        'metExploreViz.view.menu.viz_AlgorithmMenu.Viz_AlgorithmMenu',
         'metExploreViz.view.menu.viz_LoadMenu.Viz_LoadMenu',
         'metExploreViz.view.button.buttonImportMapping.ButtonImportMapping',
         'metExploreViz.view.button.buttonImportSideCompounds.ButtonImportSideCompounds',
@@ -118,6 +119,21 @@ Ext.define("metExploreViz.view.panel.graphPanel.GraphPanel",{
                                 hidden:false,
                                 padding:'0 0 0 0'
                           },
+                          {
+                                xtype:'button'/*,text: 'Copy network'*/,
+                                overflowText: 'MetExploreViz documentation',
+                                scale: 'large',
+                                reference:'documentation',
+                                tooltip:'Link to MetExploreViz website',
+                                iconCls:'documentation',                              
+                                border: false,
+                                padding:'0 0 0 0',
+                                listeners: {
+                                    click : function() {
+                                        window.open('http://metexplore.toulouse.inra.fr/metexploreViz/doc/');
+                                    }
+                                }
+                            },
                            '-',
                            {
                                 xtype:'button'/*,text: 'Copy network'*/,

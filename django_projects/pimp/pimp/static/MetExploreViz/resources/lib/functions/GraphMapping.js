@@ -170,7 +170,7 @@ metExploreD3.GraphMapping = {
 	* This function will assignmapping value to each nodes in datas
 	*/
 	mapNodeData: function(mapping, lines) {
-
+		console.log(lines);
 		var session = _metExploreViz.getSessionById('viz');
 		var force = session.getForce();
 		force.stop(); 
@@ -460,7 +460,7 @@ metExploreD3.GraphMapping = {
 	mapFluxes : function(mappingName, conditionName, colorMax, colorMin, useOpacity, func) {
 		var mapping = _metExploreViz.getMappingByName(mappingName);
 		var myMask = metExploreD3.createLoadMask("Mapping in progress...", 'viz');
-	
+		
 								
 		if(myMask!= undefined){
 
@@ -855,6 +855,7 @@ metExploreD3.GraphMapping = {
 			    		var quart = 1;
 			    		var midl = 1;
 			    	}
+
 			    	var opacity = d3.scale.linear()
 						.domain([-4, -1, 0, 1, 4])
 			    		.range([1, quart, midl, quart, 1]);
@@ -975,6 +976,13 @@ metExploreD3.GraphMapping = {
 						})
 						.remove();
 
+
+		          	d3.select("#viz").select("#D3viz").selectAll(".linklabel")
+		          		.filter(function(link){
+							return this.id == "linkRev";
+						})
+						.remove();
+
 		          	if(minValue!=undefined)
 		          		metExploreD3.fireEventArg('selectConditionForm', 'afterContinuousMapping', 'flux');
 		          	else
@@ -1080,11 +1088,11 @@ metExploreD3.GraphMapping = {
 	},
 
 
- 	graphMappingFlux : function(mappingName, conditionName, fluxType, colorMax, colorMin, isOpac){
+ 	graphMappingFlux : function(mappingName, conditionName, fluxType, colorMax, colorMin, isOpac, showValues){
 		metExploreD3.onloadMapping(mappingName, function(){
 			var session = _metExploreViz.getSessionById('viz');
 			metExploreD3.GraphMapping.parseFluxValues(mappingName);
-			metExploreD3.GraphLink.loadLinksForFlux("viz", session.getD3Data(), metExploreD3.getLinkStyle(), metExploreD3.getMetaboliteStyle());
+			metExploreD3.GraphLink.loadLinksForFlux("viz", session.getD3Data(), metExploreD3.getLinkStyle(), metExploreD3.getMetaboliteStyle(), showValues, conditionName);
 			
 			if(fluxType=='Compare')
 				metExploreD3.GraphMapping.mapFluxes(mappingName, conditionName, colorMax, colorMin, isOpac);
@@ -1116,7 +1124,12 @@ metExploreD3.GraphMapping = {
 				switch (mapping.getTargetLabel()) {
 				    case "reactionDBIdentifier":
 				        mapping.getData().forEach(function(map){
-							var node = networkData.getNodeByDbIdentifier(map.getNode());
+				        	if(typeof map.getNode()=="object")
+								var node = networkData.getNodeByDbIdentifier(map.getNode().getDbIdentifier());
+							else
+								var node = networkData.getNodeByDbIdentifier(map.getNode());
+
+							console.log(node);
 							if(node!=undefined){
 								var mapNode = new MappingData(node, mapping.getName(), map.getConditionName(), map.getMapValue());
 								node.addMappingData(mapNode);
@@ -1126,7 +1139,11 @@ metExploreD3.GraphMapping = {
 
 					case "reactionId":
 				        mapping.getData().forEach(function(map){
-							var node = networkData.getNodeById(map.getNode());
+				        	if(typeof map.getNode()=="object")
+								var node = networkData.getNodeById(map.getNode().getId());
+							else
+								var node = networkData.getNodeById(map.getNode());
+
 							if(node!=undefined){
 								var mapNode = new MappingData(node, mapping.getName(), map.getConditionName(), map.getMapValue());
 								node.addMappingData(mapNode);
@@ -1136,7 +1153,11 @@ metExploreD3.GraphMapping = {
 
 					case "metaboliteId":
 				        mapping.getData().forEach(function(map){
-							var node = networkData.getNodeById(map.getNode());
+				        	if(typeof map.getNode()=="object")
+								var node = networkData.getNodeById(map.getNode().getId());
+							else
+								var node = networkData.getNodeById(map.getNode());
+
 							if(node!=undefined){
 								var mapNode = new MappingData(node, mapping.getName(), map.getConditionName(), map.getMapValue());
 								node.addMappingData(mapNode);
@@ -1146,7 +1167,11 @@ metExploreD3.GraphMapping = {
 
 				    case "metaboliteDBIdentifier":
 				       	mapping.getData().forEach(function(map){
-							var node = networkData.getNodeByDbIdentifier(map.getNode());
+							if(typeof map.getNode()=="object")
+								var node = networkData.getNodeByDbIdentifier(map.getNode().getDbIdentifier());
+							else
+								var node = networkData.getNodeByDbIdentifier(map.getNode());
+							
 							if(node!=undefined){
 								var mapNode = new MappingData(node, mapping.getName(), map.getConditionName(), map.getMapValue());
 								node.addMappingData(mapNode);
@@ -1600,55 +1625,55 @@ metExploreD3.GraphMapping = {
 				        //     aData.color=scale(aData.z);
 				        // });
 
-				        d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
-							.each(function(node){
-								if (node.getMappingDatasLength()!=0)
-								{
-									var maps = node.getMappingDatas();
-									var dataCond1 = -Math.abs(parseInt(maps[0].getMapValue()));
-									var dataCond2 = Math.abs(parseInt(maps[1].getMapValue()));
+// 				        d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+// 							.each(function(node){
+// 								if (node.getMappingDatasLength()!=0)
+// 								{
+// 									var maps = node.getMappingDatas();
+// 									var dataCond1 = -Math.abs(parseInt(maps[0].getMapValue()));
+// 									var dataCond2 = Math.abs(parseInt(maps[1].getMapValue()));
 
-							        var conditions2=
-							        [
-							            {
-							                name: maps[0].getConditionName(),
-							                data: 500
-							            }, {
-							                name: maps[1].getConditionName(),
-							                data: 500
-							            }
-							        ];
-var categories2 = [
-            'Alanine and aspartate metabolism',
-            'Alkaloid synthesis'
-];
-        var conditions2=
-        [
-            {
-                name: '3j',
-                data: [-5, -54]
-            }, {
-                name: '30j',
-                data: [75, 20]
-            }
-        ];
-        var dataChart2 = {categories:categories2, conditions:conditions2};
-         // var element3 = new MetXCompareBar(dataChart2, 1300, 1000, "xaxis", "yaxis", "title");
-					        		var minDim=1000;
-	        						// var dataChart2 = {categories:[node.getName()], conditions:conditions2};
-	        						var chartSvg = d3.select(this).append("svg")
-										.attr("viewBox",function(d) {return "0 0 "+minDim+" "+minDim;})
-										.attr("width", minDim *8/10 + "px")
-										.attr("height", minDim *8/10+ "px")
-										// .attr("x", (-minDim/2)+(minDim*1/10))
-										// .attr("y", (-minDim/2)+(minDim*1/10))
-					        		var compareChart = new MetXCompareBar(dataChart2, 1000, 200, "xaxis", "yaxis", maps[0].getMappingName() +" analysis");
+// 							        var conditions2=
+// 							        [
+// 							            {
+// 							                name: maps[0].getConditionName(),
+// 							                data: 500
+// 							            }, {
+// 							                name: maps[1].getConditionName(),
+// 							                data: 500
+// 							            }
+// 							        ];
+// var categories2 = [
+//             'Alanine and aspartate metabolism',
+//             'Alkaloid synthesis'
+// ];
+//         var conditions2=
+//         [
+//             {
+//                 name: '3j',
+//                 data: [-5, -54]
+//             }, {
+//                 name: '30j',
+//                 data: [75, 20]
+//             }
+//         ];
+//         var dataChart2 = {categories:categories2, conditions:conditions2};
+//          // var element3 = new MetXCompareBar(dataChart2, 1300, 1000, "xaxis", "yaxis", "title");
+// 					        		var minDim=1000;
+// 	        						// var dataChart2 = {categories:[node.getName()], conditions:conditions2};
+// 	        						var chartSvg = d3.select(this).append("svg")
+// 										.attr("viewBox",function(d) {return "0 0 "+minDim+" "+minDim;})
+// 										.attr("width", minDim *8/10 + "px")
+// 										.attr("height", minDim *8/10+ "px")
+// 										// .attr("x", (-minDim/2)+(minDim*1/10))
+// 										// .attr("y", (-minDim/2)+(minDim*1/10))
+// 					        		var compareChart = new MetXCompareBar(dataChart2, 1000, 200, "xaxis", "yaxis", maps[0].getMappingName() +" analysis");
 					        		
-										chartSvg.html(d3.select(compareChart).select('svg').node().outerHTML)
+// 										chartSvg.html(d3.select(compareChart).select('svg').node().outerHTML)
 										
-										// .attr("width", "100%").attr("height", "100%");
-								}
-							});
+// 										// .attr("width", "100%").attr("height", "100%");
+// 								}
+// 							});
 						// var array = [];
 						// d3.select(compareChart).select('svg').selectAll('.highcharts-series').selectAll('rect').each(function(){array.push(this.height.animVal.value)});
 						
@@ -1928,15 +1953,15 @@ var categories2 = [
 		metExploreD3.GraphLink.refreshLink('viz', session, linkStyle, metaboliteStyle);					
 	},
 
-	launchAfterMappingFunction:function(mappingTitle, func) {
-        var mapping = _metExploreViz.getMappingByName(mappingTitle); 
+	launchAfterMappingFunction:function(mappingId, func) {
+        var mapping = _metExploreViz.getMappingById(mappingId); 
         if (mapping !== null) {
            // the variable is defined
            func(mapping);
            return;
         }
         var that = this;
-        setTimeout(function(){that.launchAfterMappingFunction(mappingTitle, func);}, 100);    
+        setTimeout(function(){that.launchAfterMappingFunction(mappingId, func);}, 100);    
     },
 
     onloadMapping : function(mapping, func){
@@ -1947,12 +1972,9 @@ var categories2 = [
     * @param {} conditionName : Condition choosed by the user
     */
     removeMappingData : function(mappingObj) {
-        this.onloadMapping(mappingObj.get('title'), function(mapping){
+        this.onloadMapping(mappingObj.get('id'), function(mapping){
 	        metExploreD3.fireEventArg('selectConditionForm', "removeMapping", mapping);
-	        	// metExploreD3.fireEventArg('selectConditionForm', "closeMapping", null);
-	        	
-
-	        
+	        	// metExploreD3.fireEventArg('selectConditionForm', "closeMapping", null);	        
     	});
      /*   var array = [];
         _metExploreViz.getMappingsSet().forEach(function(map){
@@ -1979,9 +2001,8 @@ var categories2 = [
 					mappingJSON.mappings.forEach(function(condition){
 			        	conds.push(condition.name);
 			        });
-		   			
-		   			var mapping = new Mapping(mappingJSON.name, conds, mappingJSON.targetLabel);
-					
+		   			var mapping = new Mapping(mappingJSON.name, conds, mappingJSON.targetLabel, mappingJSON.id);
+							                
 					_metExploreViz.addMapping(mapping);
 
 	        		metExploreD3.GraphMapping.generateMapping(mapping, mappingJSON.mappings);

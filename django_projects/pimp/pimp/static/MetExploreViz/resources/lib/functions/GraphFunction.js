@@ -162,7 +162,7 @@ metExploreD3.GraphFunction = {
 				// 	.charge(-150)
 
 				// d3.layout.force().friction(0.90).gravity(0.08).charge(-4000).theta(0.2)
-    // 			.linkDistance(600)
+    
 			var color2 = d3.scale.linear()
 				.domain([0, 1, 2, 3])
 				.range([-600, -500, -400, -30]);
@@ -188,17 +188,324 @@ metExploreD3.GraphFunction = {
     },
 
     /*******************************************
-    * Convert hexa in rgb  
-    * @param {} r : Red  
-    * @param {} g : green  
-    * @param {} b : Bleu
+    * Hierarchical drawing of the current tulip network
+    * It uses the default algorithm provided by Tulip.js
     */
-    // Hierarchical drawing of the current cytoscape network
-	// It uses the default algorithm provided by Cytoscape
-	// Should be better to used Sugyiama algorithm
-	// !!!!!!!!!------- For the progress bar, event is catched
-	// but nothing displayed.....???????
-	hierarchicalDrawing : function() {
+    hierarchicalDrawing : function(){
+    	var algo = "Hierarchical Tree (R-T Extended)";
+		var params = [];
+		params.push({"name":"node spacing", "value":50});
+		metExploreD3.GraphFunction.applyTulipLayoutAlgorithmInWorker(algo, params);
+    },
+
+    /*******************************************
+    * Sugiyama (OGDF) drawing of the current tulip network
+    * It uses the default algorithm provided by Tulip.js
+    */
+    sugiyamaDrawing : function(){
+    	var algo = "Sugiyama (OGDF)";
+		var params = [];
+		params.push({"name":"node spacing", "value":50});
+		params.push({"name":"node distance", "value":50});
+		params.push({"name":"layer distance", "value":50});
+		metExploreD3.GraphFunction.applyTulipLayoutAlgorithmInWorker(algo, params);
+    },
+
+    /*******************************************
+    * Betweenness Centrality of the current tulip network
+    * It uses the default algorithm provided by Tulip.js
+    */
+    betweennessCentrality : function(){
+    	var algo = "Betweenness Centrality";
+		var params = [];
+		params.push({"name":"directed", "value":true});
+		// params.push({"name":"node distance", "value":50});
+		// params.push({"name":"layer distance", "value":50});
+		metExploreD3.GraphFunction.applyTulipDoubleAlgorithmInWorker(algo, params);
+    },
+
+    /*******************************************
+    * Layout drawing application provided by the tulip.js library
+    */
+	applyTulipLayoutAlgorithmInWorker : function(algo, parameters) {
+
+		var panel = "viz";
+		var myMask = metExploreD3.createLoadMask("Selection in progress...", panel);
+		if(myMask!= undefined){
+			
+			metExploreD3.showMask(myMask);
+
+	        metExploreD3.deferFunction(function() {
+				var sessions = _metExploreViz.getSessionsSet();
+				
+				var session = _metExploreViz.getSessionById(panel);
+
+				var networkData = session.getD3Data();
+				
+				if(session!=undefined)  
+				{
+					if(session.isLinked())
+					{
+						for (var key in sessions) {
+							if(sessions[key].isLinked()){
+								metExploreD3.GraphNetwork.animationButtonOff(sessions[key].getId());
+							}
+						}
+						var force = _metExploreViz.getSessionById("viz").getForce();
+						force.stop();
+					}
+					else
+					{
+						metExploreD3.GraphNetwork.animationButtonOff(panel);
+						var force = session.getForce();
+						force.stop();
+					}
+				}
+				var graph = null;
+				var tulipView = null;
+
+				var size = 100;
+				var correspondNodeId = {};
+
+				function processGraph() {
+					tulip.holdObservers();
+					var viewLayout = graph.getLayoutProperty('viewLayout');
+					var viewColor = graph.getColorProperty('viewColor');
+					var viewLabel = graph.getStringProperty("viewLabel");
+					//   viewLayout.setAllEdgeValue(new Array());
+					//   var n = graph.addNode();
+					//   viewColor.setNodeValue(n, randomColor());
+					//   viewLabel.setNodeValue(n, 'node ' + graph.numberOfNodes());
+					//   var nodes = graph.getNodes();
+					   
+
+					 //  var i = Math.random() * graph.numberOfNodes() | 0;
+					 //  var j = Math.random() * graph.numberOfNodes() | 0;
+
+					 //  graph.addEdge(nodes[i], nodes[j]);
+					tulip.unholdObservers();
+					// graph.applyLayoutAlgorithm('FM^3 (OGDF)', graph.getLayoutProperty('viewLayout'));
+					var params = tulip.getDefaultAlgorithmParameters(algo, graph);
+					console.log(params);
+					if(parameters!=undefined) {
+						parameters.forEach(function(param){
+							params[param.name]=param.value;
+						});
+					}
+					graph.applyLayoutAlgorithmInWorker(algo, graph.getLocalLayoutProperty('viewLayout'), params,
+				    	function(){
+				    		
+							d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+					        	.each(function(node){
+									node.px = viewLayout.getNodeValue(correspondNodeId[node.getId()]).x ;
+									node.py = viewLayout.getNodeValue(correspondNodeId[node.getId()]).y ;
+									node.x = viewLayout.getNodeValue(correspondNodeId[node.getId()]).x ;
+									node.y = viewLayout.getNodeValue(correspondNodeId[node.getId()]).y ;
+								});
+				        
+				         	metExploreD3.GraphNetwork.tick("viz");
+				        	metExploreD3.hideMask(myMask);
+				    	}
+				    );
+				}
+
+				function initTulip(func) {
+
+					if (typeof tulip == 'undefined' || !tulip.isLoaded()) {
+						setTimeout(initTulip, 1000);
+					} else {
+
+						graph = new tulip.Graph();
+
+						console.log("tulip.getLayoutAlgorithmPluginsList() ", tulip.getLayoutAlgorithmPluginsList());
+						console.log("tulip.getAlgorithmPluginsList() ", tulip.getAlgorithmPluginsList());
+						console.log("tulip.getDoubleAlgorithmPluginsList() ", tulip.getDoubleAlgorithmPluginsList());
+
+						tulip.holdObservers();
+
+						graph.setName("Test Javascript Graph");
+
+						var viewLabel = graph.getStringProperty("viewLabel");
+						networkData.getNodes().forEach(function(node){
+							var n = graph.addNode();
+							var viewLayout = graph.getLayoutProperty('viewLayout');
+							viewLayout.setNodeValue(n, new tulip.Coord(node.x, node.y, 0));
+
+							viewLabel.setNodeValue(n, "node 1");
+
+							correspondNodeId[node.getId()] = n;
+						});
+
+						var viewLayout = graph.getLayoutProperty('viewLayout');
+						networkData.getLinks().forEach(function(link){
+							graph.addEdge(correspondNodeId[link.getSource()], correspondNodeId[link.getTarget()]);
+						});
+
+
+						var bends = new Array();
+						bends.push(new tulip.Coord(0,0,0));
+
+						viewLayout.setAllEdgeValue(bends);
+
+						tulip.unholdObservers();
+					}
+					if (func!=undefined) {func()};
+				}
+
+				initTulip(processGraph);
+
+			}, 100);
+		}
+	},
+
+    /*******************************************
+    * Algorithms provided by the tulip.js library
+    */
+	applyTulipDoubleAlgorithmInWorker : function(algo, parameters) {
+
+		var panel = "viz";
+		var myMask = metExploreD3.createLoadMask("Selection in progress...", panel);
+		if(myMask!= undefined){
+			
+			metExploreD3.showMask(myMask);
+
+	        metExploreD3.deferFunction(function() {
+				var sessions = _metExploreViz.getSessionsSet();
+				
+				var session = _metExploreViz.getSessionById(panel);
+
+				var networkData = session.getD3Data();
+				
+				if(session!=undefined)  
+				{
+					if(session.isLinked())
+					{
+						for (var key in sessions) {
+							if(sessions[key].isLinked()){
+								metExploreD3.GraphNetwork.animationButtonOff(sessions[key].getId());
+							}
+						}
+						var force = _metExploreViz.getSessionById("viz").getForce();
+						force.stop();
+					}
+					else
+					{
+						metExploreD3.GraphNetwork.animationButtonOff(panel);
+						var force = session.getForce();
+						force.stop();
+					}
+				}
+				var graph = null;
+				var tulipView = null;
+
+				var size = 100;
+				var correspondNodeId = {};
+
+				function processGraph() {
+					tulip.holdObservers();
+					var viewLayout = graph.getLayoutProperty('viewLayout');
+					var viewColor = graph.getColorProperty('viewColor');
+					var viewLabel = graph.getStringProperty("viewLabel");
+					var viewMetric = graph.getDoubleProperty('viewMetric');
+					//   viewLayout.setAllEdgeValue(new Array());
+					//   var n = graph.addNode();
+					//   viewColor.setNodeValue(n, randomColor());
+					//   viewLabel.setNodeValue(n, 'node ' + graph.numberOfNodes());
+					//   var nodes = graph.getNodes();
+					   
+
+					 //  var i = Math.random() * graph.numberOfNodes() | 0;
+					 //  var j = Math.random() * graph.numberOfNodes() | 0;
+
+					 //  graph.addEdge(nodes[i], nodes[j]);
+					tulip.unholdObservers();
+					// graph.applyLayoutAlgorithm('FM^3 (OGDF)', graph.getLayoutProperty('viewLayout'));
+					var params = tulip.getDefaultAlgorithmParameters(algo, graph);
+					if(parameters!=undefined) {
+						parameters.forEach(function(param){
+							params[param.name]=param.value;
+						});
+					}
+					console.log("params :", params);
+			
+					graph.applyDoubleAlgorithmInWorker(algo, graph.getDoubleProperty('viewMetric'), params,
+				    	function(){
+
+					   		var arrayVal = [];
+
+							d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+					        	.each(function(node){
+									arrayVal.push(viewMetric.getNodeValue(correspondNodeId[node.getId()]));
+								});
+
+							var colorNode = d3.scale.linear()
+								.domain([Math.min.apply(null, arrayVal), Math.max.apply(null, arrayVal)])
+					    		.range(["yellow", "blue"]);
+
+							var sizeNode = d3.scale.linear()
+								.domain([Math.min.apply(null, arrayVal), Math.max.apply(null, arrayVal)])
+					    		.range([1, 3]);
+
+							d3.select("#viz").select("#D3viz").select("#graphComponent").selectAll("g.node")
+					        	.style('fill', function(node){
+									return colorNode(viewMetric.getNodeValue(correspondNodeId[node.getId()]));
+								})
+								.attr("transform", function(node){
+									return "translate("+node.x+", "+node.y+") scale("+sizeNode(viewMetric.getNodeValue(correspondNodeId[node.getId()]))+")";
+								}).transition().duration(2000);
+
+					        metExploreD3.hideMask(myMask);
+				        }
+				    );
+				}
+
+				function initTulip(func) {
+
+					if (typeof tulip == 'undefined' || !tulip.isLoaded()) {
+						setTimeout(initTulip, 1000);
+					} else {
+
+						graph = new tulip.Graph();
+
+						console.log("tulip.getLayoutAlgorithmPluginsList() ", tulip.getLayoutAlgorithmPluginsList());
+						console.log("tulip.getAlgorithmPluginsList() ", tulip.getAlgorithmPluginsList());
+						console.log("tulip.getDoubleAlgorithmPluginsList() ", tulip.getDoubleAlgorithmPluginsList());
+
+						tulip.holdObservers();
+
+						graph.setName("Test Javascript Graph");
+
+						var viewLabel = graph.getStringProperty("viewLabel");
+						networkData.getNodes().forEach(function(node){
+							var n = graph.addNode();
+							var viewLayout = graph.getLayoutProperty('viewLayout');
+							viewLayout.setNodeValue(n, new tulip.Coord(node.x, node.y, 0));
+
+							viewLabel.setNodeValue(n, "node 1");
+
+							correspondNodeId[node.getId()] = n;
+						});
+
+						var viewLayout = graph.getLayoutProperty('viewLayout');
+						networkData.getLinks().forEach(function(link){
+							graph.addEdge(correspondNodeId[link.getSource()], correspondNodeId[link.getTarget()]);
+						});
+
+
+						var bends = new Array();
+						bends.push(new tulip.Coord(0,0,0));
+
+						viewLayout.setAllEdgeValue(bends);
+
+						tulip.unholdObservers();
+					}
+					if (func!=undefined) {func()};
+				}
+
+				initTulip(processGraph);
+
+			}, 100);
+		}
 	},
 
 	drawNetwork : function() {

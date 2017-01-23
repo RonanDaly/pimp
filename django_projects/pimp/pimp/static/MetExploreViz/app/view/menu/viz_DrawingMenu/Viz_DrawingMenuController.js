@@ -31,11 +31,16 @@ Ext.define('metExploreViz.view.menu.viz_DrawingMenu.Viz_DrawingMenuController', 
 			click : me.clustMetabolites,
 			scope : me
 		});
+		
+		if(metExploreD3.Features.isEnabled('layouts')){
+			view.lookupReference('vizLayoutMenuID').setHidden(false);
+		}
 
 		view.lookupReference('makeClusters').on({
 			click : me.makeClusters,
 			scope : me
 		});
+		
 		view.on({
 			enableMakeClusters : function(){
 				this.lookupReference('makeClusters').setDisabled(false);

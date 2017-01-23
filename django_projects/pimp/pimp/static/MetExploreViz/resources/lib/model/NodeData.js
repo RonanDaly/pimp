@@ -2,7 +2,7 @@
  * NodeData class
  * For now, only contains the id
  */
-var NodeData = function(name, compart, dbIdentifier, ec, id, reactionReversibility, isSideCompound, biologicalType, isSelected, labelVisible, svg, svgWidth, svgHeight, mappings, isDuplicated, identifier, pathW) {
+var NodeData = function(name, compart, dbIdentifier, ec, id, reactionReversibility, isSideCompound, biologicalType, isSelected, labelVisible, svg, svgWidth, svgHeight, mappings, isDuplicated, identifier, pathW, lock, label) {
         this.name=name;
         this.dbIdentifier = dbIdentifier ;
         this.ec = ec;
@@ -30,6 +30,11 @@ var NodeData = function(name, compart, dbIdentifier, ec, id, reactionReversibili
         if(mappings==undefined)
             mappings=[];
         this.mappingDatas = mappings;
+
+        if(lock==undefined)
+            lock=false;
+        this.locked = lock;
+        this.label= label;
 };
 
 
@@ -51,6 +56,14 @@ NodeData.prototype = {
 
     setIsSelected : function(b){
       this.selected = b;
+    },
+
+    isLocked :function(){
+      return this.locked;
+    },
+
+    setLocked : function(b){
+      this.locked = b;
     },
 
     isDuplicated :function(){
@@ -98,10 +111,27 @@ NodeData.prototype = {
     {
       return this.reactionReversibility;
     },
+    setReactionReversibility:function(reactionReversibility)
+    {
+      this.reactionReversibility = reactionReversibility;
+    },
 
     getName:function()
     {
       return this.name;
+    },
+
+    setName : function(b){
+      this.name = b;
+    },
+
+    getLabel:function()
+    {
+      return this.label;
+    },
+
+    setLabel : function(b){
+      this.label = b;
     },
 
     getId:function()

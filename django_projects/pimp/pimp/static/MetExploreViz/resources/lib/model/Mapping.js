@@ -6,15 +6,23 @@
  * ListId : liste des id mysql qui ont ete mappes
  */
 
-var Mapping = function(title, conditions, targetLabel){
+var Mapping = function(title, conditions, targetLabel, id){
 
 	this.name = title;
 	this.conditions = conditions;
 	this.targetLabel = targetLabel;
 	this.data = [];
+	this.id = id;
 };
 
 Mapping.prototype = {
+	getId : function(){
+		return this.id;
+	},
+	setId : function(newid){
+		this.id = newid;
+	},
+
 	getName : function(){
 		return this.name;
 	},

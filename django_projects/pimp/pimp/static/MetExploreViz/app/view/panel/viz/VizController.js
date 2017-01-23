@@ -37,8 +37,7 @@ Ext.define('metExploreViz.view.panel.viz.VizController', {
 	*/
 	initiateViz : function() {
 		
-		$("#viz").on('contextmenu', function(e) {					
-
+		$("#viz").on('contextmenu', function(e) {		
 			// devalide le menu contextuel du navigateur
 			e.preventDefault();
 			var networkVizSessionStore = _metExploreViz.getSessionById("viz");
@@ -55,10 +54,17 @@ Ext.define('metExploreViz.view.panel.viz.VizController', {
 							items : [{
 								text : 'Remove selected nodes',
 								hidden : false,
+								iconCls:"removeNode",
 								handler :function(){ metExploreD3.GraphNetwork.removeSelectedNode("viz") }
+							},{
+								text : 'Fix selected nodes',
+								hidden : false,
+								iconCls:"lock_font_awesome",
+								handler :function(){ metExploreD3.GraphNode.fixSelectedNode("viz") }
 							},{
 								text : 'Side compounds (duplicate)',
 								hidden : false,
+								iconCls:"duplicate-sideCompounds",
 								handler : function(){ 
 									var sessio = _metExploreViz.getSessionById('viz');
 									metExploreD3.GraphNetwork.duplicateSideCompoundsSelected("viz"); 
@@ -88,28 +94,45 @@ Ext.define('metExploreViz.view.panel.viz.VizController', {
 						var target = e.target;
 
 
+					var theNode = metExploreD3.GraphNode.selectNodeData(e.target);
+					var isMetabolite = (theNode.getBiologicalType()=="metabolite");
+					
 					viz.CtxMenu = new Ext.menu.Menu({
 						items : [
 						{
 							text : 'Remove the node',
 							hidden : false,
-							handler : function(){ metExploreD3.GraphNetwork.removeOnlyClickedNode(metExploreD3.GraphNode.selectNodeData(target.parentNode), "viz"); }	
+							iconCls:"removeNode",
+							handler : function(){
+							 	metExploreD3.GraphNetwork.removeOnlyClickedNode(theNode, "viz"); 
+							}	
 						},{
 							text : 'Side compound (duplicate)',
-							hidden : false,
-							handler : function(){ metExploreD3.GraphNetwork.duplicateASideCompoundSelected(target.parentNode, "viz"); }
+							hidden : !isMetabolite,
+							iconCls:"duplicate-sideCompounds",
+							handler : function(){ 
+								metExploreD3.GraphNetwork.duplicateASideCompoundSelected(theNode, "viz"); 
+							}
 						},{
-							text : 'Select neighbour',
+							text : 'Change name',
 							hidden : false,
-							handler : function(){ metExploreD3.GraphNode.selectNeighbours(_metExploreViz.getSessionById('viz').getD3Data().getNodeById(target.id), "viz"); }
+							iconCls:"edit",
+							handler : function(){ 
+								metExploreD3.GraphNode.changeName(theNode); 
+							}
+						},{
+							text : 'Select neighbours (N+select)',
+							hidden : false,
+							iconCls:"neighbours",
+							handler : function(){ 
+								metExploreD3.GraphNode.selectNeighbours(theNode, "viz"); 
+							}
 						}
 						,{
 							text : 'See more information',
 							hidden : !metExploreD3.getGeneralStyle().hasEventForNodeInfo(),
+							iconCls:"info",
 							handler : function() {
-
-								var id = target.id;
-								var theNode = _metExploreViz.getSessionById('viz').getD3Data().getNodeById(id);
 								metExploreD3.fireEventParentWebSite("seeMoreInformation", theNode);
 							}
 						}

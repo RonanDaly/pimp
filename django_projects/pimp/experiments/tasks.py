@@ -7,18 +7,18 @@ import subprocess
 import sys
 import pandas as pd
 import re
-from fileupload.models import Sample, CalibrationSample
-from experiments.models import Comparison, Analysis
-from data.models import *
-from compound.models import *
-from experiments.pimpxml_parser.pimpxml_parser import Xmltree
-from django.core.mail import send_mail
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.db import connection;
-##### JUST FOR SCOTT ALTERNATIVE CODE
-import rpy2.robjects as robjects
+from django.db import connection
+from djcelery import celery
+
+from compound.models import logging, Compound, RepositoryCompound, DataSourceSuperPathway, CompoundPathway
+from data.models import Analysis, Dataset, Peak, Comparison, PeakDtComparison, Sample, PeakDTSample, CalibrationSample, PeakQCSample
+from experiments.pimpxml_parser.pimpxml_parser import Xmltree
+from experiments.pipelines.pipeline_rpy2 import Rpy2Pipeline
+
 
 from frank.models import PimpAnalysisFrankFs, AnnotationQuery
 logger = logging.getLogger(__name__)
@@ -36,9 +36,8 @@ def error_handler(task_id, analysis, project, user, success):
 
     end_pimp_pipeline(analysis, project, user, success)
 
-
 def populate_database(xml_file_path):
-    
+
     compound_id_map = {}
     print "Database population started!"
     xmltree = Xmltree(xml_file_path)
@@ -144,11 +143,11 @@ def populate_database(xml_file_path):
                     for compound_id in compound_id_map[compound_in_pathway_id]:
                         compound = Compound.objects.get(id=compound_id)
                         CompoundPathway.objects.create(compound=compound, pathway=datasource_super_pathway)
-                        
+
 def send_email(analysis, project, user, success):
 
     print "In the send email function"
-    
+
     ctx_dict = {'analysis_name': analysis.experiment.title,
                 'analysis': analysis,
                 'project': project,
@@ -165,12 +164,10 @@ def send_email(analysis, project, user, success):
         html_content = render_to_string('email_templates/analysis_status_success_email.html', ctx_dict)
     else: # analysis failed
         text_content = render_to_string('email_templates/analysis_status_error_email.txt', ctx_dict)
-        html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)        
+        html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
     msg.send()
-
-
 
 @celery.task
 def start_pimp_pipeline(analysis, project, saveFixtures=False):
@@ -180,22 +177,16 @@ def start_pimp_pipeline(analysis, project, saveFixtures=False):
     """
     analysis.status = 'Processing'
 
-    r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'),
-                      str(analysis.id), str(saveFixtures)]
-    r_command = " ".join(r_command_list)
-    logger.info('r_command is %s' % r_command)
-
-    # Here is the entry point to the R pipeline
-    return_code = subprocess.call(r_command, shell=True)
-    if return_code != 0:
-        raise Exception('Return code from R pipeline is not 0: %d' % return_code)
-
-    xml_file_name = ".".join(["_".join(["analysis", str(analysis.id)]), "xml"])
-    xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(project.id), xml_file_name)
+    pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
+    pipeline.setup()
+    xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
 
     if os.path.exists(xml_file_path):
+        logger.info('Populating database')
         populate_database(xml_file_path)
+    else:
+        logger.info('XML file does not exist')
 
     connection.close()
 
@@ -262,5 +253,3 @@ def get_ms1_df(analysis):
     df = pd.DataFrame(data, columns=['pimp_id', 'mz', 'rt', 'intensity', 'polarity'])
 
     return df
-
-

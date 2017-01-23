@@ -306,3 +306,7 @@ DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': getString('PIMP_BACKUP_LOCATION', os.path.join(os.path.dirname(BASE_DIR), 'backups'))}
 DBBACKUP_CLEANUP_KEEP=2
 DBBACKUP_CLEANUP_KEEP_MEDIA=2
+
+NOTEBOOK_ARGUMENTS = [
+    '--ip', '0.0.0.0',
+]
