@@ -33,4 +33,3 @@ scipy==0.14.1
 six==1.10.0
 suds==0.4
 wheel==0.24.0
-django-spaghetti-and-meatballs # interactively browse schema
