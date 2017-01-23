@@ -1110,6 +1110,8 @@ def input_peak_list_to_database_signature(experiment_name_slug, fragmentation_se
     ms1_peaks will be none if this method is called from Frank, and will have a dataframe from Pimp
     """
 
+    print "In the peak list signature method"
+
     experiment = Experiment.objects.get(slug=experiment_name_slug)
     # Determine the type of experimental protocol used
     experiment_type = experiment.detection_method.name
@@ -1137,6 +1139,7 @@ def generate_annotations(annotation_query_object,user = None):
         #If Sirius is to be queried, run the batch service as a background process
         tasks.sirius_batch_search.delay(annotation_query_object.id)
     elif annotation_tool.name == 'NIST':
+        print "as NIST annotation tool"
         # If NIST is to be queried, run the batch service as a background process
         tasks.nist_batch_search(annotation_query_object.id)
     elif annotation_tool.name == 'Network Sampler':

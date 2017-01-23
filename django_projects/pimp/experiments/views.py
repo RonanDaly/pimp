@@ -21,7 +21,6 @@ from compound.models import *
 from groups.models import Attribute
 from fileupload.models import Sample, CalibrationSample, Curve
 from frank.models import PimpFrankPeakLink
-from frank.models import Peak as FrankPeak
 # Add on
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
@@ -38,20 +37,26 @@ import datetime
 import numpy as np
 from rpy2.robjects.packages import importr
 from rpy2 import robjects
+from rpy2.robjects import pandas2ri
+
 
 # Scikitlearn for the PCA
 from sklearn.decomposition import PCA
 
 from experiments.forms import *
-# import mdp
-# import matplotlib.pyplot as plt
-# from management.pimpxml_parser.pimpxml_parser import Xmltree
-
-# import sys
-# temporary import
-import os
-# tasks
 from experiments import tasks
+
+#FrAnK imports
+
+from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
+from frank.models import SampleFile as FrankSampleFile
+from frank.views import input_peak_list_to_database_signature
+from frank.tasks import run_default_annotations
+
+#Celery imports
+
+from celery import chain
+
 # debug libraries
 import timeit
 import pickle
@@ -281,6 +286,8 @@ def experiment(request, project_id):
 #     print len(xmltree.allPeaks())
 
 def start_analysis(request, project_id):
+
+
     # base = importr('base')
     # base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
     # pimp = importr('PiMP')
@@ -289,6 +296,21 @@ def start_analysis(request, project_id):
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
         user = request.user
+
+        # Get the required objects for running FrAnK here.
+        pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+        frank_experiment = pimpFrankLink.frank_expt
+        fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
+        logger.info("The FrAnK Experiment and Fragmetation set added to PiMP are %s %s", frank_experiment, fragmentation_set)
+
+        fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
+        num_fragment_files = len(fragment_files)
+        logger.info("The number of fragment files are %d", num_fragment_files)
+
+        # Link the Frank fragment set and the pimp analysis set
+        PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
+
+
         if analysis.status != "Ready":
             message = "The analysis has already been submitted"
             response = simplejson.dumps(message)
@@ -327,11 +349,38 @@ def start_analysis(request, project_id):
                 analysis.submited = datetime.datetime.now()
                 analysis.save(update_fields=['submited'])
 
-                #Start the R pipeline for pimp
-                r = tasks.start_pimp_pipeline.delay(analysis, project, user)
-                # r = tasks.start_pimp_pipeline.delay(comparison_name, file_list, group_list, standards, databases)
-                # print r.get()
-                # message = "The function has been disabled for maintanance"
+                #Start the R pipeline for PiMP and FrAnK if fragments are present.
+                celery_tasks = []
+
+                #Always want to start the pipeline
+                celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
+
+                #If we have fragment files we want to add the FrAnK processing and annotation processed
+                if num_fragment_files > 0:
+                    try:
+                        df = tasks.get_ms1_df(analysis)
+
+                        # Get the polarities for the MS1 peaks and for each polarity add the peak processing to the chain.
+                        polarities = df.polarity.unique()
+                        for p in polarities:
+                            df_pol = df[df.polarity == p]
+                            pandas2ri.activate()
+                            ms1_df_pol = pandas2ri.py2ri(df_pol)
+
+                            # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
+                            celery_tasks.append(input_peak_list_to_database_signature(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol))
+
+                        celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
+
+                    except Exception as e:
+                        logger.error('The FrAnK analysis has failed, by throwing the exception: %s', e)
+                        tasks.end_pimp_pipeline.si(analysis, project, user, False)
+
+                celery_tasks.append(tasks.end_pimp_pipeline.si(analysis, project, user, True))
+                chain(celery_tasks, link_error=tasks.error_handler.s(analysis, project, user, False))()
+
+                #r = tasks.start_pimp_pipeline.delay(analysis, project, user)
+
                 message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
                 data = {"status": "success", "message": message}
                 response = simplejson.dumps(data)
