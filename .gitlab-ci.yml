@@ -2,7 +2,7 @@ stages:
   - prebuild
   - build1
   - build2
-  - squash
+#  - squash
   - packaging
 
 variables:
@@ -36,13 +36,24 @@ pimp:
             $PROXY_SETTINGS
             .
     stage: build2
+    except:
+        - tags
 
-squash-image:
+pimp-squash:
     script:
-        - docker-squash -t pimp:squashed pimp
-    stage: squash
+        - docker build --squash -t pimp:squashed
+            $PROXY_SETTINGS
+            .
+    stage: build2
     only:
         - tags
+
+#squash-image:
+#    script:
+#        - docker-squash -t pimp:squashed pimp
+#    stage: squash
+#    only:
+#        - tags
 
 package:
     script:
