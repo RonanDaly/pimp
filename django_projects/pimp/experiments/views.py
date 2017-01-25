@@ -17,7 +17,8 @@ from django.http import Http404
 from projects.models import Project
 from data.models import *
 from compound.models import *
-from groups.models import Attribute
+from groups.models import *
+#from groups.models import Attribute
 from fileupload.models import Sample, CalibrationSample, Curve
 # Add on
 from django.core.serializers import serialize
@@ -598,13 +599,18 @@ def get_peak_table(request, project_id, analysis_id):
         project = Project.objects.get(pk=project_id)
         dataset = analysis.dataset_set.all()[0]
         comparisons = analysis.experiment.comparison_set.all()
+        attributes = Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')
+        row_length = sum([len(a.sample.all()) for a in attributes])
+        #list(attributes)
+        #groups = Group.objects.filter(attribute__comparison__in=comparisons).distinct()
         s = Sample.objects.filter(
             attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
-        p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset)       \
+        list(s)
+        p = list(PeakDTSample.objects.filter(sample__in=s, peak__dataset=dataset, sample__attribute__in=attributes)       \
                                                 .select_related('peak', 'sample')   \
                                                 .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
-        pp = map(list, zip(*[iter(p)] * s.count()))
+        pp = map(list, zip(*[iter(p)] * row_length))
         data = [
             [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [
                 round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
@@ -680,6 +686,8 @@ def analysis_result(request, project_id, analysis_id):
         ############################# Samples & attributes ##############################
         logger.info("Samples -- START")
         s, member_list, sample_list = get_samples_and_attributes(comparisons)
+        sample_list_union = get_samples(comparisons)
+        logger.warn('!!!!!!sample_list_union: %s', sample_list_union)
         logger.info("Samples -- END")
 
         ############################# PCA calculation ##############################
@@ -741,6 +749,7 @@ def analysis_result(request, project_id, analysis_id):
         # populate in the request context
         c = {'member_list': member_list,
              'sample_list': sample_list,
+             'sample_list_union': sample_list_union,
              'pathway_list': pathway_list,
              'databases': databases,
              'dataset': dataset,
@@ -787,6 +796,32 @@ def get_pathway_url(request, project_id, analysis_id):
         response = simplejson.dumps({'pathway_map': pathway_map})
 
         return HttpResponse(response, content_type='application/json')
+
+def get_samples(comparisons):
+
+    ######## Old query for members ########
+    # member_set = set()
+    # for comparison in comparisons:
+    #     member_set = member_set.union(set(comparison.attribute.all()))
+    # member_list = list(member_set)
+
+    ######## New query for members ########
+    s = Sample.objects.filter(
+        attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
+        'attribute__id', 'id')
+
+    member_list = list(Attribute.objects.filter(comparison=comparisons).distinct().order_by('id'))
+    logger.info('Member list: %s' % member_list)
+
+    sample_list = []
+    for member in member_list:
+        sample_list.extend(list(member.sample.all().order_by('id')))
+    sample_list = list(OrderedDict.fromkeys(sample_list))
+    logger.debug("sample list: %s", sample_list)
+
+    return  sample_list
+
+
 
 def get_samples_and_attributes(comparisons):
 

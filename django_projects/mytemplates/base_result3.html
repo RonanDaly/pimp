@@ -330,7 +330,7 @@
 				// remove filter on datable
 			});
 
-            var samplesGroupsNum = [{{ sample_list|samplelistlength }}, {{ comparisons|length }}]; // [num samples, num comparisons]
+            var samplesGroupsNum = [{{ sample_list_union|length }}, {{ comparisons|length }}, {{ sample_list|samplelistlength }}]; // [num samples, num comparisons]
 
 			var metabolitesTable = set_metabolitestable(metabolites_table_url, samplesGroupsNum);
             $('#metabolites-table tbody').on('click', 'tr', function() {
@@ -2875,29 +2875,24 @@
 									<table id="metabolites-table" class="table table-striped">
 						              <thead>
 						                <tr>
-						                  <th rowspan="2">Compound id</th>
-						                  <th rowspan="2">Peak ID</th>
-						                  <th rowspan="2">Name</th>
-						                  <th rowspan="2">Formula</th>
-						                  <th rowspan="2">SuperPathway</th>
-										  <th rowspan="2">Pathway</th>
-										  {% for member in member_list %}
-										  <th rowspan="1" class="intensity-column" colspan="{{ member.sample.all|length }}" style="{% if not forloop.last %}border-right: solid 1px black;{% endif %}">{{ member.name }}</th>
-										  {% endfor %}
+						                  <th rowspan="1">Compound id</th>
+						                  <th rowspan="1">Peak ID</th>
+						                  <th rowspan="1">Name</th>
+						                  <th rowspan="1">Formula</th>
+						                  <th rowspan="1">SuperPathway</th>
+										  <th rowspan="1">Pathway</th>
+											{% for sample in sample_list_union %}
+											<th rowspan="1">{{ sample.name }}</th>
+											{% endfor %}
 {#										  {% for member in member_list %}#}
 {#										  <th rowspan="2" class="average-column">Average {{ member.name }}</th>#}
 {#										  {% endfor %}#}
                                           {% for comparison in comparisons %}
-                                          <th rowspan="2">logFC {{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</th>
+                                          <th rowspan="1">logFC {{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</th>
                                           {% endfor %}
-										  <th rowspan="2">Identification</th>
-										  </tr>
-										  <tr>
-										  {% for sublist in sample_list %}
-											{% for sample in sublist %}
-											<th rowspan="1">{{ sample.name }}</th>
-											{% endfor %}
-										  {% endfor %}
+										  <th rowspan="1">Identification</th>
+
+
 						                 </tr>
 						              </thead>
 						            </table>
@@ -2918,16 +2913,6 @@
 							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
 								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
 									<table id="pathway-table" class="table table-striped">
-						              <thead>
-						                <tr>
-						                  <th>Name</th>
-						                  <th>ID</th>
-						                  <th>Number compounds</th>
-						                  <th>Annotated</th>
-						                  <th>Identified</th>
-						                  <th>Coverage</th>
-						                </tr>
-						              </thead>
 						              <tbody>
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>

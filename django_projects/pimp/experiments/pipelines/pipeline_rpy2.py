@@ -258,12 +258,11 @@ class Rpy2Pipeline(object):
             
         save_fixtures = True    
         self.run_stats(raw_data_dict, groups_dict, mzmatch_outputs, mzmatch_params, save_fixtures)        
-            
-        return_code = 0
+
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
         xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(self.project.id), xml_file_name)
 
-        return return_code, xml_file_path
+        return xml_file_path
             
     def create_peakml(self, polarity, polarity_dir, 
                       xcms_params, mzmatch_params, peakml_params, 
