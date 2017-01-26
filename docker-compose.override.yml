@@ -3,8 +3,8 @@ version: '2'
 services:
     pimp:
         volumes:
-            - media:/home/pimp/media
-            - backups:/home/pimp/backups
+            - ./media:/home/pimp/media
+            - ./backups:/home/pimp/backups
     nginx:
         hostname: nginx
         image: ${NGINX_IMAGE}
@@ -24,7 +24,3 @@ services:
             - pimp
         depends_on:
             - pimp
-
-volumes:
-    backups:
-    media:
