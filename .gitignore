@@ -104,4 +104,5 @@ packrat/src/*
 DockerDevContext/media
 DockerDevContext/mysql
 
-Procfile.*
+Procfile.docker
+Procfile.jupyter
