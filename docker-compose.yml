@@ -18,11 +18,16 @@ services:
             - PIMP_INITIAL_LAST_NAME
             - PIMP_DEBUG
             - PIMP_LOG_LEVEL
+            - MSPEPSEARCH_IMAGE
+            - INTERNAL_NIST_QUERY_DIR=/home/pimp/media/frank/NISTQueryFiles
+            - EXTERNAL_NIST_QUERY_DIR=./media/frank/NISTQueryFiles
         extends:
             file: common.yml
             service: logging
         depends_on:
         - mysql
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
     mysql:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
