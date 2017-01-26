@@ -10,6 +10,7 @@ import re
 from django.conf import settings
 from subprocess import call, CalledProcessError
 import os
+import logging
 from django.db.models import Max
 from urllib2 import URLError
 
@@ -21,7 +22,7 @@ import shutil
 import json
 import pprint
 
-
+logger = logging.getLogger(__name__)
 
 MASS_OF_AN_PROTON = 1.00727645199076
 
@@ -926,42 +927,36 @@ class NISTQueryTool:
         # Therefore, its mass should not be submitted to NIST which takes this into account.
         # Conversely, massbank's search API does not
         output_file = None
-        try:
-            # Open new MSP file for writing
-            with open(self.query_file_name, "w") as output_file:
-                # Retrieve all the peaks in the fragmentation set
-                peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
-                # Determine if there are peaks to be written to the MSP file
-                if len(peaks_in_fragmentation_set) < 1:
-                    raise ValueError('No peaks found in fragmentation set')
-                # Determine the number of msn levels
-                number_of_msn_levels = peaks_in_fragmentation_set.aggregate(Max('msn_level'))
-                number_of_msn_levels = number_of_msn_levels['msn_level__max']
-                for level in range(1, number_of_msn_levels):
-                    # Get all peaks in the current msn level
-                    peaks_in_msn_level = peaks_in_fragmentation_set.filter(msn_level=level)
-                    # For each peak in the level
-                    for peak in peaks_in_msn_level:
-                        fragmentation_spectra = peaks_in_fragmentation_set.filter(parent_peak=peak)
-                        # Only write the spectra to the file if it has fragmentation spectra
-                        if len(fragmentation_spectra) > 0:
-                            if include_precursor_mz:
-                                output_file.write('NAME: '+peak.slug+'\nDB#: ' + str(peak.id) +
-                                                  '\nComments: None\nPrecursormz:' + str(peak.mass) +
-                                                  '\nNum Peaks: ' + str(len(fragmentation_spectra)) + '\n')
-                            else:
-                                output_file.write('NAME: ' + peak.slug + '\nDB#: ' + str(peak.id) +
-                                                  '\nComments: None\nNum Peaks: ' +
-                                                  str(len(fragmentation_spectra)) + '\n')
-                            for fragment in fragmentation_spectra:
-                                output_file.write(str(fragment.mass)+' ' + str(fragment.intensity) + '\n')
-                            output_file.write('\n')
-        except IOError:
-            raise
-        finally:
-                # Using 'with' should close the file but make sure
-                if output_file.closed is False:
-                    output_file.close()
+        # Open new MSP file for writing
+        logger.info('query_file_name: %s', self.query_file_name)
+        with open(self.query_file_name, "w") as output_file:
+            # Retrieve all the peaks in the fragmentation set
+            peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)
+            # Determine if there are peaks to be written to the MSP file
+            if len(peaks_in_fragmentation_set) < 1:
+                raise ValueError('No peaks found in fragmentation set')
+            # Determine the number of msn levels
+            number_of_msn_levels = peaks_in_fragmentation_set.aggregate(Max('msn_level'))
+            number_of_msn_levels = number_of_msn_levels['msn_level__max']
+            for level in range(1, number_of_msn_levels):
+                # Get all peaks in the current msn level
+                peaks_in_msn_level = peaks_in_fragmentation_set.filter(msn_level=level)
+                # For each peak in the level
+                for peak in peaks_in_msn_level:
+                    fragmentation_spectra = peaks_in_fragmentation_set.filter(parent_peak=peak)
+                    # Only write the spectra to the file if it has fragmentation spectra
+                    if len(fragmentation_spectra) > 0:
+                        if include_precursor_mz:
+                            output_file.write('NAME: '+peak.slug+'\nDB#: ' + str(peak.id) +
+                                              '\nComments: None\nPrecursormz:' + str(peak.mass) +
+                                              '\nNum Peaks: ' + str(len(fragmentation_spectra)) + '\n')
+                        else:
+                            output_file.write('NAME: ' + peak.slug + '\nDB#: ' + str(peak.id) +
+                                              '\nComments: None\nNum Peaks: ' +
+                                              str(len(fragmentation_spectra)) + '\n')
+                        for fragment in fragmentation_spectra:
+                            output_file.write(str(fragment.mass)+' ' + str(fragment.intensity) + '\n')
+                        output_file.write('\n')
         return True
 
     def _populate_annotation_list(self):
