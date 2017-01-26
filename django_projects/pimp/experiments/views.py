@@ -21,7 +21,6 @@ from compound.models import *
 from groups.models import Attribute
 from fileupload.models import Sample, CalibrationSample, Curve
 from frank.models import PimpFrankPeakLink
-from frank.models import Peak as FrankPeak
 # Add on
 from django.core.serializers import serialize
 from django.db.models.query import QuerySet
@@ -38,23 +37,32 @@ import datetime
 import numpy as np
 from rpy2.robjects.packages import importr
 from rpy2 import robjects
+from rpy2.robjects import pandas2ri
+
 
 # Scikitlearn for the PCA
 from sklearn.decomposition import PCA
 
 from experiments.forms import *
-# import mdp
-# import matplotlib.pyplot as plt
-# from management.pimpxml_parser.pimpxml_parser import Xmltree
-
-# import sys
-# temporary import
-import os
-# tasks
 from experiments import tasks
+
+#FrAnK imports
+
+from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
+from frank.models import SampleFile as FrankSampleFile
+from frank.views import input_peak_list_to_database_signature
+from frank.tasks import run_default_annotations
+
+#Celery imports
+
+from celery import chain
+
 # debug libraries
 import timeit
 import pickle
+import urllib2
+import requests
+import jsonpickle
 from django.views.decorators.cache import cache_page
 # from pimp.profiler import profile
 logger = logging.getLogger(__name__)
@@ -228,12 +236,13 @@ def experiment(request, project_id):
                 logger.info("attribute id : %s", id_attribute_1)
                 attribute_1 = Attribute.objects.get(id=id_attribute_1)
                 logger.info("attribute found : %s", attribute_1)
-                attribute_comp = AttributeComparison(control=False, attribute=attribute_1, comparison=comparison)
+                attribute_comp = AttributeComparison(group=1, attribute=attribute_1, comparison=comparison)
                 attribute_comp.save()
 
                 id_attribute_2 = form.cleaned_data['attribute2']
                 attribute_2 = Attribute.objects.get(id=id_attribute_2)
-                attribute_comp = AttributeComparison(control=True, attribute=attribute_2, comparison=comparison)
+                # smallest group is the control
+                attribute_comp = AttributeComparison(group=0, attribute=attribute_2, comparison=comparison)
                 attribute_comp.save()
             return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
     else:
@@ -281,6 +290,8 @@ def experiment(request, project_id):
 #     print len(xmltree.allPeaks())
 
 def start_analysis(request, project_id):
+
+
     # base = importr('base')
     # base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
     # pimp = importr('PiMP')
@@ -289,6 +300,21 @@ def start_analysis(request, project_id):
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
         user = request.user
+
+        # Get the required objects for running FrAnK here.
+        pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+        frank_experiment = pimpFrankLink.frank_expt
+        fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
+        logger.info("The FrAnK Experiment and Fragmetation set added to PiMP are %s %s", frank_experiment, fragmentation_set)
+
+        fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
+        num_fragment_files = len(fragment_files)
+        logger.info("The number of fragment files are %d", num_fragment_files)
+
+        # Link the Frank fragment set and the pimp analysis set
+        PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
+
+
         if analysis.status != "Ready":
             message = "The analysis has already been submitted"
             response = simplejson.dumps(message)
@@ -327,11 +353,38 @@ def start_analysis(request, project_id):
                 analysis.submited = datetime.datetime.now()
                 analysis.save(update_fields=['submited'])
 
-                #Start the R pipeline for pimp
-                r = tasks.start_pimp_pipeline.delay(analysis, project, user)
-                # r = tasks.start_pimp_pipeline.delay(comparison_name, file_list, group_list, standards, databases)
-                # print r.get()
-                # message = "The function has been disabled for maintanance"
+                #Start the R pipeline for PiMP and FrAnK if fragments are present.
+                celery_tasks = []
+
+                #Always want to start the pipeline
+                celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
+
+                #If we have fragment files we want to add the FrAnK processing and annotation processed
+                if num_fragment_files > 0:
+                    try:
+                        df = tasks.get_ms1_df(analysis)
+
+                        # Get the polarities for the MS1 peaks and for each polarity add the peak processing to the chain.
+                        polarities = df.polarity.unique()
+                        for p in polarities:
+                            df_pol = df[df.polarity == p]
+                            pandas2ri.activate()
+                            ms1_df_pol = pandas2ri.py2ri(df_pol)
+
+                            # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
+                            celery_tasks.append(input_peak_list_to_database_signature(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol))
+
+                        celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
+
+                    except Exception as e:
+                        logger.error('The FrAnK analysis has failed, by throwing the exception: %s', e)
+                        tasks.end_pimp_pipeline.si(analysis, project, user, False)
+
+                celery_tasks.append(tasks.end_pimp_pipeline.si(analysis, project, user, True))
+                chain(celery_tasks, link_error=tasks.error_handler.s(analysis, project, user, False))()
+
+                #r = tasks.start_pimp_pipeline.delay(analysis, project, user)
+
                 message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
                 data = {"status": "success", "message": message}
                 response = simplejson.dumps(data)
@@ -1091,11 +1144,177 @@ def get_superpathway():
     super_pathways_list.append([None, pathway_name_list])
     return super_pathways_list
 
+def get_metexplore_biosource(request, project_id, analysis_id):
+    if request.is_ajax():
+        # Get the list of biosources from metexplore webservice
+        url = 'http://metexplore.toulouse.inra.fr:8080/metExploreWebService/biosources'
+        r = requests.get(url)
+        if r.raise_for_status():
+            response = "error"
+            response = simplejson.dumps(contents)
+            print "------------ Biosource connection status: ERROR ----------"
+            return HttpResponse(response, content_type='application/json')
+        content = jsonpickle.decode(r.text)
+        response = jsonpickle.encode(content)
+        print "------------ Biosource connection status: WORK ----------"
+        return HttpResponse(response, content_type='application/json')
+        # try:
+        #     resp = urllib2.urlopen(url)
+        #     contents = resp.read()
+        #     print "------------ Biosource connection status: WORK ----------"
+
+        # except urllib2.HTTPError, error:
+        #     error = error.read()
+        #     print "------------ Biosource connection status: ERROR ----------"
+        #     contents = "error"
+        # return HttpResponse(contents, content_type='application/json')
+
+
+def get_metexplore_pathways(request, project_id, analysis_id):
+    # To limit the size of the network, we only display the pathways with metabolite match (at least 1),
+    # the first call to MetExplore returns the list of pathways which will be then used to filter the network in the second call
+    if request.is_ajax():
+        project = Project.objects.get(pk=project_id)
+        analysis = Analysis.objects.get(pk=analysis_id)
+        # This token is temporary, a permanent one will be provided, this will have to move to the environment viriables and kept secret
+        # token = "eb0fd4bd183a4dbf0db6ca2b240495bb" update, no token required anymore
+        # Get the selected biosource
+        biosource_id = str(request.GET['id'])
+        # Create list of inchikey and put it in json
+        inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
+        # data = simplejson.dumps({"Content": inchikey_list, "token": token})
+        data = simplejson.dumps({"Content": inchikey_list})
+        # Get pathway list from MetExplore
+        # Creation of the url to call MetExplore webservice with the selected biosource
+        url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/aspathways/')
+        r = requests.post(url, data = data)
+        # Check if MetExplore server returns a server error response
+        # If so, return error response to PiMP user "MetExplore server is not available"
+        if r.raise_for_status():
+            response = "error"
+            response = simplejson.dumps(contents)
+            print "------------ Pathway connection status: ERROR ----------"
+            return HttpResponse(response, content_type='application/json')
+        print "------------ Pathway connection status: WORK ----------"
+        # If MetExplore returns code 200, we start parsing the response
+        content = jsonpickle.decode(r.text)
+        pathway_list = []
+        pathway_selection_list = []
+
+        # Extract the IDs of pathways with more than 1 metabolite mapped
+        if "pathwayList" in content[0].keys():
+            for pathway in content[0]['pathwayList']:
+                if pathway['mappedMetabolite'] > 0 and "Transport" not in pathway['name'] and "Exchange" not in pathway['name']:
+                    pathway_list.append(pathway['mysqlId'])
+                    pathway_selection_list.append({'id': str(pathway['mysqlId']),'text':str(pathway['name'] + ' ' + str(pathway['numberOfMetabolite']) + ' (' + str(pathway['mappedMetabolite']) + ')')})
+        print "before len pathway"
+        # If pathway list is empty (no metabolite mapped), return response to PiMP user "No metabolite could be found in the selected organism"
+        if len(pathway_list) == 0:
+            contents = "empty"
+            response = simplejson.dumps(contents)
+            print "------------ Pathway list is empty ----------"
+            return HttpResponse(response, content_type='application/json')
+        else:
+            response = simplejson.dumps(pathway_selection_list)
+            print "------------ Send pathway selection list -------------"
+            return HttpResponse(response, content_type='application/json')
+
+
+def get_metexplore_network(request, project_id, analysis_id):
+    if request.is_ajax():
+        project = Project.objects.get(pk=project_id)
+        analysis = Analysis.objects.get(pk=analysis_id)
+
+        biosource_id = str(request.GET['biousourceid'])
+        pathway_list = request.GET.getlist('pathwayids')
+
+        print "------------- Requesting network --------------"
+
+        inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
+        # Create json data to send to MetExplore webservice
+        data = simplejson.dumps({"Content": inchikey_list, "pathways": pathway_list})
+        # Create the url with the right biosource
+        url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/filteredbypathways/')
+        # Request the data
+        r = requests.post(url, data = data)
+        # Catch error if one
+        if r.raise_for_status():
+            response = "error"
+            response = simplejson.dumps(contents)
+            print "------------ Network connection status: ERROR ----------"
+            return HttpResponse(response, content_type='application/json')
+
+        # Check if network isn't empty (node count)
+        if len(jsonpickle.decode(r.text)['nodes']) == 0:
+            response = "empty"
+            response = simplejson.dumps(contents)
+            print "------------ Network list is empty ----------"
+            return HttpResponse(response, content_type='application/json')
+        
+        # Modify the network to add abundance values for each metabolite and condition
+        mapping = jsonpickle.decode(r.text)
+        inchikey_nodeId_map = {}
+        for node in mapping['mappingdata'][0]['mappings'][0]['data']:
+            if node['inchikey'] in inchikey_nodeId_map.keys():
+                inchikey_nodeId_map[node['inchikey']].append(node['node'])
+            else:
+                inchikey_nodeId_map[node['inchikey']] = [node['node']]
+
+
+        inchikey_list = [(inchikey[0].encode("utf8"),inchikey[1]) for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', 'peak__id').distinct()]
+
+        comparisons = analysis.experiment.comparison_set.all()
+
+        member_set = set()
+        for comparison in comparisons:
+            member_set = member_set.union(set(comparison.attribute.all()))
+
+        member_list = list(member_set)
+        mapping_data = []
+        for member in member_list:
+            # Temporary fix cause some standard are attached to many base peaks! Problem coming from R backend
+            # We only take the values for the first bp
+            debug_inchi = []
+            member_hash = {}
+            metabolite_list = []
+            for metabolite in inchikey_list:
+                if metabolite[0] not in debug_inchi:
+                    debug_inchi.append(metabolite[0]) 
+                    if metabolite[0] in inchikey_nodeId_map.keys():
+                        intensity_list = []
+                        # sample_list = []
+                        for sample in member.sample.all():
+                            peak_intensity = sample.peakdtsample_set.get(peak=metabolite[1])
+                            intensity_list.append(peak_intensity.intensity)
+                            # sample_list.append(str(sample.name).split(".")[0])
+                        if len(intensity_list) > 1:
+                            for node in inchikey_nodeId_map[metabolite[0]]:
+                                metabolite_list.append({"node": node, "value":str(int(np.mean(np.array(intensity_list))))})
+                        else:
+                            for node in inchikey_nodeId_map[metabolite[0]]:
+                                metabolite_list.append({"node": inchikey_nodeId_map[metabolite[0]], "value":str(int(intensity_list[0]))})
+                        # metabolite_list[metabolite[0]] = intensity_list
+                    # print sample.name
+                    # print peak_intensity.intensity
+                    # member_hash[member.name] = [intensity_list, sample_list]
+            member_hash["name"] = member.name
+            member_hash["data"] = metabolite_list
+            mapping_data.append(member_hash)
+
+        mapping['mappingdata'][0]['mappings'] = mapping_data
+        # print mapping
+        response = simplejson.dumps(mapping)
+        # content = jsonpickle.decode(r.text)
+        # response = simplejson.dumps(content)
+        return HttpResponse(response, content_type='application/json')
+
+
 def get_metexplore_info(request, project_id, analysis_id):
     if request.is_ajax():
         project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
         identified_peak = Peak.objects.filter(dataset__analysis=analysis_id, compound__identified='True')
+        print identified_peak.count()
 
         comparisons = analysis.experiment.comparison_set.all()
 
@@ -1146,10 +1365,14 @@ def get_metexplore_info(request, project_id, analysis_id):
                     nameIn.append(str(compound.compound_name))
                     compound_data_list.append({"name": str(compound.compound_name), "conditions": data})
                     testdata.append({compound.compound_name: hash_data})
+            else:
+                print compounds_identified[0].compound_name
 
         # print "COMPOUND DATA"
         # print compound_data_list
         # print testdata
+        print compound_data_list
+        print len(compound_data_list)
         message = "got somthing on the server!!!"
         response = simplejson.dumps(compound_data_list)
 

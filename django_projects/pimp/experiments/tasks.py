@@ -1,35 +1,43 @@
 from djcelery import celery
-from celery import chain
-from celery import signature
-# from rpy2.robjects.packages import importr
-# import rpy2.robjects as robjects
+from celery.result import AsyncResult
+#from celery.utils.log import get_task_logger
+
 import os
 import subprocess
+import sys
 import pandas as pd
-from rpy2.robjects import pandas2ri
 import re
-from fileupload.models import Sample, CalibrationSample
-from experiments.models import Comparison, Analysis
-from data.models import *
-from compound.models import *
-from experiments.pimpxml_parser.pimpxml_parser import Xmltree
-from django.core.mail import send_mail
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.db import connection;
-##### JUST FOR SCOTT ALTERNATIVE CODE
-import rpy2.robjects as robjects
+from django.db import connection
+from djcelery import celery
 
-from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
-from frank.models import SampleFile as FrankSampleFile
-from frank.views import input_peak_list_to_database_signature
-from frank.tasks import run_default_annotations
+from compound.models import logging, Compound, RepositoryCompound, DataSourceSuperPathway, CompoundPathway
+from data.models import Analysis, Dataset, Peak, Comparison, PeakDtComparison, Sample, PeakDTSample, CalibrationSample, PeakQCSample
+from experiments.pimpxml_parser.pimpxml_parser import Xmltree
+from experiments.pipelines.pipeline_rpy2 import Rpy2Pipeline
 
+
+from frank.models import PimpAnalysisFrankFs, AnnotationQuery
 logger = logging.getLogger(__name__)
+#logger = get_task_logger(__name__)
+
+
+@celery.task
+def error_handler(task_id, analysis, project, user, success):
+
+    result = AsyncResult(task_id)
+
+
+    print "We are in the celery error handler routine and running end of pipeline as failed"
+    print "The traceback result: %s", result.traceback
+
+    end_pimp_pipeline(analysis, project, user, success)
 
 def populate_database(xml_file_path):
-    
+
     compound_id_map = {}
     print "Database population started!"
     xmltree = Xmltree(xml_file_path)
@@ -135,9 +143,11 @@ def populate_database(xml_file_path):
                     for compound_id in compound_id_map[compound_in_pathway_id]:
                         compound = Compound.objects.get(id=compound_id)
                         CompoundPathway.objects.create(compound=compound, pathway=datasource_super_pathway)
-                        
+
 def send_email(analysis, project, user, success):
-    
+
+    print "In the send email function"
+
     ctx_dict = {'analysis_name': analysis.experiment.title,
                 'analysis': analysis,
                 'project': project,
@@ -147,121 +157,46 @@ def send_email(analysis, project, user, success):
     subject = ''.join(subject.splitlines())
     from_email, to = settings.DEFAULT_FROM_EMAIL, user.email
 
+    print "The user's email is, ", user.email
+
     if success: # analysis has run successfully
         text_content = render_to_string('email_templates/analysis_status_success_email.txt', ctx_dict)
         html_content = render_to_string('email_templates/analysis_status_success_email.html', ctx_dict)
     else: # analysis failed
         text_content = render_to_string('email_templates/analysis_status_error_email.txt', ctx_dict)
-        html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)        
+        html_content = render_to_string('email_templates/analysis_status_error_email.html', ctx_dict)
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
     msg.send()
 
 @celery.task
-def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
-    """ Starts the pimp R pipeline """
-    
-    # some old code not sure written by whom to call Pimp.runPipeline from python using rpy2
-    # according to yoann, this doesn't work with the mzmatch pipeline because it's too big 
-    # and takes too long to run
-    
-    # print "standards: ",standard_list
-    # print "comparisons: ",comparisons
-    # print "file list: ",file_list
-    # print "groups: ",group_list
-    # print "+++++++++++++++++ Loading parameters +++++++++++++++"
-    # base = importr('base')
-    # base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
-    # posvector = robjects.StrVector(file_list['positive'])
-    # negvector = robjects.StrVector(file_list['negative'])
-    # files = robjects.ListVector({'positive': posvector, 'negative': negvector})
-    # print "----------------- File list loaded ----------------"
-    # group_dict = {}
-    # for k in group_list.keys():
-    # 	group_dict[k] = robjects.StrVector(group_list[k])
-    # groups = robjects.ListVector(group_dict)
-    # print "----------------- Group list loaded ---------------"
-    # standards = robjects.StrVector(standard_list)
-    # print "--------------- Standard list loaded --------------"
-    # contrasts = robjects.StrVector(comparisons)
-    # print "--------------- Contrast list loaded --------------"
-    # databases = robjects.StrVector(database_list)
-    # print "--------------- Database list loaded --------------"
-    # pimp = importr('PiMP')
-    # runPipeline = robjects.r['Pimp.runPipeline']
-    # runPipeline(files=files, groups=groups, contrasts=contrasts, standards=standards, databases=databases, nSlaves=15)
+def start_pimp_pipeline(analysis, project, saveFixtures=False):
 
-    # Extra calls for running Frank.
-
-    pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
-    frank_experiment = pimpFrankLink.frank_expt
-    print "Pimp tasks Experiment ", frank_experiment
-    fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
-    print "Pimp Tasks FragSet ", fragmentation_set
-    fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
-    num_fragment_files = len(fragment_files)
-    #Link the Frank fragment set and the pimp analysis set
-    PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis,frank_fs=fragmentation_set)
-
-    logger.info('There are %s' % num_fragment_files, 'fragment files to be processed and are: %s' % fragment_files)
-
-    r_command_list = [settings.RSCRIPT_PATH, os.path.join(os.path.dirname(settings.BASE_DIR), '..', 'runPiMP.R'),
-                      str(analysis.id), str(saveFixtures)]
-    r_command = " ".join(r_command_list)
-    logger.info('r_command is %s' % r_command)
-
+    """ Starts the pimp R pipeline
+    :type analysis: object
+    """
     analysis.status = 'Processing'
-    analysis.save(update_fields=['status'])
-    connection.close()
 
-    # Here is the entry point to the R pipeline
-    return_code = subprocess.call(r_command, shell=True)
-
-    xml_file_name = ".".join(["_".join(["analysis", str(analysis.id)]), "xml"])
-    xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(project.id), xml_file_name)
+    pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
+    pipeline.setup()
+    xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
 
     if os.path.exists(xml_file_path):
+        logger.info('Populating database')
         populate_database(xml_file_path)
+    else:
+        logger.info('XML file does not exist')
 
-        # Start the R pipeline for Frank passing in the Pimp MS1 peaks.
-        if num_fragment_files > 0:
+    connection.close()
 
-            #Get the MS1 peaks associated with this analysis
-            ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("id","mass","rt","polarity")
+@celery.task
+def end_pimp_pipeline(analysis, project, user, successful):
 
-            #Put the data into a dataFrame format in order to be passed to R.
-            #Intensity set to -0.25 until we decide what should be done with it.
-            data = []
-            for id, mass, rt, polarity in ms1_peaks:
-                value = (id, float(mass), float(rt), -0.25, polarity)
-                data.append(value)
-            df = pd.DataFrame(data, columns=['pimp_id', 'mz', 'rt', 'intensity', 'polarity'])
+    print "In the end of the pimp pipeline"
 
-            #Get the polarities for the MS1 peaks and run through Frank
-            polarities = df.polarity.unique()
-
-            tasks = []
-            for p in polarities:
-
-                df_pol = df[df.polarity == p]
-                pandas2ri.activate()
-                ms1_df_pol = pandas2ri.py2ri(df_pol)
-
-                # Append tasks to extract the peaks for the fragmentation files using Frank and the ms1 peaks
-                tasks.append(input_peak_list_to_database_signature(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol))
-
-            #If we have fragmentation files then we can create an AnnotationQuery and subsequently run the tools.
-            #Add the default annotations method to run after the DB is populated
-
-            print type(run_default_annotations)
-            tasks.append(run_default_annotations.si(fragmentation_set, analysis.id, user))
-            print "here"
-            #Run the tasks in a chain
-            print "Running the Peak extraction, DB population and default annotations"
-            chain(tasks)()
-            print "Finished processing the fragments for this run"
-
+    # when pimp R analysis with or without fragments has finished
+    if successful and frank_success(analysis):
         analysis.status = 'Finished'
         analysis_succeeded = True
     else:
@@ -269,10 +204,51 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=False):
         analysis_succeeded = False
 
     analysis.save(update_fields=['status'])
+    print 'the status of the analysis is', analysis.status
+
     try:
+        print 'analysis succeeded is', analysis_succeeded
         send_email(analysis, project, user, analysis_succeeded)
+        print 'An email should have been sent'
+
     except Exception as e:
         logger.info('Sending email failed: %s', e)
+        print 'email failed'
 
-    success = True if return_code == 0 else False
+
+#Check that the Frank run associated with this analysis was successful
+def frank_success(analysis):
+
+    success = True
+    analysis_frag_link = PimpAnalysisFrankFs.objects.get(pimp_analysis=analysis)
+    frag_set = analysis_frag_link.frank_fs
+    print "Frag set status is:", frag_set.status
+    annot_queries = AnnotationQuery.objects.filter(fragmentation_set=frag_set)
+
+    for a_query in annot_queries:
+        if a_query.status is "Completed with Errors":
+            success = False
+
+    if frag_set.status is "Completed with Errors":
+        print "In frag set staus"
+        success = False
+
+    print "The success of the FrAnK run is", success
+
     return success
+
+
+def get_ms1_df(analysis):
+
+    #Get the MS1 peaks associated with this analysis
+    print "Getting the MS1 dataframe"
+    ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("id", "mass", "rt", "polarity")
+    # Put the data into a dataFrame format in order to be passed to R.
+    # Intensity set to -0.25 until we decide what should be done with it.
+    data = []
+    for id, mass, rt, polarity in ms1_peaks:
+        value = (id, float(mass), float(rt), -0.25, polarity)
+        data.append(value)
+    df = pd.DataFrame(data, columns=['pimp_id', 'mz', 'rt', 'intensity', 'polarity'])
+
+    return df

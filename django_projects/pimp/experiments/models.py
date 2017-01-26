@@ -23,7 +23,9 @@ class Comparison(models.Model):
 		return self.name
 
 class AttributeComparison(models.Model):
-	control = models.BooleanField(default=False)
+	# AttributeComparisons with the same group and comparison have been grouped together.
+	# If there are two groups, the lower group is the control group.
+	group = models.IntegerField()
 	attribute = models.ForeignKey(Attribute)
 	comparison = models.ForeignKey(Comparison)
 

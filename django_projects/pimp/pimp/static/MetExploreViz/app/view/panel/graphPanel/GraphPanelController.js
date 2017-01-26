@@ -37,7 +37,7 @@ Ext.define('metExploreViz.view.panel.graphPanel.GraphPanelController', {
 				if(buttonCopyNetwork!=undefined)
 				{
 					buttonCopyNetwork.setDisabled(false);
-					buttonCopyNetwork.setTooltip('The graph will be copy in other frame');
+					buttonCopyNetwork.setTooltip('The graph will be copied in an other frame');
 				}	
 
 				if(buttonSaveNetwork!=undefined)

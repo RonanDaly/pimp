@@ -58,6 +58,18 @@ metExploreD3.GraphCaption = {
 	* Draw caption
 	*/
 	drawCaption : function(){
+		 d3.select("#viz").select("#D3viz")
+			.select('#captionComparment')
+			.remove();
+
+	    d3.select("#viz").select("#D3viz")
+			.select('#captionPathway')
+			.remove();
+
+	    d3.select("#viz")
+			.select("#D3viz")
+			.select(".logoViz")
+			.remove();
 		// Load user's preferences
 		var reactionStyle = metExploreD3.getReactionStyle();
 		var maxDimRea = Math.max(reactionStyle.getWidth(),reactionStyle.getHeight());
@@ -188,7 +200,7 @@ metExploreD3.GraphCaption = {
 		d3.select("#viz").select("#D3viz")
 			.append("svg:text")
 			.attr('id', 'metexplore')
-			.text('metExploreViz')
+			.text('MetExploreViz')
 			.attr('x', $("#viz").width() - 130)
 			.attr('y', $("#viz").height() - 10);
 
@@ -245,11 +257,47 @@ metExploreD3.GraphCaption = {
 			.attr('y',15)
 			.attr("transform","translate(30,140)");  
 	    	    
+		metExploreD3.GraphCaption.colorPathwayLegend(175);
+
 	    metExploreD3.GraphCaption.colorMetaboliteLegend(175);
+	    
 	    d3.select("#viz").select("#D3viz")
 			.select('#captionComparment')
 			.classed('hide', true);
 
+	    d3.select("#viz").select("#D3viz")
+			.select('#captionPathway')
+			.classed('hide', true);
+
+		metExploreD3.GraphCaption.majCaption();
+	},
+
+	/*****************************************************
+	* Maj caption
+	*/
+	majCaption : function(){
+		var s_GeneralStyle = _metExploreViz.getGeneralStyle();
+		
+		var component = s_GeneralStyle.isDisplayedCaption();
+		if(component=="Pathways"){
+			d3.select("#viz").select("#D3viz")
+				.select('#captionComparment')
+				.classed('hide', true);
+
+			d3.select("#viz").select("#D3viz")
+				.select('#captionPathway')
+				.classed('hide', false);
+		}
+		else
+		{
+			d3.select("#viz").select("#D3viz")
+				.select('#captionComparment')
+				.classed('hide', false);
+
+			d3.select("#viz").select("#D3viz")
+				.select('#captionPathway')
+				.classed('hide', true);
+		}
 	},
 
 	/*****************************************************
@@ -315,19 +363,44 @@ metExploreD3.GraphCaption = {
 			position+=10;
 
 			caption.append("svg:text")
-				.text(compartment.getName())
+				.html(compartment.getName())
 				.attr('x', 20)
 				.attr('y', -6)
 				.attr("transform","translate(30,"+position+")");
 
 			position+=10;				
         }
+    	
     },
 	/*****************************************************
 	* Draw caption of metabolic compartiments
     * @param {} top : top of the metabolite caption
 	*/
 	colorPathwayLegend : function(top){
+
+		var groups = metExploreD3.getPathwaysSet();
+		var pathways = [];
+
+		groups.forEach(function(path){
+			pathways.push({"key":path});
+		});
+
+		var phase = metExploreD3.getPathwaysLength();
+        if (phase == undefined) phase = 0;
+        center = 128;
+        width = 127;
+        frequency = Math.PI*2*0.95/phase;
+		
+		for (var i = 0; i < phase; i++)
+        {
+
+			red   = Math.sin(frequency*i+2+phase) * width + center;
+			green = Math.sin(frequency*i+0+phase) * width + center;
+			blue  = Math.sin(frequency*i+4+phase) * width + center;
+	 
+			var pathway = pathways[i];
+			pathway.color=metExploreD3.GraphUtils.RGB2Color(red,green,blue);				
+        }
 
 		var caption =  d3.select("#viz").select("#D3viz")
 	    	.append("svg:g")
@@ -336,6 +409,7 @@ metExploreD3.GraphCaption = {
 			.attr("y1", 0)
 			.attr("x2", 15)
 			.attr("y2", 0);
+
     	// Load user's preferences
 		var reactionStyle = metExploreD3.getReactionStyle();
 		var maxDimRea = Math.max(reactionStyle.getWidth(),reactionStyle.getHeight());
@@ -345,14 +419,14 @@ metExploreD3.GraphCaption = {
 		var maxDimMet = Math.max(metaboliteStyle.getWidth(),metaboliteStyle.getHeight());
 		var xMet = 20/maxDimMet;
 		var session = _metExploreViz.getSessionById('viz');
-		session.groups.sort(function(a,b){
+		pathways.sort(function(a,b){
 			if(a.key < b.key) return -1;
 		    if(a.key > b.key) return 1;
 		    return 0;
 		});
 
 
-		var phase = session.groups.length;
+		var phase = pathways.length;
         if (phase == undefined) phase = 0;
         center = 128;
         width = 127;
@@ -375,7 +449,7 @@ metExploreD3.GraphCaption = {
 			green = Math.sin(frequency*i+0+phase) * width + center;
 			blue  = Math.sin(frequency*i+4+phase) * width + center;
 	 
-			var group = session.groups[i];
+			var group = pathways[i];
 
 			caption.append("svg:line")
 				.attr('class', 'metabolite')
@@ -390,7 +464,7 @@ metExploreD3.GraphCaption = {
 			position+=10;
 
 			caption.append("svg:text")
-				.text(group.key)
+				.html(group.key)
 				.attr('x', 20)
 				.attr('y', -6)
 				.attr("transform","translate(30,"+position+")");

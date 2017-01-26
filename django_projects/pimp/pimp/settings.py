@@ -306,3 +306,11 @@ DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': getString('PIMP_BACKUP_LOCATION', os.path.join(os.path.dirname(BASE_DIR), 'backups'))}
 DBBACKUP_CLEANUP_KEEP=2
 DBBACKUP_CLEANUP_KEEP_MEDIA=2
+
+NOTEBOOK_ARGUMENTS = [
+    '--ip', '0.0.0.0',
+]
+
+MSPEPSEARCH_IMAGE = getString('MSPEPSEARCH_IMAGE', 'nist-image')
+INTERNAL_NIST_QUERY_DIR = getString('INTERNAL_NIST_QUERY_DIR', os.path.join(os.path.dirname(BASE_DIR), 'pimp', 'frank', 'NISTQueryFiles'))
+EXTERNAL_NIST_QUERY_DIR = getString('EXTERNAL_NIST_QUERY_DIR', INTERNAL_NIST_QUERY_DIR)

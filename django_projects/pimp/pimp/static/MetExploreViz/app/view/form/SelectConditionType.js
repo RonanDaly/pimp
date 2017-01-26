@@ -22,6 +22,11 @@ Ext.define('metExploreViz.view.form.SelectConditionType', {
                 target: c.getEl(),
                 html: 'Select a type of data'
             });
+        },
+        change: function(){
+            console.log('change');
+            var comboCond = Ext.getCmp('selectCondition');
+            comboCond.clearValue();
         }
     }, 
     displayField: 'name',

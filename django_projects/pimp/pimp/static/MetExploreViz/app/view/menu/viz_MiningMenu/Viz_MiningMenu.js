@@ -19,10 +19,21 @@ Ext.define('metExploreViz.view.menu.viz_MiningMenu.Viz_MiningMenu', {
 
         items:  [
              {
+                text: 'Algorithm', 
+                scale: 'large',
+                menu:{id:'vizIdAlgorithmMenu',xtype: 'vizAlgorithmMenu'},
+                id:'vizAlgorithmMenuID',
+                reference:'vizAlgorithmMenuID',
+                padding:'0 0 0 0',
+                // iconCls:'drawhierarchicalalgorithm',
+                hidden:true
+             },
+             {
                  text: 'Highlight Subnetwork',
                  reference :'highlightSubnetwork',
                  tooltip:'Highlight sub-network based on node selection or mapped nodes',
-                 iconCls:'highlightSubnetwork'
+                 iconCls:'highlightSubnetwork',
+                 hidden:true
              },
               {
                  text: 'Extract Subnetwork',

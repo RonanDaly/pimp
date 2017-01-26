@@ -1,3 +1,18 @@
+Pimp.gapFilling <- function(in_file, out_file, ionisation, ppm, rtwindow) {
+	PeakML.GapFiller(filename=in_file, ionisation=ionisation, Rawpath=NULL,
+		outputfile=out_file, ppm=ppm, rtwin=rtwindow,
+		nSlaves=0, fillAll=TRUE
+	)
+}
+
+Pimp.relatedPeaks <- function(in_file, out_file, basepeaks_file, ppm, rtwindow) {
+	mzmatch.ipeak.sort.RelatedPeaks(i=in_file, v=TRUE,o=out_file,
+		basepeaks=basepeaks_file,ppm=ppm, rtwindow=rtwindow)
+}
+
+# --------------------------------------------------------
+# replaced by experiments.pipelines.pipeline_rpy2.py
+# --------------------------------------------------------
 Pimp.processRawData <- function(files=character(), groups=list(), databases=character(), xcms.params=list(), peakml.params=list(), mzmatch.params=list(), mzmatch.outputs=list(), mzmatch.filters=list(), polarity=c("positive", "negative"), verbose=TRUE, nSlaves=0, batch.correction=FALSE) {
 	logger <- getPiMPLogger('Pimp.processRawData')
 	loginfo('files: %s', files, logger=logger)
@@ -19,11 +34,11 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	if(length(databases) < 1)
 		warning("No external databases found. No external identification will be done")
 
-	
+
 	##Get mzXML files parent directory.  Modify output file names for this polarity.
 	#parent.dir <- unique(dirname(files))
 	#if(length(parent.dir) > 1)
-	#	stop("Sample files in multiple directories.")	
+	#	stop("Sample files in multiple directories.")
 
 	#stds.xml.db.idx <- match("stds.xml.db", names(mzmatch.outputs))
 	#mzmatch.outputs[-stds.xml.db.idx] <- lapply(mzmatch.outputs[-stds.xml.db.idx], function(x){file.path(parent.dir, x)})
@@ -33,28 +48,28 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	##
 	## Process mzXML files
 	##
-	
+
 	#Generate xcmsSet
 	if(verbose){ message("Generating xcmsSet.") }
 
-	xset <- xcmsSet(files, 
-		method=xcms.params$method, ppm=xcms.params$ppm, peakwidth=xcms.params$peakwidth, 
-		snthresh=xcms.params$snthresh, prefilter=xcms.params$prefilter, integrate=xcms.params$integrate, 
+	xset <- xcmsSet(files,
+		method=xcms.params$method, ppm=xcms.params$ppm, peakwidth=xcms.params$peakwidth,
+		snthresh=xcms.params$snthresh, prefilter=xcms.params$prefilter, integrate=xcms.params$integrate,
 		mzdiff=xcms.params$mzdiff, verbose.columns=xcms.params$verbose.columns, fitgauss=xcms.params$fitgauss, nSlaves=nSlaves
 	)
 
 	#Correct Retention Times and write out individual PeakML files.
 	if(verbose) { message("Correcting retention times.") }
-	
-	peakml.files <- Pimp.rtcorrect(xset=xset, method=mzmatch.params$rt.alignment, peakml.params=peakml.params, mzmatch.outputs=mzmatch.outputs, nSlaves=nSlaves)	
+
+	peakml.files <- Pimp.rtcorrect(xset=xset, method=mzmatch.params$rt.alignment, peakml.params=peakml.params, mzmatch.outputs=mzmatch.outputs, nSlaves=nSlaves)
 	loginfo('peakml.files: %s', peakml.files, logger=logger)
-	
+
 	#Combine files by group, RSD filter if required (Not convinced we should be using this filter) and combine group files
 	#combined directory
 	combined.dir <- ifelse(mzmatch.params$rt.alignment != "none", mzmatch.outputs$alignment.folder, mzmatch.outputs$combined.folder) #"combined_rt.alignment", "combined"
 	loginfo('combined.dir: %s', combined.dir, logger=logger)
 	if(verbose) { message("Combined directory ", combined.dir) }
-	
+
 	#combine and RSD
 	final.combined.peakml <- Pimp.combine.peakml(files=peakml.files, combined.dir=combined.dir, groups=groups,
 		mzmatch.filters=mzmatch.filters, mzmatch.outputs=mzmatch.outputs, mzmatch.params=mzmatch.params, nSlaves=nSlaves
@@ -67,14 +82,14 @@ Pimp.processRawData <- function(files=character(), groups=list(), databases=char
 	#Uses "soft" filters. i.e. for minintensity as long as one sample is above threshold function keeps everything.
 	filtered.file <- Pimp.filter.multifilter(file=final.combined.peakml, mzmatch.filters=mzmatch.filters, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs)
 
-	
+
 	#Gapfilling
 	PeakML.GapFiller(
-		filename=filtered.file, 
+		filename=filtered.file,
 		ionisation=peakml.params$ionisation,
-		Rawpath=NULL, 
-		outputfile=mzmatch.outputs$final.combined.gapfilled.file, 
-		ppm=peakml.params$ppm, 
+		Rawpath=NULL,
+		outputfile=mzmatch.outputs$final.combined.gapfilled.file,
+		ppm=peakml.params$ppm,
 		rtwin=peakml.params$rtwin,nSlaves=0,
 		fillAll=TRUE
   	)

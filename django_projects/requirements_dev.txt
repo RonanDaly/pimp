@@ -1,0 +1,2 @@
+ipython # debugging via jupyter notebook environment
+jupyter # debugging via jupyter notebook environment

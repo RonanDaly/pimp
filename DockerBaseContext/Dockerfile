@@ -39,6 +39,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
 	R CMD javareconf
 
+COPY java.conf /etc/ld.so.conf.d/java.conf
+COPY install_docker_cli.sh /tmp
+RUN /tmp/install_docker_cli.sh && rm /tmp/install_docker_cli.sh
 RUN groupadd pimp && useradd -g pimp -m pimp
 RUN mkdir /home/pimp/static /home/pimp/media /home/pimp/backups
 RUN chown -R pimp:pimp /home/pimp

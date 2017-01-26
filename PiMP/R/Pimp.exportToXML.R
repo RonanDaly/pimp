@@ -1,5 +1,6 @@
-Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), ...) {
+Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data.frame(), toptables=list(), pathway.stats=data.frame(), identified.compounds.by.pathway=list(), sample.metadata, contrasts, db, ...) {
     logger <- getPiMPLogger('Pimp.exportToXML')
+    logger$info('Exporting to XML')
 
     if(is.null(id)) {
         stop("No analysis id found.")
@@ -14,7 +15,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     }
 
     if(!exists("db")) {
-        warn("No database connection.  Unable to create XML file.")
+        logging::logwarn("No database connection.  Unable to create XML file.", logger=logger)
         return()
     }
     
@@ -97,23 +98,31 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
     member.comparison.set = xml_add_child(settings, "member_comparison_set")
 
-    experiment.comparisons <- getExperimentComparisons(db, experiment_id)
-    for(i in nrow(experiment.comparisons)) {
-        contrasts <- experiment.comparisons$contrast
-        cntrls <- experiment.comparisons$control
-        con = unlist(strsplit(cntrls, ','))
-        if ( con[1] == '0' ) {
-            cont = unlist(strsplit(contrasts, ','))
-            contrasts = paste0(cont[2], ',', cont[1])
-            experiment.comparisons$contrast[i] <- contrasts
-        }
+    #experiment.comparisons <- getExperimentComparisons(db, experiment_id)
+    #for(i in nrow(experiment.comparisons)) {
+    #    contrasts <- experiment.comparisons$contrast
+    #    cntrls <- experiment.comparisons$control
+    #    con = unlist(strsplit(cntrls, ','))
+    #    if ( con[1] == '0' ) {
+    #        cont = unlist(strsplit(contrasts, ','))
+    #        contrasts = paste0(cont[2], ',', cont[1])
+    #        experiment.comparisons$contrast[i] <- contrasts
+    #    }
+    #}
+    
+    for (comparison in unique(contrasts$comparison)) {
+      comparison_id = contrasts[contrasts$comparison == comparison,'id'][1]
+      factor = contrasts[contrasts$comparison == comparison,'factor'][1]
+      member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(comparison_id))
+      comparison.members = contrasts[contrasts$factor == factor,'attribute_id']
+      sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
     }
 
-    for(i in 1:nrow(experiment.comparisons)) {
-        member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(experiment.comparisons$id[i]))
-        comparison.members <- getExperimentComparisonMembers(db, experiment.comparisons$id[i])
-        sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
-    }
+    #for(i in 1:nrow(experiment.comparisons)) {
+    #    member.comparison = xml_add_child(member.comparison.set, 'member_comparison', id=as.character(experiment.comparisons$id[i]))
+    #    comparison.members <- getExperimentComparisonMembers(db, experiment.comparisons$id[i])
+    #    sapply(comparison.members, function(x) xml_add_child(member.comparison, 'member_reference', id=as.character(x)))
+    #}
 
 
     ##parameters
@@ -239,12 +248,14 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
             # }
         }
 
-            #comparisons            
-        for(k in 1:nrow(experiment.comparisons)) {
-            tt <- toptables[[experiment.comparisons$name[k]]]
+            #comparisons
+        lev = unique(as.character(contrasts$comparison))
+        ids = unique(as.character(contrasts$id))
+        for(k in 1:length(lev)) {
+            tt <- toptables[[lev[k]]]
             peak.idx <- match(peak.id, rownames(tt))
             if(!is.na(peak.idx) && !is.na(tt$P.Value[peak.idx])){
-                comparison = xml_add_child(comparisonset, 'comparison', id=as.character(experiment.comparisons$id[k]))
+                comparison = xml_add_child(comparisonset, 'comparison', id=as.character(ids[k]))
                 xml_add_child(comparison, 'logfc', tt$logFC[peak.idx])
                 xml_add_child(comparison, 'pvalue', tt$P.Value[peak.idx])
                 xml_add_child(comparison, 'adjpvalue', tt$adj.P.Val[peak.idx])

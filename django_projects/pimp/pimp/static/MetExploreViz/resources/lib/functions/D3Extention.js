@@ -47,3 +47,35 @@ d3.selection.enter.prototype =
 			.style("stroke-width", strokewidth);
 	};
 
+	d3.selection.prototype.addNodeText = function(style) {
+
+		var minDim = Math.min(style.getWidth(),style.getHeight());
+			
+		this
+			.append("svg:text")
+	        .attr("fill", "black")
+	        .attr("class", function(d) { return d.getBiologicalType(); })
+			.each(function(d) { 
+				var el = d3.select(this);
+			    var name = style.getDisplayLabel(d, style.getLabel());
+				name = name.split(' ');
+				el.text('');
+				for (var i = 0; i < name.length; i++) {
+					var nameDOMFormat = $("<div/>").html(name[i]).text();
+			        var tspan = el.append('tspan').text(nameDOMFormat);
+			        if (i > 0)
+			            tspan.attr('x', 0).attr('dy', '5');
+			    }
+			})
+			.style("font-size",style.getFontSize())
+			.style("paint-order","stroke")
+			.style("stroke-width", 1)
+			.style("stroke", "white")
+			.style("stroke-opacity", "0.7")
+			.attr("dy", ".4em")
+			.style("font-weight", 'bold')
+			.style("pointer-events", 'none')
+			.attr("y",minDim/2+5);
+
+	};
+

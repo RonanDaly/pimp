@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from data.models import Peak as PimpPeak
-
+import sys
 
 class PeakBuilder:
     """
@@ -197,11 +197,9 @@ class MSNPeakBuilder(PeakBuilder):
         """
 
         fragment_files = SampleFile.objects.filter(sample__experimental_condition__experiment=self.experiment)
-        print "The fragment files are" + str(fragment_files)
 
         # If valid parameters then create the peak model instance
         sample_file_name = self.sample_file_vector.levels[self.sample_file_vector[peak_array_index] - 1]
-        print "The sample file name is " + str(sample_file_name)
         peak_source_file = fragment_files.get(name=sample_file_name)
         peak_mass = self.mz_ratio_vector[peak_array_index]
         peak_retention_time = self.retention_time_vector[peak_array_index]
