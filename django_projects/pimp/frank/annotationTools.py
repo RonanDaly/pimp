@@ -729,13 +729,6 @@ class NISTQueryTool:
         
         # Determine suitable names for both the query file and nist output files
         
-        #Local directory name
-        self.query_nist_dir = os.path.join(
-            os.path.dirname(settings.BASE_DIR),
-            'pimp',
-            'frank',
-            'NISTQueryFiles')
-        
         #Docker directory name
         
         self.query_docker_dir = os.path.join(
@@ -743,12 +736,12 @@ class NISTQueryTool:
             )
         
         self.query_file_name = os.path.join(
-            self.query_nist_dir,
+            settings.INTERNAL_NIST_QUERY_DIR,
             str(self.annotation_query.id)+'.msp'
             )
         
         self.nist_output_file_name = os.path.join(
-            self.query_nist_dir,
+            settings.INTERNAL_NIST_QUERY_DIR,
             str(self.annotation_query.id)+'_nist_out.txt'
             )  
         
@@ -850,8 +843,8 @@ class NISTQueryTool:
 #         nist_query_call =["/bin/bash", command, param_query_nist_dir, search_type, str(max_number_of_hits),
 #                    self.docker_input_file, self.docker_output_file_name]
         nist_query_call = ["docker","run","--rm","-v",
-                           self.query_nist_dir+":"+"/home/nist/data",
-                           "nist-image",
+                           settings.EXTERNAL_NIST_QUERY_DIR+":"+"/home/nist/data",
+                           settings.NIST_IMAGE,
                            "wine",
                            "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
                            #tool_parameters['source'],
