@@ -31,15 +31,10 @@ logger = logging.getLogger(__name__)
 
 @celery.task
 def error_handler(task_id, analysis, project, user, success):
-
     result = AsyncResult(task_id)
-
-
     print "We are in the celery error handler routine and running end of pipeline as failed"
     print "The traceback result: %s", result.traceback
-
     end_pimp_pipeline(analysis, project, user, success)
-
 
 @celery.task
 def run_frags(pimp_analysis, frank_expt, fragmentation_set):
@@ -62,7 +57,6 @@ def run_frags(pimp_analysis, frank_expt, fragmentation_set):
         populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_df_pol))
 
     return populate_tasks
-
 
 def populate_database(xml_file_path):
 

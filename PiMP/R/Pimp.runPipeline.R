@@ -339,8 +339,9 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
 	smd = as.data.table(sample.metadata, keep.rownames=TRUE)
 	count = smd[, list(Rows=list(.I)), by = eval(factorNames)]
 	for (group in count$Rows) {
+      samples = smd$rn[group]
 	  for (i in 1:nrow(raw.data)) {
-	    if ( all(raw.data[i,group] == 0 | is.na(raw.data[i,group])) ) {
+	    if ( all(raw.data[i,samples] == 0 | is.na(raw.data[i,samples])) ) {
 	      raw.data[i,group] = low_level
 	    }
 	  }
