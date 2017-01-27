@@ -41,7 +41,7 @@ def error_handler(task_id, analysis, project, user, success):
     end_pimp_pipeline(analysis, project, user, success)
 
 
-@celery.task
+#@celery.task
 def run_frags(pimp_analysis, frank_expt, fragmentation_set):
 
     #Get dataframe of ms1 peaks
@@ -61,7 +61,7 @@ def run_frags(pimp_analysis, frank_expt, fragmentation_set):
         # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
         populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_df_pol))
 
-    return populate_tasks
+    return chain(populate_tasks)
 
 
 def populate_database(xml_file_path):
@@ -201,7 +201,7 @@ def send_email(analysis, project, user, success):
 def create_run_frank_chain(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user):
     celery_tasks=[]
     if num_fragment_files > 0:
-        populate_tasks = run_frags.si(analysis, frank_experiment, fragmentation_set)
+        populate_tasks = run_frags(analysis, frank_experiment, fragmentation_set)
         celery_tasks.append(populate_tasks)
         celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
     celery_tasks.append(end_pimp_pipeline.si(analysis, project, user, True))
