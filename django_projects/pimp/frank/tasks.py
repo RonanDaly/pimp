@@ -5,6 +5,7 @@ from django.conf import settings
 from frank.models import Peak, SampleFile, CandidateAnnotation, Compound, AnnotationTool, \
     CompoundAnnotationTool, FragmentationSet, Experiment, AnnotationQuery
 from djcelery import celery
+from celery import chain
 from celery.utils.log import get_task_logger
 from decimal import *
 from frank.peakFactories import MSNPeakBuilder, GCMSPeakBuilder

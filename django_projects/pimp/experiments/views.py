@@ -26,7 +26,6 @@ from django.core.serializers import serialize
 from django.db.models.query import QuerySet
 from django.db.models import Avg, Max, Q
 from __builtin__ import True
-from Carbon.Aliases import true
 
 try:
     from django.utils import simplejson
@@ -50,8 +49,8 @@ from experiments import tasks
 
 from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
 from frank.models import SampleFile as FrankSampleFile
-from frank.views import input_peak_list_to_database_signature
 from frank.tasks import run_default_annotations
+
 
 #Celery imports
 
@@ -356,34 +355,10 @@ def start_analysis(request, project_id):
                 #Start the R pipeline for PiMP and FrAnK if fragments are present.
                 celery_tasks = []
 
-                #Always want to start the pipeline
+                #Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
+
                 celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
-
-                #If we have fragment files we want to add the FrAnK processing and annotation processed
-                if num_fragment_files > 0:
-                    try:
-                        df = tasks.get_ms1_df(analysis)
-
-                        # Get the polarities for the MS1 peaks and for each polarity add the peak processing to the chain.
-                        polarities = df.polarity.unique()
-                        for p in polarities:
-                            df_pol = df[df.polarity == p]
-                            pandas2ri.activate()
-                            ms1_df_pol = pandas2ri.py2ri(df_pol)
-
-                            # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
-                            celery_tasks.append(input_peak_list_to_database_signature(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol))
-
-                        celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
-
-                    except Exception as e:
-                        logger.error('The FrAnK analysis has failed, by throwing the exception: %s', e)
-                        tasks.end_pimp_pipeline.si(analysis, project, user, False)
-
-                celery_tasks.append(tasks.end_pimp_pipeline.si(analysis, project, user, True))
-                chain(celery_tasks, link_error=tasks.error_handler.s(analysis, project, user, False))()
-
-                #r = tasks.start_pimp_pipeline.delay(analysis, project, user)
+                chain(celery_tasks, link=tasks.create_run_frank_chain.si(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user))()user
 
                 message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
                 data = {"status": "success", "message": message}

@@ -1,11 +1,13 @@
 from djcelery import celery
 from celery.result import AsyncResult
+from celery import chain
 #from celery.utils.log import get_task_logger
 
 import os
 import subprocess
 import sys
 import pandas as pd
+from rpy2.robjects import pandas2ri
 import re
 
 from django.conf import settings
@@ -21,6 +23,8 @@ from experiments.pipelines.pipeline_rpy2 import Rpy2Pipeline
 
 
 from frank.models import PimpAnalysisFrankFs, AnnotationQuery
+from frank.views import input_peak_list_to_database_signature
+from frank.tasks import run_default_annotations
 logger = logging.getLogger(__name__)
 #logger = get_task_logger(__name__)
 
@@ -35,6 +39,30 @@ def error_handler(task_id, analysis, project, user, success):
     print "The traceback result: %s", result.traceback
 
     end_pimp_pipeline(analysis, project, user, success)
+
+
+@celery.task
+def run_frags(pimp_analysis, frank_expt, fragmentation_set):
+
+    #Get dataframe of ms1 peaks
+    df = get_ms1_df(pimp_analysis)
+
+    print "The dataframe is", df
+
+    populate_tasks = []
+
+    # Get the polarities for the MS1 peaks and for each polarity add the peak processing to the chain.
+    polarities = df.polarity.unique()
+    for p in polarities:
+        df_pol = df[df.polarity == p]
+        pandas2ri.activate()
+        ms1_df_pol = pandas2ri.py2ri(df_pol)
+
+        # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
+        populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_df_pol))
+
+    return populate_tasks
+
 
 def populate_database(xml_file_path):
 
@@ -168,6 +196,17 @@ def send_email(analysis, project, user, success):
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
     msg.send()
+
+@celery.task
+def create_run_frank_chain(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user):
+    celery_tasks=[]
+    if num_fragment_files > 0:
+        populate_tasks = run_frags.si(analysis, frank_experiment, fragmentation_set)
+        celery_tasks.append(populate_tasks)
+        celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
+    celery_tasks.append(end_pimp_pipeline.si(analysis, project, user, True))
+    chain(celery_tasks, link_error=error_handler.s(analysis, project, user, False))()
+
 
 @celery.task
 def start_pimp_pipeline(analysis, project, saveFixtures=False):
