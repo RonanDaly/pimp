@@ -20,7 +20,7 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=True):
 
     pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
     pipeline.setup()
-    return_code, xml_file_path = pipeline.run_pipeline()
+    xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
     fileExists = os.path.exists(xml_file_path)
 
@@ -37,8 +37,6 @@ def start_pimp_pipeline(analysis, project, user, saveFixtures=True):
         send_email(analysis, project, user, fileExists)
     except Exception as e:
         logger.warning('Problem sending email: %s', repr(e))
-    success = True if return_code == 0 else False
-    return success
 
 def populate_database(xml_file_path):
 
