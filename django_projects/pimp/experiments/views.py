@@ -351,7 +351,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         dataset = analysis.dataset_set.first()
         comparisons = analysis.experiment.comparison_set.all()
         num_comparisons = comparisons.count()
-        samples = Sample.objects.filter(attribute=Attribute.objects.filter(comparison__in=list(comparisons)).distinct().order_by('id')).distinct().order_by('attribute__id', 'id')
+        samples = Sample.objects.filter(attribute__comparison__in=comparisons).distinct().order_by('id')
 
         data = []
         c_data = []
@@ -363,7 +363,10 @@ def get_metabolites_table(request, project_id, analysis_id):
         sample_map = [sample.id for sample in samples]
         new_test_start = timeit.default_timer()
 
-        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity',
+                'comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id',
+                'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula',
+                'peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
         identified_compound_pathway_list = identified_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
         pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
 
