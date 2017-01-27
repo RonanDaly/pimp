@@ -358,7 +358,7 @@ def start_analysis(request, project_id):
                 #Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
 
                 celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
-                chain(celery_tasks, link=tasks.create_run_frank_chain.si(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user))()user
+                chain(celery_tasks, link=tasks.create_run_frank_chain.si(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user))()
 
                 message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
                 data = {"status": "success", "message": message}
