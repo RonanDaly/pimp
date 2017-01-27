@@ -853,7 +853,7 @@ class NISTQueryTool:
 #         nist_query_call =["/bin/bash", command, param_query_nist_dir, search_type, str(max_number_of_hits),
 #                    self.docker_input_file, self.docker_output_file_name]
         nist_query_call = ["docker","run","--rm","-v",
-                           os.path.abspath(settings.EXTERNAL_NIST_QUERY_DIR)+":"+"/home/nist/data",
+                           settings.EXTERNAL_NIST_QUERY_DIR+":"+"/home/nist/data",
                            settings.MSPEPSEARCH_IMAGE,
                            "wine",
                            "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
