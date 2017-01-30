@@ -20,7 +20,7 @@ services:
             - PIMP_LOG_LEVEL
             - MSPEPSEARCH_IMAGE
             - INTERNAL_NIST_QUERY_DIR=/home/pimp/media/frank/NISTQueryFiles
-            - EXTERNAL_NIST_QUERY_DIR=./media/frank/NISTQueryFiles
+            - EXTERNAL_NIST_QUERY_DIR=${PWD}/media/frank/NISTQueryFiles
         extends:
             file: common.yml
             service: logging

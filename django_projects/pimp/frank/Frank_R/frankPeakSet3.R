@@ -1,7 +1,6 @@
 source(paste(getwd(), '/frank/Frank_R/cachedEic.R', sep=""))
 source(paste(getwd(), '/frank/Frank_R/cachedMsms.R', sep=""))
 library(mzR)
-dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_102.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
 library(RMassBank)  # Load RMassBank
 
 ### This is the peak detection workflow based on the RMassBank's script from Emma ###

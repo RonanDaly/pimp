@@ -28,6 +28,16 @@ logger = logging.getLogger(__name__)
 
 MASS_OF_AN_PROTON = 1.00727645199076
 
+import errno
+
+def make_sure_path_exists(path):
+    print "Make sure path exists: ", path
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
 
 class MassBankQueryTool:
 
@@ -846,7 +856,7 @@ class NISTQueryTool:
 #                    self.docker_input_file, self.docker_output_file_name]
         nist_query_call = ["docker","run","--rm","-v",
                            settings.EXTERNAL_NIST_QUERY_DIR+":"+"/home/nist/data",
-                           settings.NIST_IMAGE,
+                           settings.MSPEPSEARCH_IMAGE,
                            "wine",
                            "C:\\2013_06_04_MSPepSearch_x32\\MSPepSearch.exe",
                            #tool_parameters['source'],
@@ -886,12 +896,13 @@ class NISTQueryTool:
 
         try:
             # Make the call to NIST to write the candidate annotations to the output file
+            print "Calling the nist_query_call %s" % nist_query_call
             call(nist_query_call)
             print "Finished the nist_query_call"
         except CalledProcessError:
             raise
-        except OSError:
-            raise
+        except OSError as e:
+            print(e)
         # Finally check to see if the call was successfull and the output file exists
         if os.path.isfile(self.nist_output_file_name) is False:
             raise Warning('NIST failed to write the output file')
@@ -923,7 +934,8 @@ class NISTQueryTool:
         # Conversely, massbank's search API does not
         output_file = None
         # Open new MSP file for writing
-        logger.info('query_file_name: %s', self.query_file_name)
+        logger.warning('query_file_name: %s', self.query_file_name)
+        make_sure_path_exists(os.path.dirname(self.query_file_name))
         with open(self.query_file_name, "w") as output_file:
             # Retrieve all the peaks in the fragmentation set
             peaks_in_fragmentation_set = Peak.objects.filter(fragmentation_set=self.fragmentation_set)

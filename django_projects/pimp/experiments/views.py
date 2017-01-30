@@ -18,7 +18,8 @@ from django.db.models import Count
 from projects.models import Project
 from data.models import *
 from compound.models import *
-from groups.models import Attribute
+from groups.models import *
+#from groups.models import Attribute
 from fileupload.models import Sample, CalibrationSample, Curve
 from frank.models import PimpFrankPeakLink
 # Add on
@@ -26,7 +27,6 @@ from django.core.serializers import serialize
 from django.db.models.query import QuerySet
 from django.db.models import Avg, Max, Q
 from __builtin__ import True
-from Carbon.Aliases import true
 
 try:
     from django.utils import simplejson
@@ -50,8 +50,8 @@ from experiments import tasks
 
 from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
 from frank.models import SampleFile as FrankSampleFile
-from frank.views import input_peak_list_to_database_signature
 from frank.tasks import run_default_annotations
+
 
 #Celery imports
 
@@ -356,34 +356,11 @@ def start_analysis(request, project_id):
                 #Start the R pipeline for PiMP and FrAnK if fragments are present.
                 celery_tasks = []
 
-                #Always want to start the pipeline
+                #Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
+
                 celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
+                chain(celery_tasks, link=tasks.create_run_frank_chain.si(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user))()
 
-                #If we have fragment files we want to add the FrAnK processing and annotation processed
-                if num_fragment_files > 0:
-                    try:
-                        df = tasks.get_ms1_df(analysis)
-
-                        # Get the polarities for the MS1 peaks and for each polarity add the peak processing to the chain.
-                        polarities = df.polarity.unique()
-                        for p in polarities:
-                            df_pol = df[df.polarity == p]
-                            pandas2ri.activate()
-                            ms1_df_pol = pandas2ri.py2ri(df_pol)
-
-                            # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
-                            celery_tasks.append(input_peak_list_to_database_signature(frank_experiment.slug, fragmentation_set.slug, ms1_df_pol))
-
-                        celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
-
-                    except Exception as e:
-                        logger.error('The FrAnK analysis has failed, by throwing the exception: %s', e)
-                        tasks.end_pimp_pipeline.si(analysis, project, user, False)
-
-                celery_tasks.append(tasks.end_pimp_pipeline.si(analysis, project, user, True))
-                chain(celery_tasks, link_error=tasks.error_handler.s(analysis, project, user, False))()
-
-                #r = tasks.start_pimp_pipeline.delay(analysis, project, user)
 
                 message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
                 data = {"status": "success", "message": message}
@@ -405,7 +382,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         dataset = analysis.dataset_set.first()
         comparisons = analysis.experiment.comparison_set.all()
         num_comparisons = comparisons.count()
-        samples = Sample.objects.filter(attribute=Attribute.objects.filter(comparison__in=list(comparisons)).distinct().order_by('id')).distinct().order_by('attribute__id', 'id')
+        samples = Sample.objects.filter(attribute__comparison__in=comparisons).distinct().order_by('id')
 
         data = []
         c_data = []
@@ -417,7 +394,10 @@ def get_metabolites_table(request, project_id, analysis_id):
         sample_map = [sample.id for sample in samples]
         new_test_start = timeit.default_timer()
 
-        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
+        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity',
+                'comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id',
+                'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula',
+                'peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
         identified_compound_pathway_list = identified_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
         pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
 
@@ -706,33 +686,18 @@ def get_peak_table(request, project_id, analysis_id):
         project = Project.objects.get(pk=project_id)
         dataset = analysis.dataset_set.all()[0]
         comparisons = analysis.experiment.comparison_set.all()
+        attributes = Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')
+        row_length = sum([len(a.sample.all()) for a in attributes])
+        #list(attributes)
+        #groups = Group.objects.filter(attribute__comparison__in=comparisons).distinct()
         s = Sample.objects.filter(
             attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
-        p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset)       \
+        list(s)
+        p = list(PeakDTSample.objects.filter(sample__in=s, peak__dataset=dataset, sample__attribute__in=attributes)       \
                                                 .select_related('peak', 'sample')   \
                                                 .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
-        pp = map(list, zip(*[iter(p)] * s.count()))
-
-        # Simon's addition to fetch frank_annotations if the peak
-        # has been linked to a frank peak and the frank_peak has
-        # a preferred_candidate_annotation set
-
-#         start2 = timeit.default_timer()
-#         print "before slower"
-#         frank_annotations = {}
-#         for peakgroup in pp:
-#             p2f = PimpFrankPeakLink.objects.filter(pimp_peak = peakgroup[0].peak)
-#             if p2f:
-#                 if p2f[0].frank_peak.preferred_candidate_annotation:
-#                     ac = p2f[0].frank_peak.preferred_candidate_annotation
-#                     fset = p2f[0].frank_peak.fragmentation_set.slug
-#                     pslug = p2f[0].frank_peak.slug
-#                     annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
-#                     frank_annotations[peakgroup[0].peak] = annot_string
-#         stop2 = timeit.default_timer()
-#         print "after slower: ", str(stop2 - start2)
-
+        pp = map(list, zip(*[iter(p)] * row_length))
         start2 = timeit.default_timer()
         print "before faster"
         first_peaks_ids = []
@@ -778,18 +743,6 @@ def get_single_comparison_table(request, project_id, analysis_id, comparison_id)
         list(peak_comparison_info)
 
         data = [list(elem) for elem in peak_comparison_info]
-        # s = Sample.objects.filter(
-        #     attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
-        #     'attribute__id', 'id')
-        # p = list(PeakDTSample.objects.filter(sample=s, peak__dataset=dataset)       \
-        #                                         .select_related('peak', 'sample')   \
-        #                                         .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
-        # pp = map(list, zip(*[iter(p)] * s.count()))
-        # data = [
-        #     [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] + [
-        #         round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
-        #         peakgroup] + [str(peakgroup[0].peak.polarity)] for peakgroup in pp]
-
         response = simplejson.dumps({"aaData": data})
         logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
 
@@ -820,6 +773,8 @@ def analysis_result(request, project_id, analysis_id):
         ############################# Samples & attributes ##############################
         logger.info("Samples -- START")
         s, member_list, sample_list = get_samples_and_attributes(comparisons)
+        sample_list_union = get_samples(comparisons)
+        logger.warn('!!!!!!sample_list_union: %s', sample_list_union)
         logger.info("Samples -- END")
 
         ############################# PCA calculation ##############################
@@ -883,6 +838,7 @@ def analysis_result(request, project_id, analysis_id):
         # populate in the request context
         c = {'member_list': member_list,
              'sample_list': sample_list,
+             'sample_list_union': sample_list_union,
              'pathway_list': pathway_list,
              'databases': databases,
              'dataset': dataset,
@@ -931,15 +887,25 @@ def get_pathway_url(request, project_id, analysis_id):
 
         return HttpResponse(response, content_type='application/json')
 
+def get_samples(comparisons):
+    s = Sample.objects.filter(
+        attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
+        'attribute__id', 'id')
+
+    member_list = list(Attribute.objects.filter(comparison=comparisons).distinct().order_by('id'))
+    logger.info('Member list: %s' % member_list)
+
+    sample_list = []
+    for member in member_list:
+        sample_list.extend(list(member.sample.all().order_by('id')))
+    sample_list = list(OrderedDict.fromkeys(sample_list))
+    logger.debug("sample list: %s", sample_list)
+
+    return  sample_list
+
+
+
 def get_samples_and_attributes(comparisons):
-
-    ######## Old query for members ########
-    # member_set = set()
-    # for comparison in comparisons:
-    #     member_set = member_set.union(set(comparison.attribute.all()))
-    # member_list = list(member_set)
-
-    ######## New query for members ########
     s = Sample.objects.filter(
         attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
         'attribute__id', 'id')
