@@ -41,25 +41,15 @@ def get_annotation_tool(name):
     annotation_tool = AnnotationTool.objects.get(slug=name)
     return annotation_tool
 
-<<<<<<< HEAD
-#Create and return annotation query given the correct parameters
-def get_annotation_query(fragSet, name, tool_name, analysis_id, params):
-
-    annotation_query, created = created = AnnotationQuery.objects.get_or_create(
-        name=fragSet.name+name+analysis_id,
-=======
-
 # Create and return annotation query given the correct parameters
 def get_annotation_query(fragSet, name, tool_name, params):
     annotation_query, created = AnnotationQuery.objects.get_or_create(
         name=fragSet.name + name,
->>>>>>> pimp_frank_integration
         fragmentation_set=fragSet,
         annotation_tool=get_annotation_tool(tool_name),
         annotation_tool_params=jsonpickle.encode(params))
 
     return annotation_query
-
 
 # Method to run a set of default annotations and set the preferred annotations to the highest
 # confidence level (clean methods) - currently used for PiMP/FrAnK intergration
@@ -69,17 +59,10 @@ def run_default_annotations(fragSet, analysis_id, user):
     print "In default annotations"
     # Parameters for nist annotation tool
     default_params_nist = {"search_type": "G",
-<<<<<<< HEAD
-                      "library": ["nist_msms", "nist_msms2", "massbank_msms"],
-                      "max_hits": 10}
-    #Create nist_query
-    nist_query = get_annotation_query(fragSet, "-NistQ", "nist", analysis_id, default_params_nist)
-=======
                            "library": ["nist_msms", "nist_msms2", "massbank_msms"],
                            "max_hits": 10}
     # Create nist_query
     nist_query = get_annotation_query(fragSet, "-NistQ", "nist", default_params_nist)
->>>>>>> pimp_frank_integration
 
     # Run the nist search for annotations
     print "running Nist from default"
