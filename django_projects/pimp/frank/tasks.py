@@ -55,7 +55,7 @@ def get_annotation_query(fragSet, name, tool_name, params):
 # Method to run a set of default annotations and set the preferred annotations to the highest
 # confidence level (clean methods) - currently used for PiMP/FrAnK intergration
 @celery.task
-def run_default_annotations(fragSet, analysis_id, user):
+def run_default_annotations(fragSet, user):
 
     print "In default annotations"
     # Parameters for nist annotation tool
