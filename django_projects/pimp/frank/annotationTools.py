@@ -901,9 +901,8 @@ class NISTQueryTool:
             raise
         except OSError as e:
             print(e)
-        # Finally check to see if the call was successfull and the output file exists
-        if os.path.isfile(self.nist_output_file_name) is False:
-            raise Warning('NIST failed to write the output file')
+        # Finally check to see if the call was successfull and the output file exists, AssertionError thrown if not true.
+        assert os.path.isfile(self.nist_output_file_name),"NIST failed to write the output file!"
         return True
 
     def _write_nist_msp_file(self):
