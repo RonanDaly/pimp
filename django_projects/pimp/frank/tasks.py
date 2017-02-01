@@ -302,7 +302,8 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     print 'Polarity = ' + str(pol_dir)
     if os.path.join(filepath, pol_dir):
         polarity_fp = os.path.join(filepath, pol_dir)
-        print polarity_fp
+        print "the polarity fp is", polarity_fp
+
 
         for f in os.listdir(polarity_fp):
             if f.endswith(".mzML"):
