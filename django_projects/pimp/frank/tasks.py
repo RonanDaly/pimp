@@ -42,6 +42,7 @@ def get_annotation_tool(name):
     annotation_tool = AnnotationTool.objects.get(slug=name)
     return annotation_tool
 
+
 # Create and return annotation query given the correct parameters
 def get_annotation_query(fragSet, name, tool_name, params):
     annotation_query, created = AnnotationQuery.objects.get_or_create(
@@ -51,6 +52,7 @@ def get_annotation_query(fragSet, name, tool_name, params):
         annotation_tool_params=jsonpickle.encode(params))
 
     return annotation_query
+
 
 # Method to run a set of default annotations and set the preferred annotations to the highest
 # confidence level (clean methods) - currently used for PiMP/FrAnK intergration
@@ -255,6 +257,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
         )
 
     print (filepath)
+
     # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
     # Store the source function as a variable
@@ -300,12 +303,22 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
         print "we have a polarity issue"
 
     print 'Polarity = ' + str(pol_dir)
-    if os.path.join(filepath, pol_dir):
-        polarity_fp = os.path.join(filepath, pol_dir)
-        print "the polarity fp is", polarity_fp
 
+    polarity_fp = os.path.join(filepath, pol_dir)
 
-        for f in os.listdir(polarity_fp):
+    print "The location of the file should be ", polarity_fp
+    files_in_dir = os.listdir(polarity_fp)
+
+    print "The files present in the directory are ", files_in_dir
+
+    """If we have a file in the directory we are looking at (should always be true for stand-alone FrAnK)
+    This catch is present in case the user has a dual polarity MS1 experiment but only adds fragments of a
+    single polarity.
+    """
+    #If there are files in the directory
+    if files_in_dir:
+
+        for f in files_in_dir:
             if f.endswith(".mzML"):
                 path = os.path.join(polarity_fp, f)
                 pol = findpolarity(path)
@@ -316,53 +329,50 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
                 file_pol_dict[path] = polarity
             else:
                 print 'no file of mzML type here'
+
+        print "the file polarity mapping is", file_pol_dict
+
+        # Put dictionary into dataframe for passing to R
+        df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
+        pandas2ri.activate()
+        f_pol_df = pandas2ri.py2ri(df)
+        print "The polarity_dataframe is", f_pol_df
+
+        # If no MS1 peaks, generate the peak matrix for Frank
+        if ms1_peaks is None:
+            output = r_frank_pimp_prepare(filepath)
+        # Else there are MS1 peaks and we want to prepare the files for Method 3
         else:
-            print 'no file of polarity' + str(p)
+            output = r_frank_pimp_prepare(filepath, ms1_peaks, f_pol_df)
 
-    print "the file polarity mapping is", file_pol_dict
-
-    # Put dictionary into dataframe for passing to R
-    df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
-    pandas2ri.activate()
-    f_pol_df = pandas2ri.py2ri(df)
-    print "The polarity_dataframe is", f_pol_df
-
-    # If no MS1 peaks, generate the peak matrix for Frank
-    if ms1_peaks is None:
-        output = r_frank_pimp_prepare(filepath)
-    # Else there are MS1 peaks and we want to prepare the files for Method 3
-    else:
-        output = r_frank_pimp_prepare(filepath, ms1_peaks, f_pol_df)
-
-    try:
-        # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
-        # into the database.
-        # Pass the experiment name slug in order to grab the experiment.
-        peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
-        # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
-        # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
-        peak_generator.populate_database_peaks()
-        # Upon completion the status of the fragmentation set is updated, to inform the user of completion
-        fragmentation_set_object.status = 'Completed Successfully'
-    # Should the addition of the peaks to the database fail, the exceptions are passed back up
-    # and the status is updated.
-    except ValueError as value_error:
-        print value_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except TypeError as type_error:
-        print type_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except ValidationError as validation_error:
-        print validation_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except MultipleObjectsReturned as multiple_error:
-        print multiple_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except ObjectDoesNotExist as object_error:
-        print object_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    fragmentation_set_object.save()
-    return True
+        try:
+            # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
+            # into the database.
+            # Pass the experiment name slug in order to grab the experiment.
+            peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
+            # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
+            # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
+            peak_generator.populate_database_peaks()
+            # Upon completion the status of the fragmentation set is updated, to inform the user of completion
+            fragmentation_set_object.status = 'Completed Successfully'
+        # Should the addition of the peaks to the database fail, the exceptions are passed back up
+        # and the status is updated.
+        except ValueError as value_error:
+            print value_error.message
+            fragmentation_set_object.status = 'Completed with Errors'
+        except TypeError as type_error:
+            print type_error.message
+            fragmentation_set_object.status = 'Completed with Errors'
+        except ValidationError as validation_error:
+            print validation_error.message
+            fragmentation_set_object.status = 'Completed with Errors'
+        except MultipleObjectsReturned as multiple_error:
+            print multiple_error.message
+            fragmentation_set_object.status = 'Completed with Errors'
+        except ObjectDoesNotExist as object_error:
+            print object_error.message
+            fragmentation_set_object.status = 'Completed with Errors'
+        fragmentation_set_object.save()
 
 
 @celery.task
