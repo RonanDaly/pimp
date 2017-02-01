@@ -132,9 +132,9 @@ $(function () {
 
         //KMcL: Adding the fragment file to be accepted
         if (url.split("/")[url.split("/").length-2] == "fragmentfile"){
-            console.log("hihi");
+            console.log("fragupload");
             $('#fileupload').fileupload('option', {
-                acceptFileTypes: /(\.|\/)(mzxml|mzML)$/i,
+                acceptFileTypes: /(\.|\/)(mzML)$/i,
                 sequentialUploads: true,
             });
         }
