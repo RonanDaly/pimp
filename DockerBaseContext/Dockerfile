@@ -44,6 +44,7 @@ RUN wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/downloa
     chmod +x /usr/local/bin/gosu
 
 COPY java.conf /etc/ld.so.conf.d/java.conf
+RUN ldconfig
 COPY docker-entrypoint.sh /usr/local/bin/
 COPY install_docker_cli.sh /tmp
 RUN /tmp/install_docker_cli.sh && rm /tmp/install_docker_cli.sh
