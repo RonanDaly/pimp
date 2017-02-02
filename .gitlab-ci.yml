@@ -68,8 +68,6 @@ package:
             - docker-compose.override.yml
             - common.yml
             - DockerNginxContext
-            - media/touchfile
-            - backups/touchfile
     stage: packaging
 
 deploy:

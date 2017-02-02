@@ -19,5 +19,5 @@ WORKDIR /home/pimp/pimp/django_projects/pimp
 ENV MYSQL_DATABASE=
 ENV MYSQL_USER=
 ENV MYSQL_PASSWORD=
-VOLUME /home/pimp/media /home/pimp/backups
+VOLUME /home/pimp/media /home/pimp/backups /home/pimp/frank
 USER pimp
