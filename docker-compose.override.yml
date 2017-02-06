@@ -30,8 +30,12 @@ services:
             - pimp
         depends_on:
             - pimp
+    mysql:
+        volumes:
+            - mysql:/var/lib/mysql
 
 volumes:
     backups:
     media:
     frank:
+    mysql:
