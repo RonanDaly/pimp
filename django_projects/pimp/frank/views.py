@@ -1141,7 +1141,6 @@ def generate_annotations(annotation_query_object,user = None):
     elif annotation_tool.name == 'NIST':
         print "as NIST annotation tool"
         # If NIST is to be queried, run the batch service as a background process
-        #tasks.nist_batch_search.delay(annotation_query_object.id)
         tasks.nist_batch_search(annotation_query_object.id)
     elif annotation_tool.name == 'Network Sampler':
         tasks.runNetworkSampler(annotation_query_object.id)
