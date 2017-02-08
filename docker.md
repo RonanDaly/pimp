@@ -39,7 +39,7 @@ initial user information
 Then run:
 
     $ docker-compose build
-    $ docker-compose run pimp bash
+    $ docker-compose run --rm pimp bash
 
 This will run a bash shell inside the container. From here:
 

@@ -27,6 +27,7 @@ services:
         - mysql
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+            - .:/home/pimp/backups
     mysql:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -39,4 +40,5 @@ services:
             file: common.yml
             service: logging
         command: mysqld --range_optimizer_max_mem_size=0
-
+        volumes:
+            - .:/backups
