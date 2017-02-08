@@ -68,6 +68,8 @@ package:
             - docker-compose.override.yml
             - common.yml
             - DockerNginxContext
+            - backup-pimp.sh
+            - restore-pimp.sh
     stage: packaging
 
 deploy:
