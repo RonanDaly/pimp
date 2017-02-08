@@ -329,84 +329,81 @@ class FragfileCreateView(CreateView):
         fragment_sample = self.getfragsample()
 
         """The way we are setting up FrAnk in Pimp should assure that there is only one unique Sample for each project
-        this sample can then have many samplefiles asscoiated with it.
+        this sample can then have many samplefiles asscoiated with it but we only want to allow two files maximum -
+        one for each polarity in the MS1 file.
         """
+        sample_names = [samplefile.name for samplefile in fragment_sample.samplefile_set.all()]
+        frag_polarities = [samplefile.polarity for samplefile in fragment_sample.samplefile_set.all()]
 
-        samples = [samplefile.name for samplefile in fragment_sample.samplefile_set.all()]
+        print "The samples associated with this fragmentation set are ", sample_names
 
+        #If we have less than two sampleFiles associated with this fragmentation set..
+        if len(sample_names) < 2:
 
-        print "The samples are ", samples
-        self.project.modified = datetime.datetime.now()
-        self.project.save()
+            self.project.modified = datetime.datetime.now()
+            self.project.save()
 
-        file = self.request.FILES['file']
-
-        print "Name of the fragment file is", file.name
-
-        polarity = self.findpolarity(file)
-        print "The file polarity is ", polarity
-
-        # If we don't have the sample file
-        # Can I just change this to a get or create statement - get if it doesn't exist?
-
-        print "Test condition is" , file.name.replace(" ", "_")
-        if file.name.replace(" ", "_") not in samples:
-
-            print "fragmentation files doesn't exist"
-
-            #Assign polarity first as Frank uses this to store the files in the folders.
-
-
-            frag_pol =self.getfragpolarity(polarity)
-
-            #Create samplefile object
-
-            fragment_file = SampleFile.objects.create(sample=fragment_sample, name=file.name, address=file, polarity=frag_pol)
-
-
-            print "Frank SampleFile polarity is ", fragment_file.polarity
-
-        # Else we have the sample file already loaded and only want to upload if the polarity is different.
-
-        else:
-
-            print "A file with this name already exists"
+            file = self.request.FILES['file']
 
             file_name = file.name.replace(" ", "_")
-            stored_files = SampleFile.objects.filter(sample=fragment_sample, name=file_name)
+            print "Name of the fragment file is", file.name
 
-
-            #For all of the stored_files check the polairty & if we don't have that file create the sample file
-
-            file_found =False
-
+            polarity = self.findpolarity(file)
+            print "The file polarity is ", polarity
             frag_pol = self.getfragpolarity(polarity)
-            #Check if the same file already exists.
+            print "The fragment polarity is ", frag_pol
 
-            for stored_file in stored_files:
+            # If we don't have a smaple file of that name or polarity
+            if (file_name not in sample_names) and (frag_pol not in frag_polarities):
 
-            #If the polarity of the stored file matched that of the uploaded file then we have found the file.
+                logger.info("Creating the sample file %s", file_name)
 
-                if stored_file.polarity==frag_pol:
-                    file_found =True
-
-            print "The file already existed? ", file_found
-
-            #If the same file does not already exist.
-            if not file_found:
-
-                print "A file of this polarity does not exist"
-                #Create a new samplefile object
+                #Create samplefile object
                 fragment_file = SampleFile.objects.create(sample=fragment_sample, name=file.name, address=file, polarity=frag_pol)
 
+            # Else we have the sample file already loaded and only want to upload if the polarity is different.
             else:
 
-                fragment_file = SampleFile.objects.get(sample=fragment_sample, polarity=frag_pol, name=file.name)
-                print "A file of that name and polarity all ready exists, ignoring and returning ", fragment_file.name
+                logger.info("A file with this name or polarity already exists")
+
+                # #If a file with this polarity exists just return one of the Samplefiles we have stored.
+                if frag_pol in frag_polarities:
+                    logger.info("A file of this polarity already exists")
+                    fragment_file = fragment_sample.samplefile_set.all()[0]
+
+                # If a file with this name already exists - check if it has the same polarity.
+                elif file_name in sample_names:
+
+                    logger.info("A file of this name already exists, checking polarity")
+                    stored_files = SampleFile.objects.filter(sample=fragment_sample, name=file_name)
+                    file_found =False
+                    frag_pol = self.getfragpolarity(polarity)
+
+                    #Check if the same file already exists.
+                    for stored_file in stored_files:
+
+                    #If the polarity of the stored file matched that of the uploaded file then we have found the file.
+                        if stored_file.polarity==frag_pol:
+                            file_found =True
+
+                    logger.info("The file already existed? %s", file_found)
+
+                    #If the same file does not already exist.
+                    if not file_found:
+                        logger.info("A file of this polarity does not exist, creating a samplefile")
+                        #Create a new samplefile object
+                        fragment_file = SampleFile.objects.create(sample=fragment_sample, name=file.name, address=file, polarity=frag_pol)
+
+                    else:
+                        fragment_file = SampleFile.objects.get(sample=fragment_sample, polarity=frag_pol, name=file.name)
+                        logger.info("A file of that name and polarity all ready exists, ignoring and returning %S", fragment_file.name)
+
+        else:
+            print logger.info("we already have more than two fragment files")
+            fragment_file = fragment_sample.samplefile_set.all()[0] #Else return one of the fragment files that we already have.
 
 
-
-        data = [{"name": file.name, "url": settings.MEDIA_URL + str(fragment_file.name), "thumbnail_url": settings.MEDIA_URL + str(fragment_sample.name),"delete_url": reverse("upload-fragFile-delete", args=[self.project.id, fragment_sample.id]),"delete_type": "DELETE"}]
+        data = [{"name": fragment_file.name, "url": settings.MEDIA_URL + str(fragment_file.name), "thumbnail_url": settings.MEDIA_URL + str(fragment_sample.name),"delete_url": reverse("upload-fragFile-delete", args=[self.project.id, fragment_sample.id]),"delete_type": "DELETE"}]
 
         response = JSONResponse(data, {}, response_mimetype(self.request))
         response['Content-Disposition'] = 'inline; filename=files.json'

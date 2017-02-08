@@ -45,12 +45,12 @@ class MSNPeakBuilder(PeakBuilder):
         # Assume that this is not from Method 3 ar the start.
         self.from_method_3 = False
 
-        print ("The head of the R data frame is")
+        #print ("The head of the R data frame is")
         head_df = robjects.r['head']
-        print(head_df(r_dataframe, 50))
-        print ("The tail of the R data frame is")
+        #print(head_df(r_dataframe, 50))
+        #print ("The tail of the R data frame is")
         tail_df = robjects.r['tail']
-        print(tail_df(r_dataframe, 50))
+        #print(tail_df(r_dataframe, 50))
 
         # Ensure correct argument types are passed
         if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) is False:
@@ -116,7 +116,7 @@ class MSNPeakBuilder(PeakBuilder):
         starting_index = self.total_number_of_peaks-1
         # Iterate through the peaks in reverse order
         for peak_array_index in range(starting_index, -1, -1):
-            print 'Processing Peak: '+str(peak_array_index+1)+' of '+str(self.total_number_of_peaks)
+            #print 'Processing Peak: '+str(peak_array_index+1)+' of '+str(self.total_number_of_peaks)
             # Determine the peak id and the id of any precursor peak
             parent_peak_id = int(self.parent_peak_id_vector[peak_array_index])
             peak_id = int(self.peak_ID_vector[peak_array_index])
@@ -206,15 +206,16 @@ class MSNPeakBuilder(PeakBuilder):
         peak_intensity = self.intensity_vector[peak_array_index]
         peak_msn_level = int(self.msn_level_vector[peak_array_index])
 
-        print "peak level is" + str(peak_msn_level)
+        #print "peak level is" + str(peak_msn_level)
         if peak_msn_level == 1:
-            print 'Parent peak and MS1 ID is:'
+            #print 'Parent peak and MS1 ID is:'
             ms1_id = self.ms1_peak_id_vector[peak_array_index]
-            print ms1_id
+            #print ms1_id
 
         if peak_msn_level > 1:
-            print 'not parent peak and MS1 ID is'
-            print self.ms1_peak_id_vector[peak_array_index]
+            pass
+            #print 'not parent peak and MS1 ID is'
+            #print self.ms1_peak_id_vector[peak_array_index]
 
         try:
             newly_created_peak = Peak.objects.create(
@@ -231,7 +232,7 @@ class MSNPeakBuilder(PeakBuilder):
             # If we have a parent peak link it back to Pimp
             #KMCL: This should only be created if it doesn't already exist.
             if peak_msn_level == 1:
-                print ("we are linking")
+                #print ("we are linking")
                 self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
 
         except ValidationError:
@@ -246,10 +247,10 @@ class MSNPeakBuilder(PeakBuilder):
 
         ms1_peak = PimpPeak.objects.get(id=pimp_ms1)
 
-        print ms1_peak.mass
-        print ms1_peak.id
-        print frank_parent.mass
-        print frank_parent.id
+        #print ms1_peak.mass
+        #print ms1_peak.id
+        #print frank_parent.mass
+        #print frank_parent.id
 
         #     If a peak has an pimpID i.e it is not "None" .
         #     then this is an MS1 peak and should be linked directly to
@@ -257,7 +258,7 @@ class MSNPeakBuilder(PeakBuilder):
 
         #Only create if it doesn't already exist.
         pimp_frank_link = PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
-        print "The link is" + str(pimp_frank_link)
+        #print "The link is" + str(pimp_frank_link)
 
 
 class GCMSPeakBuilder(PeakBuilder):

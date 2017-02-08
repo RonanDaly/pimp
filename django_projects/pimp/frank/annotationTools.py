@@ -901,9 +901,8 @@ class NISTQueryTool:
             raise
         except OSError as e:
             print(e)
-        # Finally check to see if the call was successfull and the output file exists
-        if os.path.isfile(self.nist_output_file_name) is False:
-            raise Warning('NIST failed to write the output file')
+        # Finally check to see if the call was successfull and the output file exists, AssertionError thrown if not true.
+        assert os.path.isfile(self.nist_output_file_name),"NIST failed to write the output file!"
         return True
 
     def _write_nist_msp_file(self):
@@ -998,8 +997,8 @@ class NISTQueryTool:
                             parent_ion_slug = parent_ion_slug[2:-2]
                         try:
                             current_parent_peak = peaks_in_fragmentation_set.get(slug=parent_ion_slug)
-                            print 'Populating Annotations For: '+current_parent_peak.slug
-                            print current_parent_peak.mass
+                            #print 'Populating Annotations For: '+current_parent_peak.slug
+                            #print current_parent_peak.mass
                         except MultipleObjectsReturned:
                             raise
                         except ObjectDoesNotExist:
