@@ -113,19 +113,6 @@ class Rpy2Pipeline(object):
             neg = os.path.basename(neg_files[f])
             assert pos == neg        
 
-        # check that all samples in groups have corresponding file
-        unique_files = set()
-        for f in all_files:
-            basename = os.path.basename(f)
-            front, ext = os.path.splitext(basename)
-            unique_files.add(front)
-            
-        for factor in self.metadata.groups:
-            for level in factor.levels:
-                files = factor.level_files[level]
-                for f in files:
-                    assert f in unique_files        
-        
     def get_analysis_params(self, analysis_id):
         get_analysis_params = robjects.r['Pimp.getAnalysisParams']
         pimp_params = get_analysis_params(analysis_id)
