@@ -6,8 +6,6 @@ services:
             - media:/home/pimp/media
             - backups:/home/pimp/backups
             - frank:/home/pimp/frank/NISTQueryFiles
-        entrypoint: docker-entrypoint.sh
-        user: root
         command: ./start_pimp_prod.sh
         environment:
             - EXTERNAL_NIST_QUERY_DIR=${COMPOSE_PROJECT_NAME}_frank

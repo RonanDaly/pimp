@@ -10,8 +10,6 @@ services:
         ports:
             - "${EXTERNAL_PORT}:8000"
             - "${JUPYTER_PORT}:8888"
-        entrypoint: docker-entrypoint.sh
-        user: root
         environment:
             - EXTERNAL_NIST_QUERY_DIR=${PWD}/frank/NISTQueryFiles
     mysql:

@@ -28,6 +28,8 @@ services:
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - .:/home/pimp/backups
+        entrypoint: docker-entrypoint.sh
+        user: root
     mysql:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes

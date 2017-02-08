@@ -8,4 +8,4 @@ set +a
 set -eu -o pipefail
 honcho run python manage.py migrate
 honcho run python setupInitialUser.py
-honcho -f Procfile.docker start
+honcho -f Procfile.prod start
