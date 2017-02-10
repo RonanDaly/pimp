@@ -1782,7 +1782,7 @@ def create_member_tics(comparisons):
                     posmzxmlfile.tic = curve
                     posmzxmlfile.save()
 
-                    logger.debug('%s', posmzxmlfile.tic.x_axis)
+                    #logger.debug('%s', posmzxmlfile.tic.x_axis)
                 # posintensity = posdata[0]
                 # postime = posdata[1]
                 else:
@@ -1887,7 +1887,7 @@ def create_member_tic(attribute_id):
                 posmzxmlfile.tic = curve
                 posmzxmlfile.save()
 
-                logger.debug('%s', posmzxmlfile.tic.x_axis)
+                #logger.debug('%s', posmzxmlfile.tic.x_axis)
             # posintensity = posdata[0]
             # postime = posdata[1]
             else:

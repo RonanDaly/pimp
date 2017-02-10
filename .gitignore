@@ -103,6 +103,3 @@ packrat/src/*
 # DockerDev Files
 DockerDevContext/media
 DockerDevContext/mysql
-
-Procfile.docker
-Procfile.jupyter

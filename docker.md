@@ -14,6 +14,15 @@ Toolbox. In this guide we are assuming Docker for Mac/Windows. In particular,
 it means that the instructions on the Docker Compose page are outdated, so
 Docker Compose will need to be installed separately.
 
+_Make sure that Docker has enough memory and CPUs allocated to it._ These can
+be changed in the preferences page. For the purposes of building and running
+PiMP, 16 GB and 8 CPUs are known to work, though these are likely much too
+big; note that 2 GB is known _not_ to work.
+
+Before we begin
+---------------
+Make sure the that git-lfs is installed and the LFS files pulled as mentioned on [setup_guide.md](file://setup_guide.md).
+
 Building the PiMP stack
 -----------------------
 There are two ways to build the necessary containers. The first is for
@@ -39,7 +48,7 @@ initial user information
 Then run:
 
     $ docker-compose build
-    $ docker-compose run pimp bash
+    $ docker-compose run --rm pimp bash
 
 This will run a bash shell inside the container. From here:
 

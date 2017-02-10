@@ -1000,8 +1000,8 @@ class NISTQueryTool:
                             parent_ion_slug = parent_ion_slug[2:-2]
                         try:
                             current_parent_peak = peaks_in_fragmentation_set.get(slug=parent_ion_slug)
-                            print 'Populating Annotations For: '+current_parent_peak.slug
-                            print current_parent_peak.mass
+                            #print 'Populating Annotations For: '+current_parent_peak.slug
+                            #print current_parent_peak.mass
                         except MultipleObjectsReturned:
                             raise
                         except ObjectDoesNotExist:

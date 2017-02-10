@@ -19,8 +19,7 @@ services:
             - PIMP_DEBUG
             - PIMP_LOG_LEVEL
             - MSPEPSEARCH_IMAGE
-            - INTERNAL_NIST_QUERY_DIR=/home/pimp/media/frank/NISTQueryFiles
-            - EXTERNAL_NIST_QUERY_DIR=${PWD}/media/frank/NISTQueryFiles
+            - INTERNAL_NIST_QUERY_DIR=/home/pimp/frank/NISTQueryFiles
         extends:
             file: common.yml
             service: logging
@@ -28,6 +27,9 @@ services:
         - mysql
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+            - .:/home/pimp/backups
+        entrypoint: docker-entrypoint.sh
+        user: root
     mysql:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -40,4 +42,5 @@ services:
             file: common.yml
             service: logging
         command: mysqld --range_optimizer_max_mem_size=0
-
+        volumes:
+            - .:/backups

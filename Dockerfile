@@ -25,5 +25,5 @@ ENV MYSQL_DATABASE=
 ENV MYSQL_USER=
 ENV MYSQL_PASSWORD=
 RUN ./collectstatic.sh
-VOLUME /home/pimp/static /home/pimp/pimp /home/pimp/media /home/pimp/backups
+VOLUME /home/pimp/static /home/pimp/pimp /home/pimp/media /home/pimp/backups /home/pimp/frank/NISTQueryFiles
 CMD ./start_pimp_prod.sh

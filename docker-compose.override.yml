@@ -3,8 +3,12 @@ version: '2'
 services:
     pimp:
         volumes:
-            - ./media:/home/pimp/media
-            - ./backups:/home/pimp/backups
+            - media:/home/pimp/media
+            - backups:/home/pimp/backups
+            - frank:/home/pimp/frank/NISTQueryFiles
+        command: ./start_pimp_prod.sh
+        environment:
+            - EXTERNAL_NIST_QUERY_DIR=${COMPOSE_PROJECT_NAME}_frank
     nginx:
         hostname: nginx
         image: ${NGINX_IMAGE}
@@ -24,3 +28,12 @@ services:
             - pimp
         depends_on:
             - pimp
+    mysql:
+        volumes:
+            - mysql:/var/lib/mysql
+
+volumes:
+    backups:
+    media:
+    frank:
+    mysql:

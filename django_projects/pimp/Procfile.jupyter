@@ -1,3 +1,3 @@
 rabbitmq: /bin/sh run_rabbitmq.sh
 celery: /bin/sh run_celery.sh
-pimp: /bin/sh run_gunicorn_docker.sh
+jupyter: /bin/sh run_jupyter.sh

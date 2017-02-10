@@ -30,6 +30,8 @@ RUN apt-get update && \
         # Needed for javareconf
         build-essential \
         python-minimal \
+        vim \
+        less \
         mysql-client-5.7 \
 		oracle-java8-installer \
 		rabbitmq-server && \
@@ -39,9 +41,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
 	R CMD javareconf
 
+
+RUN wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.9/gosu-$(dpkg --print-architecture)" && \
+    chmod +x /usr/local/bin/gosu
+
 COPY java.conf /etc/ld.so.conf.d/java.conf
+RUN ldconfig
+COPY docker-entrypoint.sh /usr/local/bin/
 COPY install_docker_cli.sh /tmp
 RUN /tmp/install_docker_cli.sh && rm /tmp/install_docker_cli.sh
 RUN groupadd pimp && useradd -g pimp -m pimp
-RUN mkdir /home/pimp/static /home/pimp/media /home/pimp/backups
+RUN mkdir -m o-w -p /home/pimp/static /home/pimp/media /home/pimp/backups /home/pimp/frank/NISTQueryFiles
 RUN chown -R pimp:pimp /home/pimp
