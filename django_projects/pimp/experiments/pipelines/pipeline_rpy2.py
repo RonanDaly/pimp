@@ -259,8 +259,8 @@ class Rpy2Pipeline(object):
         files = self.get_value(self.metadata.r_files, polarity)
         xset = self.peak_detection(files, xcms_params, n_slaves) 
         rt_correction_method = self.get_value(mzmatch_params, 'rt.alignment')[0]            
-        fp, xseto = self.rt_correct(xset, rt_correction_method, peakml_params, mzmatch_outputs, n_slaves, True)   
-        self.generate_peakml_files(xseto, fp, polarity_dir, self.analysis.id, peakml_params)  
+        xseto = self.rt_correct(xset, rt_correction_method, peakml_params, mzmatch_outputs, n_slaves, True)
+        self.generate_peakml_files(xseto, polarity_dir, self.analysis.id, peakml_params)
 
     def generate_peaksets(self, polarity, polarity_dir, combined_dir, mzmatch_params):
         ''' Separates samples into groups and match peakml files in each group to produce aligned peaksets '''
@@ -403,19 +403,19 @@ class Rpy2Pipeline(object):
             xset_aln = retcor(xset, method='loess', family="symmetric")
         else:
             xset_aln = xset
-            
+
         filepaths = robjects.r['filepaths']
         fp = filepaths(xset_aln)
-    
+
         split = robjects.r['split']
         xseto = split(xset_aln, fp)
-        return fp, xseto   
+        return xseto
 
     ############################################################
     # peakml generation
     ############################################################             
     
-    def generate_peakml_files(self, xseto, fp, polarity_dir, analysis_id, peakml_params):
+    def generate_peakml_files(self, xseto, polarity_dir, analysis_id, peakml_params):
         
         write_peakml = robjects.r['PeakML.xcms.write.SingleInstance']        
         ionisation = self.get_value(peakml_params, 'ionisation')
@@ -425,17 +425,20 @@ class Rpy2Pipeline(object):
         ppm = self.get_value(peakml_params, 'ppm') # this doesn't seem to be set inside peakml_params ..?
         if ppm == 0:
             ppm = 5
-            
+
         peakml_files = []
         regex = re.compile(re.escape('mzxml'), re.IGNORECASE)
-        for single_fp in fp:
-            replaced = regex.sub('peakml', single_fp)
+
+        names = robjects.r['names']
+        xset_names = names(xseto)
+        for name in xset_names:
+            replaced = regex.sub('peakml', name)
             outfile = os.path.join(polarity_dir, os.path.basename(replaced))
-            peakml_files.append(outfile)            
-        
+            peakml_files.append(outfile)
+
         for i in range(len(peakml_files)):
             logger.debug('Now creating %s' % peakml_files[i])
-            write_peakml(xseto[i], outputfile=peakml_files[i], ionisation=ionisation, 
+            write_peakml(xseto[i], outputfile=peakml_files[i], ionisation=ionisation,
                          addscans=add_scans, writeRejected=write_rejected, 
                          ApodisationFilter=apodisation_filter, ppm=ppm)    
 
