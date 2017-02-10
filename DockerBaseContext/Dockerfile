@@ -30,6 +30,8 @@ RUN apt-get update && \
         # Needed for javareconf
         build-essential \
         python-minimal \
+        vim \
+        less \
         mysql-client-5.7 \
 		oracle-java8-installer \
 		rabbitmq-server && \
