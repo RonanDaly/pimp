@@ -231,6 +231,7 @@ class Rpy2Pipeline(object):
         raw_data_dict = {}
         groups_dict = {}
         for polarity in self.metadata.files:
+            logger.info('Processing %s polarity', polarity)
             raw_data, groups = self.process_raw_data(polarity, xcms_params, mzmatch_params,
                                                   peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves)
             raw_data_dict[polarity] = raw_data
