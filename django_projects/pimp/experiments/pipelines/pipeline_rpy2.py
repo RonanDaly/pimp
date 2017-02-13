@@ -51,17 +51,9 @@ class Rpy2Pipeline(object):
         set_lib_path = robjects.r['.libPaths']
         set_lib_path(packrat_lib_path)
 
-        importr('PiMP')    
         base = importr('base')
-        base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
-
-        # I think this should be called only once??
-        args = {
-            'memorysize' : self.get_env_heap_size(),
-            'version.1'  : False
-        }
-        mzmatch_init = robjects.r['mzmatch.init']
-        mzmatch_init(**args)
+        base.options(**{'java.parameters':"".join(["-Xmx",str(1024*8),"m"])})
+        importr('PiMP')
         
         # activate the conversion from pandas dataframe to r                
         pandas2ri.activate()    
