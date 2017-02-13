@@ -211,7 +211,6 @@ def start_pimp_pipeline(analysis, project, saveFixtures=False):
     analysis.status = 'Processing'
 
     pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
-    pipeline.setup()
     xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
 
