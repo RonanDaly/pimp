@@ -31,6 +31,10 @@ urlpatterns = patterns(
     url(r'^my_fragmentation_sets/(?P<fragmentation_set_name_slug>[\w\-]+)/(?P<peak_name_slug>[\w\-]+)'
         r'/(?P<annotation_id>[\w\-]+)/specify_preferred_annotation/$',
         views.specify_preferred_annotation, name='specify_preferred_annotation'),
+    #ChemSpider url
+    url(r'^chemspider_info/(?P<compound_id>[\w\-]+)/$',
+        views.get_chemspider_info, name='get_chemspider_info'),
+
     url(r'^remove_preferred_annotations/(?P<fragmentation_set_name_slug>[\w\-]+)',
         views.remove_preferred_annotations, name='remove_preferred_annotations'),
     url(r'^delete_annotation_query/(?P<fragmentation_set_name_slug>[\w\-]+)'

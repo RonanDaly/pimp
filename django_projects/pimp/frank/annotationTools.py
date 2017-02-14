@@ -1118,17 +1118,16 @@ class ChemSpiderQueryTool:
                     try:
                         csid = csresult.csid
                         compound_name = csresult.common_name
+
+                        compound_object.csid = csid
+                        compound_object.name = compound_name
+                        compound_object.save()
+
+                        logger.info("the identified CSID is and compound name is %s %s", csid, compound_name)
                         #seen_before[identifier] = csid
                     except:
                         logger.info("Compound name error for ChemSpider, ignoring")
                         pass
-
-                logger.info("the final CSID is and compound name is %s %s", csid, compound_name)
-
-                # Update the csid for the object if we have it - don't use to Get as it won't always be added.
-                compound_object.csid = csid
-                compound_object.name = compound_name
-                compound_object.save()
 
             else:
                 logger.info("There is no cas_code or inchikey that allows the searching of ChemSpider")

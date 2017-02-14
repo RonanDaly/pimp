@@ -383,7 +383,7 @@ class Compound(models.Model):
         else:
             return None
 
-    hmdb_url = property(get_cs_url)
+    hmdb_url = property(get_hmdb_url)
 
     def save(self, *args, **kwargs):
         """

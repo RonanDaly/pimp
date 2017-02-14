@@ -5,6 +5,7 @@ from frank.models import *
 from frank.forms import *
 from django.contrib.auth.decorators import login_required
 from frank import tasks
+from frank import annotationTools
 from decimal import *
 from django.db.models import Max
 import datetime
@@ -29,14 +30,20 @@ import PIL
 
 from experiments.models import Analysis
 from projects.models import Project
+from frank.annotationTools import ChemSpiderQueryTool
 
 from MS2LDA.visualisation.networkx import lda_visualisation
 
-
+try:
+    from django.utils import simplejson
+except:
+    import json as simplejson
 """
 To reduce code repetition, add a method for the context_dict
 of each page here at the top of the page.
 """
+
+
 
 
 def get_my_experiments_context_dict(user):
@@ -591,6 +598,24 @@ def add_experiment(request):
         form = ExperimentForm()
         context_dict = get_add_experiment_context_dict(form)
         return render(request, 'frank/add_experiment.html', context_dict)
+
+
+
+
+def get_chemspider_info(request, compound_id):
+
+
+    csid_generator = ChemSpiderQueryTool()
+    csid_generator.populate_compound_csid(compound_id)
+
+    compound = Compound.objects.get(pk=compound_id)
+    data = [compound.csid]
+    print "the compound csid is", data
+    response = simplejson.dumps(data)
+
+    return HttpResponse(response, content_type='application/json')
+
+
 
 
 @login_required
