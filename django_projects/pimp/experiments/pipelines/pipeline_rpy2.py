@@ -132,7 +132,7 @@ class Rpy2Pipeline(object):
         logger.info('------------------------------------------')
 
         # peak detection and rt correction
-        logger.debug('Input for peak detection and RT correction %s' % self.metadata.files[polarity])
+        logger.debug('Input for peak detection and RT correction %s', self.metadata.files[polarity])
         self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params,
                            peakml_params, mzmatch_outputs, n_slaves)
 
@@ -140,35 +140,35 @@ class Rpy2Pipeline(object):
         non_empty = self.generate_combinations(polarity, combined_dir)
         logger.debug('Non-empty groups')
         for group_label, index, description, files, abspath in non_empty:
-            logger.debug('%s %s %s %s %s' % group_label, index, description, files, abspath)
+            logger.debug('%s %s %s %s %s', group_label, str(index), description, str(files), abspath)
 
         # perform the grouping of peaks across samples into peaksets
         out_files = self.generate_peaksets(polarity_dir, combined_dir, non_empty, mzmatch_params)
-        logger.debug('combined groups = %s' % out_files)
+        logger.debug('combined groups = %s', out_files)
 
         # filter each peakset
         out_files = self.filter_peaksets(out_files, mzmatch_params)
-        logger.debug('filtered groups = %s' % out_files)
+        logger.debug('filtered groups = %s', out_files)
 
         # combine all the peaksets into a single peakml file and filter it
         out_file = self.combine_final(out_files, mzmatch_params, formatted_mzmatch_outputs)
-        logger.debug('combined final = %s' % out_file)
+        logger.debug('combined final = %s', out_file)
 
         out_file = self.filter_final(out_file, mzmatch_filters, mzmatch_params, formatted_mzmatch_outputs)
-        logger.debug('filter final = %s' % out_file)
+        logger.debug('filter final = %s', out_file)
 
         # do gap filling
         out_file = self.gap_filling(out_file, peakml_params, formatted_mzmatch_outputs)
-        logger.debug('gap-filled = %s' % out_file)
+        logger.debug('gap-filled = %s', out_file)
 
         # do related peaks
         out_file, basepeak_file = self.related_peaks(out_file, mzmatch_params, formatted_mzmatch_outputs)
-        logger.debug('related peaks = %s %s' % (out_file, basepeak_file))
+        logger.debug('related peaks = %s %s', out_file, basepeak_file)
 
         # do identification
         databases = self.r_dbs
-        logger.debug('identification databases %s' % databases)
-        logger.debug('identification groups %s' % non_empty)
+        logger.debug('identification databases %s', databases)
+        logger.debug('identification groups %s', non_empty)
         raw_data = self.identify(polarity, out_file, databases, non_empty, mzmatch_params, formatted_mzmatch_outputs)
         return raw_data
 
@@ -253,7 +253,7 @@ class Rpy2Pipeline(object):
                                      'projects', str(self.project.id),
                                      'analysis', str(self.analysis.id),
                                      xml_file_name)
-        logger.debug('xml_file_path is %s' % xml_file_path)
+        logger.debug('xml_file_path is %s', xml_file_path)
 
         return xml_file_path
 
@@ -448,7 +448,7 @@ class Rpy2Pipeline(object):
             peakml_files.append(outfile)
 
         for i in range(len(peakml_files)):
-            logger.debug('Now creating %s' % peakml_files[i])
+            logger.debug('Now creating %s', peakml_files[i])
             write_peakml(xseto[i], outputfile=peakml_files[i], ionisation=ionisation,
                          addscans=add_scans, writeRejected=write_rejected,
                          ApodisationFilter=apodisation_filter, ppm=ppm)
@@ -540,7 +540,7 @@ class Rpy2Pipeline(object):
 
         for group_label, index, description, files, abspath in group_info:
 
-            logger.debug('%s %s %s %s %s' % (group_label, str(index), description, str(files), abspath))
+            logger.debug('%s %s %s %s %s', group_label, str(index), description, str(files), abspath)
             if not os.path.exists(abspath):
                 os.makedirs(abspath)
 
