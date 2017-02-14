@@ -203,14 +203,15 @@ def create_run_frank_chain(num_fragment_files, analysis, project, frank_experime
 
 
 @celery.task
-def start_pimp_pipeline(analysis, project, saveFixtures=False):
+def start_pimp_pipeline(analysis, project):
 
     """ Starts the pimp R pipeline
-    :type analysis: object
+    :type analysis: the analysis object
+    :type project: the project object
     """
     analysis.status = 'Processing'
 
-    pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
+    pipeline = Rpy2Pipeline(analysis, project)
     xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
 

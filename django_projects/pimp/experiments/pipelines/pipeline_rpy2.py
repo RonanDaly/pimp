@@ -31,15 +31,12 @@ class Rpy2Pipeline(object):
 
     # read and think about this:
     # http://stackoverflow.com/questions/5707382/is-multiprocessing-with-rpy-safe
-    def __init__(self, analysis, project, saveFixtures):
+    def __init__(self, analysis, project):
 
         self.connect_to_rpy2()
-
         self.analysis = analysis
         self.project = project
-        self.saveFixtures = saveFixtures
         self.metadata = Rpy2PipelineMetadata(analysis, project)
-
         self.setup()
 
     def connect_to_rpy2(self):
@@ -135,30 +132,45 @@ class Rpy2Pipeline(object):
         logger.info('------------------------------------------')
 
         # peak detection and rt correction
+        logger.debug('Input for peak detection and RT correction %s' % self.metadata.files[polarity])
         self.create_peakml(polarity, polarity_dir, xcms_params, mzmatch_params,
                            peakml_params, mzmatch_outputs, n_slaves)
 
         # separate samples into peaksets for grouping
-        r_combi = self.generate_peaksets(polarity, polarity_dir, combined_dir, mzmatch_params)
+        non_empty = self.generate_combinations(polarity, combined_dir)
+        logger.debug('Non-empty groups')
+        for group_label, index, description, files, abspath in non_empty:
+            logger.debug('%s %s %s %s %s' % group_label, index, description, files, abspath)
+
+        # perform the grouping of peaks across samples into peaksets
+        out_files = self.generate_peaksets(polarity_dir, combined_dir, non_empty, mzmatch_params)
+        logger.debug('combined groups = %s' % out_files)
 
         # filter each peakset
-        peaksets = self.filter_peaksets(combined_dir, mzmatch_params)
+        out_files = self.filter_peaksets(out_files, mzmatch_params)
+        logger.debug('filtered groups = %s' % out_files)
 
-        # combine peaksets into a single peakml file and filter it
-        out_file = self.combine_final(polarity, peaksets, mzmatch_params, formatted_mzmatch_outputs)
-        out_file = self.filter_final(polarity, out_file, mzmatch_filters, mzmatch_params, formatted_mzmatch_outputs)
+        # combine all the peaksets into a single peakml file and filter it
+        out_file = self.combine_final(out_files, mzmatch_params, formatted_mzmatch_outputs)
+        logger.debug('combined final = %s' % out_file)
+
+        out_file = self.filter_final(out_file, mzmatch_filters, mzmatch_params, formatted_mzmatch_outputs)
+        logger.debug('filter final = %s' % out_file)
 
         # do gap filling
-        out_file = self.gap_filling(polarity, out_file, peakml_params, formatted_mzmatch_outputs)
+        out_file = self.gap_filling(out_file, peakml_params, formatted_mzmatch_outputs)
+        logger.debug('gap-filled = %s' % out_file)
 
         # do related peaks
-        out_file, basepeak_file = self.related_peaks(polarity, out_file, mzmatch_params, formatted_mzmatch_outputs)
+        out_file, basepeak_file = self.related_peaks(out_file, mzmatch_params, formatted_mzmatch_outputs)
+        logger.debug('related peaks = %s %s' % (out_file, basepeak_file))
 
         # do identification
         databases = self.r_dbs
-        groups = r_combi
-        raw_data = self.identify(polarity, out_file, databases, groups, mzmatch_params, formatted_mzmatch_outputs)
-        return raw_data, r_combi
+        logger.debug('identification databases %s' % databases)
+        logger.debug('identification groups %s' % non_empty)
+        raw_data = self.identify(polarity, out_file, databases, non_empty, mzmatch_params, formatted_mzmatch_outputs)
+        return raw_data
 
     def convert_to_dataframe(self, factors):
 
@@ -198,7 +210,7 @@ class Rpy2Pipeline(object):
         r_dataframe = pandas2ri.py2ri(df)
         return df, r_dataframe
 
-    def run_stats(self, raw_data_dict, groups_dict, mzmatch_outputs, mzmatch_params, save_fixtures):
+    def run_stats(self, raw_data_dict, mzmatch_outputs, mzmatch_params):
 
         analysis_id = self.analysis.id
 
@@ -212,6 +224,7 @@ class Rpy2Pipeline(object):
         dbs = self.r_dbs
         wd = self.working_dir
 
+        save_fixtures = True
         pimp_run_stats = robjects.r['Pimp.runStats.save']
         pimp_run_stats(raw_data_dict['positive'], raw_data_dict['negative'], analysis_id,
                        r_factors, metadata, r_contrasts,
@@ -229,18 +242,18 @@ class Rpy2Pipeline(object):
 
         # still assuming that there are two polarities: pos and neg
         raw_data_dict = {}
-        groups_dict = {}
         for polarity in self.metadata.files:
-            raw_data, groups = self.process_raw_data(polarity, xcms_params, mzmatch_params,
+            raw_data = self.process_raw_data(polarity, xcms_params, mzmatch_params,
                                                   peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves)
             raw_data_dict[polarity] = raw_data
-            groups_dict[polarity] = groups
 
-        save_fixtures = True
-        self.run_stats(raw_data_dict, groups_dict, mzmatch_outputs, mzmatch_params, save_fixtures)
-
+        self.run_stats(raw_data_dict, mzmatch_outputs, mzmatch_params)
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
-        xml_file_path = os.path.join(settings.MEDIA_ROOT, 'projects', str(self.project.id), xml_file_name)
+        xml_file_path = os.path.join(settings.MEDIA_ROOT,
+                                     'projects', str(self.project.id),
+                                     'analysis', str(self.analysis.id),
+                                     xml_file_name)
+        logger.debug('xml_file_path is %s' % xml_file_path)
 
         return xml_file_path
 
@@ -249,44 +262,40 @@ class Rpy2Pipeline(object):
                       mzmatch_outputs, n_slaves):
         ''' Performs peak detection using centwave, rt alignment using xcms (optional) and generate peakml files. '''
 
-        posvector = robjects.StrVector(self.metadata.files['positive'])
-        negvector = robjects.StrVector(self.metadata.files['negative'])
-        r_files = robjects.ListVector({'positive': posvector, 'negative': negvector})
-
-        files = self.get_value(r_files, polarity)
+        files = robjects.StrVector(self.metadata.files[polarity])
         xset = self.peak_detection(files, xcms_params, n_slaves)
         rt_correction_method = self.get_value(mzmatch_params, 'rt.alignment')[0]
-        xseto = self.rt_correct(xset, rt_correction_method, peakml_params, mzmatch_outputs, n_slaves, True)
-        self.generate_peakml_files(xseto, polarity_dir, self.analysis.id, peakml_params)
+        xseto = self.rt_correct(xset, rt_correction_method)
+        self.generate_peakml_files(xseto, polarity_dir, peakml_params)
 
-    def generate_peaksets(self, polarity, polarity_dir, combined_dir, mzmatch_params):
-        ''' Separates samples into groups and match peakml files in each group to produce aligned peaksets '''
+    def generate_peaksets(self, polarity_dir, combined_dir, non_empty, mzmatch_params):
+        ''' Match peakml files in a group to produce peaksets '''
 
-        combine_info, combined_dir = self.generate_combinations(polarity, combined_dir)
-        combination_paths = self.copy_files(polarity_dir, combined_dir, combine_info)
+        # copy files to the right folder to be combined
+        self.copy_files(polarity_dir, non_empty)
 
+        # actually do the combining here
+        out_files = []
         ppm = self.get_value(mzmatch_params, 'ppm')[0]
         rtwindow = self.get_value(mzmatch_params, 'rtwindow')[0]
         combine_type = self.get_value(mzmatch_params, 'combination')[0]
+        for group_label, index, description, files, abspath in non_empty:
+            logger.info('Processing %s', abspath)
+            input_list = self.list_peakml_files_in(abspath)
+            out_file = os.path.abspath(os.path.join(combined_dir, group_label + '.peakml'))
+            self.combine_peaksets(input_list, out_file, group_label, ppm, rtwindow, combine_type)
+            out_files.append(out_file)
 
-        self.combine_all(combine_info, combined_dir, combination_paths, ppm, rtwindow, combine_type)
+        return out_files
 
-        i = 0
-        group_dict = {}
-        for i in range(len(combine_info)):
-            combi, index, factors, files = combine_info[i]
-            if len(files) > 0:
-                group_dict[combi] = robjects.StrVector(files)
-        r_combi = robjects.ListVector(group_dict)
-        return r_combi
+    def filter_peaksets(self, in_files, mzmatch_params):
 
-    def filter_peaksets(self, combined_dir, mzmatch_params):
-        peaksets = self.list_peakml_files_in(combined_dir)
         rsd = self.get_value(mzmatch_params, 'rsd')[0]
-        peaksets = self.rsd_filter(peaksets, rsd)
-        return peaksets
+        out_files = self.rsd_filter(in_files, rsd)
+        return out_files
 
-    def combine_final(self, polarity, peaksets, mzmatch_params, mzmatch_outputs):
+    def combine_final(self, in_files, mzmatch_params, mzmatch_outputs):
+
         out_file = self.get_value(mzmatch_outputs, 'final.combined.peakml.file')[0]
         out_file = os.path.abspath(out_file)
 
@@ -294,11 +303,11 @@ class Rpy2Pipeline(object):
         rtwindow = self.get_value(mzmatch_params, 'rtwindow')[0]
         combine_type = self.get_value(mzmatch_params, 'combination')[0]
         NULL = robjects.r("NULL")
-        self.combine_peaksets(peaksets, out_file, NULL, ppm, rtwindow, combine_type)
+        self.combine_peaksets(in_files, out_file, NULL, ppm, rtwindow, combine_type)
 
         return out_file
 
-    def filter_final(self, polarity, in_file, mzmatch_filters, mzmatch_params, mzmatch_outputs):
+    def filter_final(self, in_file, mzmatch_filters, mzmatch_params, mzmatch_outputs):
 
         noise_filter = robjects.r['Pimp.noiseFilter']
         apply_noise_filter = self.get_value(mzmatch_filters, 'noise')[0]
@@ -321,7 +330,7 @@ class Rpy2Pipeline(object):
 
         return out_file
 
-    def gap_filling(self, polarity, in_file, peakml_params, mzmatch_outputs):
+    def gap_filling(self, in_file, peakml_params, mzmatch_outputs):
 
         out_file = self.get_value(mzmatch_outputs, 'final.combined.gapfilled.file')[0]
         out_file = os.path.abspath(out_file)
@@ -334,7 +343,7 @@ class Rpy2Pipeline(object):
 
         return out_file
 
-    def related_peaks(self, polarity, in_file, mzmatch_params, mzmatch_outputs):
+    def related_peaks(self, in_file, mzmatch_params, mzmatch_outputs):
 
         out_file = self.get_value(mzmatch_outputs, 'final.combined.related.file')[0]
         out_file = os.path.abspath(out_file)
@@ -349,7 +358,12 @@ class Rpy2Pipeline(object):
 
         return out_file, basepeak_file
 
-    def identify(self, polarity, in_file, databases, groups, mzmatch_params, mzmatch_outputs):
+    def identify(self, polarity, in_file, databases, non_empty, mzmatch_params, mzmatch_outputs):
+
+        group_dict = {}
+        for group_label, index, description, files, abspath in non_empty:
+            group_dict[group_label] = robjects.StrVector(files)
+        groups = robjects.ListVector(group_dict)
 
         args = {
             'in_file'           : in_file,
@@ -390,7 +404,7 @@ class Rpy2Pipeline(object):
         xset = xcms_set(**args)
         return xset
 
-    def rt_correct(self, xset, method, peakml_params, mzmatch_outputs, n_slaves, verbose):
+    def rt_correct(self, xset, method):
 
         if method == 'obiwarp':
             retcor = robjects.r['retcor']
@@ -412,7 +426,7 @@ class Rpy2Pipeline(object):
     # peakml generation
     ############################################################
 
-    def generate_peakml_files(self, xseto, polarity_dir, analysis_id, peakml_params):
+    def generate_peakml_files(self, xseto, polarity_dir, peakml_params):
 
         write_peakml = robjects.r['PeakML.xcms.write.SingleInstance']
         ionisation = self.get_value(peakml_params, 'ionisation')
@@ -445,6 +459,7 @@ class Rpy2Pipeline(object):
 
     def generate_combinations(self, polarity, combined_dir):
 
+        # create a big matrix where each factor is an axis
         factors = self.metadata.get_groups(self.project)
         logger.debug(factors)
         dims = []
@@ -453,19 +468,42 @@ class Rpy2Pipeline(object):
             for lev in f.levels:
                 logger.debug('- %s %s', lev, f.level_files[lev])
             dims.append(len(f.levels))
-
-        mat = np.empty(dims, dtype=object)
+        mat = np.empty(dims, dtype=object) # TODO: this should be a sparse thing!!
         logger.debug(mat.shape)
+
+        # do a search to place entries in the right place in the matrix
         parent = Tree(None, 'root', -1, None)
         parent.level_files = set(self.metadata.get_short_names(polarity))
         self.populate_tree(parent, factors)
         output = self.print_tree(parent, mat, [])
         logger.debug(output)
 
-        out_file = os.path.join(combined_dir, 'combined.tsv')
-        combine_info = self.write_combinations(factors, mat, out_file)
+        # loop through entries in the matrix, finding those with len(files) > 0
+        group_info = []
+        non_empty = []
+        i = 0
+        for index, files in np.ndenumerate(mat):
+            group_label = 'group_%s' % i
+            description = self.index_to_string(factors, index)
+            files = list(files)
+            abspath = os.path.abspath(os.path.join(combined_dir, group_label))
+            row = (group_label, index, description, files, abspath, )
+            group_info.append(row)
+            if len(files) > 0:
+                non_empty.append(row)
+            i += 1
 
-        return combine_info, combined_dir
+        # write a debugging file
+        out_file = os.path.join(combined_dir, 'combined.tsv')
+        parent_dir = os.path.dirname(out_file)
+        self.create_if_not_exist(parent_dir)
+        with open(out_file, 'w') as f:
+            for group_label, index, description, files, abspath in group_info:
+                s = '%s\t%s\t%s\t%s\t%s\n' % (group_label, index, description, files, abspath)
+                f.write(s)
+
+        # return a list of non-empty entries that should be combined
+        return non_empty
 
     def populate_tree(self, parent, factors):
         depth = parent.depth + 1
@@ -477,36 +515,17 @@ class Rpy2Pipeline(object):
             node = Tree(factor, level, depth, parent)
             self.populate_tree(node, factors)
 
-    def print_tree(self, node, mat, coord):
+    def print_tree(self, node, mat, index):
         if node.level_idx is not None:
-            coord.append(node.level_idx)
+            index.append(node.level_idx)
         output = ''.join(['\t' for i in range(node.depth)])
         output += '%d %s %s : %s at %s\n' % (node.depth, node.factor, node.level_label,
-                                             node.level_files, coord)
-        mat[tuple(coord)] = node.level_files # coord must be a tuple
+                                             node.level_files, index)
+        mat[tuple(index)] = node.level_files # index must be a tuple
         for child in node.children:
-            new_coord = list(coord) # copy
-            output += self.print_tree(child, mat, new_coord)
+            new_index = list(index) # copy
+            output += self.print_tree(child, mat, new_index)
         return output
-
-    def write_combinations(self, factors, mat, out_file):
-
-        parent_dir = os.path.dirname(out_file)
-        self.create_if_not_exist(parent_dir)
-
-        rows = []
-        with open(out_file, 'w') as f:
-            i = 0
-            for index, files in np.ndenumerate(mat):
-
-                combi = 'group_%s' % i
-                row = (combi, index, self.index_to_string(factors, index), list(files))
-                rows.append(row)
-
-                s = '%s\t%s\t%s\t%s\n' % row
-                f.write(s)
-                i += 1
-        return rows
 
     def index_to_string(self, factors, index):
         assert len(factors) == len(index)
@@ -517,59 +536,28 @@ class Rpy2Pipeline(object):
             output.append(f.levels[idx])
         return ','.join(output)
 
-    def copy_files(self, polarity_dir, combined_dir, combine_info):
+    def copy_files(self, polarity_dir, group_info):
 
-        to_process = []
-        for row in combine_info:
+        for group_label, index, description, files, abspath in group_info:
 
-            logger.debug(row)
-            combi_label, coord, description, files = row
+            logger.debug('%s %s %s %s %s' % (group_label, index, description, files, abspath))
+            if not os.path.exists(abspath):
+                os.makedirs(abspath)
 
-            one_combination = os.path.join(combined_dir, combi_label)
-            if not os.path.exists(one_combination):
-                os.makedirs(one_combination)
-
-            # copy files
+            # copy the peakml files that should be combined together as a group
             for f_name in files:
                 abs_dir = os.path.abspath(polarity_dir)
                 source = os.path.join(abs_dir, f_name + '.peakml')
-                target = one_combination
+                target = abspath
                 shutil.copy(source, target)
-
-            to_process.append(one_combination)
-
-        return to_process
 
     ############################################################
     # matching across groups
     ############################################################
 
-    def combine_all(self, combine_info, combined_dir, combination_paths,
-                      combine_ppm, combine_rtwindow, combine_type):
+    def combine_peaksets(self, in_files, out_file, label, ppm, rtwindow, combine_type):
 
-        assert len(combine_info) == len(combination_paths)
-        for i in range(len(combine_info)):
-
-            combine_label, coord, description, files = combine_info[i]
-            one_combination = combination_paths[i]
-            if len(files) > 0:
-                logger.info('Processing %s', one_combination)
-                self.combine_single_combi(one_combination, combined_dir, combine_label,
-                               combine_ppm, combine_rtwindow, combine_type)
-            else:
-                logger.info('Nothing to combine in %s', one_combination)
-
-    def combine_single_combi(self, one_combination, combined_dir, label,
-                            ppm, rtwindow, combine_type):
-
-        one_combination_path = os.path.abspath(one_combination)
-        input_list = self.list_peakml_files_in(one_combination_path)
-        out_file = os.path.join(combined_dir, label + '.peakml')
-        self.combine_peaksets(input_list, out_file, label, ppm, rtwindow, combine_type)
-
-    def combine_peaksets(self, input_list, out_file, label, ppm, rtwindow, combine_type):
-
-        peakml_list_str = ','.join(input_list)
+        peakml_list_str = ','.join(in_files)
         files = robjects.StrVector([peakml_list_str])
         combine_peakml = robjects.r['Pimp.combineSingle']
         combine_peakml(files, out_file, label, ppm, rtwindow, combine_type)
@@ -581,15 +569,15 @@ class Rpy2Pipeline(object):
     def rsd_filter(self, in_peaksets, rsd):
 
         rsd_filter_peakml = robjects.r['Pimp.rsdSingle']
-        out_peaksets = []
+        out_files = []
         for in_file in in_peaksets:
             basename, extension = os.path.splitext(in_file)
             out_file = basename + '_rsd' + extension
             rej_file = basename + '_rsdrej' + extension
             rsd_filter_peakml(in_file, out_file, rej_file, rsd)
-            out_peaksets.append(out_file)
+            out_files.append(os.path.abspath(out_file))
 
-        return out_peaksets
+        return out_files
 
     ############################################################
     # common functions
@@ -643,7 +631,6 @@ class Rpy2PipelineMetadata(object):
         self.stds = self.get_standards()
         self.contrasts = self.get_comparisons()
         self.databases = self.get_databases()
-
 
     def remove_first_two(self, path):
         tokens = path.split('/')
@@ -749,6 +736,7 @@ class Rpy2PipelineMetadata(object):
     def get_databases(self):
         databases = Database.objects.filter(params__analysis=self.analysis).values_list('name', flat=True)
         return list(databases)
+
 
 class Tree(object):
 
