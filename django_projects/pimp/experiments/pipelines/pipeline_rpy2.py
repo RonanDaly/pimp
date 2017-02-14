@@ -540,7 +540,7 @@ class Rpy2Pipeline(object):
 
         for group_label, index, description, files, abspath in group_info:
 
-            logger.debug('%s %s %s %s %s' % (group_label, index, description, files, abspath))
+            logger.debug('%s %s %s %s %s' % (group_label, str(index), description, str(files), abspath))
             if not os.path.exists(abspath):
                 os.makedirs(abspath)
 
