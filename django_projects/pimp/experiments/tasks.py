@@ -211,6 +211,7 @@ def start_pimp_pipeline(analysis, project, saveFixtures=False):
     analysis.status = 'Processing'
 
     pipeline = Rpy2Pipeline(analysis, project, saveFixtures)
+    logger.error('Testing logging system with error level message')
     logger.info('Starting pipeline with analysis %s(%s) and project %s(%s)', analysis.id, analysis, project.id, project)
     xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)

@@ -250,6 +250,7 @@ ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, us
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+CELERYD_HIJACK_ROOT_LOGGER = False
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -289,8 +290,22 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'celery': {
+            'handlers': ['console'],
+            'level': 'WARN',
+            'propagate': False,
+        },
+        'celery.task': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
+from celery.signals import setup_logging
+@setup_logging.connect
+def configure_celery_logging(**kwargs):
+    pass
 
 RSCRIPT_PATH = getNeededString('PIMP_RSCRIPT_PATH')
 
