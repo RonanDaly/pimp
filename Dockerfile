@@ -10,15 +10,12 @@ COPY django_projects/requirements*.txt /home/pimp/pimp/django_projects/
 COPY packrat /home/pimp/pimp/packrat
 COPY PiMP /home/pimp/pimp/PiMP
 COPY PiMPDB /home/pimp/pimp/PiMPDB
-COPY setup_docker_prod.sh setup_pimp_prod.sh setupR.R /home/pimp/pimp/
+COPY setup_docker_prod.sh setup_pimp_prod.sh setupR.R install_run_sencha_linux.sh install_sencha_linux.sh run_sencha_linux.sh /home/pimp/pimp/
+COPY django_projects/pimp/pimp/static /home/pimp/pimp/django_projects/pimp/pimp/static
 RUN chown -R pimp:pimp /home/pimp
 USER pimp
 WORKDIR /home/pimp/pimp
 RUN ./setup_docker_prod.sh
-USER root
-COPY . /home/pimp/pimp/
-RUN chown -R pimp:pimp /home/pimp
-USER pimp
 RUN ./install_run_sencha_linux.sh
 WORKDIR /home/pimp/pimp/django_projects/pimp
 ENV MYSQL_DATABASE=
@@ -27,3 +24,7 @@ ENV MYSQL_PASSWORD=
 RUN ./collectstatic.sh
 VOLUME /home/pimp/static /home/pimp/pimp /home/pimp/media /home/pimp/backups /home/pimp/frank/NISTQueryFiles
 CMD ./start_pimp_prod.sh
+USER root
+COPY . /home/pimp/pimp/
+RUN chown -R pimp:pimp /home/pimp
+USER pimp
