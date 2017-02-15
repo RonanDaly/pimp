@@ -10,7 +10,7 @@ def create_missing_frank_objects(apps, schema_editor):
     
     for project in Project.objects.all():
         if not PimpProjectFrankExp.objects.filter(pimp_project=project).exists():
-            create_frank_project_objects(user=project.created_by, title=project.title,
+            create_frank_project_objects(user=project.user_owner, title=project.title,
                 description=project.description, new_project=project) 
 
 class Migration(migrations.Migration):
