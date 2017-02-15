@@ -5,7 +5,7 @@ from django.db import models, migrations
 from projects.views import create_frank_project_objects
 
 def create_missing_frank_objects(apps, schema_editor):
-    Project = apps.get_model('project', 'Project')
+    Project = apps.get_model('projects', 'Project')
     PimpProjectFrankExp = apps.get_model('frank', 'PimpProjectFrankExp')
     
     for project in Project.objects.all():
