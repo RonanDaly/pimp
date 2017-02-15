@@ -6,7 +6,7 @@ MAINTAINER Rónán Daly <Ronan.Daly@glasgow.ac.uk>
 # If no change is made in them, then the cache is okay and can be reused
 COPY DockerSupport /home/pimp/pimp/DockerSupport
 COPY virtualenv /home/pimp/pimp/virtualenv
-COPY django_projects/pimp/collectstatic.sh /home/pimp/pimp/django_projects/pimp
+COPY django_projects/pimp/collectstatic.sh /home/pimp/pimp/django_projects/pimp/collectstatic.sh
 COPY django_projects/requirements*.txt /home/pimp/pimp/django_projects/
 COPY packrat /home/pimp/pimp/packrat
 COPY PiMP /home/pimp/pimp/PiMP
