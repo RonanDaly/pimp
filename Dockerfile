@@ -21,10 +21,10 @@ WORKDIR /home/pimp/pimp/django_projects/pimp
 ENV MYSQL_DATABASE=
 ENV MYSQL_USER=
 ENV MYSQL_PASSWORD=
-VOLUME /home/pimp/static /home/pimp/pimp /home/pimp/media /home/pimp/backups /home/pimp/frank/NISTQueryFiles
 CMD ./start_pimp_prod.sh
 USER root
 COPY . /home/pimp/pimp/
 RUN chown -R pimp:pimp /home/pimp
 USER pimp
 RUN ./collectstatic.sh
+VOLUME /home/pimp/static /home/pimp/pimp /home/pimp/media /home/pimp/backups /home/pimp/frank/NISTQueryFiles
