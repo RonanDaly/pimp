@@ -4,7 +4,6 @@ services:
     pimp:
         volumes:
             - media:/home/pimp/media
-            - backups:/home/pimp/backups
             - frank:/home/pimp/frank/NISTQueryFiles
         command: ./start_pimp_prod.sh
         environment:
@@ -33,7 +32,6 @@ services:
             - mysql:/var/lib/mysql
 
 volumes:
-    backups:
     media:
     frank:
     mysql:

@@ -4,3 +4,4 @@
 *.fixture.json filter=lfs diff=lfs merge=lfs -text
 *.tar.bz filter=lfs diff=lfs merge=lfs -text
 *.tar.gz filter=lfs diff=lfs merge=lfs -text
+*.mzML filter=lfs diff=lfs merge=lfs -text

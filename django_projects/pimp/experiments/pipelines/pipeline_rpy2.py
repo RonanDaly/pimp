@@ -4,6 +4,8 @@ import re
 import shutil
 
 from django.conf import settings
+from django.db import connection
+
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 
@@ -38,6 +40,8 @@ class Rpy2Pipeline(object):
         self.project = project
         self.metadata = Rpy2PipelineMetadata(analysis, project)
         self.setup()
+        # We need to make sure we close the database connection when we are idle for long periods
+        connection.close()
 
     def connect_to_rpy2(self):
 
@@ -212,6 +216,8 @@ class Rpy2Pipeline(object):
         analysis_id = self.analysis.id
 
         groups = self.metadata.get_groups()
+        # We need to make sure we close the database connection when we are idle for long periods
+        connection.close()
         df, metadata = self.convert_to_dataframe(groups)
 
         r_factors = robjects.StrVector([f.label for f in groups])
@@ -240,6 +246,7 @@ class Rpy2Pipeline(object):
         # still assuming that there are two polarities: pos and neg
         raw_data_dict = {}
         for polarity in self.metadata.files:
+            logger.info('Processing %s polarity', polarity)
             raw_data = self.process_raw_data(polarity, xcms_params, mzmatch_params,
                                                   peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves)
             raw_data_dict[polarity] = raw_data
@@ -467,6 +474,9 @@ class Rpy2Pipeline(object):
             dims.append(len(f.levels))
         mat = np.empty(dims, dtype=object) # TODO: this should be a sparse thing!!
         logger.debug(mat.shape)
+
+        # We need to make sure we close the database connection when we are idle for long periods
+        connection.close()        
 
         # do a search to place entries in the right place in the matrix
         parent = Tree(None, 'root', -1, None)

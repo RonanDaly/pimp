@@ -1,7 +1,7 @@
 from djcelery import celery
 from celery.result import AsyncResult
 from celery import chain
-#from celery.utils.log import get_task_logger
+from celery.utils.log import get_task_logger
 
 import os
 import subprocess
@@ -25,8 +25,8 @@ from experiments.pipelines.pipeline_rpy2 import Rpy2Pipeline
 from frank.models import PimpAnalysisFrankFs, AnnotationQuery
 from frank.views import input_peak_list_to_database_signature
 from frank.tasks import run_default_annotations
-logger = logging.getLogger(__name__)
-#logger = get_task_logger(__name__)
+#logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @celery.task
@@ -212,6 +212,8 @@ def start_pimp_pipeline(analysis, project):
     analysis.status = 'Processing'
 
     pipeline = Rpy2Pipeline(analysis, project)
+    logger.error('Testing logging system with error level message')
+    logger.info('Starting pipeline with analysis %s(%s) and project %s(%s)', analysis.id, analysis, project.id, project)
     xml_file_path = pipeline.run_pipeline()
     logger.info('xml_file_path is %s' % xml_file_path)
 
