@@ -4,6 +4,8 @@ import re
 import shutil
 
 from django.conf import settings
+from django.db import connection
+
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 
@@ -41,6 +43,8 @@ class Rpy2Pipeline(object):
         self.metadata = Rpy2PipelineMetadata(analysis, project)
 
         self.setup()
+        # We need to make sure we close the database connection when we are idle for long periods
+        connection.close()
 
     def connect_to_rpy2(self):
 
@@ -203,6 +207,8 @@ class Rpy2Pipeline(object):
         analysis_id = self.analysis.id
 
         groups = self.metadata.get_groups()
+        # We need to make sure we close the database connection when we are idle for long periods
+        connection.close()
         df, metadata = self.convert_to_dataframe(groups)
 
         r_factors = robjects.StrVector([f.label for f in groups])
@@ -264,6 +270,8 @@ class Rpy2Pipeline(object):
         ''' Separates samples into groups and match peakml files in each group to produce aligned peaksets '''
 
         combine_info, combined_dir = self.generate_combinations(polarity, combined_dir)
+        # We need to make sure we close the database connection when we are idle for long periods
+        connection.close()
         combination_paths = self.copy_files(polarity_dir, combined_dir, combine_info)
 
         ppm = self.get_value(mzmatch_params, 'ppm')[0]
