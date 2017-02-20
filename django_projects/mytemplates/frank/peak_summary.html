@@ -80,7 +80,7 @@
 					</tr>
 					{% for annotation in annotations %}
 						<tr>
-							<td><p>{{annotation.compound.name}}</p></td>
+							<td><p class="cs_name {{annotation.compound.id}}">{{annotation.compound.name}}</p></td>
 							<td><p>{{annotation.compound.formula|safe}}</p></td>
 							<td><p>{{annotation.compound.exact_mass|floatformat:4}}</p></td>
 							<td><p>{{annotation.confidence|floatformat:3}}</p></td>		

@@ -610,7 +610,7 @@ def get_chemspider_info(request, compound_id):
 
         compound = Compound.objects.get(pk=compound_id)
 
-        data = {"compound_id": compound_id, "image_url": compound.image_url, "cs_url": compound.cs_url, "csid": compound.csid}
+        data = {"compound_id": compound_id, "image_url": compound.image_url, "cs_url": compound.cs_url, "csid": compound.csid, "cs_name": compound.name}
         print "the data being returned is", data
 
         response = simplejson.dumps(data)

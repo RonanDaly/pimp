@@ -6,27 +6,33 @@ $(document).ready(function() {
  		e.preventDefault();
 
     	var compound_id = $(this).attr("compound_id");
-    	console.log("compound_id: "+ compound_id);
     	var url = cs_url.replace('1234567', compound_id); 
     	var show_cs = $('.show_cs');
-
-    	console.log("the length of the cs_show is "+ show_cs.length); 
 
     $.ajax({
         type: "GET",
         url: url,
         data: compound_id,
         success: function(response){
+        	//Data fron the response
         	image_url = response['image_url']
         	csid = response['csid']
         	url = response['cs_url']
+        	name = response['cs_name']
 
         	console.log("The image url is "+image_url);
-        	console.log("The CSID returned is "+ response);
-        	if (response['csid'] != "None") {
+        	console.log("Returned form the view is: "+ response);
+        	//If the CSID has been returned successfully from the server
+        	if (response['csid'] != null) {
         		$('.cspider_info_btn.'+compound_id).replaceWith('<p>ChemSpider ID: '+ csid + '</p>');
         		$('.cs_image.'+compound_id).append('<img src ="'+ image_url + '"  height="900" >'); 
 				$('.cs_url.'+compound_id).append('<a href ="'+ url + '" > ChemSpider </a>');
-           }}});
+				$('.cs_name.'+compound_id).replaceWith(name);
+			}
+			else {
+				$('.cspider_info_btn.'+compound_id).replaceWith('<p>No ChemSpider info for '+ name + ' </p>');
+			}
+
+           }});
 });
 });
