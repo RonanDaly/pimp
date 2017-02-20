@@ -1,11 +1,9 @@
 {% extends "base.html" %}
-
 {% load staticfiles %}
-
 
 {% block content %}
 
-        <h2>Peak {{peak.id}}</h2>
+    <h2>Peak {{peak.id}}</h2>
 	<p>Mass: {{peak.mass|floatformat:4}}</p>
 	<p>Retention Time: {{peak.retention_time|floatformat:4}}</p>
 	<p>Intensity: {{peak.intensity|stringformat:".4e"}}</p>
@@ -90,17 +88,18 @@
 							<td><p>{{annotation.adduct}}</p></td>
 							<td><p>{{annotation.collision_energy}}</p></td>	
 							<td>
-							{% if annotation.compound.csid = None %}
-							<p><a class="chemspider_info_btn" href="{% url 'get_chemspider_info' annotation.compound.id %}">ChemSpider Info</a></p>
+							{% if annotation.compound.csid = None %}   
+							<a class ="cspider_info_btn {{annotation.compound.id}}" compound_id="{{annotation.compound.id}}" href={{cs_url}}>Get ChemSpider Info</a></td>
+							<td><p class="cs_image {{annotation.compound.id}}"></p></td>
+							<td><p class="cs_url {{annotation.compound.id}}"></p></td>
 							{% else %}
-							<p> ChemSpider ID: {{annotation.compound.csid}}</p>
-							{% endif %}
-							</td>
+							<p class ="show_cs {{annotation.compound.id}}"> ChemSpider ID: {{annotation.compound.csid}}</p></td>
 							<!--<td><p>{{annotation.compound.csid}}</p></td>-->
-							<td><p> <img src="{{ annotation.compound.image_url }}" height="900"></p></td>
-							<td><p><a href ="{{annotation.compound.cs_url}}">ChemSpider</p></td>
+							<td><p class="cs_image {{annotation.compound.id}}"> <img src="{{ annotation.compound.image_url }}" height="900"></p></td>
+							<td><p class="cs_url {{annotation.compound.id}}"><a href ="{{annotation.compound.cs_url}}">ChemSpider</a></p></td>
+							{% endif %}
 							<!--<td><p>{{annotation.additional_information}}</p></td>-->
-							<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+							<td><a class ="show_cs {{annotation.compound.id}} href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
 						</tr>
 					{% endfor %}
 					{% endif %}

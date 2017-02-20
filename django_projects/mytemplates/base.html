@@ -25,6 +25,16 @@
 		<!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
 		<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-image-gallery.min.css">
     	<link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.fileupload-ui.css">
+
+		<script>
+		console.log("we are logging")
+		var cs_url = "{% url 'get_chemspider_info' 1234567 %}";
+		console.log("cs_url= "+ cs_url);
+		</script>
+    
+		<script src="{% static 'js/get_chemspider_info.js' %}"></script>
+		<script> console.log("loading the chemspider info js")</script>
+
     	<!-- Shim to make HTML5 elements usable in older Internet Explorer versions -->
     	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 		<style type="text/css">

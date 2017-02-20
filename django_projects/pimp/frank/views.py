@@ -604,16 +604,20 @@ def add_experiment(request):
 
 def get_chemspider_info(request, compound_id):
 
+    if request.is_ajax():
+        csid_generator = ChemSpiderQueryTool()
+        csid_generator.populate_compound_csid(compound_id)
 
-    csid_generator = ChemSpiderQueryTool()
-    csid_generator.populate_compound_csid(compound_id)
+        compound = Compound.objects.get(pk=compound_id)
 
-    compound = Compound.objects.get(pk=compound_id)
-    data = [compound.csid]
-    print "the compound csid is", data
-    response = simplejson.dumps(data)
+        data = {"compound_id": compound_id, "image_url": compound.image_url, "cs_url": compound.cs_url, "csid": compound.csid}
+        print "the data being returned is", data
 
-    return HttpResponse(response, content_type='application/json')
+        response = simplejson.dumps(data)
+
+        print "the response is", response
+
+        return HttpResponse(response, content_type='application/json')
 
 
 
