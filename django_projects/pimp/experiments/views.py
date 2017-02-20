@@ -1065,7 +1065,7 @@ def get_comparison_info_list(dataset, comparisons):
     for comparison in comparisons:
         peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
         logger.info('peak_comparison_info: %d', peak_comparison_info.count())
-        logger.debug(peak_comparison_info)
+        #logger.debug(peak_comparison_info)
         comparison_info.append([comparison,peak_comparison_info])
     new_query_stop = timeit.default_timer()
     logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
@@ -1691,7 +1691,7 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
                     logger.error("EXCEPTION TRIGGERED!!!!!")
                 # print lineList
                 data.append([name, lineList])
-                logger.debug(data)
+                #logger.debug(data)
         message = "got somthing on the server for peaks chromatogram!!!"
 
 
