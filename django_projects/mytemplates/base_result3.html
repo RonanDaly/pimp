@@ -381,8 +381,7 @@
             });
 
             var pathwayTable = set_pathwaytable();
-            //pathwayTable.$('tr').click( function () {
-            pathwayTable.on('click', 'tr', function() {
+            $('#pathway-table tbody').on('click', 'tr', function() {
 
                 // Row selection
                 pathwayTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
@@ -1167,7 +1166,7 @@
 			{% endfor %}
 
 			{% for comparison in comparisons %}
-            $('#comparison{{ comparison.id }}-table').on('click', 'tr', function() {
+            $('#comparison{{ comparison.id }}-table tbody').on('click', 'tr', function() {
 			// comparisonTable{{ comparison.id }}.$('tr').click( function () {
 				// get data from the row clicked as an array
 			    var data = comparisonTable{{ comparison.id }}.fnGetData( this );
