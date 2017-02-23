@@ -284,9 +284,15 @@ class Rpy2Pipeline(object):
         rtwindow = self.get_value(mzmatch_params, 'rtwindow')[0]
         combine_type = self.get_value(mzmatch_params, 'combination')[0]
         for group_label, index, description, files, abspath in non_empty:
+
             logger.info('Processing %s', abspath)
-            input_list = self.list_peakml_files_in(abspath)
+
+            input_list = []
+            for f_name in files:
+                peakml_path = os.path.join(abspath, f_name + '.peakml')
+                input_list.append(peakml_path)
             out_file = os.path.abspath(os.path.join(combined_dir, group_label + '.peakml'))
+
             self.combine_peaksets(input_list, out_file, group_label, ppm, rtwindow, combine_type)
             out_files.append(out_file)
 
@@ -485,7 +491,7 @@ class Rpy2Pipeline(object):
         output = self.print_tree(parent, mat, [])
         logger.debug(output)
 
-        # loop through entries in the matrix, finding those with len(files) > 0
+        # loop through entries in the matrix, finding non-empty cells where len(files) > 0
         group_info = []
         non_empty = []
         i = 0
@@ -509,7 +515,7 @@ class Rpy2Pipeline(object):
                 s = '%s\t%s\t%s\t%s\t%s\n' % (group_label, index, description, files, abspath)
                 f.write(s)
 
-        # return a list of non-empty entries that should be combined
+        # return a list of non-empty groups that should be combined
         return non_empty
 
     def populate_tree(self, parent, factors):
@@ -588,15 +594,6 @@ class Rpy2Pipeline(object):
     ############################################################
     # common functions
     ############################################################
-
-    def list_peakml_files_in(self, input_dir):
-        dir_content = os.listdir(input_dir)
-        peakml_list = []
-        for item in dir_content:
-            if item.endswith(".peakml"):
-                full_path = os.path.join(input_dir, item)
-                peakml_list.append(os.path.abspath(full_path))
-        return peakml_list
 
     def get_value(self, r_vect, key):
         return r_vect[r_vect.names.index(key)]
