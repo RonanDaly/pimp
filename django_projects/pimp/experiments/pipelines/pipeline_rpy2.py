@@ -62,6 +62,9 @@ class Rpy2Pipeline(object):
 
     def setup(self):
 
+        self.analysis.status = 'Processing'
+        self.analysis.save(update_fields=['status'])
+
         self.working_dir = self.get_pimp_wd(self.project.id)
         self.validate_input()
         pp = self.get_analysis_params(self.analysis.id)

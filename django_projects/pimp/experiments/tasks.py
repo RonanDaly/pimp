@@ -209,8 +209,6 @@ def start_pimp_pipeline(analysis, project):
     :type analysis: the analysis object
     :type project: the project object
     """
-    analysis.status = 'Processing'
-
     pipeline = Rpy2Pipeline(analysis, project)
     logger.error('Testing logging system with error level message')
     logger.info('Starting pipeline with analysis %s(%s) and project %s(%s)', analysis.id, analysis, project.id, project)
