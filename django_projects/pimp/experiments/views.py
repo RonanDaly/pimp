@@ -289,89 +289,113 @@ def experiment(request, project_id):
 #     xmltree = Xmltree(pimpXmlFile)
 #     print len(xmltree.allPeaks())
 
-def start_analysis(request, project_id):
 
+def submit_analysis(project, analysis, user):
+
+    # Get the required objects for running FrAnK here.
+    pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+    frank_experiment = pimpFrankLink.frank_expt
+    fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
+    logger.debug("The FrAnK experiment and fragmentation set added to PiMP are %s %s", frank_experiment,
+                fragmentation_set)
+
+    fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
+    num_fragment_files = len(fragment_files)
+    logger.debug("The number of fragment files are %d", num_fragment_files)
+
+    # Link the Frank fragment set and the pimp analysis set
+    PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
+    analysis.status = 'Submitted'
+    analysis.submited = datetime.datetime.now()
+    analysis.save(update_fields=['status', 'submited'])
+
+    # Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
+    celery_tasks = [tasks.start_pimp_pipeline.si(analysis, project)]
+    chain(celery_tasks,
+          link=tasks.create_run_frank_chain.si(num_fragment_files, analysis,
+                                               project, frank_experiment,
+                                               fragmentation_set,
+                                               user))()
+
+
+def validate_analysis(analysis):
+
+    samples = Sample.objects.filter(attribute__comparison__experiment__analysis=
+                                    analysis).distinct()
+    pos_missing_samples = []
+    neg_missing_samples = []
+    for sample in samples:
+        if not sample.samplefile.posdata:
+            pos_missing_samples.append(sample.name.split(".")[0])
+        if not sample.samplefile.negdata:
+            neg_missing_samples.append(sample.name.split(".")[0])
+
+    is_valid = False
+    if not neg_missing_samples and not pos_missing_samples:
+        is_valid = True
+
+    return is_valid, pos_missing_samples, neg_missing_samples
+
+
+def start_analysis(request, project_id):
 
     # base = importr('base')
     # base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
     # pimp = importr('PiMP')
     if request.is_ajax():
+
         analysis_id = int(request.GET['id'])
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
         user = request.user
-
-        # Get the required objects for running FrAnK here.
-        pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
-        frank_experiment = pimpFrankLink.frank_expt
-        fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
-        logger.info("The FrAnK Experiment and Fragmetation set added to PiMP are %s %s", frank_experiment, fragmentation_set)
-
-        fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
-        num_fragment_files = len(fragment_files)
-        logger.info("The number of fragment files are %d", num_fragment_files)
-
-        # Link the Frank fragment set and the pimp analysis set
-        PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
-
 
         if analysis.status != "Ready":
             message = "The analysis has already been submitted"
             response = simplejson.dumps(message)
             return HttpResponse(response, content_type='application/json')
         else:
-            comparisons = analysis.experiment.comparison_set.all()
-            comparison_name = [str(comparison.name) for comparison in comparisons]
-            samples = Sample.objects.filter(attribute__comparison__experiment__analysis=analysis).distinct()
-            groups = Attribute.objects.filter(comparison__experiment__analysis=analysis).distinct()
-            qc = CalibrationSample.objects.filter(project=project).filter(attribute__name="qc")
-            blank = CalibrationSample.objects.filter(project=project).filter(attribute__name="blank")
-            standard = CalibrationSample.objects.filter(project=project).filter(attribute__name="standard")
-            pos_missing_samples = []
-            neg_missing_samples = []
-            for sample in samples:
-                if not sample.samplefile.posdata:
-                    pos_missing_samples.append(sample.name.split(".")[0])
-                if not sample.samplefile.negdata:
-                    neg_missing_samples.append(sample.name.split(".")[0])
-            if not neg_missing_samples and not pos_missing_samples:
-                pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples]
-                neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples]
-                # pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples] + [str(sample.standardFile.posdata.file.path) for sample in qc] + [str(sample.standardFile.posdata.file.path) for sample in blank]
-                # neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples] + [str(sample.standardFile.negdata.file.path) for sample in qc] + [str(sample.standardFile.negdata.file.path) for sample in blank]
-                file_list = {"positive": pos_list, "negative": neg_list}
-                group_list = {}
-                for group in groups:
-                    group_list[str(group.name)] = [str(sample.name.split(".")[0]) for sample in group.sample.all()]
-                # group_list["QC"] = [str(sample.name.split(".")[0]) for sample in qc]
-                # group_list["Blank"] = [str(sample.name.split(".")[0]) for sample in blank]
-                standards = [str(sample.standardFile.data.file.path) for sample in standard]
-                databases = ["hmdb", "kegg", "lipidmaps"]
-                analysis.status = 'Submitted'
-                analysis.save(update_fields=['status'])
 
-                analysis.submited = datetime.datetime.now()
-                analysis.save(update_fields=['submited'])
-
-                #Start the R pipeline for PiMP and FrAnK if fragments are present.
-                celery_tasks = []
-
-                #Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
-
-                celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
-                chain(celery_tasks, link=tasks.create_run_frank_chain.si(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user))()
-
-
-                message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
+            is_valid, pos_missing_samples, neg_missing_samples = validate_analysis(analysis)
+            if is_valid:
+                submit_analysis(project, analysis, user)
+                message = "Your analysis has been correctly submitted. " \
+                          "The status update will be emailed to you."
                 data = {"status": "success", "message": message}
                 response = simplejson.dumps(data)
                 return HttpResponse(response, content_type='application/json')
             else:
-                message = "Some samples are only present in one polarity, please add the following missing files: "
+                message = "Some samples are only present in one polarity, please add " \
+                          "the following missing files: "
                 data = {"status": "fail", "error": "missing file", "message": message,
                         "missing_neg": neg_missing_samples, "missing_pos": pos_missing_samples}
                 response = simplejson.dumps(data)
                 return HttpResponse(response, content_type='application/json')
+
+
+def restart_analysis(request, project_id):
+
+    analysis_id = int(request.GET['id'])
+    analysis = Analysis.objects.get(pk=analysis_id)
+    project = Project.objects.get(pk=project_id)
+    user = request.user
+
+    # creates a copy analysis, keeping the same experiment, owner and
+    # analysis parameters, but nothing else
+    copy_analysis = Analysis.objects.create(
+        owner=analysis.owner,
+        experiment=analysis.experiment,
+        params=analysis.params,
+        status='Ready'
+    )
+
+    # now we can submit this copy analysis
+    submit_analysis(project, copy_analysis, user)
+    message = "Your analysis has been correctly resubmitted. " \
+              "The status update will be emailed to you."
+    data = {"status": "success", "message": message}
+    response = simplejson.dumps(data)
+    return HttpResponse(response, content_type='application/json')
+
 
 def get_metabolites_table(request, project_id, analysis_id):
     if request.is_ajax():

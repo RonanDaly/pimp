@@ -1964,6 +1964,49 @@ $(document).ready(function() {
 		});
 	})
 
+	$('.analysis-resubmit-btn').click(function (e) {
+  		e.preventDefault();
+
+  		var url = "{% url 'restart_analysis' project.id %}";
+  		var action = $(this);
+
+  		analysis = $(this).attr('id').split("_")[1];
+  		console.log("analysis_id: "+analysis);
+  		var analysis_id = {"id": analysis};
+
+  		var $modal = $("#analysis-submission-popup");
+		var modalLabel = $modal.find('#analysis-submission-popup-Label');
+		var modalBody = $modal.find('.modal-body');
+
+		$(modalLabel).empty();
+		$(modalBody).empty();
+
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: analysis_id,
+            success: function(response){
+            	console.log(response);
+            	if (response["status"] == "fail"){
+                    $(modalLabel).text("Error");
+                    $(modalBody).text("An unknown error happened, please contact an administrator.");
+            	}
+            	else {
+            		$(action).empty();
+            		$(status).text('Resubmitted');
+            		$(status).css('color','rgb(75, 122, 195)');
+            		$(modalLabel).text("Analysis resubmitted");
+            		$(modalBody).text(response["message"]);
+            	}
+            	$modal.modal();
+            },
+            error: function(e){
+        		$(modalLabel).text("Error");
+	            $(modalBody).text("An unknown error happened, please contact an administrator.");
+	            $modal.modal();
+        	}
+		});
+	})
 
 	$('#group-tab a').click(function (e) {
   		e.preventDefault();
@@ -2845,14 +2888,34 @@ $(document).ready(function() {
 												{% endfor %}
 											</div>
 											<div class="span2 center-text" style="min-height:10px;padding-top: 4px;">
-												{% ifequal analysis.status 'Finished' %}<p><a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">Access result</a></p>
-												{% if analysis.pimpanalysisfrankfs_set.all %}
-
-												{% else %}
-                                                    <p><a href="{% url 'connect' project.id analysis.id %}" class="text-in-table analysis_result_button" style="font-size:13px;">Connect to FrAnK</a></p>
-												{% endif %}
-
-												{% endifequal %}{% ifequal analysis.status 'Ready' %}<p><a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">Submit analysis</a></p>{% endifequal %}
+												{% ifequal analysis.status 'Finished' %}
+                                                    <p>
+                                                        <a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">
+                                                            Access result
+                                                        </a>
+                                                    </p>
+	    											{% if analysis.pimpanalysisfrankfs_set.all %}
+    												{% else %}
+                                                        <p>
+                                                            <a href="{% url 'connect' project.id analysis.id %}" class="text-in-table analysis_result_button" style="font-size:13px;">
+                                                                Connect to FrAnK
+                                                            </a>
+                                                        </p>
+	    											{% endif %}
+												{% endifequal %}
+                                                {% ifequal analysis.status 'Ready' %}
+                                                    <p>
+                                                        <a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">
+                                                            Submit analysis
+                                                        </a>
+                                                    </p>
+                                                {% else %}
+                                                    <p>
+                                                        <a class="analysis-resubmit-btn" id="analysis_{{ analysis.id }}" href="#">
+                                                            Resubmit analysis
+                                                        </a>
+                                                    </p>
+                                                {% endifequal %}
 
 											</div>
 										</div>
