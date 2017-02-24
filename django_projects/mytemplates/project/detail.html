@@ -1977,7 +1977,9 @@ $(document).ready(function() {
   		var $modal = $("#analysis-submission-popup");
 		var modalLabel = $modal.find('#analysis-submission-popup-Label');
 		var modalBody = $modal.find('.modal-body');
-
+        $modal.on('hidden.bs.modal', function (e) {
+            location.reload();
+        })
 		$(modalLabel).empty();
 		$(modalBody).empty();
 
@@ -1992,7 +1994,6 @@ $(document).ready(function() {
                     $(modalBody).text("An unknown error happened, please contact an administrator.");
             	}
             	else {
-            		$(action).empty();
             		$(status).text('Resubmitted');
             		$(status).css('color','rgb(75, 122, 195)');
             		$(modalLabel).text("Analysis resubmitted");
