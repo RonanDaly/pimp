@@ -17,6 +17,8 @@ import pandas as pd
 from pimp.settings import getString, getNeededString
 import rpy2.robjects as robjects
 
+from .helpers import get_pimp_wd
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -65,7 +67,7 @@ class Rpy2Pipeline(object):
         self.analysis.status = 'Processing'
         self.analysis.save(update_fields=['status'])
 
-        self.working_dir = self.get_pimp_wd(self.project.id)
+        self.working_dir = get_pimp_wd(self.project.id)
         self.validate_input()
         pp = self.get_analysis_params(self.analysis.id)
         self.pimp_params = self.create_analysis_dir(self.analysis.id, pp)
@@ -78,18 +80,6 @@ class Rpy2Pipeline(object):
         self.r_dbs = output[output.names.index('DBS')]
         self.r_databases = output[output.names.index('databases')]
 
-    def get_pimp_wd(self, project_id):
-
-        base_dir = getNeededString('PIMP_BASE_DIR')
-        defined_media_root = os.path.join(base_dir, '..', 'pimp_data')
-        media_root = getString('PIMP_MEDIA_ROOT', defined_media_root)
-        data_dir = os.path.join(media_root, 'projects')
-        project_dir = os.path.join(data_dir, str(project_id))
-
-        logger.info('Data dir: %s', data_dir)
-        logger.info('Project dir: %s', project_dir)
-
-        return project_dir
 
     def validate_input(self):
 

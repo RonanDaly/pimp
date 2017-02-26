@@ -1,5 +1,7 @@
 import itertools
 from collections import OrderedDict
+import os
+import shutil
 
 from django.contrib.auth.decorators import login_required
 from django.core.context_processors import csrf
@@ -33,6 +35,7 @@ from sklearn.decomposition import PCA
 
 from experiments.forms import *
 from experiments import tasks
+from experiments.pipelines.helpers import get_pimp_wd
 
 # FrAnK imports
 from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
@@ -305,6 +308,24 @@ def restart_analysis(request, project_id):
     submit_analysis(project, copy_analysis, user)
     message = "Your analysis has been correctly resubmitted. " \
               "The status update will be emailed to you."
+    data = {"status": "success", "message": message}
+    response = simplejson.dumps(data)
+    return HttpResponse(response, content_type='application/json')
+
+
+def delete_analysis(request, project_id):
+
+    analysis_id = int(request.GET['id'])
+    analysis = Analysis.objects.get(pk=analysis_id)
+    analysis.delete()
+
+    # delete the analysis folder too
+    proj_dir = get_pimp_wd(project_id)
+    analysis_dir = os.path.join(proj_dir, 'analysis_%d' % analysis_id)
+    logger.debug('Deleting analysis directory %d', analysis_dir)
+    shutil.rmtree(analysis_dir)
+
+    message = "Analysis %s has been deleted." % analysis_id
     data = {"status": "success", "message": message}
     response = simplejson.dumps(data)
     return HttpResponse(response, content_type='application/json')
