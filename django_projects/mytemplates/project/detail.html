@@ -2916,7 +2916,9 @@ $(document).ready(function() {
 										</div>
 										<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% ifequal analysis.status 'Error' %}background-color: rgb(240, 230, 230);{% endifequal %}{% ifequal analysis.status 'Finished' %}background-color: rgb(230, 240, 231);{% endifequal %}{% ifequal analysis.status 'Finished' %}background-color: rgb(230, 240, 231);{% endifequal %}{% ifequal analysis.status 'Submitted' %}background-color: rgb(221, 236, 245);{% endifequal %}{% ifequal analysis.status 'Ready' %}background-color: rgb(221, 236, 245);{% endifequal %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
 											<div class="span2 center-text" style="margin-left: 0px;min-height:10px;">
-												<p class="text-in-table introduction_text">{{ experiment.title }}</p>
+												<p class="text-in-table introduction_text">
+                                                    {{ experiment.title }} ({{ analysis.id }})
+                                                </p>
 											</div>
 											<div class="span2 center-text"style="min-height:10px;">
 												<p class="text-in-table introduction_text">{{ analysis.created|truncatewords:"1"|slice:":-3" }}</p>
@@ -2962,12 +2964,12 @@ $(document).ready(function() {
                                                             Resubmit analysis
                                                         </a>
                                                     </p>
-                                                    <p>
-                                                        <a class="analysis-delete-btn" id="analysis_{{ analysis.id }}" href="#">
-                                                            Delete analysis
-                                                        </a>
-                                                    </p>
                                                 {% endifequal %}
+                                                <p>
+                                                    <a class="analysis-delete-btn" id="analysis_{{ analysis.id }}" href="#">
+                                                        Delete analysis
+                                                    </a>
+                                                </p>
 
 											</div>
 										</div>

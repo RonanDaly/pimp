@@ -317,13 +317,21 @@ def delete_analysis(request, project_id):
 
     analysis_id = int(request.GET['id'])
     analysis = Analysis.objects.get(pk=analysis_id)
+    experiment = analysis.experiment
     analysis.delete()
+
+    # if experiment has no more analyses, delete this experiment too
+    if len(experiment.analysis_set.all()) == 0:
+        experiment.delete()
 
     # delete the analysis folder too
     proj_dir = get_pimp_wd(project_id)
     analysis_dir = os.path.join(proj_dir, 'analysis_%d' % analysis_id)
-    logger.debug('Deleting analysis directory %d', analysis_dir)
-    shutil.rmtree(analysis_dir)
+    logger.debug('Deleting analysis directory %s', analysis_dir)
+    try:
+        shutil.rmtree(analysis_dir)
+    except OSError:
+        logger.debug('Cannot delete analysis directory %s', analysis_dir)
 
     message = "Analysis %s has been deleted." % analysis_id
     data = {"status": "success", "message": message}
