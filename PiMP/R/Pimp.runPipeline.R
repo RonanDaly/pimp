@@ -148,6 +148,7 @@ Pimp.generateStdXml <- function(standards, databases, pimp_params, wd) {
     if(length(standards) > 0 && 'standard' %in% databases) {
         stds  <- Pimp.stds.createAnnotationFile(files=standards, outfile=mzmatch.outputs$stds.xml.db)
     } else {
+        logwarn('Standards database is not present!', logger=logger)
         mzmatch.outputs$stds.xml.db <- NULL
     }
     databases = databases[ ! databases == 'standard']
