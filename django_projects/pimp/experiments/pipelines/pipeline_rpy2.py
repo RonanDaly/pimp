@@ -248,7 +248,7 @@ class Rpy2Pipeline(object):
         xml_file_name = ".".join(["_".join(["analysis", str(self.analysis.id)]), "xml"])
         xml_file_path = os.path.join(settings.MEDIA_ROOT,
                                      'projects', str(self.project.id),
-                                     'analysis', str(self.analysis.id),
+                                     'analysis_' + str(self.analysis.id),
                                      xml_file_name)
         logger.debug('xml_file_path is %s', xml_file_path)
 
@@ -367,6 +367,16 @@ class Rpy2Pipeline(object):
         for group_label, index, description, files, abspath in non_empty:
             group_dict[group_label] = robjects.StrVector(files)
         groups = robjects.ListVector(group_dict)
+
+        # turns out that 'stds.xml.db' always has a value, e.g. /home/pimp/media/projects/10/analysis_38/stds_db.xml
+        # regardless of whether the file exists or not.
+        # this behaviour is different from the old pipeline? So here we set it to R NULL if the file doesn't exist
+
+        stds_xml_file = self.get_value(mzmatch_outputs, 'stds.xml.db')[0]
+        stds_xml_file = os.path.abspath(stds_xml_file)
+        if not os.path.isfile(stds_xml_file):
+            logger.info('%s is not found, setting stds.xml.db to NULL', stds_xml_file)
+            self.set_value(mzmatch_outputs, 'stds.xml.db', robjects.r("NULL"))
 
         args = {
             'in_file'           : in_file,
@@ -590,6 +600,9 @@ class Rpy2Pipeline(object):
 
     def get_value(self, r_vect, key):
         return r_vect[r_vect.names.index(key)]
+
+    def set_value(self, r_vect, key, value):
+        r_vect[r_vect.names.index(key)] = value
 
     def get_env_heap_size(self):
         xmx = getString('PIMP_JAVA_PARAMETERS', '')
