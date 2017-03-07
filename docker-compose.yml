@@ -30,6 +30,8 @@ services:
             - .:/home/pimp/backups
         entrypoint: docker-entrypoint.sh
         user: root
+        ulimits:
+            core: -1
     mysql:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes

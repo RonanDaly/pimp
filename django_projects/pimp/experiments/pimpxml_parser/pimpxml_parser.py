@@ -22,7 +22,8 @@ class Xmltree:
 		"""
 
 		# pathway_id = str(id)
-		analysis_id = self.tree.xpath("//*[name()='gpimp:pimp_analysis']/@id")
+		analysis_id = self.tree.xpath('/gpimp:pimp_analysis/@id',
+									  namespaces={'gpimp':'http://puma.ibls.gla.ac.uk/ns/gpimp/1.0'})
 		if len(analysis_id) > 0:
 			return int(analysis_id[0])
 		else:
