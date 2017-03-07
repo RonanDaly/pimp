@@ -295,12 +295,26 @@ def restart_analysis(request, project_id):
     project = Project.objects.get(pk=project_id)
     user = request.user
 
+    # copy the params too
+    new_params = Params()
+    new_params.save()
+
+    for p in analysis.params.param.all():
+        print p.id, p
+        new_p = Parameter(state=p.state, name=p.name, value=p.value)
+        new_p.save()
+        new_params.param.add(new_p)
+
+    for db in analysis.params.databases.all():
+        print db.id, db
+        new_params.databases.add(db.id)
+
     # creates a copy analysis, keeping the same experiment, owner and
-    # analysis parameters, but nothing else
+    # copies of the analysis parameters
     copy_analysis = Analysis.objects.create(
         owner=analysis.owner,
         experiment=analysis.experiment,
-        params=analysis.params,
+        params=new_params,
         status='Ready'
     )
 
@@ -318,13 +332,15 @@ def delete_analysis(request, project_id):
     analysis_id = int(request.GET['id'])
     analysis = Analysis.objects.get(pk=analysis_id)
     experiment = analysis.experiment
-    analysis.delete()
 
-    # if experiment has no more analyses, delete this experiment too
+    # deleting the params will cascade to the analysis and the dataset
+    analysis.params.delete()
+
+    # if experiment has no more analyses, delete it
     if len(experiment.analysis_set.all()) == 0:
         experiment.delete()
 
-    # delete the analysis folder too
+    # finally delete the analysis folder too
     proj_dir = get_pimp_wd(project_id)
     analysis_dir = os.path.join(proj_dir, 'analysis_%d' % analysis_id)
     logger.debug('Deleting analysis directory %s', analysis_dir)
