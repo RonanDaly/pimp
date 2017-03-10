@@ -64,6 +64,7 @@ package:
         name: pimp-$CI_BUILD_TAG
         paths:
             - .env
+            - .env.template
             - docker-compose.yml
             - docker-compose.override.yml
             - common.yml
