@@ -17,7 +17,7 @@ def create_missing_frank_objects(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('frank', '0010_auto_20161221_1334'),
+        ('frank', '0009_auto_20161017_1227'),
     ]
 
     operations = [
