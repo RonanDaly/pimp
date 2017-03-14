@@ -76,7 +76,7 @@ class CompoundAdmin(admin.ModelAdmin):
     """
     Class to show the fields of the Compound model in the django admin pages
     """
-    list_display = ('name', 'formula', 'exact_mass', 'inchikey', 'cas_code',)
+    list_display = ('name', 'formula', 'exact_mass', 'inchikey', 'cas_code', 'csid')
 
 
 class PeakAdmin(admin.ModelAdmin):

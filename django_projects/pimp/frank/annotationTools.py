@@ -22,6 +22,8 @@ import shutil
 import json
 import pprint
 
+from chemspipy import ChemSpider
+
 logger = logging.getLogger(__name__)
 
 MASS_OF_AN_PROTON = 1.00727645199076
@@ -901,8 +903,9 @@ class NISTQueryTool:
             raise
         except OSError as e:
             print(e)
-        # Finally check to see if the call was successfull and the output file exists, AssertionError thrown if not true.
+        # Finally check to see if the call was successfull and the output file exists, AssertionError thrown if not.
         assert os.path.isfile(self.nist_output_file_name),"NIST failed to write the output file!"
+
         return True
 
     def _write_nist_msp_file(self):
@@ -977,7 +980,7 @@ class NISTQueryTool:
             with open(self.nist_output_file_name, "r") as input_file:
                 # Open the NIST output file
                 current_parent_peak = None
-                # For each line which does not begin in a comment (in NIST.txt this is indicated by '>')
+
                 for line in (line for line in input_file if not line.startswith('>')):
                     try:
                         # Due to use of wine,'NIST' uses a distinct encoding which alters the greek letters
@@ -1023,14 +1026,18 @@ class NISTQueryTool:
                         compound_mass = Decimal(re.findall('Mw: (.*?);', annotation_description, re.DOTALL)[0])
                         # And the unique identifier NIST uses to identify the compound
                         compound_annotation_tool_identifier = re.findall('Id: (\d+).', annotation_description)[0]
+
                         try:
-                            # Try to add the compound to the database
+                            # Try to add the compound to the database (all of these are true to create compound)
                             compound_object = Compound.objects.get_or_create(
                                 formula=compound_formula,
                                 exact_mass=compound_mass,
                                 name=compound_name,
-                                cas_code=compound_cas,
+                                cas_code=compound_cas
                             )[0]
+
+                            #ChemSpider tools were accessed here originally.
+
                             # And form the association with the NIST Annotation Tool
                             compound_annotation_tool = CompoundAnnotationTool.objects.get_or_create(
                                 compound=compound_object,
@@ -1068,3 +1075,107 @@ class NISTQueryTool:
             if input_file.closed is False:
                 input_file.close()
         return True
+
+
+class ChemSpiderQueryTool:
+
+    # CAn search with inchikey but also with the CAS-codes when they are availiable.
+    def __init__(self):
+
+        self.cs = ChemSpider('8f40d3ca-3119-4b9c-be8f-c9d18ef6131c')
+
+    #Identifier can be search term ,inchikey and in most cases from NIST - compound_cas
+    def populate_compound_csid(self, compound_id):
+
+        compound_object = Compound.objects.get(id=compound_id)
+        csid = compound_object.csid
+
+        #If there is not a csid associated with this compound
+        if csid is None:
+
+            cas_code = compound_object.cas_code
+            inchikey = compound_object.inchikey
+
+            #Choose inchikey to search ChemSpider if avaliable, else choose cas-code, if available.
+            identifier = None
+
+            if inchikey is not None:
+                identifier = inchikey
+
+            elif cas_code is not None:
+                identifier = cas_code
+
+            if identifier is not None:
+                csresults = self.cs.search("'" + identifier + "'")  # search DB using the cas-code
+
+                # If there is a result from chemSpider
+                if csresults:
+                    csresult = csresults[0]  # Take the first compound as the result, should be unique.
+                else:
+                    csresult = None
+
+                if csresult is not None:
+                    try:
+                        csid = csresult.csid
+                        compound_name = csresult.common_name
+
+                        compound_object.csid = csid
+                        compound_object.name = compound_name
+                        compound_object.save()
+
+                        logger.info("the identified CSID is and compound name is %s %s", csid, compound_name)
+                        #seen_before[identifier] = csid
+                    except:
+                        logger.info("Compound name error for ChemSpider, ignoring")
+                        pass
+
+            else:
+                logger.info("There is no cas_code or inchikey that allows the searching of ChemSpider")
+
+        else:
+
+            logger.info("A CSID was already availiable for this compound and is %s", compound_object.csid)
+
+
+    def search(self, identifier):
+
+        print "the identifier is " + identifier
+
+        csresults = self.cs.search("'" + identifier + "'")  # search DB using the cas-code
+        # If there is a result from chemSpider
+        if csresults:
+            csresult = csresults[0]  # Take the first compound as the result, should be unique.
+        else:
+            csresult = None
+
+        return csresult
+
+
+    # # Get a dictionary of chemSpider data if required: Possibly delete this.
+    # def get_ChemSpider_data(self):
+    #
+    #     # Collect data to return - can be added to later on if required.
+    #     CS_data = {
+    #         'CSID': self.c.csid,
+    #         'image_url': self.c.image_url,
+    #         'name': self.c.common_name
+    #     }
+    #
+    #     # Allows a check of whether chemSpider returns anything useful.
+
+    # def get_csid(self):
+    #
+    #     return self.c.csid
+    #
+    def get_cs_name(self):
+
+         return self.c.common_name
+
+    def get_cs_image_url(self):
+
+         return self.c.image_url
+
+    def get_cs_image(self):
+
+         return self.c.image
+

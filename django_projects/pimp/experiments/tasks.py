@@ -224,7 +224,6 @@ def start_pimp_pipeline(analysis, project, saveFixtures=False):
 
     connection.close()
 
-
 @celery.task
 def end_pimp_pipeline(analysis, project, user, successful):
 

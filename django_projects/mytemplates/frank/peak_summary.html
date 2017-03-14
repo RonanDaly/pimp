@@ -1,18 +1,16 @@
 {% extends "base.html" %}
-
 {% load staticfiles %}
-
 
 {% block content %}
 
-        <h2>Peak {{peak.id}}</h2>
+    <h2>Peak {{peak.id}}</h2>
 	<p>Mass: {{peak.mass|floatformat:4}}</p>
 	<p>Retention Time: {{peak.retention_time|floatformat:4}}</p>
 	<p>Intensity: {{peak.intensity|stringformat:".4e"}}</p>
 	<p>Number of Fragments: {{number_of_fragments}}</p>
 	</br>
 	{% if preferred_annotation %}
-		<div>Preferred Annotation: <b>{{preferred_annotation.compound.name}}</b> ({{preferred_annotation.compound.formula}})</div>
+		<div>Preferred Annotation: <b>{{preferred_annotation.compound.name}}</b> ({{preferred_annotation.compound.formula|safe}})</div>
 		<div>Selected By: {{peak.preferred_candidate_user_selector}} ({{peak.preferred_candidate_updated_date}})</div>
 		<div>Selection Criteria: {{peak.preferred_candidate_description}}</div>
 		</br>
@@ -20,8 +18,8 @@
 		<p>No Specified Preferred Annotation</p>
 	{% endif %}
 
-	<h3>MS2 Fragment Spectrum</h3>     
 	{% if fragments %}
+	<h3>MS2 Fragment Spectrum</h3>     
 
 		<!-- <div>
 			<img src="{% url 'make_spectra_plot' peak.fragmentation_set.slug peak.slug %}">
@@ -38,6 +36,7 @@
 				<th>Retention Time</th>
 				<th>Intensity</th>
 				<th>Relative Intensity</th>
+				<th>Selected Annotation</th>
 			</tr>
 			{% for fragment,relative_intensity in fragments %}
 			<tr>
@@ -46,6 +45,7 @@
 				<td>{{fragment.retention_time|floatformat:4}}</td>
 				<td>{{fragment.intensity|stringformat:".4e"}}</td>
 				<td>{{relative_intensity|floatformat:0}}%</td>
+				<td>{{fragment.preferred_candidate_annotation.compound.formula}} {{fragment.preferred_candidate_annotation.adduct}}</td>
 			</tr>
 			{% endfor %}
 		</table>
@@ -53,7 +53,7 @@
 		Download spectrum as <a href="{% url 'get_fragments_as_text' peak.slug 'list' %}">list</a>&nbsp;<a href="{% url 'get_fragments_as_text' peak.slug 'mona' %}">mona string</a>
 	</p>
 	{% else %}
-		<p>No peaks to display</p>
+		<p>There are no fragments for this peak</p>
 	{% endif %}
 	<br/>
 	<h3>Candidate Annotations</h3>
@@ -72,20 +72,34 @@
 						<th>Difference In Mass</th>
 						<th>Adduct</th>
 						<th>Collision Energy</th>
+						<th>Get CSID</th>
+						<th>Molecule</th>		
 						<th>Additional Information</th>
+						<th>Annotation Selection</th>
 						<th></th>
 					</tr>
 					{% for annotation in annotations %}
 						<tr>
-							<td><p>{{annotation.compound.name}}</p></td>
-							<td><p>{{annotation.compound.formula}}</p></td>
+							<td><p class="cs_name {{annotation.compound.id}}">{{annotation.compound.name}}</p></td>
+							<td><p>{{annotation.compound.formula|safe}}</p></td>
 							<td><p>{{annotation.compound.exact_mass|floatformat:4}}</p></td>
 							<td><p>{{annotation.confidence|floatformat:3}}</p></td>		
 							<td><p {% if annotation.mass_match == True %}style="color: rgb(59, 182, 59);"{% endif %}{% if annotation.mass_match == False %}style="color: rgb(232, 45, 45);"{% endif %}>{{annotation.difference_from_peak_mass|floatformat:3}}</p></td>
 							<td><p>{{annotation.adduct}}</p></td>
-							<td><p>{{annotation.collision_energy}}</p></td>
-							<td><p>{{annotation.additional_information}}</p></td>
-							<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+							<td><p>{{annotation.collision_energy}}</p></td>	
+							<td>
+							{% if annotation.compound.csid = None %}   
+							<a class ="cspider_info_btn {{annotation.compound.id}}" compound_id="{{annotation.compound.id}}" href={{cs_url}}>Get ChemSpider Info</a></td>
+							<td><p class="cs_image {{annotation.compound.id}}"></p></td>
+							<td><p class="cs_url {{annotation.compound.id}}"></p></td>
+							{% else %}
+							<p class ="show_cs {{annotation.compound.id}}"> ChemSpider ID: {{annotation.compound.csid}}</p></td>
+							<!--<td><p>{{annotation.compound.csid}}</p></td>-->
+							<td><p class="cs_image {{annotation.compound.id}}"> <img src="{{ annotation.compound.image_url }}" height="900"></p></td>
+							<td><p class="cs_url {{annotation.compound.id}}"><a href ="{{annotation.compound.cs_url}}">ChemSpider</a></p></td>
+							{% endif %}
+							<!--<td><p>{{annotation.additional_information}}</p></td>-->
+							<td><a class ="show_cs {{annotation.compound.id}} href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
 						</tr>
 					{% endfor %}
 					{% endif %}
