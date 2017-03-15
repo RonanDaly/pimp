@@ -99,7 +99,7 @@
 							<td><p class="cs_url {{annotation.compound.id}}"><a href ="{{annotation.compound.cs_url}}">ChemSpider</a></p></td>
 							{% endif %}
 							<!--<td><p>{{annotation.additional_information}}</p></td>-->
-							<td><a class ="show_cs {{annotation.compound.id}} href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+							<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
 						</tr>
 					{% endfor %}
 					{% endif %}
