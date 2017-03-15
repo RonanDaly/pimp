@@ -1964,6 +1964,96 @@ $(document).ready(function() {
 		});
 	})
 
+	$('.analysis-resubmit-btn').click(function (e) {
+  		e.preventDefault();
+
+  		var url = "{% url 'restart_analysis' project.id %}";
+  		var action = $(this);
+
+  		analysis = $(this).attr('id').split("_")[1];
+  		console.log("analysis_id: "+analysis);
+  		var analysis_id = {"id": analysis};
+
+  		var $modal = $("#analysis-submission-popup");
+		var modalLabel = $modal.find('#analysis-submission-popup-Label');
+		var modalBody = $modal.find('.modal-body');
+        $modal.on('hidden.bs.modal', function (e) {
+            location.reload();
+        })
+		$(modalLabel).empty();
+		$(modalBody).empty();
+
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: analysis_id,
+            success: function(response){
+            	console.log(response);
+            	if (response["status"] == "fail"){
+                    $(modalLabel).text("Error");
+                    $(modalBody).text("An unknown error happened, please contact an administrator.");
+            	}
+            	else {
+            		$(status).text('Resubmitted');
+            		$(status).css('color','rgb(75, 122, 195)');
+            		$(modalLabel).text("Analysis resubmitted");
+            		$(modalBody).text(response["message"]);
+            	}
+            	$modal.modal();
+            },
+            error: function(e){
+        		$(modalLabel).text("Error");
+	            $(modalBody).text("An unknown error happened, please contact an administrator.");
+	            $modal.modal();
+        	}
+		});
+	})
+
+
+	$('.analysis-delete-btn').click(function (e) {
+  		e.preventDefault();
+
+  		var url = "{% url 'delete_analysis' project.id %}";
+  		var action = $(this);
+
+  		analysis = $(this).attr('id').split("_")[1];
+  		console.log("analysis_id: "+analysis);
+  		var analysis_id = {"id": analysis};
+
+  		var $modal = $("#analysis-submission-popup");
+		var modalLabel = $modal.find('#analysis-submission-popup-Label');
+		var modalBody = $modal.find('.modal-body');
+        $modal.on('hidden.bs.modal', function (e) {
+            location.reload();
+        })
+		$(modalLabel).empty();
+		$(modalBody).empty();
+
+		$.ajax({
+            type: "GET",
+            url: url,
+            data: analysis_id,
+            success: function(response){
+            	console.log(response);
+            	if (response["status"] == "fail"){
+                    $(modalLabel).text("Error");
+                    $(modalBody).text("An unknown error happened, please contact an administrator.");
+            	}
+            	else {
+            		$(status).text('Deleted');
+            		$(status).css('color','rgb(75, 122, 195)');
+            		$(modalLabel).text("Analysis deleted");
+            		$(modalBody).text(response["message"]);
+            	}
+            	$modal.modal();
+            },
+            error: function(e){
+        		$(modalLabel).text("Error");
+	            $(modalBody).text("An unknown error happened, please contact an administrator.");
+	            $modal.modal();
+        	}
+		});
+	})
 
 	$('#group-tab a').click(function (e) {
   		e.preventDefault();
@@ -2826,7 +2916,9 @@ $(document).ready(function() {
 										</div>
 										<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% ifequal analysis.status 'Error' %}background-color: rgb(240, 230, 230);{% endifequal %}{% ifequal analysis.status 'Finished' %}background-color: rgb(230, 240, 231);{% endifequal %}{% ifequal analysis.status 'Finished' %}background-color: rgb(230, 240, 231);{% endifequal %}{% ifequal analysis.status 'Submitted' %}background-color: rgb(221, 236, 245);{% endifequal %}{% ifequal analysis.status 'Ready' %}background-color: rgb(221, 236, 245);{% endifequal %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
 											<div class="span2 center-text" style="margin-left: 0px;min-height:10px;">
-												<p class="text-in-table introduction_text">{{ experiment.title }}</p>
+												<p class="text-in-table introduction_text">
+                                                    {{ experiment.title }} ({{ analysis.id }})
+                                                </p>
 											</div>
 											<div class="span2 center-text"style="min-height:10px;">
 												<p class="text-in-table introduction_text">{{ analysis.created|truncatewords:"1"|slice:":-3" }}</p>
@@ -2845,15 +2937,39 @@ $(document).ready(function() {
 												{% endfor %}
 											</div>
 											<div class="span2 center-text" style="min-height:10px;padding-top: 4px;">
-												{% ifequal analysis.status 'Finished' %}<p><a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">Access result</a></p>
-												{% if analysis.pimpanalysisfrankfs_set.all %}
-
-												{% else %}
-                                                    <p><a href="{% url 'connect' project.id analysis.id %}" class="text-in-table analysis_result_button" style="font-size:13px;">Connect to FrAnK</a></p>
-												{% endif %}
-
-												{% endifequal %}{% ifequal analysis.status 'Ready' %}<p><a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">Submit analysis</a></p>{% endifequal %}
-
+												{% ifequal analysis.status 'Finished' %}
+                                                    <p>
+                                                        <a class="text-in-table analysis_result_button" href="{% url 'analysis_result' project.id analysis.id %}" style="font-size:13px;">
+                                                            Access result
+                                                        </a>
+                                                    </p>
+	    											{% if analysis.pimpanalysisfrankfs_set.all %}
+    												{% else %}
+                                                        <p>
+                                                            <a href="{% url 'connect' project.id analysis.id %}" class="text-in-table analysis_result_button" style="font-size:13px;">
+                                                                Connect to FrAnK
+                                                            </a>
+                                                        </p>
+	    											{% endif %}
+												{% endifequal %}
+                                                {% ifequal analysis.status 'Ready' %}
+                                                    <p>
+                                                        <a class="analysis-submit-btn" id="analysis_{{ analysis.id }}" href="#">
+                                                            Submit analysis
+                                                        </a>
+                                                    </p>
+                                                {% else %}
+                                                    <p>
+                                                        <a class="analysis-resubmit-btn" id="analysis_{{ analysis.id }}" href="#">
+                                                            Resubmit analysis
+                                                        </a>
+                                                    </p>
+                                                    <p>
+                                                        <a class="analysis-delete-btn" id="analysis_{{ analysis.id }}" href="#">
+                                                            Delete analysis
+                                                        </a>
+                                                    </p>
+                                                {% endifequal %}
 											</div>
 										</div>
 									</div>

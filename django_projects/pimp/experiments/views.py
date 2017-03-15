@@ -1,32 +1,24 @@
-# Create your views here.
 import itertools
-import logging
 from collections import OrderedDict
+import os
+import shutil
 
-from django.shortcuts import render_to_response
-from django.shortcuts import render
-from experiments.models import *
-from django.core.context_processors import csrf
-from django.template import RequestContext  # For CSRF
-from django.forms.formsets import formset_factory, BaseFormSet
-from django.http import HttpResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
-from django.db.models import Count
-# models
-from projects.models import Project
-from data.models import *
-from compound.models import *
-from groups.models import *
-#from groups.models import Attribute
-from fileupload.models import Sample, CalibrationSample, Curve
-from frank.models import PimpFrankPeakLink
-# Add on
+from django.core.context_processors import csrf
 from django.core.serializers import serialize
+from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.db.models import Avg, Max, Q
-from __builtin__ import True
+from django.forms.formsets import formset_factory, BaseFormSet
+from django.http import Http404
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+
+from compound.models import *
+from data.models import *
+from fileupload.models import Sample, Curve
+from frank.models import PimpFrankPeakLink
+from groups.models import *
 
 try:
     from django.utils import simplejson
@@ -37,35 +29,30 @@ import datetime
 import numpy as np
 from rpy2.robjects.packages import importr
 from rpy2 import robjects
-from rpy2.robjects import pandas2ri
-
 
 # Scikitlearn for the PCA
 from sklearn.decomposition import PCA
 
 from experiments.forms import *
 from experiments import tasks
+from experiments.pipelines.helpers import get_pimp_wd
 
-#FrAnK imports
-
+# FrAnK imports
 from frank.models import PimpProjectFrankExp, FragmentationSet, PimpAnalysisFrankFs
 from frank.models import SampleFile as FrankSampleFile
-from frank.tasks import run_default_annotations
 
-
-#Celery imports
-
+# Celery imports
 from celery import chain
 
 # debug libraries
 import timeit
 import pickle
-import urllib2
 import requests
 import jsonpickle
-from django.views.decorators.cache import cache_page
+
 # from pimp.profiler import profile
 logger = logging.getLogger(__name__)
+
 
 def experiment(request, project_id):
     class RequiredComparisonFormSet(BaseFormSet):
@@ -131,61 +118,39 @@ def experiment(request, project_id):
     for group in ref:
         combination += len(list(itertools.combinations(group, 2)))
 
-    ComparisonFormSet = formset_factory(ComparisonForm, extra=1, max_num=combination, formset=RequiredComparisonFormSet)
+    ComparisonFormSet = formset_factory(ComparisonForm, extra=1, max_num=combination,
+                                        formset=RequiredComparisonFormSet)
 
-    """
-    Check if standard exist for this project, if not, the choice will be removed from the form.
-    """
+    # Check if standard exist for this project, if not, the choice will be removed from the form.
     if Attribute.objects.filter(name="standard", calibrationsample__project=project):
         no_standard = False
     else:
         no_standard = True
 
-    logger.info("I am here!")
+    logger.debug("I am here!")
     if request.method == 'POST':
         experiment_form = ExperimentForm(request.POST)
         parameter_formset = ParametersFormSet(request.POST, request.FILES, prefix='parameters')
         comparison_formset = ComparisonFormSet(request.POST, request.FILES, prefix='attributes')
         database_form = DatabaseForm(request.POST)
 
-        ################### DEBUG ############################################
-        # print "something"
-        # if experiment_form.is_valid():
-        #     print "experiment form is valid"
-        # if parameter_formset.is_valid():
-        #     print "parameter form is valid"
-        # if comparison_formset.is_valid():
-        #     print "comparison form is valid"
+        logger.debug("experiment form")
+        logger.debug(experiment_form.is_valid())
+        logger.debug("parameter ")
+        logger.debug(parameter_formset.is_valid())
+        logger.debug("comparison")
+        logger.debug(comparison_formset.is_valid())
+        logger.debug("databases form")
+        logger.debug(database_form.is_valid())
 
-        # for form in comparison_formset.forms:
-        #     for field in form:
-        #         print field.errors
-        logger.info("experiment form")
-        logger.info(experiment_form.is_valid())
-        logger.info("parameter ")
-        logger.info(parameter_formset.is_valid())
-        logger.info("comparison")
-        logger.info(comparison_formset.is_valid())
-        logger.info("databases form")
-        logger.info(database_form.is_valid())
-
-        if experiment_form.is_valid() and parameter_formset.is_valid() and comparison_formset.is_valid() and database_form.is_valid():
+        if experiment_form.is_valid() and parameter_formset.is_valid() and \
+                comparison_formset.is_valid() and database_form.is_valid():
             experiment = experiment_form.save()
             params = Params()
             params.save()
             for form in parameter_formset.forms:
                 project.modified = datetime.datetime.now()
                 project.save()
-                dictio = form.cleaned_data
-                ################ DEBUG ##################
-                # if len(dictio.keys()) == 0 :
-                #     print "HHHHHHHHHHHHHHHH"
-                #     # print form.cleaned_data['value']
-                # else :
-                #     print "value = ",form.cleaned_data['value']
-                #     print "state = ",form.cleaned_data['state']
-                #     print "name = ",form.cleaned_data['name']
-                ############### END DEBUG ################
                 value = form.cleaned_data['value']
                 state = form.cleaned_data['state']
                 name = form.cleaned_data['name']
@@ -198,28 +163,11 @@ def experiment(request, project_id):
                     parameter.save()
                 params.param.add(parameter)
 
-
-
-            # checkbox = request.POST.get('state', True)
-            # print checkbox
-            # print form.fields
-
-            # if form.cleaned_data['value']:
-            # print form.cleaned_data['value']
-            # if form.cleaned_data['state']:
-            # print form.cleaned_data['state']
-            # else:
-            #     print "parameter form is NOT valid!"
-            #     print "errors : ",form.errors
-            # print
-            # print "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
-            # print "parameter formset : ",parameter_formset
-            # print
             databases_ids = database_form.cleaned_data['databases']
             for db_id in databases_ids:
                 params.databases.add(db_id)
 
-            logger.info("after databases added")
+            logger.debug("after databases added")
 
             params.save()
             user = request.user
@@ -265,113 +213,147 @@ def experiment(request, project_id):
     return render(request, 'experiment/experimentCreation.html', c)
 
 
-# def create_dataset(request, project_id, experiment_id):
-#     if request.method == 'GET':
-#         experiment = Experiment.objects.get(pk=experiment_id)
-#         print experiment.dataset_set.all()
-#         project = Project.objects.get(pk=project_id)
-#         print "PROUTi prouta"
-#         sourceFile = '/Users/yoanngloaguen/Documents/ideomWebSite/static/temp.xlsx'
-#         book = xlrd.open_workbook(sourceFile)
-#         print "sheet number : ",book.nsheets
-#         rawData = book.sheet_by_index(0)
-#         sampleNb = rawData.ncols-23
-#         dtSamples = []
-#         for i in range(3,3+sampleNb):
-#             print rawData.cell_value(rowx=0,colx=i)
-#             dt_sample_name = rawData.cell_value(rowx=0,colx=i)
-#             sample = Sample.objects.filter(project__id=project.id,name=dt_sample_name+str(".mzXML"))[0]
-#             print Sample.objects.filter(project__id=project.id,name=dt_sample_name+str(".mzXML"))[0]
-#         return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+def submit_analysis(project, analysis, user):
+    # Get the required objects for running FrAnK here.
+    pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+    frank_experiment = pimpFrankLink.frank_expt
+    fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
+    logger.debug("The FrAnK experiment and fragmentation set added to PiMP are %s %s", frank_experiment,
+                 fragmentation_set)
 
-# def createdataset(request, file_path):
-#     pimpXmlFile = file_path
-#     xmltree = Xmltree(pimpXmlFile)
-#     print len(xmltree.allPeaks())
+    fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
+    num_fragment_files = len(fragment_files)
+    logger.debug("The number of fragment files are %d", num_fragment_files)
+
+    # Link the Frank fragment set and the pimp analysis set
+    PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
+    analysis.status = 'Submitted'
+    analysis.submited = datetime.datetime.now()
+    analysis.save(update_fields=['status', 'submited'])
+
+    # Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
+    celery_tasks = [tasks.start_pimp_pipeline.si(analysis, project)]
+    chain(celery_tasks,
+          link=tasks.create_run_frank_chain.si(num_fragment_files, analysis,
+                                               project, frank_experiment,
+                                               fragmentation_set,
+                                               user))()
+
+
+def validate_analysis(analysis):
+    samples = Sample.objects.filter(attribute__comparison__experiment__analysis=
+                                    analysis).distinct()
+    pos_missing_samples = []
+    neg_missing_samples = []
+    for sample in samples:
+        if not sample.samplefile.posdata:
+            pos_missing_samples.append(sample.name.split(".")[0])
+        if not sample.samplefile.negdata:
+            neg_missing_samples.append(sample.name.split(".")[0])
+
+    is_valid = False
+    if not neg_missing_samples and not pos_missing_samples:
+        is_valid = True
+
+    return is_valid, pos_missing_samples, neg_missing_samples
+
 
 def start_analysis(request, project_id):
-
-
-    # base = importr('base')
-    # base.options('java.parameters=paste("-Xmx",1024*8,"m",sep=""')
-    # pimp = importr('PiMP')
     if request.is_ajax():
+
         analysis_id = int(request.GET['id'])
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
         user = request.user
-
-        # Get the required objects for running FrAnK here.
-        pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
-        frank_experiment = pimpFrankLink.frank_expt
-        fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
-        logger.info("The FrAnK Experiment and Fragmetation set added to PiMP are %s %s", frank_experiment, fragmentation_set)
-
-        fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
-        num_fragment_files = len(fragment_files)
-        logger.info("The number of fragment files are %d", num_fragment_files)
-
-        # Link the Frank fragment set and the pimp analysis set
-        PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
-
 
         if analysis.status != "Ready":
             message = "The analysis has already been submitted"
             response = simplejson.dumps(message)
             return HttpResponse(response, content_type='application/json')
         else:
-            comparisons = analysis.experiment.comparison_set.all()
-            comparison_name = [str(comparison.name) for comparison in comparisons]
-            samples = Sample.objects.filter(attribute__comparison__experiment__analysis=analysis).distinct()
-            groups = Attribute.objects.filter(comparison__experiment__analysis=analysis).distinct()
-            qc = CalibrationSample.objects.filter(project=project).filter(attribute__name="qc")
-            blank = CalibrationSample.objects.filter(project=project).filter(attribute__name="blank")
-            standard = CalibrationSample.objects.filter(project=project).filter(attribute__name="standard")
-            pos_missing_samples = []
-            neg_missing_samples = []
-            for sample in samples:
-                if not sample.samplefile.posdata:
-                    pos_missing_samples.append(sample.name.split(".")[0])
-                if not sample.samplefile.negdata:
-                    neg_missing_samples.append(sample.name.split(".")[0])
-            if not neg_missing_samples and not pos_missing_samples:
-                pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples]
-                neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples]
-                # pos_list = [str(sample.samplefile.posdata.file.path) for sample in samples] + [str(sample.standardFile.posdata.file.path) for sample in qc] + [str(sample.standardFile.posdata.file.path) for sample in blank]
-                # neg_list = [str(sample.samplefile.negdata.file.path) for sample in samples] + [str(sample.standardFile.negdata.file.path) for sample in qc] + [str(sample.standardFile.negdata.file.path) for sample in blank]
-                file_list = {"positive": pos_list, "negative": neg_list}
-                group_list = {}
-                for group in groups:
-                    group_list[str(group.name)] = [str(sample.name.split(".")[0]) for sample in group.sample.all()]
-                # group_list["QC"] = [str(sample.name.split(".")[0]) for sample in qc]
-                # group_list["Blank"] = [str(sample.name.split(".")[0]) for sample in blank]
-                standards = [str(sample.standardFile.data.file.path) for sample in standard]
-                databases = ["hmdb", "kegg", "lipidmaps"]
-                analysis.status = 'Submitted'
-                analysis.save(update_fields=['status'])
 
-                analysis.submited = datetime.datetime.now()
-                analysis.save(update_fields=['submited'])
-
-                #Start the R pipeline for PiMP and FrAnK if fragments are present.
-                celery_tasks = []
-
-                #Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
-
-                celery_tasks.append(tasks.start_pimp_pipeline.si(analysis, project))
-                chain(celery_tasks, link=tasks.create_run_frank_chain.si(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user))()
-
-
-                message = "Your analysis has been correctly submitted. The status update will be emailed to you."  # +str(r.task_id)
+            is_valid, pos_missing_samples, neg_missing_samples = validate_analysis(analysis)
+            if is_valid:
+                submit_analysis(project, analysis, user)
+                message = "Your analysis has been correctly submitted. " \
+                          "The status update will be emailed to you."
                 data = {"status": "success", "message": message}
                 response = simplejson.dumps(data)
                 return HttpResponse(response, content_type='application/json')
             else:
-                message = "Some samples are only present in one polarity, please add the following missing files: "
+                message = "Some samples are only present in one polarity, please add " \
+                          "the following missing files: "
                 data = {"status": "fail", "error": "missing file", "message": message,
                         "missing_neg": neg_missing_samples, "missing_pos": pos_missing_samples}
                 response = simplejson.dumps(data)
                 return HttpResponse(response, content_type='application/json')
+
+
+def restart_analysis(request, project_id):
+    analysis_id = int(request.GET['id'])
+    analysis = Analysis.objects.get(pk=analysis_id)
+    project = Project.objects.get(pk=project_id)
+    user = request.user
+
+    # copy the params too
+    new_params = Params()
+    new_params.save()
+
+    for p in analysis.params.param.all():
+        print p.id, p
+        new_p = Parameter(state=p.state, name=p.name, value=p.value)
+        new_p.save()
+        new_params.param.add(new_p)
+
+    for db in analysis.params.databases.all():
+        print db.id, db
+        new_params.databases.add(db.id)
+
+    # creates a copy analysis, keeping the same experiment, owner and
+    # copies of the analysis parameters
+    copy_analysis = Analysis.objects.create(
+        owner=analysis.owner,
+        experiment=analysis.experiment,
+        params=new_params,
+        status='Ready'
+    )
+
+    # now we can submit this copy analysis
+    submit_analysis(project, copy_analysis, user)
+    message = "Your analysis has been correctly resubmitted. " \
+              "The status update will be emailed to you."
+    data = {"status": "success", "message": message}
+    response = simplejson.dumps(data)
+    return HttpResponse(response, content_type='application/json')
+
+
+def delete_analysis(request, project_id):
+
+    analysis_id = int(request.GET['id'])
+    analysis = Analysis.objects.get(pk=analysis_id)
+    experiment = analysis.experiment
+
+    # deleting the params will cascade to the analysis and the dataset
+    analysis.params.delete()
+
+    # if experiment has no more analyses, delete it
+    if len(experiment.analysis_set.all()) == 0:
+        experiment.delete()
+
+    # finally delete the analysis folder too
+    proj_dir = get_pimp_wd(project_id)
+    analysis_dir = os.path.join(proj_dir, 'analysis_%d' % analysis_id)
+    logger.debug('Deleting analysis directory %s', analysis_dir)
+    try:
+        shutil.rmtree(analysis_dir)
+    except OSError:
+        logger.debug('Cannot delete analysis directory %s', analysis_dir)
+
+    message = "Analysis %s has been deleted." % analysis_id
+    data = {"status": "success", "message": message}
+    response = simplejson.dumps(data)
+    return HttpResponse(response, content_type='application/json')
+
 
 def get_metabolites_table(request, project_id, analysis_id):
     if request.is_ajax():
@@ -394,41 +376,47 @@ def get_metabolites_table(request, project_id, analysis_id):
         sample_map = [sample.id for sample in samples]
         new_test_start = timeit.default_timer()
 
-        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity',
-                'comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id',
-                'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula',
-                'peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
-        identified_compound_pathway_list = identified_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
-        pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
+        test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by(
+            'peak__compound__secondaryId', '-peak__peakdtsample__intensity',
+            'comparison').values_list('peak__compound__secondaryId', 'peak__id', 'comparison__id',
+                                      'peak__peakdtsample__sample__id', 'peak__compound__id', 'peak__secondaryId',
+                                      'peak__compound__formula',
+                                      'peak__peakdtsample__intensity', 'logFC', 'peak__peakdtsample__id').distinct()
+        identified_compound_pathway_list = identified_compounds.order_by(
+            "secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
+        pathway_super_pathway_list = Pathway.objects.all().values_list(
+            "name", "datasourcesuperpathway__super_pathway__name")
 
         superpathway_dict = {}
 
         for pathway_name in pathway_super_pathway_list:
             if pathway_name[0] in superpathway_dict:
                 if pathway_name[1] not in superpathway_dict[pathway_name[0]]:
-                    superpathway_dict[pathway_name[0]] = " ".join([superpathway_dict[pathway_name[0]], pathway_name[1]])
+                    superpathway_dict[pathway_name[0]] = " ".join(
+                        [superpathway_dict[pathway_name[0]], pathway_name[1]])
             else:
-                if pathway_name[1] == None:
+                if pathway_name[1] is None:
                     superpathway_dict[pathway_name[0]] = "None"
                 else:
                     superpathway_dict[pathway_name[0]] = pathway_name[1]
 
+        # Create dictionary with pathway names for each compound
         pathway_name_dict = {}
-        # Create dictionnary with pathway names for each compound
         for pathway_name in identified_compound_pathway_list:
             #
             if pathway_name[0] in pathway_name_dict:
                 if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
-                    pathway_name_dict[pathway_name[0]][0] = " ".join([pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
-                    pathway_name_dict[pathway_name[0]][1] = " ".join([pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]]])
+                    pathway_name_dict[pathway_name[0]][0] = " ".join(
+                        [pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
+                    pathway_name_dict[pathway_name[0]][1] = " ".join(
+                        [pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]]])
             else:
-                if pathway_name[1] == None:
-                    pathway_name_dict[pathway_name[0]] = ["None","None"]
+                if pathway_name[1] is None:
+                    pathway_name_dict[pathway_name[0]] = ["None", "None"]
                 else:
-                    pathway_name_dict[pathway_name[0]] = [pathway_name[1],  superpathway_dict[pathway_name[1]]]
+                    pathway_name_dict[pathway_name[0]] = [pathway_name[1], superpathway_dict[pathway_name[1]]]
 
         # print pathway_name_dict
-
         list(test)
         current_compound = None
         current_peak = None
@@ -440,7 +428,8 @@ def get_metabolites_table(request, project_id, analysis_id):
             if test[i][0] != current_compound:
                 if not first:
                     id_status = 'identified+fragment' if has_frank_annotation(current_peak) else 'identified'
-                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
+                    c_data = [compound_id, peak_secondary_id, compound_name, formula, super_pathway_names,
+                              pathway_names] + intensity_list + logfc_list + [id_status]
                     data.append(c_data)
                 else:
                     first = False
@@ -455,7 +444,8 @@ def get_metabolites_table(request, project_id, analysis_id):
                 intensity_list = [None] * len(sample_map)
                 intensity_list[sample_map.index(test[i][3])] = round(test[i][7], 2)
                 # Get the compound name
-                compound_name = identified_compounds.get(pk=compound_id).repositorycompound_set.filter(db_name='stds_db').values_list('compound_name',flat=True).first()
+                compound_name = identified_compounds.get(pk=compound_id).repositorycompound_set.filter(
+                    db_name='stds_db').values_list('compound_name', flat=True).first()
                 pathway_names = pathway_name_dict[current_compound][0]
                 super_pathway_names = pathway_name_dict[current_compound][1]
             else:
@@ -469,29 +459,40 @@ def get_metabolites_table(request, project_id, analysis_id):
 
         if not first:
             id_status = 'identified+fragment' if has_frank_annotation(current_peak) else 'identified'
-            c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
+            c_data = [compound_id, peak_secondary_id, compound_name, formula, super_pathway_names, pathway_names] + \
+                     intensity_list + logfc_list + [id_status]
             data.append(c_data)
 
         new_test_stop = timeit.default_timer()
 
-        logger.info("Identified metabolites processing time: %s", str(new_test_stop - new_test_start))
-        logger.info("--------------------------------------------------------")
+        logger.debug("Identified metabolites processing time: %s", str(new_test_stop - new_test_start))
+        logger.debug("--------------------------------------------------------")
 
         ac_start = timeit.default_timer()
 
-        logger.info('Creating a list of the compound objects that are annotated removing all identified')
-        annotated_compounds = Compound.objects.filter(Q(adduct="M+H") | Q(adduct="M-H"),identified='False', peak__dataset=dataset).exclude(secondaryId__in=list(ic_secondary_ids))
-        logger.info('Getting the list of secondary Ids of compounds that are annotated only')
+        logger.debug('Creating a list of the compound objects that are annotated removing all identified')
+        annotated_compounds = Compound.objects.filter(Q(adduct="M+H") | Q(adduct="M-H"),
+                                                      identified='False', peak__dataset=dataset
+                                                      ).exclude(secondaryId__in=list(ic_secondary_ids))
+        logger.debug('Getting the list of secondary Ids of compounds that are annotated only')
 
         new_test_ac_start = timeit.default_timer()
-        logger.info('Getting comparisons')
-        test = PeakDtComparison.objects.filter(peak__compound__in=list(annotated_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity','comparison').values_list('peak__compound__secondaryId','peak__id','comparison__id', 'peak__peakdtsample__sample__id','peak__compound__id','peak__secondaryId','peak__compound__formula','peak__peakdtsample__intensity','logFC','peak__peakdtsample__id').distinct()
-        logger.info('Getting annotated compound name list')
-        annotated_compound_name_list = annotated_compounds.order_by("secondaryId").values_list("id","repositorycompound__db_name","repositorycompound__compound_name").distinct()
-        logger.info('Getting annotated compound pathway list')
-        annotated_compound_pathway_list = annotated_compounds.order_by("secondaryId").values_list("secondaryId", "compoundpathway__pathway__pathway__name").distinct()
-        logger.info('Getting super-pathway list')
-        pathway_super_pathway_list = Pathway.objects.all().values_list("name","datasourcesuperpathway__super_pathway__name")
+        logger.debug('Getting comparisons')
+        test = PeakDtComparison.objects.filter(peak__compound__in=list(annotated_compounds)).order_by(
+            'peak__compound__secondaryId', '-peak__peakdtsample__intensity', 'comparison').values_list(
+            'peak__compound__secondaryId', 'peak__id', 'comparison__id', 'peak__peakdtsample__sample__id',
+            'peak__compound__id', 'peak__secondaryId', 'peak__compound__formula', 'peak__peakdtsample__intensity',
+            'logFC', 'peak__peakdtsample__id').distinct()
+        logger.debug('Getting annotated compound name list')
+        annotated_compound_name_list = annotated_compounds.order_by("secondaryId").values_list("id",
+                                                                                               "repositorycompound__db_name",
+                                                                                               "repositorycompound__compound_name").distinct()
+        logger.debug('Getting annotated compound pathway list')
+        annotated_compound_pathway_list = annotated_compounds.order_by("secondaryId").values_list("secondaryId",
+                                                                                                  "compoundpathway__pathway__pathway__name").distinct()
+        logger.debug('Getting super-pathway list')
+        pathway_super_pathway_list = Pathway.objects.all().values_list("name",
+                                                                       "datasourcesuperpathway__super_pathway__name")
 
         superpathway_dict = {}
 
@@ -510,13 +511,15 @@ def get_metabolites_table(request, project_id, analysis_id):
         for pathway_name in annotated_compound_pathway_list:
             if pathway_name[0] in pathway_name_dict:
                 if pathway_name[1] not in pathway_name_dict[pathway_name[0]][0]:
-                    pathway_name_dict[pathway_name[0]][0] = " ".join([pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
-                    pathway_name_dict[pathway_name[0]][1] = " ".join([pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]]])
+                    pathway_name_dict[pathway_name[0]][0] = " ".join(
+                        [pathway_name_dict[pathway_name[0]][0], pathway_name[1]])
+                    pathway_name_dict[pathway_name[0]][1] = " ".join(
+                        [pathway_name_dict[pathway_name[0]][1], superpathway_dict[pathway_name[1]]])
             else:
                 if pathway_name[1] == None:
-                    pathway_name_dict[pathway_name[0]] = ["None","None"]
+                    pathway_name_dict[pathway_name[0]] = ["None", "None"]
                 else:
-                    pathway_name_dict[pathway_name[0]] = [pathway_name[1],  superpathway_dict[pathway_name[1]]]
+                    pathway_name_dict[pathway_name[0]] = [pathway_name[1], superpathway_dict[pathway_name[1]]]
 
         compound_name_dict = {}
         for compound_name in annotated_compound_name_list:
@@ -532,7 +535,8 @@ def get_metabolites_table(request, project_id, analysis_id):
             if test[i][0] != current_compound:
                 if not first:
                     id_status = 'annotated+fragment' if has_frank_annotation(current_peak) else 'annotated'
-                    c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
+                    c_data = [compound_id, peak_secondary_id, compound_name, formula, super_pathway_names,
+                              pathway_names] + intensity_list + logfc_list + [id_status]
                     data.append(c_data)
                 else:
                     first = False
@@ -561,7 +565,8 @@ def get_metabolites_table(request, project_id, analysis_id):
                         sample_id_list.append(test[i][3])
         if not first:
             id_status = 'annotated+fragment' if has_frank_annotation(current_peak) else 'annotated'
-            c_data = [compound_id,peak_secondary_id,compound_name,formula,super_pathway_names,pathway_names] + intensity_list + logfc_list + [id_status]
+            c_data = [compound_id, peak_secondary_id, compound_name, formula, super_pathway_names,
+                      pathway_names] + intensity_list + logfc_list + [id_status]
             data.append(c_data)
 
         new_test_ac_stop = timeit.default_timer()
@@ -578,12 +583,12 @@ def get_metabolites_table(request, project_id, analysis_id):
         # return Http404
         pass
 
-def get_frank_annotations(peak_ids):
 
-    p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id__in = peak_ids).select_related(
-                                'pimp_peak', 'frank_peak',
-                                'frank_peak__fragmentation_set',
-                                'frank_peak__preferred_candidate_annotation')
+def get_frank_annotations(peak_ids):
+    p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id__in=peak_ids).select_related(
+        'pimp_peak', 'frank_peak',
+        'frank_peak__fragmentation_set',
+        'frank_peak__preferred_candidate_annotation')
     frank_annotations = {}
     for p2f in p2fs:
         fset = p2f.frank_peak.fragmentation_set.slug
@@ -595,26 +600,31 @@ def get_frank_annotations(peak_ids):
         if p2f.frank_peak.preferred_candidate_annotation is not None:
             ac = p2f.frank_peak.preferred_candidate_annotation
             # TODO: shouldn't write the link inside here !!
-            annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(ac.confidence) + '</a>'
+            annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,
+                                                                                             pslug) + ac.compound.name + " (" + ac.compound.formula + ")" + " Prob = {}".format(
+                ac.confidence) + '</a>'
         # elif ms2_peaks_count > 0:
-        #Move this to the template and return the value only KMcL.
+        # Move this to the template and return the value only KMcL.
         else:
-            annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,pslug) + 'Annotate in FrAnK' + '</a>'
+            annot_string = '<a href="/frank/my_fragmentation_sets/{}/{}" target=new>'.format(fset,
+                                                                                             pslug) + 'Annotate in FrAnK' + '</a>'
 
         peak = p2f.pimp_peak
         frank_annotations[peak.id] = annot_string
 
     return frank_annotations
 
+
 def has_frank_annotation(peak_id):
-    p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id = peak_id).select_related(
-                                'frank_peak__preferred_candidate_annotation')
+    p2fs = PimpFrankPeakLink.objects.filter(pimp_peak__id=peak_id).select_related(
+        'frank_peak__preferred_candidate_annotation')
     found = False
     for p2f in p2fs:
         if p2f.frank_peak.preferred_candidate_annotation:
             found = True
             break
     return found
+
 
 def get_metabolite_info(request, project_id, analysis_id):
     """
@@ -631,26 +641,28 @@ def get_metabolite_info(request, project_id, analysis_id):
         dataset = analysis.dataset_set.first()
         comparisons = analysis.experiment.comparison_set.all()
         samples = Sample.objects.filter(
-            attribute=Attribute.objects.filter(comparison__in=list(comparisons)).distinct().order_by('id')).distinct().order_by(
+            attribute=Attribute.objects.filter(comparison__in=list(comparisons)).distinct().order_by(
+                'id')).distinct().order_by(
             'attribute__id', 'id')
         peakdtsamples = PeakDTSample.objects.filter(peak__dataset=dataset)
         compound_id = int(request.GET['compound_id'])
         compound_secondary_id = Compound.objects.get(pk=compound_id).secondaryId
 
         # added for frank annotation stuff
-        peaks = Peak.objects.filter(dataset=dataset, compound__secondaryId=compound_secondary_id).order_by('secondaryId')
+        peaks = Peak.objects.filter(dataset=dataset, compound__secondaryId=compound_secondary_id).order_by(
+            'secondaryId')
         peak_ids = [peak.id for peak in peaks]
 
-        logger.info("Before getting Frank annotation")
+        logger.debug("Before getting Frank annotation")
         frank_annotations = get_frank_annotations(peak_ids)
         attribute_ids = set(samples.values_list('sampleattribute__attribute__id', flat=True))
         peaks_data = []
 
-        logger.info("Before setting peak info")
+        logger.debug("Before setting peak info")
         for peak in peaks:
             comp = peak.compound_set.get(secondaryId=compound_secondary_id)
             annotated_comp_num = peak.compound_set.exclude(secondaryId=compound_secondary_id).count()
-            print "annotated compound number: ",annotated_comp_num
+            print "annotated compound number: ", annotated_comp_num
             print comp.identified
             if comp.identified == "True":
                 standard_peak = True
@@ -662,24 +674,16 @@ def get_metabolite_info(request, project_id, analysis_id):
             peaks_data.append([peak.secondaryId, str(round(peak.rt, 2)),
                                str(round(peak.mass, 4)), str(peak.polarity),
                                str(peak.type), str(comp.adduct),
-                               str(round(comp.ppm, 4)), standard_peak,annotated_comp_num, frank_annot])
-
-
-            # peak_intensities_by_samples = peakdtsamples.filter(peak=peak).order_by('sample__attribute__id', 'sample__id').distinct()
-            #
-            # averages_by_group = []
-            # for attribute_id in attribute_ids:
-            #     averages_by_group.append(peak_intensities_by_samples.filter(sample__sampleattribute__attribute__id=attribute_id).aggregate(Avg('intensity'))['intensity__avg'])
-            #
-            # peak_data += averages_by_group
-            # peaks_data.append(peak_data)
+                               str(round(comp.ppm, 4)), standard_peak, annotated_comp_num, frank_annot])
 
         # print peaks_data
         response = simplejson.dumps({'aaData': peaks_data})
         return HttpResponse(response, content_type='application/json')
 
+
 def get_peak_table(request, project_id, analysis_id):
     if request.is_ajax():
+
         logger.info("peak table requested")
         start = timeit.default_timer()
         analysis = Analysis.objects.get(pk=analysis_id)
@@ -688,32 +692,30 @@ def get_peak_table(request, project_id, analysis_id):
         comparisons = analysis.experiment.comparison_set.all()
         attributes = Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')
         row_length = sum([len(a.sample.all()) for a in attributes])
-        #list(attributes)
-        #groups = Group.objects.filter(attribute__comparison__in=comparisons).distinct()
+
         s = Sample.objects.filter(
             attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
             'attribute__id', 'id')
         list(s)
-        p = list(PeakDTSample.objects.filter(sample__in=s, peak__dataset=dataset, sample__attribute__in=attributes)       \
-                                                .select_related('peak', 'sample')   \
-                                                .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
+        p = list(PeakDTSample.objects.filter(sample__in=s, peak__dataset=dataset, sample__attribute__in=attributes) \
+                 .select_related('peak', 'sample') \
+                 .distinct().order_by('peak__id', 'sample__attribute__id', 'sample__id'))
         pp = map(list, zip(*[iter(p)] * row_length))
-        start2 = timeit.default_timer()
-        print "before faster"
+
         first_peaks_ids = []
         for peakgroup in pp:
             peak = peakgroup[0].peak
             first_peaks_ids.append(peak.id)
         frank_annotations = get_frank_annotations(first_peaks_ids)
-        stop2 = timeit.default_timer()
-        print "after faster: ", str(stop2 - start2)
 
         data = [
             [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] +
             [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
-                peakgroup] +
+             peakgroup] +
             [str(peakgroup[0].peak.polarity)] +
-            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[0].peak.id in frank_annotations else 'No Fragments'] for peakgroup in pp]
+            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[
+                                                                 0].peak.id in frank_annotations else 'No Fragments']
+            for peakgroup in pp]
 
         response = simplejson.dumps({"aaData": data})
 
@@ -723,9 +725,8 @@ def get_peak_table(request, project_id, analysis_id):
 
 
 def get_single_comparison_table(request, project_id, analysis_id, comparison_id):
-
     if request.is_ajax():
-        logger.info("single comparison table requested - comparison id: %s",comparison_id)
+        logger.info("single comparison table requested - comparison id: %s", comparison_id)
         start = timeit.default_timer()
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
@@ -733,12 +734,15 @@ def get_single_comparison_table(request, project_id, analysis_id, comparison_id)
         dataset = analysis.dataset_set.all()[0]
 
         peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison=comparison,
-                                               dataset=dataset).distinct()
+                                                   dataset=dataset).distinct()
 
         new_query_start = timeit.default_timer()
-        peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison).values_list('peak__secondaryId','logFC', 'pValue','adjPvalue', 'logOdds').distinct()
+        peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list,
+                                                               comparison=comparison).values_list('peak__secondaryId',
+                                                                                                  'logFC', 'pValue',
+                                                                                                  'adjPvalue',
+                                                                                                  'logOdds').distinct()
         new_query_stop = timeit.default_timer()
-
 
         list(peak_comparison_info)
 
@@ -753,7 +757,6 @@ def get_single_comparison_table(request, project_id, analysis_id, comparison_id)
 @login_required
 # @profile("analysis_result.prof")
 def analysis_result(request, project_id, analysis_id):
-
     if request.method == 'GET':
 
         try:
@@ -795,7 +798,7 @@ def analysis_result(request, project_id, analysis_id):
         ############################# Databases ##############################
         logger.info("Databases -- START")
         databases = RepositoryCompound.objects.filter(compound__peak__dataset=dataset) \
-                        .values_list('db_name', flat=True).distinct()
+            .values_list('db_name', flat=True).distinct()
         databases = map(str, databases)
         logger.info("Databases -- END")
 
@@ -813,7 +816,7 @@ def analysis_result(request, project_id, analysis_id):
 
         ############################# Potential hits ##############################
         logger.info("Potential hits -- START")
-        potential_hits = get_potential_hits(analysis, comparisons) # potetial hits that can't do statistics on.
+        potential_hits = get_potential_hits(analysis, comparisons)  # potetial hits that can't do statistics on.
         logger.info("Potential hits -- END")
 
         ############################# Super Pathway ##############################
@@ -853,9 +856,9 @@ def analysis_result(request, project_id, analysis_id):
              'potential_hits': potential_hits,
              'tics': tics,
              'super_pathways_list': super_pathways_list,
-             'explained_variance':explained_variance,
+             'explained_variance': explained_variance,
              'identification_type_list': identification_type_list
-            }
+             }
 
         logger.info('Starting render')
         rendering_start = timeit.default_timer()
@@ -863,6 +866,7 @@ def analysis_result(request, project_id, analysis_id):
         rendering_stop = timeit.default_timer()
         logger.info("rendering time: %s", str(rendering_stop - rendering_start))
         return rendering
+
 
 def get_pathway_url(request, project_id, analysis_id):
     if request.is_ajax():
@@ -887,6 +891,7 @@ def get_pathway_url(request, project_id, analysis_id):
 
         return HttpResponse(response, content_type='application/json')
 
+
 def get_samples(comparisons):
     s = Sample.objects.filter(
         attribute=Attribute.objects.filter(comparison=comparisons).distinct().order_by('id')).distinct().order_by(
@@ -901,8 +906,7 @@ def get_samples(comparisons):
     sample_list = list(OrderedDict.fromkeys(sample_list))
     logger.debug("sample list: %s", sample_list)
 
-    return  sample_list
-
+    return sample_list
 
 
 def get_samples_and_attributes(comparisons):
@@ -924,8 +928,8 @@ def get_samples_and_attributes(comparisons):
 
     return s, member_list, sample_list
 
-def get_pca(analysis, s, sample_list, member_list):
 
+def get_pca(analysis, s, sample_list, member_list):
     pca_table = []
     for sample in s:
         pca_table.append(
@@ -937,12 +941,12 @@ def get_pca(analysis, s, sample_list, member_list):
     pca_matrix = np.delete(pca_matrix, index_of_zero, 1)
     log_pca_matrix = np.log2(pca_matrix)
 
-    pca_obj = PCA(n_components=2,whiten=False)
+    pca_obj = PCA(n_components=2, whiten=False)
     pca_obj.fit(log_pca_matrix)
     projected_data = pca_obj.transform(log_pca_matrix)
     explained_variance = []
     for i in range(2):
-        explained_variance.append(100*pca_obj.explained_variance_ratio_[i])
+        explained_variance.append(100 * pca_obj.explained_variance_ratio_[i])
 
     pca_info = [None, None]
     pca_data_point = []
@@ -954,8 +958,8 @@ def get_pca(analysis, s, sample_list, member_list):
         for sample in member:
             dic = []
             dic.append(sample.name)
-            dic.append(projected_data[i,0])
-            dic.append(projected_data[i,1])
+            dic.append(projected_data[i, 0])
+            dic.append(projected_data[i, 1])
             pca_serie.append(dic)
             i += 1
         pca_data_point.append(pca_serie)
@@ -965,8 +969,8 @@ def get_pca(analysis, s, sample_list, member_list):
 
     return pca_info, explained_variance
 
-def get_best_hits_comparison(dataset, comparisons, s):
 
+def get_best_hits_comparison(dataset, comparisons, s):
     # cache peakdt' intensity values from all samples for use later
     peakdtsample_intensity = {}
     for sample in s:
@@ -980,17 +984,17 @@ def get_best_hits_comparison(dataset, comparisons, s):
 
     for c in comparisons:
 
-        identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)    \
-                                            .filter(peak__compound__identified='True', peak__dataset=dataset)             \
-                                            .extra(select={"absLogFC": "abs(logFC)",
-                                                           'compound_name':'compound_repositorycompound.compound_name'},
-                                                   tables=['compound_repositorycompound'],
-                                                   where=['compound_repositorycompound.compound_id = compound_compound.id'])           \
-                                            .order_by("-absLogFC").distinct()
-        peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05)     \
-                                            .filter(peak__dataset=dataset)              \
-                                            .extra(select={"absLogFC": "abs(logFC)"})           \
-                                            .order_by("-absLogFC").distinct()
+        identified_peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05) \
+            .filter(peak__compound__identified='True', peak__dataset=dataset) \
+            .extra(select={"absLogFC": "abs(logFC)",
+                           'compound_name': 'compound_repositorycompound.compound_name'},
+                   tables=['compound_repositorycompound'],
+                   where=['compound_repositorycompound.compound_id = compound_compound.id']) \
+            .order_by("-absLogFC").distinct()
+        peakdtcomparisonList = c.peakdtcomparison_set.exclude(adjPvalue__gt=0.05) \
+            .filter(peak__dataset=dataset) \
+            .extra(select={"absLogFC": "abs(logFC)"}) \
+            .order_by("-absLogFC").distinct()
 
         annotated_peakdtcomparisonList = list(set(peakdtcomparisonList) - set(identified_peakdtcomparisonList))
 
@@ -1027,6 +1031,7 @@ def get_best_hits_comparison(dataset, comparisons, s):
 
     return comparison_hits_list
 
+
 def get_intensities_values(peakdtcomparison, peakdtsample_intensity, member_list_map):
     peak = peakdtcomparison.peak_id
     member_hash = {}
@@ -1050,50 +1055,54 @@ def get_intensities_values(peakdtcomparison, peakdtsample_intensity, member_list
         elif len(intensities) == 1:
             memberInfo = [str(member), intensities[0], None]
             data.append(memberInfo)
-        else: # len is 0
+        else:  # len is 0
             memberInfo = [str(member), 0, None]
             data.append(memberInfo)
     # print "data : ",datadata
     return data
 
-def get_comparison_info_list(dataset, comparisons):
 
+def get_comparison_info_list(dataset, comparisons):
     peak_comparison_list = Peak.objects.filter(peakdtcomparison__comparison__in=list(comparisons),
                                                dataset=dataset).distinct()
     new_query_start = timeit.default_timer()
     comparison_info = []
     for comparison in comparisons:
-        peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list, comparison=comparison.id).values_list('peak__secondaryId','logFC','adjPvalue', 'pValue', 'logOdds').distinct()
+        peak_comparison_info = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list,
+                                                               comparison=comparison.id).values_list(
+            'peak__secondaryId', 'logFC', 'adjPvalue', 'pValue', 'logOdds').distinct()
         logger.info('peak_comparison_info: %d', peak_comparison_info.count())
-        #logger.debug(peak_comparison_info)
-        comparison_info.append([comparison,peak_comparison_info])
+        # logger.debug(peak_comparison_info)
+        comparison_info.append([comparison, peak_comparison_info])
     new_query_stop = timeit.default_timer()
     logger.info("new comparison info list : %s", str(new_query_stop - new_query_start))
 
     new_comp_query_start = timeit.default_timer()
-    all_comparison_info_query = PeakDtComparison.objects.filter(peak__dataset=dataset, peak=peak_comparison_list).values_list('peak__secondaryId','logFC','adjPvalue').order_by('peak__secondaryId','comparison__id').distinct()
-    all_comparison_info = zip(*[iter(all_comparison_info_query)]*comparisons.count())
+    all_comparison_info_query = PeakDtComparison.objects.filter(peak__dataset=dataset,
+                                                                peak=peak_comparison_list).values_list(
+        'peak__secondaryId', 'logFC', 'adjPvalue').order_by('peak__secondaryId', 'comparison__id').distinct()
+    all_comparison_info = zip(*[iter(all_comparison_info_query)] * comparisons.count())
     new_comp_query_stop = timeit.default_timer()
     logger.info("all comparison info list : %s", str(new_comp_query_stop - new_comp_query_start))
 
     return peak_comparison_list, comparison_info, all_comparison_info
 
-def get_potential_hits(analysis, comparisons):
 
+def get_potential_hits(analysis, comparisons):
     potential_hits = []
-#     peaks = Peak.objects.filter(dataset__analysis=analysis)
-#     for peak in peaks:
-#          peak_comparisons = peak.peakdtcomparison_set.all()
-#          if len(peak_comparisons) < len(comparisons): ##number of comparisons
-#              missing_comparisons = comparisons.exclude(id__in=peak.peakdtcomparison_set.values_list("comparison_id"))
-#              for comparison in missing_comparisons:
-#                  groups = comparison.attribute.all()
-#                  if peak._minimum_intensities_present(groups[0].sample.all()) or peak._minimum_intensities_present(groups[1].sample.all()):
-#                     potential_hits.append([peak.id, peak.mass, peak.rt, groups[0].name + " / " + groups[1].name])
+    #     peaks = Peak.objects.filter(dataset__analysis=analysis)
+    #     for peak in peaks:
+    #          peak_comparisons = peak.peakdtcomparison_set.all()
+    #          if len(peak_comparisons) < len(comparisons): ##number of comparisons
+    #              missing_comparisons = comparisons.exclude(id__in=peak.peakdtcomparison_set.values_list("comparison_id"))
+    #              for comparison in missing_comparisons:
+    #                  groups = comparison.attribute.all()
+    #                  if peak._minimum_intensities_present(groups[0].sample.all()) or peak._minimum_intensities_present(groups[1].sample.all()):
+    #                     potential_hits.append([peak.id, peak.mass, peak.rt, groups[0].name + " / " + groups[1].name])
     return potential_hits
 
-def get_superpathway():
 
+def get_superpathway():
     super_pathways = SuperPathway.objects.all().prefetch_related('datasourcesuperpathway_set__pathway')
     super_pathways_list = []
     for i in super_pathways:
@@ -1109,6 +1118,7 @@ def get_superpathway():
         pathway_name_list.append(i.pathway.name)
     super_pathways_list.append([None, pathway_name_list])
     return super_pathways_list
+
 
 def get_metexplore_biosource(request, project_id, analysis_id):
     if request.is_ajax():
@@ -1147,13 +1157,16 @@ def get_metexplore_pathways(request, project_id, analysis_id):
         # Get the selected biosource
         biosource_id = str(request.GET['id'])
         # Create list of inchikey and put it in json
-        inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
+        inchikey_list = [inchikey.encode("utf8") for inchikey in
+                         Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list(
+                             'inchikey', flat=True).distinct()]
         # data = simplejson.dumps({"Content": inchikey_list, "token": token})
         data = simplejson.dumps({"Content": inchikey_list})
         # Get pathway list from MetExplore
         # Creation of the url to call MetExplore webservice with the selected biosource
-        url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/aspathways/')
-        r = requests.post(url, data = data)
+        url = str(
+            'http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/aspathways/')
+        r = requests.post(url, data=data)
         # Check if MetExplore server returns a server error response
         # If so, return error response to PiMP user "MetExplore server is not available"
         if r.raise_for_status():
@@ -1170,9 +1183,12 @@ def get_metexplore_pathways(request, project_id, analysis_id):
         # Extract the IDs of pathways with more than 1 metabolite mapped
         if "pathwayList" in content[0].keys():
             for pathway in content[0]['pathwayList']:
-                if pathway['mappedMetabolite'] > 0 and "Transport" not in pathway['name'] and "Exchange" not in pathway['name']:
+                if pathway['mappedMetabolite'] > 0 and "Transport" not in pathway['name'] and "Exchange" not in pathway[
+                    'name']:
                     pathway_list.append(pathway['mysqlId'])
-                    pathway_selection_list.append({'id': str(pathway['mysqlId']),'text':str(pathway['name'] + ' ' + str(pathway['numberOfMetabolite']) + ' (' + str(pathway['mappedMetabolite']) + ')')})
+                    pathway_selection_list.append({'id': str(pathway['mysqlId']), 'text': str(
+                        pathway['name'] + ' ' + str(pathway['numberOfMetabolite']) + ' (' + str(
+                            pathway['mappedMetabolite']) + ')')})
         print "before len pathway"
         # If pathway list is empty (no metabolite mapped), return response to PiMP user "No metabolite could be found in the selected organism"
         if len(pathway_list) == 0:
@@ -1194,15 +1210,18 @@ def get_metexplore_network(request, project_id, analysis_id):
         biosource_id = str(request.GET['biousourceid'])
         pathway_list = request.GET.getlist('pathwayids')
 
-        print "------------- Requesting network --------------"
+        logger.debug('------------- Requesting network --------------')
 
-        inchikey_list = [inchikey.encode("utf8") for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', flat=True).distinct()]
+        inchikey_list = [inchikey.encode("utf8") for inchikey in
+                         Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list(
+                             'inchikey', flat=True).distinct()]
         # Create json data to send to MetExplore webservice
         data = simplejson.dumps({"Content": inchikey_list, "pathways": pathway_list})
         # Create the url with the right biosource
-        url = str('http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/filteredbypathways/')
+        url = str(
+            'http://metexplore.toulouse.inra.fr:8080/metExploreWebService/mapping/launchtokenmapping/inchikey/' + biosource_id + '/filteredbypathways/')
         # Request the data
-        r = requests.post(url, data = data)
+        r = requests.post(url, data=data)
         # Catch error if one
         if r.raise_for_status():
             response = "error"
@@ -1216,7 +1235,7 @@ def get_metexplore_network(request, project_id, analysis_id):
             response = simplejson.dumps(contents)
             print "------------ Network list is empty ----------"
             return HttpResponse(response, content_type='application/json')
-        
+
         # Modify the network to add abundance values for each metabolite and condition
         mapping = jsonpickle.decode(r.text)
         inchikey_nodeId_map = {}
@@ -1226,8 +1245,9 @@ def get_metexplore_network(request, project_id, analysis_id):
             else:
                 inchikey_nodeId_map[node['inchikey']] = [node['node']]
 
-
-        inchikey_list = [(inchikey[0].encode("utf8"),inchikey[1]) for inchikey in Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list('inchikey', 'peak__id').distinct()]
+        inchikey_list = [(inchikey[0].encode("utf8"), inchikey[1]) for inchikey in
+                         Compound.objects.filter(peak__dataset__analysis=analysis_id, identified='True').values_list(
+                             'inchikey', 'peak__id').distinct()]
 
         comparisons = analysis.experiment.comparison_set.all()
 
@@ -1245,33 +1265,26 @@ def get_metexplore_network(request, project_id, analysis_id):
             metabolite_list = []
             for metabolite in inchikey_list:
                 if metabolite[0] not in debug_inchi:
-                    debug_inchi.append(metabolite[0]) 
+                    debug_inchi.append(metabolite[0])
                     if metabolite[0] in inchikey_nodeId_map.keys():
                         intensity_list = []
-                        # sample_list = []
                         for sample in member.sample.all():
                             peak_intensity = sample.peakdtsample_set.get(peak=metabolite[1])
                             intensity_list.append(peak_intensity.intensity)
-                            # sample_list.append(str(sample.name).split(".")[0])
                         if len(intensity_list) > 1:
                             for node in inchikey_nodeId_map[metabolite[0]]:
-                                metabolite_list.append({"node": node, "value":str(int(np.mean(np.array(intensity_list))))})
+                                metabolite_list.append(
+                                    {"node": node, "value": str(int(np.mean(np.array(intensity_list))))})
                         else:
                             for node in inchikey_nodeId_map[metabolite[0]]:
-                                metabolite_list.append({"node": inchikey_nodeId_map[metabolite[0]], "value":str(int(intensity_list[0]))})
-                        # metabolite_list[metabolite[0]] = intensity_list
-                    # print sample.name
-                    # print peak_intensity.intensity
-                    # member_hash[member.name] = [intensity_list, sample_list]
+                                metabolite_list.append(
+                                    {"node": inchikey_nodeId_map[metabolite[0]], "value": str(int(intensity_list[0]))})
             member_hash["name"] = member.name
             member_hash["data"] = metabolite_list
             mapping_data.append(member_hash)
 
         mapping['mappingdata'][0]['mappings'] = mapping_data
-        # print mapping
         response = simplejson.dumps(mapping)
-        # content = jsonpickle.decode(r.text)
-        # response = simplejson.dumps(content)
         return HttpResponse(response, content_type='application/json')
 
 
@@ -1288,7 +1301,6 @@ def get_metexplore_info(request, project_id, analysis_id):
         for comparison in comparisons:
             member_set = member_set.union(set(comparison.attribute.all()))
         member_list = list(member_set)
-        # print member_list
 
         compound_data_list = []
         testdata = []
@@ -1301,17 +1313,15 @@ def get_metexplore_info(request, project_id, analysis_id):
             if str(compounds_identified[0].compound_name) not in nameIn:
                 logger.debug(compounds_identified[:1])
                 for compound in compounds_identified[:1]:
+
                     member_hash = {}
                     for member in member_list:
                         intensity_list = []
                         for sample in member.sample.all():
                             peak_intensity = sample.peakdtsample_set.get(peak=peak)
                             intensity_list.append(peak_intensity.intensity)
-
-                        # print sample.name
-                        # print peak_intensity.intensity
                         member_hash[member.name] = intensity_list
-                    # print member_hash
+
                     hash_data = {}
                     data = []
                     for member in member_hash.iterkeys():
@@ -1327,24 +1337,15 @@ def get_metexplore_info(request, project_id, analysis_id):
                         elif len(intensities) == 0:
                             hash_data[str(member)] = 0
                             data.append(0)
-                    # print data
+
                     nameIn.append(str(compound.compound_name))
                     compound_data_list.append({"name": str(compound.compound_name), "conditions": data})
                     testdata.append({compound.compound_name: hash_data})
             else:
                 print compounds_identified[0].compound_name
 
-        # print "COMPOUND DATA"
-        # print compound_data_list
-        # print testdata
-        print compound_data_list
-        print len(compound_data_list)
-        message = "got somthing on the server!!!"
         response = simplejson.dumps(compound_data_list)
-
         return HttpResponse(response, content_type='application/json')
-
-    # identified_peakdtcomparisonList = c.peakdtcomparison_set.filter(peak__in=identified_peak)
 
 
 def peak_info(request, project_id, analysis_id):
@@ -1364,15 +1365,16 @@ def peak_info(request, project_id, analysis_id):
         logger.debug(member_list)
         member_hash = {}
         for member in member_list:
+
             intensity_list = []
             sample_list = []
             for sample in member.sample.all():
                 peak_intensity = sample.peakdtsample_set.get(peak=peak)
                 intensity_list.append(peak_intensity.intensity)
                 sample_list.append(str(sample.name).split(".")[0])
-            # print sample.name
-            # print peak_intensity.intensity
+
             member_hash[member.name] = [intensity_list, sample_list]
+
         logger.debug(member_hash)
         data = []
         for member in member_hash.iterkeys():
@@ -1388,8 +1390,9 @@ def peak_info(request, project_id, analysis_id):
             elif len(intensities) == 1:
                 memberInfo = [str(member), intensities[0], None, member_hash[member]]
                 data.append(memberInfo)
-        logger.debug("BBBbbbbbBBBBBBBBBBBBBBBBBBB")
+
         logger.debug(data)
+
         # PeakQCSample objects for blank samples only
         peakblanksamples = PeakQCSample.objects.filter(peak=peak, sample__attribute__name="blank")
         if peakblanksamples:
@@ -1421,12 +1424,7 @@ def peak_info(request, project_id, analysis_id):
         logger.info(blankInfo)
         data_hash = {"samples": data, "blanks": blankInfo}
         logger.info(data_hash)
-
-        message = "got somthing on the server!!!"
         response = simplejson.dumps(data_hash)
-
-        # message = "got somthing on the server!!!"
-        # response = simplejson.dumps(data)
 
         return HttpResponse(response, content_type='application/json')
 
@@ -1464,8 +1462,6 @@ def peak_info_peak_id(request, project_id, analysis_id):
                 peak_intensity = sample.peakdtsample_set.get(peak=peak)
                 intensity_list.append(peak_intensity.intensity)
                 sample_list.append(str(sample.name).split(".")[0])
-            # print sample.name
-            # print peak_intensity.intensity
             member_hash[member.name] = [intensity_list, sample_list]
         logger.debug(member_hash)
         data = []
@@ -1484,6 +1480,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
                 memberInfo = [str(member), 0, None, member_hash[member]]
                 data.append(memberInfo)
         logger.debug(data)
+
         # PeakQCSample objects for blank samples only
         peakblanksamples = PeakQCSample.objects.filter(peak=peak, sample__attribute__name="blank")
         if peakblanksamples:
@@ -1515,14 +1512,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
         logger.debug(blankInfo)
         data_hash = {"samples": data, "blanks": blankInfo}
         logger.debug(data_hash)
-
-
-        message = "got somthing on the server!!!"
         response = simplejson.dumps(data_hash)
-
-        # message = "got somthing on the server!!!"
-        # response = simplejson.dumps(data)
-
         return HttpResponse(response, content_type='application/json')
 
 
@@ -1597,26 +1587,11 @@ def get_peaks_from_compound(request, project_id, analysis_id):
                 except:
                     lineList = None
                     logger.error("EXCEPTION TRIGGERED!!!!!")
-                # print lineList
+
                 data.append([name, lineList])
-            # print data
-        message = "got somthing on the server for peaks chromatogram!!!"
+
         response = simplejson.dumps(data)
         return HttpResponse(response, content_type='application/json')
-
-
-#def my_new_view(requet, project_id, analysis_id):
-#    if request.is_ajax():
-#        peak_id = int(request.GET['id'])
-#        ppm = float(request.GET['ppm'])
-#        rtWindow = float(request.GET['rtwindow'])
-#
-#        mass = float(peak.mass)
-#        u = robjects.FloatVector([massLow, massUp])
-#        mzrange = robjects.r['matrix'](u, ncol=2)
-#        w = robjects.FloatVector([rtLow, rtUp])
-#        rtrange = robjects.r['matrix'](w, ncol=2)
-#        xcms = importr("xcms")
 
 
 def get_peaks_from_peak_id(request, project_id, analysis_id):
@@ -1628,7 +1603,6 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
         project = Project.objects.get(pk=project_id)
         analysis = Analysis.objects.get(pk=analysis_id)
         peak = analysis.dataset_set.all()[0].peak_set.get(secondaryId=peak_id)
-
 
         rt = float(peak.rt)
         mass = float(peak.mass)
@@ -1689,11 +1663,7 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
                 except:
                     lineList = None
                     logger.error("EXCEPTION TRIGGERED!!!!!")
-                # print lineList
                 data.append([name, lineList])
-                #logger.debug(data)
-        message = "got somthing on the server for peaks chromatogram!!!"
-
 
         response = simplejson.dumps(data)
         return HttpResponse(response, content_type='application/json')
@@ -1704,7 +1674,8 @@ def compound_info(request, project_id, analysis_id):
         compound_id = int(request.GET['id'])
         compound = Compound.objects.get(pk=compound_id)
         data = [compound.adduct, compound.inchikey]
-        pathway_list = [pathway_name.encode("utf8") for pathway_name in compound.compoundpathway_set.all().values_list('pathway__pathway__name', flat=True).distinct()]
+        pathway_list = [pathway_name.encode("utf8") for pathway_name in
+                        compound.compoundpathway_set.all().values_list('pathway__pathway__name', flat=True).distinct()]
         if pathway_list:
             data.append(pathway_list)
         else:
@@ -1727,11 +1698,7 @@ def get_compounds_from_peak_id(request, project_id, analysis_id):
         peak = analysis.dataset_set.all()[0].peak_set.get(secondaryId=peak_id)
 
         compoundsList = []
-
-        # print "peak here",peak
-
         for compound in peak.compound_set.all():
-            # print "blblblblblbl"
             names = compound.repositorycompound_set.all().values_list('compound_name', flat=True).distinct()
             logger.debug("names lalalalalalala %s", names)
             distinct_names = list(set([x.lower() for x in names]))
@@ -1741,6 +1708,7 @@ def get_compounds_from_peak_id(request, project_id, analysis_id):
 
         response = simplejson.dumps(compoundsList)
         return HttpResponse(response, content_type='application/json')
+
 
 def create_member_tics(comparisons):
     tics = {}
@@ -1760,51 +1728,29 @@ def create_member_tics(comparisons):
             else:
                 posmzxmlfile = sample.samplefile.posdata
                 if not posmzxmlfile.tic:
-                    # print "over here"
                     posdata = getIntensity(posmzxmlfile)
-                    # print "posdata ",[i[0] for i in posdata]
                     x_axis = [i[0] for i in posdata]
                     y_axis = [i[1] for i in posdata]
                     x = pickle.dumps(x_axis)
                     y = pickle.dumps(y_axis)
                     mean = np.mean(y_axis)
                     median = np.median(y_axis)
-                    # print "pos median : ", median
-                    # print "pos mean : ", mean
-                    posBarTic = [mean, median]
-
-                    # print x
-
-                    # print "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
-
                     curve = Curve.objects.create(x_axis=x, y_axis=y, mean=mean, median=median)
                     curve.save()
                     posmzxmlfile.tic = curve
                     posmzxmlfile.save()
-
-                    #logger.debug('%s', posmzxmlfile.tic.x_axis)
-                # posintensity = posdata[0]
-                # postime = posdata[1]
                 else:
-                    # print "tic exist"
-                    # print str(posmzxmlfile.tic.x_axis)
                     x_axis = pickle.loads(str(posmzxmlfile.tic.x_axis))
                     y_axis = pickle.loads(str(posmzxmlfile.tic.y_axis))
-                    # print "pos median : ", posmzxmlfile.tic.median
-                    # print "pos mean : ", posmzxmlfile.tic.mean
-                    posBarTic = [posmzxmlfile.tic.mean, posmzxmlfile.tic.median]
                     posdata = []
-                    # print "after loads"
                     for i in range(len(x_axis)):
                         posdata.append([float(x_axis[i]), float(y_axis[i])])
-                    # print "after for"
-                # print posdata
+
             if not sample.samplefile.negdata:
                 negdata = "None"
             else:
                 negmzxmlfile = sample.samplefile.negdata
                 if not negmzxmlfile.tic:
-                    # print "over there :)"
                     negdata = getIntensity(negmzxmlfile)
                     x_axis = [i[0] for i in negdata]
                     y_axis = [i[1] for i in negdata]
@@ -1812,41 +1758,21 @@ def create_member_tics(comparisons):
                     y = pickle.dumps(y_axis)
                     mean = np.mean(y_axis)
                     median = np.median(y_axis)
-                    # print "neg median : ", median
-                    # print "neg mean : ", mean
-                    negBarTic = [mean, median]
 
                     curve = Curve.objects.create(x_axis=x, y_axis=y, mean=mean, median=median)
                     curve.save()
                     negmzxmlfile.tic = curve
                     negmzxmlfile.save()
                 else:
-                    # print "tic exist"
                     x_axis = pickle.loads(str(negmzxmlfile.tic.x_axis))
                     y_axis = pickle.loads(str(negmzxmlfile.tic.y_axis))
-                    # print "neg median : ", negmzxmlfile.tic.median
-                    # print "neg mean : ", negmzxmlfile.tic.mean
-                    negBarTic = [negmzxmlfile.tic.mean, negmzxmlfile.tic.median]
                     negdata = []
                     for i in range(len(x_axis)):
                         negdata.append([float(x_axis[i]), float(y_axis[i])])
-            # fileList = [sample_name,posdata,negdata,posBarTic,negBarTic]
+
             fileList = {'pos': posdata, 'neg': negdata}
             sampleCurveList[sample_name] = fileList
 
-        # print attributeResponse
-        # ++++++++++++++++++++++++++++++++++++++ Previous version of group tic creation ++++++++++++++++++++++++++++++++++++++
-        # if not Attribute.objects.get(id=attribute_id).ticgroup.postic :
-        #     posticfile = "None"
-        # else:
-        #     posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
-        #     # print posticfile
-        # if not Attribute.objects.get(id=attribute_id).ticgroup.negtic :
-        #     negticfile = "None"
-        # else:
-        #     negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
-        # fileList = [attribute_name,posticfile,negticfile]
-        # attributeResponse = [attribute_name, sampleCurveList]
         tics[attribute] = sampleCurveList
     return tics
 
@@ -1874,42 +1800,24 @@ def create_member_tic(attribute_id):
                 y = pickle.dumps(y_axis)
                 mean = np.mean(y_axis)
                 median = np.median(y_axis)
-                # print "pos median : ", median
-                # print "pos mean : ", mean
-                posBarTic = [mean, median]
-
-                # print x
-
-                # print "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
 
                 curve = Curve.objects.create(x_axis=x, y_axis=y, mean=mean, median=median)
                 curve.save()
                 posmzxmlfile.tic = curve
                 posmzxmlfile.save()
 
-                #logger.debug('%s', posmzxmlfile.tic.x_axis)
-            # posintensity = posdata[0]
-            # postime = posdata[1]
             else:
-                # print "tic exist"
-                # print str(posmzxmlfile.tic.x_axis)
                 x_axis = pickle.loads(str(posmzxmlfile.tic.x_axis))
                 y_axis = pickle.loads(str(posmzxmlfile.tic.y_axis))
-                # print "pos median : ", posmzxmlfile.tic.median
-                # print "pos mean : ", posmzxmlfile.tic.mean
-                posBarTic = [posmzxmlfile.tic.mean, posmzxmlfile.tic.median]
                 posdata = []
-                # print "after loads"
                 for i in range(len(x_axis)):
                     posdata.append([float(x_axis[i]), float(y_axis[i])])
-                # print "after for"
-            # print posdata
+
         if not sample.samplefile.negdata:
             negdata = "None"
         else:
             negmzxmlfile = sample.samplefile.negdata
             if not negmzxmlfile.tic:
-                # print "over there :)"
                 negdata = getIntensity(negmzxmlfile)
                 x_axis = [i[0] for i in negdata]
                 y_axis = [i[1] for i in negdata]
@@ -1917,58 +1825,32 @@ def create_member_tic(attribute_id):
                 y = pickle.dumps(y_axis)
                 mean = np.mean(y_axis)
                 median = np.median(y_axis)
-                # print "neg median : ", median
-                # print "neg mean : ", mean
-                negBarTic = [mean, median]
 
                 curve = Curve.objects.create(x_axis=x, y_axis=y, mean=mean, median=median)
                 curve.save()
                 negmzxmlfile.tic = curve
                 negmzxmlfile.save()
             else:
-                # print "tic exist"
                 x_axis = pickle.loads(str(negmzxmlfile.tic.x_axis))
                 y_axis = pickle.loads(str(negmzxmlfile.tic.y_axis))
-                # print "neg median : ", negmzxmlfile.tic.median
-                # print "neg mean : ", negmzxmlfile.tic.mean
-                negBarTic = [negmzxmlfile.tic.mean, negmzxmlfile.tic.median]
                 negdata = []
                 for i in range(len(x_axis)):
                     negdata.append([float(x_axis[i]), float(y_axis[i])])
-        # fileList = [sample_name,posdata,negdata,posBarTic,negBarTic]
+
         fileList = {'pos': posdata, 'neg': negdata}
         sampleCurveList[sample_name] = fileList
 
-    # print attributeResponse
-    # ++++++++++++++++++++++++++++++++++++++ Previous version of group tic creation ++++++++++++++++++++++++++++++++++++++
-    # if not Attribute.objects.get(id=attribute_id).ticgroup.postic :
-    #     posticfile = "None"
-    # else:
-    #     posticfile = Attribute.objects.get(id=attribute_id).ticgroup.postic.ticplot
-    #     # print posticfile
-    # if not Attribute.objects.get(id=attribute_id).ticgroup.negtic :
-    #     negticfile = "None"
-    # else:
-    #     negticfile = Attribute.objects.get(id=attribute_id).ticgroup.negtic.ticplot
-    # fileList = [attribute_name,posticfile,negticfile]
-    # attributeResponse = [attribute_name, sampleCurveList]
     return sampleCurveList
 
 
 def getIntensity(mzxmlFile):
     xcms = importr("xcms")
-    intensity = []
     file = xcms.xcmsRaw(mzxmlFile.file.path)
     logger.info("file opened")
     intensity = [int(i) for i in list(file.do_slot("tic"))]
     time = [str(i) for i in list(file.do_slot("scantime"))]
     logger.info("intensity list created")
-    # scan = xcms.getScan(file, 1)
-    # print "scan : ",scan
-    # print intensity
-    # print time
     lineList = []
     for i in range(len(intensity)):
         lineList.append([float(time[i]), intensity[i]])
-    # print lineList
     return lineList

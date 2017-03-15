@@ -18,7 +18,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
         logging::logwarn("No database connection.  Unable to create XML file.", logger=logger)
         return()
     }
-    
+
 	#con <- dbConnect("SQLite", dbname = "~/Downloads/sqlite3.db")
 
     experiment_id <- getExperimentID(db, id)
@@ -109,7 +109,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     #        experiment.comparisons$contrast[i] <- contrasts
     #    }
     #}
-    
+
     for (comparison in unique(contrasts$comparison)) {
       comparison_id = contrasts[contrasts$comparison == comparison,'id'][1]
       factor = contrasts[contrasts$comparison == comparison,'factor'][1]
@@ -261,8 +261,8 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
                 xml_add_child(comparison, 'adjpvalue', tt$adj.P.Val[peak.idx])
                 xml_add_child(comparison, 'logodds', tt$B[peak.idx])
             }
-        }            
-    
+        }
+
                     ##add sample intensities
         sampleintensityset = xml_add_child(peak, 'sample_intensity_set')
         for(l in 1:nrow(experiment.samples)) {
@@ -280,15 +280,15 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
         }
 
 
-        
+
 
     }
 
     message("Writing pathway information...")
 
     pathwayset = xml_add_child(doc, 'pathwayset')
-    
-    pathway.compounds <- identification[which(identification$DB=="kegg"),]    
+
+    pathway.compounds <- identification[which(identification$DB=="kegg"),]
 
     for(i in seq(length = nrow(pathway.stats))) {
         pathway = xml_add_child(pathwayset, 'pathway', id=as.character(pathway.stats$id[i]))
@@ -297,12 +297,12 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
         compound_in_pathwayset = xml_add_child(pathway, 'compound_in_pathwayset')
 
         dbid.idx <- which(
-            pathway.compounds$DBID %in% identified.compounds.by.pathway[[pathway.stats$id[i]]], 
+            pathway.compounds$DBID %in% identified.compounds.by.pathway[[pathway.stats$id[i]]],
             arr.ind=TRUE
             )
         lapply(
             unique(pathway.compounds[dbid.idx,'compound.id']),
-            #1, 
+            #1,
             function(x) {
                 #newXMLNode("compound_in_pathway", attrs=c("id"=as.integer(x['compound.id'])), parent=compound_in_pathwayset)
                 xml_add_child(compound_in_pathwayset, 'compound_in_pathway', id=as.character(as.integer(x)))
@@ -315,9 +315,9 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
 
 
        #b = newXMLNode("bar", parent = n)
-     
+
           # suppress the <?xml ...?>
-    write_xml(doc, file=paste0("analysis_", id, ".xml"))
+    write_xml(doc, file=paste0("analysis_", id, "/analysis_", id, ".xml"))
 
     #dbdisconnect(db)
 }

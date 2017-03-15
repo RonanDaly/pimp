@@ -91,6 +91,10 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/peak_discovery/$', 'projects.views.peak_discovery', name='peak_discovery'),
     # ajax request to start analysis
     url(r'^accounts/project/(?P<project_id>\d+)/start_analysis/$', 'experiments.views.start_analysis', name='start_analysis'),
+    # restart analysis
+    url(r'^accounts/project/(?P<project_id>\d+)/restart_analysis/$', 'experiments.views.restart_analysis', name='restart_analysis'),
+    # delete analysis
+    url(r'^accounts/project/(?P<project_id>\d+)/delete_analysis/$', 'experiments.views.delete_analysis', name='delete_analysis'),
     # ajax request to return tic plots
     url(r'^accounts/project/(?P<project_id>\d+)/(?P<attribute_id>\d+)/$', 'projects.views.get_tic', name='get_tic'),
     # ajax request to return group tic plots
