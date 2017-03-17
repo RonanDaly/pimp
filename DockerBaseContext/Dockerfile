@@ -4,6 +4,8 @@ MAINTAINER Rónán Daly <Ronan.Daly@glasgow.ac.uk>
 ENV DEBIAN_FRONTEND noninteractive
 RUN update-locale LC_ALL=C.UTF-8
 ENV LC_ALL C.UTF-8
+ENV R_KEEP_PKG_SOURCE yes
+ENV PYTHONIOENCODING utf_8
 RUN apt-get update && \
 	apt-get install -y \
 		apt-utils && \

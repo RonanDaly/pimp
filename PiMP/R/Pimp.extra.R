@@ -132,3 +132,11 @@ getDefaultSettings = function() {
   return(list(mzmatch.filters=mzmatch.filters, mzmatch.params=mzmatch.params, mzmatch.outputs=mzmatch.outputs,
               xcms.params=xcms.params, peakml.params=peakml.params))
 }
+
+createError <- function() {
+        return(createError2())
+}
+
+createError2 <- function() {
+        stop('throwing from createError2')
+}
