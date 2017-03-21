@@ -12,6 +12,10 @@ findMsMsHR.mass.cached <- function(msRaw, mz, limit.coarse, limit.fine, rtLimits
 	else
 		headerData <- as.data.frame(header(msRaw))
 
+	# We can only handle MS/MS
+	# Strip out all scan levels that are not 1 or 2
+	headerData = subset(headerData, msLevel == 1 | msLevel == 2)
+
 	if(fillPrecursorScan == TRUE)
 	{
 		# reset the precursor scan number. first set to NA, then
