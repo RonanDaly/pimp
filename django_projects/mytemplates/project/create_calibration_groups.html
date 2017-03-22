@@ -2,6 +2,8 @@
 
 {% load staticfiles %}
 
+{% load group_tags %}
+
 {% block DataTables %}
     <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/dataTables.bootstrap.min.js' %}"></script>
@@ -15,6 +17,7 @@
     <script src="{% static 'jquery-validation-1.14.0/jquery.validate.min.js' %}"></script>
     <script src="{% static 'jquery-validation-1.14.0/additional-methods.min.js' %}"></script>
     <script src="{% static 'js/calibration_group_creation.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/group_creation.css' %}" type="text/css" />
 {% endblock %}
 
 {% block content %}
@@ -101,7 +104,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for sample in project.calibrationsample_set.all %}
+                                            {% for sample in unassigned_calibration_samples %}
                                             <tr>
                                                 <td>{{ sample.id }}</td>
                                                 <td>{{ sample.name }}</td>
@@ -145,11 +148,25 @@
                                 </div>
                                 <h2 class="panel-title" style="padding-top: 5px;">{% if form.name.value == "qc" %}{{ form.name.value|upper }}{% else %}{{ form.name.value|title }}{% endif %}</h2>
                             </div>
+                            {% with associated_samples=attribute_sample_association|get_dictionary_item:form.name.value %}
                             <div class="panel-body">
-                                <ol></ol>
+                                <ol class="list-group">
+                                {% if associated_samples %}
+                                    {% for sample in associated_samples %}
+                                    <li class="list-group-item" data-form_id="{{ assigned_calibration_samples|sample_index:sample }}" data-sample_id="{{ sample.id }}" data-polarity="{% if sample.standardFile.posdata and sample.standardFile.negdata %}+-{% elif sample.standardFile.posdata%}+{% elif sample.standardFile.negdata %}-{% else %}NA{% endif %}"><div class="sample_name" style="display:inline;">{{ sample.name }}</div><span class="pull-right"><a href="#" class="remove_sample btn btn-xs btn-default"><span class="glyphicon glyphicon-remove"></span></a></span></li>
+                                    <label for="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" style="display: none;">Projfile:</label>
+                                    <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" name="samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" rows="10" style="display: none;" value="{{ sample.id }}"></textarea>
+                                    <label for="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" style="display: none;">Attribute:</label>
+                                    <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" name="samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" rows="10" style="display: none;" value="{{ form.name.value }}"></textarea>
+                                    {% endfor %}
+                                </ol>
+                                {% else %}
+                                </ol>
                                 <p class="sample_placeholder">No samples</p>
+                                {% endif %}
                                 <div style="display: none;">{{ form.name }}</div>
                             </div>
+                            {% endwith %}
                         </div>
                     {% endfor %}
                 </div>

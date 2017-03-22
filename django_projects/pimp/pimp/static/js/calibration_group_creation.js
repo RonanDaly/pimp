@@ -74,7 +74,7 @@ function main() {
 
     $('[data-toggle=tooltip]').tooltip(); // Set the tooltips
 
-    var numberSampleAttributes = 0;
+    var numberSampleAttributes = $('[name=samplesattributes-TOTAL_FORMS]').val();
 
     function removeSample(sampleAsLi) {
         // Remove a sample from the attribute div and return it to the sampleList table.
@@ -86,7 +86,7 @@ function main() {
         // liElId = current list element Id
         var liElId = parseInt($(sampleAsLi).attr('data-sample_id'));
         var polarity = $(sampleAsLi).attr('data-polarity');
-        $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-sample"]').remove();
+        $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-projfile"]').remove();
         $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-attribute"]').remove();
         sampleList.row.add([liElId, $(sampleAsLi).children('.sample_name').text(), polarity]).draw();
         sampleAsLi.remove();
@@ -153,7 +153,7 @@ function main() {
                         $('[name="samplesattributes-' + (numberSampleAttributes - 1) + '-projfile"]').val(sample[0]);
                         $('[name="samplesattributes-' + (numberSampleAttributes - 1) + '-attribute"]').val(attributeName);
 
-                        attributeDiv.find('ol').append('<li data-form_id=' + (numberSampleAttributes - 1) + ' data-sample_id=' + sample[0] + ' data-polarity="' + sample[2] + '"><div class="sample_name" style="display:inline;">' + sample[1] + ' </div><a href="#" class="remove_sample">(Remove)</a></li>');
+                        attributeDiv.find('ol').append('<li class="list-group-item" data-form_id=' + (numberSampleAttributes - 1) + ' data-sample_id=' + sample[0] + ' data-polarity="' + sample[2] + '"><div class="sample_name" style="display:inline;">' + sample[1] + ' </div><span class="pull-right"><a href="#" class="remove_sample btn btn-xs btn-default"><span class="glyphicon glyphicon-remove"></span></a></span></li>');
                     });
 
                     samplesToAssign.remove().draw();
