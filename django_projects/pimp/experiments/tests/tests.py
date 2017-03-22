@@ -16,11 +16,13 @@ from mock.mock import patch
 
 from experiments.models import Analysis, Experiment, DefaultParameter, Params, \
     Parameter, Database, Comparison, AttributeComparison
-from experiments.tasks import start_pimp_pipeline
+from experiments.tasks import start_pimp_pipeline, end_pimp_pipeline
+from projects.views import create_frank_project_objects
 from fileupload.models import ProjFile, Picture, SampleFileGroup, Sample, \
     StandardFileGroup, CalibrationSample
 from groups.models import Group, Attribute, ProjfileAttribute, SampleAttribute
 from projects.models import Project, UserProject
+from frank.models import PimpAnalysisFrankFs, PimpProjectFrankExp, FragmentationSet
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,33 @@ def create_sample(project, fixture_dir, name):
 
     name = '%s.mzXML' % name
     f = file('%s/samples/POS/%s' % (fixture_dir, name), 'rb')
+    file_pos = Picture.objects.create(
+        project = project,
+        file = SimpleUploadedFile('%s' % name, f.read()),
+        name = '%s' % name,
+    )
+    file_pos.setpolarity('+')
+
+    f = file('%s/samples/NEG/%s' % (fixture_dir, name), 'rb')
+    file_neg = Picture.objects.create(
+        project = project,
+        file = SimpleUploadedFile('%s' % name, f.read()),
+        name = '%s' % name,
+    )
+    file_neg.setpolarity('-')
+
+    samplefilegroup = SampleFileGroup.objects.create(type="mzxml", posdata=file_pos, negdata=file_neg)
+    samplefilegroup.save()
+
+    sample = Sample.objects.create(project=project,name=name, samplefile=samplefilegroup)
+    sample.save()
+
+    return sample
+
+def create_frank_sample(project, fixture_dir, name):
+
+    name = '%s.mzML' % name
+    f = file('%s/frank-samples/Positive/%s' % (fixture_dir, name), 'rb')
     file_pos = Picture.objects.create(
         project = project,
         file = SimpleUploadedFile('%s' % name, f.read()),
@@ -178,10 +207,9 @@ def create_analysis(experiment_title, user):
     analysis.save()
     return experiment, analysis
 
-
-def create_database(fixture_dir, env,
-        standard_csvs=('Std1_1_20150422_150810', 'Std2_1_20150422_150711', 'Std3_1_20150422_150553')):
-    #######################################################
+def setup_run(fixture_dir, env,
+              standard_csvs=('Std1_1_20150422_150810', 'Std2_1_20150422_150711', 'Std3_1_20150422_150553')):
+        #######################################################
     # 1. create user and project
     #######################################################
 
@@ -201,6 +229,9 @@ def create_database(fixture_dir, env,
         permission = 'admin'
     )
     user_project.save()
+
+    create_frank_project_objects(user, 'test_project', 'test', project)
+
 
     #######################################################
     # 2. create calibration, blank and std samples
@@ -291,7 +322,7 @@ def create_database(fixture_dir, env,
     SampleAttribute.objects.create(attribute=colour_light, sample=beer4_1)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer4_2)
     SampleAttribute.objects.create(attribute=colour_light, sample=beer4_3)
-    
+
     group_name = 'beer_taste'
     attribute_names = ['taste_delicious', 'taste_okay', 'taste_awful']
     conditions = create_grouping(group_name, attribute_names)
@@ -323,6 +354,10 @@ def create_database(fixture_dir, env,
     logger.info('analysis.id: %s',  analysis.id)
     experiment.save()
     analysis.save()
+    pimpFrankLink = PimpProjectFrankExp.objects.get(pimp_project=project)
+    frank_experiment = pimpFrankLink.frank_expt
+    fragmentation_set = FragmentationSet.objects.get(experiment=frank_experiment)
+    PimpAnalysisFrankFs.objects.get_or_create(pimp_analysis=analysis, frank_fs=fragmentation_set)
 
     #######################################################
     # 7. set up comparisons
@@ -343,17 +378,23 @@ def create_database(fixture_dir, env,
     ac0.save()
     ac1.save()
 
+    return project, experiment, analysis
+
+def start_run(project, env, analysis):
     #######################################################
     # 8. Run the R analysis pipeline
     #######################################################
-
     transaction.commit() # commit to the test db so it can be picked up by R
-    success = False
     with env:
         logger.info('Using %s as database', settings.ACTUAL_DATABASE)
         #print 'Using %s as database' % env['PIMP_DATABASE_NAME']
-        success = start_pimp_pipeline(analysis, project, user, True)
-    return success, project, experiment, analysis
+        start_pimp_pipeline(analysis, project, True)
+        end_pimp_pipeline(analysis, project, create_test_user(), True)
+
+def create_database(fixture_dir, env):
+    project, experiment, analysis = setup_run(fixture_dir, env)
+    start_run(project, env, analysis)
+    return project, experiment, analysis
 
 def initialise_database():
     basedir = settings.BASE_DIR
@@ -384,19 +425,10 @@ class ExperimentTestCase(TransactionTestCase):
         self.test_media_root = test_media_root
         self.env = env
 
-    @patch('experiments.tasks.send_email')
-    def test_analysis(self, mock_send_email):
-        """test that R analysis pipeline can run"""
-
-        success, project, experiment, analysis = create_database(self.fixture_dir, self.env)
-
-
+    def check_results(self, analysis, mock_send_email, project):
         #######################################################
         # 9. Check the results from the R pipeline
         #######################################################
-
-        # assert that the return code from R is 0
-        self.assertEqual(success, True)
 
         # assert that analysis status is set to Finished
         analysis = Analysis.objects.get_or_create(id=analysis.id)[0]
@@ -416,8 +448,18 @@ class ExperimentTestCase(TransactionTestCase):
         fixture_peaks = json.loads(fixture_data)
         assert(test_peaks == fixture_peaks)
 
-        #######################################################
-        # 10. remove the analysis results
-        #######################################################
+    @patch('experiments.tasks.send_email')
+    def test_analysis(self, mock_send_email):
+        """test that R analysis pipeline can run"""
 
-        shutil.rmtree(os.path.join(self.test_media_root, 'projects'))
+        project, experiment, analysis = create_database(self.fixture_dir, self.env)
+        self.check_results(analysis, mock_send_email, project)
+
+    @patch('experiments.tasks.send_email')
+    def test_frank_analysis(self, mock_send_email):
+        """test that R analysis pipeline can run"""
+
+        project, experiment, analysis = setup_run(self.fixture_dir, self.env)
+
+        start_run(project, self.env, analysis)
+        self.check_results(analysis, mock_send_email, project)
