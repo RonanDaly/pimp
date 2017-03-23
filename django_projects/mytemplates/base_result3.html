@@ -209,7 +209,7 @@
 			{% endfor %}
 		];
 
-		var comparisons = { {% for comparison in comparisons %}"{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}" : {{ comparison.id }} {% if not forloop.last %},{% endif %}{% endfor %} };
+		var comparisons = { {% for comparison in comparisons %}"{{ comparison.getCaseAttribute.name }} / {{ comparison.getControlAttribute.name }}" : {{ comparison.id }} {% if not forloop.last %},{% endif %}{% endfor %} };
 		var memberList = [{% for member in member_list %}"{{ member.name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
 		var memberColumnIndex = { {% for member in member_list %}"{{ member.name }}" : {{ forloop.counter0 }} {% if not forloop.last %},{% endif %}{% endfor %} };
 		var sampleList = [{% for sublist in sample_list %}[{% for sample in sublist %}"{{ sample.name }}"{% if not forloop.last %},{% endif %}{% endfor %}]{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -783,7 +783,7 @@
 	                width: 500,
 	            },
 	            title: {
-	                text: '{{ comparison.0.attributecomparison_set.all.0.attribute.name }} / {{ comparison.0.attributecomparison_set.all.1.attribute.name }} volcano plot'
+	                text: '{{ comparison.0.getCaseAttribute.name }} / {{ comparison.0.getControlAttribute.name }} volcano plot'
 	            },
 	            subtitle: {
 	                text: 'Click and drag in the plot area to zoom in'
@@ -2531,7 +2531,7 @@
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">More<b id="nav-bar-caret" class="caret"></b></a>
 						<ul class="dropdown-menu" id="dropdown-comparison-menu" style="min-width:100px;">
 							{% for comparison in comparisons %}
-								<li id="comparison{{ comparison.id }}-li" style="margin:0px;"><a href="#comparison{{ comparison.id }}" class="dropdown-comparison-menu-a" style="float:left;">{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</a></li>
+								<li id="comparison{{ comparison.id }}-li" style="margin:0px;"><a href="#comparison{{ comparison.id }}" class="dropdown-comparison-menu-a" style="float:left;">{{ comparison.getCaseAttribute.name }} / {{ comparison.getControlAttribute.name }}</a></li>
 					        {% endfor %}
 						</ul>
 					</li>
@@ -2624,7 +2624,7 @@
 
                     									<p>{{ comparisons|length }} pairwise comparison{{ comparison|length|pluralize }} were performed:
                     											{% for comparison in comparisons %}
-                    											<li>{{ comparison.attributecomparison_set.all.0.attribute.name }} relative to {{ comparison.attributecomparison_set.all.1.attribute.name }}</li>
+                    											<li>{{ comparison.getCaseAttribute.name }} relative to {{ comparison.getControlAttribute.name }}</li>
                     											{% endfor %}
                     										</ul>
                     									</p>
@@ -2738,7 +2738,7 @@
                 									<p>{{ comparisons|length }} group-wise comparisons were undertaken to identify differences (fold changes). Each fold change has associated significance statistics.  Peaks with an adjusted p-value less than 0.05 were considered significant. The tables below for each comparison show the statistically significant identified and annotated peaks along with their associated log fold changes.</p>
 
                 									{% for comparison,comparison_hits in comparison_hits_list.items %}
-                									<h5>{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</h5>
+                									<h5>{{ comparison.getCaseAttribute.name }} / {{ comparison.getControlAttribute.name }}</h5>
 
                 										{% if comparison_hits.0 and comparison_hits.1 %}
                 											{% if comparison_hits.0|length > 10 %}
@@ -2931,7 +2931,7 @@
 {#										  <th rowspan="2" class="average-column">Average {{ member.name }}</th>#}
 {#										  {% endfor %}#}
                                           {% for comparison in comparisons %}
-                                          <th rowspan="1">logFC {{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }}</th>
+                                          <th rowspan="1">logFC {{ comparison.getCaseAttribute.name }} / {{ comparison.getControlAttribute.name }}</th>
                                           {% endfor %}
 										  <th rowspan="1">Identification</th>
 
@@ -2990,7 +2990,7 @@
 						                <tr>
 						               	  <th>Peak id</th>
 						                  {% for comparison in comparisons %}
-						                  <th >{{ comparison.attributecomparison_set.all.0.attribute.name }} / {{ comparison.attributecomparison_set.all.1.attribute.name }} (logfc)</th>
+						                  <th >{{ comparison.getCaseAttribute.name }} / {{ comparison.getControlAttribute.name }} (logfc)</th>
 						                  {% endfor %}
 						                 </tr>
 						              </thead>

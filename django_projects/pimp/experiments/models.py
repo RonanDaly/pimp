@@ -22,6 +22,14 @@ class Comparison(models.Model):
 	def __unicode__(self):
 		return self.name
 
+	def getControlAttribute(self):
+		minac = min(self.attributecomparison_set.all(), key=lambda ac: ac.group)
+		return minac.attribute
+	
+	def getCaseAttribute(self):
+		maxac = max(self.attributecomparison_set.all(), key=lambda ac: ac.group)
+		return maxac.attribute
+
 class AttributeComparison(models.Model):
 	# AttributeComparisons with the same group and comparison have been grouped together.
 	# If there are two groups, the lower group is the control group.
