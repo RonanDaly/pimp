@@ -25,10 +25,13 @@ from groups.forms import *
 import datetime
 
 import os
+import logging
 
 # import PiMP settings
 from django.conf import settings
 
+
+logger = logging.getLogger(__name__)
 
 def assignfile(request, project_id):
     if request.method == 'POST':
@@ -223,6 +226,9 @@ def index(request, project_id):
         else:  # at least one form isn't valid
             print "At least one form in the group creation view wasn't valid."
             error_message = True # Used on the template to display a general error message.
+            logger.warning("attribute_formset errors: %s", attribute_formset.errors)
+            logger.warning("sample_attribute_formset errors: %s", sample_attribute_formset.errors)
+            logger.warning("group_form errors: %s", group_form.errors)
             group_form = GroupForm()
             attribute_formset = AttributeFormSet(prefix='attributes')
             sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
