@@ -343,7 +343,7 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
       samples = smd$rn[group]
 	  for (i in 1:nrow(raw.data)) {
 	    if ( all(raw.data[i,samples] == 0 | is.na(raw.data[i,samples])) ) {
-	      raw.data[i,group] = low_level
+	      raw.data[i,samples] = low_level
 	    }
 	  }
 	}
