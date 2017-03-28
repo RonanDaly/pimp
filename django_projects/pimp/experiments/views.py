@@ -391,7 +391,7 @@ def get_metabolites_table(request, project_id, analysis_id):
         # list(identified_compounds)
         ic_secondary_ids = identified_compounds.values_list('secondaryId', flat=True).distinct()
 
-        sample_map = [sample.id for sample in samples]
+        sample_map = [x.id for x in sorted(samples, key=lambda x: x.attribute_set.first().id)]
         new_test_start = timeit.default_timer()
 
         test = PeakDtComparison.objects.filter(peak__compound__in=list(identified_compounds)).order_by('peak__compound__secondaryId','-peak__peakdtsample__intensity',
