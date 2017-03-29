@@ -55,7 +55,10 @@
 
     </div>
     <!-- end blank forms -->
-
+    {% if dataset_exist.0 %}
+    <div id='warning-msg' class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span> The current groups have been used in {{ dataset_exist.1 }} analys{{ dataset_exist.1|pluralize:"is,es" }}. The analys{{ dataset_exist.1|pluralize:"is,es" }} will be deleted if you make any changes.
+    </div>
+    {% endif %}
     <div id='error-msg' class="alert alert-danger" style='display:none;'>
     </div>
 
@@ -154,10 +157,12 @@
                                 {% if associated_samples %}
                                     {% for sample in associated_samples %}
                                     <li class="list-group-item" data-form_id="{{ assigned_calibration_samples|sample_index:sample }}" data-sample_id="{{ sample.id }}" data-polarity="{% if sample.standardFile.posdata and sample.standardFile.negdata %}+-{% elif sample.standardFile.posdata%}+{% elif sample.standardFile.negdata %}-{% else %}NA{% endif %}"><div class="sample_name" style="display:inline;">{{ sample.name }}</div><span class="pull-right"><a href="#" class="remove_sample btn btn-xs btn-default"><span class="glyphicon glyphicon-remove"></span></a></span></li>
-                                    <label for="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" style="display: none;">Projfile:</label>
-                                    <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" name="samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" rows="10" style="display: none;" value="{{ sample.id }}"></textarea>
-                                    <label for="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" style="display: none;">Attribute:</label>
-                                    <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" name="samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" rows="10" style="display: none;" value="{{ form.name.value }}"></textarea>
+                                    <div class="item" style="display: none;">
+                                        <label for="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" style="display: none;">Projfile:</label>
+                                        <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" name="samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-projfile" rows="10" style="display: none;" value="{{ sample.id }}">{{ sample.id }}</textarea>
+                                        <label for="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" style="display: none;">Attribute:</label>
+                                        <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" name="samplesattributes-{{ assigned_calibration_samples|sample_index:sample }}-attribute" rows="10" style="display: none;" value="{{ form.name.value }}">{{ form.name.value }}</textarea>
+                                    </div>
                                     {% endfor %}
                                 </ol>
                                 {% else %}
@@ -181,7 +186,7 @@
                             <h4 class="modal-title">Assign calibration samples to control groups.</h4>
                         </div>
                         <div class="modal-body">
-                            Are you sure? Once you've assigned calibration samples to control groups they can't be changed.
+                            Are you sure?
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">No, go back</button>

@@ -2425,9 +2425,10 @@ $(document).ready(function() {
 									<div class="span6 span-btn">
 										{% if project.calibrationsample_set.all %}
 										{% if projfileattributes|length > 0 %}
-										<!--<a class="btn btn-success btn-create-project" href="{% url 'projfile_attribute' project.id %}" data-toggle="tooltip" title="Edit categories" data-placement="bottom" id="edit-btn"><i class="icon-edit icon-white"></i></a>-->
-										{% endif %}
+										<a class="btn btn-success btn-create-project" href="{% url 'projfile_attribute' project.id %}" data-toggle="tooltip" title="Edit categories" data-placement="bottom" id="edit-btn"><i class="icon-edit icon-white"></i> Edit</a>
+										{% else %}
 										<a class="btn btn-primary btn-create-project" href="{% url 'projfile_attribute' project.id %}" data-toggle="tooltip" title="Create categories" data-placement="bottom" id="plus-btn" style="margin-right: 5px;"><i class="icon-plus icon-white"></i> Create</a>
+                                        {% endif %}
 										{% endif %}
 									</div>
 								</div>
