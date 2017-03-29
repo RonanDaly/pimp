@@ -74,7 +74,20 @@ function main() {
 
     $('[data-toggle=tooltip]').tooltip(); // Set the tooltips
 
-    var numberSampleAttributes = 0;
+    var numberSampleAttributes = $('[name=samplesattributes-TOTAL_FORMS]').val();
+
+    // This function update the index of the elements when we add/remove comparisons, if not updated, the django formset will not be parsed properly in the view when the html form is submited !Important
+    // It is also used for validating the form with jquery validate
+    function updateElementIndex(el, prefix, ndx) {
+        var id_regex = new RegExp('(' + prefix + '-\\d+-)');
+        var replacement = prefix + '-' + ndx + '-';
+        // If the element has an html attribute "for", then update it
+        if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex,replacement));
+        // If the element has an html attribute "id", then update it
+        if (el.id) el.id = el.id.replace(id_regex, replacement);
+        // If the element has an html attribute "name", then update it
+        if (el.name) el.name = el.name.replace(id_regex, replacement);
+    }
 
     function removeSample(sampleAsLi) {
         // Remove a sample from the attribute div and return it to the sampleList table.
@@ -86,12 +99,35 @@ function main() {
         // liElId = current list element Id
         var liElId = parseInt($(sampleAsLi).attr('data-sample_id'));
         var polarity = $(sampleAsLi).attr('data-polarity');
-        $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-sample"]').remove();
+        $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-projfile"]').parent('.item').remove();
+        $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-projfile"]').remove();
         $('[name="samplesattributes-' + $(sampleAsLi).attr('data-form_id') + '-attribute"]').remove();
         sampleList.row.add([liElId, $(sampleAsLi).children('.sample_name').text(), polarity]).draw();
         sampleAsLi.remove();
         numberSampleAttributes--;
         $('[name=samplesattributes-TOTAL_FORMS]').val(numberSampleAttributes);
+
+        var forms = $('.item');
+        var i = 0;
+
+        // Go through the forms and set their indices, names and IDs
+        for (formCount = forms.length; i < formCount; i++) {
+
+            console.log(i);
+            // update the id and name of the textarea with the right index
+            $(forms.get(i)).find("textarea").each(function() {
+                // if we are updating the id of the projfile tag, also update the data-form_id of the li tag 
+                if ($(this).attr('id').split('-')[2] === 'projfile') {
+                    $('li[data-sample_id="' + $(this).val() + '"]').attr('data-form_id',i);
+                }
+                updateElementIndex(this, 'samplesattributes', i);
+            });
+
+            // update the for of the label with the right index
+            $(forms.get(i)).find("label").each(function() {
+                updateElementIndex(this, 'samplesattributes', i);
+            });
+        }
     }
 
     function validateSample(button_id, sampleData) {
@@ -147,13 +183,16 @@ function main() {
                         $('[name=samplesattributes-TOTAL_FORMS]').val(numberSampleAttributes);
 
                         // Clone the template field
+                        var itemDiv = $('<div class="item"></div>');
+                        itemDiv.css('display', 'none');
                         var newSample = $($('#sampleattribute_form_template').clone().html().replace(/__prefix__/g, (numberSampleAttributes - 1)));
                         newSample.css('display', 'none');
-                        newSample.appendTo(attributeDiv.children('.panel-body'));
+                        newSample.appendTo(itemDiv);
+                        itemDiv.appendTo(attributeDiv.children('.panel-body'));
                         $('[name="samplesattributes-' + (numberSampleAttributes - 1) + '-projfile"]').val(sample[0]);
                         $('[name="samplesattributes-' + (numberSampleAttributes - 1) + '-attribute"]').val(attributeName);
 
-                        attributeDiv.find('ol').append('<li data-form_id=' + (numberSampleAttributes - 1) + ' data-sample_id=' + sample[0] + ' data-polarity="' + sample[2] + '"><div class="sample_name" style="display:inline;">' + sample[1] + ' </div><a href="#" class="remove_sample">(Remove)</a></li>');
+                        attributeDiv.find('ol').append('<li class="list-group-item" data-form_id=' + (numberSampleAttributes - 1) + ' data-sample_id=' + sample[0] + ' data-polarity="' + sample[2] + '"><div class="sample_name" style="display:inline;">' + sample[1] + '</div><span class="pull-right"><a href="#" class="remove_sample btn btn-xs btn-default"><span class="glyphicon glyphicon-remove"></span></a></span></li>');
                     });
 
                     samplesToAssign.remove().draw();

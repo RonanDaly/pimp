@@ -3,14 +3,19 @@ from fileupload.models import Picture, ProjFile, Sample, CalibrationSample
 import datetime
 from projects.models import Project
 
+
+# Deprecated class - to be removed?
 class TicFile(models.Model):
 	ticplot = models.FilePathField(blank=True, null=True)
 	meanticplot = models.FilePathField(blank=True, null=True)
 	medianticplot = models.FilePathField(blank=True, null=True)
 
+
+# Deprecated class - to be removed?
 class TicGroup(models.Model):
 	postic = models.ForeignKey(TicFile, related_name='postic', blank=True, null=True)
 	negtic = models.ForeignKey(TicFile, related_name='negtic', blank=True, null=True)
+
 
 class Group(models.Model):
 	# print "group is creating!!"
@@ -20,6 +25,7 @@ class Group(models.Model):
 
 	def __unicode__(self):
 		return self.name
+
 
 class Attribute(models.Model):
 	# print "attribute is creating"
@@ -37,6 +43,7 @@ class Attribute(models.Model):
 		else:
 			return self.name
 
+
 class SampleAttribute(models.Model):
 	sample = models.ForeignKey(Sample)
 	attribute = models.ForeignKey(Attribute)
@@ -53,4 +60,3 @@ class ProjfileAttribute(models.Model):
 
 	def __unicode__(self):
 		return str(self.attribute) + " (" + str(self.calibrationsample) + ")"
-
