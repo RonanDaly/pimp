@@ -1,6 +1,8 @@
 from django.shortcuts import render_to_response
 from django.shortcuts import render
 from projects.models import Project
+from groups.models import Attribute
+from data.models import Dataset
 from django.core.context_processors import csrf
 from django.template import RequestContext # For CSRF
 from django.forms.formsets import formset_factory, BaseFormSet
@@ -31,7 +33,9 @@ import logging
 from django.conf import settings
 
 
+
 logger = logging.getLogger(__name__)
+
 
 def assignfile(request, project_id):
     if request.method == 'POST':
@@ -58,6 +62,7 @@ def assignfile(request, project_id):
     return render(request, 'project/assignfile.html', c) 
 
 
+# Deprecated function - to be removed? 
 def getFilesFromMember(member):
     posFileList = []
     negFileList = []
@@ -67,6 +72,7 @@ def getFilesFromMember(member):
         if sample.samplefile.negdata:
             negFileList.append(sample.samplefile.negdata)
     return [posFileList,negFileList]
+
 
 def createTicPlot(fileList, attribute, polarity, project):
     xcms = importr("xcms")
@@ -113,6 +119,7 @@ def createTicPlot(fileList, attribute, polarity, project):
     return filePath
 
 
+# Deprecated function - to be removed? 
 def createTic(fileList, attribute, polarity, project):
     if not attribute.ticgroup:
         print "+++++++++++++???????????????????????????+++++++++++++++++++++"
@@ -261,9 +268,6 @@ def create_calibration_groups(request, project_id):
 
     """
 
-    AttributeFormSet = formset_factory(AttributeForm, extra=3, max_num=3)
-    SampleAttributeFormSet = formset_factory(ProjfileAttributeForm, extra=0)
-
     try:
         project = Project.objects.get(pk=project_id)
         user = request.user
@@ -271,8 +275,34 @@ def create_calibration_groups(request, project_id):
     except Project.DoesNotExist:
         raise Http404  # Http404 not imported, so this except does nothing...
 
+        # Get the list of samples already assigned to a calibration group to set the total number of forms (extra)
+    assigned_calibration_samples = project.calibrationsample_set.all().filter(attribute__isnull=False)
+
+    # Create formset for calibration groups, the number of calibration groups is always 3 (extra=3)
+    AttributeFormSet = formset_factory(AttributeForm, extra=3, max_num=3)
+    # Create formset for sample-calibration group association with the correct number of existing association (extra=existing_number_of_association)
+    # This is used to set the "TOTAL" number of entries to the right number in the template  
+    SampleAttributeFormSet = formset_factory(ProjfileAttributeForm, extra=assigned_calibration_samples.count())
+
+    # Get all calibration samples
     calibration_samples = project.calibrationsample_set.all()
-    print calibration_samples
+        # Get all samples not already assigned to a calibration group
+    unassigned_calibration_samples = project.calibrationsample_set.all().filter(attribute__isnull=True)
+    # Get the existing calibration groups
+    attribute_list = Attribute.objects.filter(calibrationsample=calibration_samples).distinct()
+
+    # Create a dictonnary with calibration group - sample association information {group1: [sample1, sample2], group2: [sample3, sample4], ...}
+    attribute_sample_association = {}
+    for attribute in attribute_list:
+        assigned_samples = project.calibrationsample_set.all().filter(attribute=attribute)
+        attribute_sample_association[attribute.name] = assigned_samples
+
+    dataset_exist = False
+    if assigned_calibration_samples:
+        dataset = Dataset.objects.filter(analysis__experiment__comparison__attribute__calibrationsample_in=assigned_calibration_samples).distinct()
+        print dataset
+        if dataset:
+            dataset_exist = [True, dataset.count()]
 
     error_message = False
 
@@ -299,6 +329,10 @@ def create_calibration_groups(request, project_id):
                 # else:
                     # print "\tA calibration group already exists, so a new one wasn't created"
 
+                # Delete all attribute if any exist
+                attribute_list.delete()
+
+                empty_group = True
                 # print "\tProcessing attributes"
                 for attribute_form in attribute_formset:
 
@@ -312,12 +346,14 @@ def create_calibration_groups(request, project_id):
                         #       " in this group already existed, so a new one wasn't created."
 
                     # print "\t\tProcessing sample attributes"
+                    empty_attibute = True
                     for sample_attribute_form in sample_attribute_formset:
 
                         attribute = sample_attribute_form.cleaned_data['attribute']
 
                         if attribute == attribute_object.name:
-
+                            empty_attibute = False
+                            empty_group = False
                             sample_id = sample_attribute_form.cleaned_data['projfile']
                             sample_object = project.calibrationsample_set.get(id=sample_id)
                             _, created = ProjfileAttribute.objects.get_or_create(attribute=attribute_object, calibrationsample=sample_object)
@@ -327,6 +363,13 @@ def create_calibration_groups(request, project_id):
                             #     print "\t\t\tThe projfile attribute already existed for sample " + sample_id + \
                             #           " and attribute " + attribute
                     # print "\t\tFinished processing sample attributes."
+
+                    # If an attribute is created but no sample have been assigned to it, delete it
+                    if empty_attibute:
+                        attribute_object.delete()
+
+                if empty_group:
+                    group.delete()
                 # print "\tFinished processing attributes"
 
                 project.modified = datetime.datetime.now()
@@ -348,7 +391,7 @@ def create_calibration_groups(request, project_id):
 
                 sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
 
-                attribute_formset = attribute_formset
+                # attribute_formset = attribute_formset
 
                 c = {
                     'error_message': error_message,
@@ -361,29 +404,38 @@ def create_calibration_groups(request, project_id):
                 return render(request, 'project/create_calibration_groups.html', c)
 
     else:  # if the request method is GET
-        # print "GET request create calibration groups"
 
+        # Formset with the initial groups
         attribute_formset = AttributeFormSet(prefix='attributes', initial=[
             {'name': 'qc'},
             {'name': 'blank'},
             {'name': 'standard'}
         ])
 
+        # Create calibration group-sample association formset - resulting form will be used as a template and is handled by javascript
         sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
 
+        # I don't know what this is, should probably remove it
         attribute_formset = attribute_formset
 
+        # Create context dictonnary to be passed to the template
         c = {
             'error_message': error_message,
             'sample_attribute_formset': sample_attribute_formset,
             'attribute_formset': attribute_formset,
             'project': project,
-            'permission': permission
+            'permission': permission,
+            'unassigned_calibration_samples': unassigned_calibration_samples,
+            'assigned_calibration_samples': assigned_calibration_samples,
+            'attribute_sample_association': attribute_sample_association,
+            'dataset_exist': dataset_exist
+
         }
 
         return render(request, 'project/create_calibration_groups.html', c)
 
 
+# Deprecated function - to be removed?
 def indexRate(request, project_id):
     # This class is used to make empty formset forms required
     # See http://stackoverflow.com/questions/2406537/django-formsets-make-first-required/4951032#4951032
