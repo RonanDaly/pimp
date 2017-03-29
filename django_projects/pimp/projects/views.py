@@ -16,6 +16,7 @@ from frank.models import Experiment as FrankExperiment
 from frank.models import ExperimentalCondition as FrankExpCondition
 from frank.models import FragmentationSet, UserExperiment
 from frank.models import Sample as FrankSample
+from frank.models import SampleFile as FrankSampleFile
 
 
 
@@ -596,6 +597,7 @@ def detail(request, project_id):
 		print "the condition is", frank_expt_condition
 		frank_sample = frank_expt_condition.sample_set.all()[0]
 		print "the Frank sample is", frank_sample
+		fragment_files = FrankSampleFile.objects.filter(sample__experimental_condition__experiment=frank_experiment)
 
 		#frank_samplefiles = frank_sample.samplefile_set.all()
 
@@ -631,7 +633,7 @@ def detail(request, project_id):
 				projfileattributes = list(projfileattSet)
 		# print "projfile attribute : ",projfileattributes
 		print "At the end of the detail view"
-		return render(request, 'project/detail.html', {'project': project, 'permission':permission, 'groups':groups, 'projfileattributes':projfileattributes, 'experiments':experiments, 'frank_sample':frank_sample})
+		return render(request, 'project/detail.html', {'project': project, 'permission':permission, 'groups':groups, 'projfileattributes':projfileattributes, 'experiments':experiments, 'frank_sample':frank_sample, 'fragment_files':fragment_files})
 
 def sampleDelete(request, project_id):
 	if request.method == 'POST':
