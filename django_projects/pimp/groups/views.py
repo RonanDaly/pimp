@@ -23,6 +23,7 @@ except:
 from rpy2.robjects.packages import importr
 
 from groups.forms import *
+from experiments.models import Analysis
 
 import datetime
 
@@ -314,6 +315,14 @@ def create_calibration_groups(request, project_id):
             sample_attribute_formset = SampleAttributeFormSet(request.POST, prefix='samplesattributes')
 
             if attribute_formset.is_valid() and sample_attribute_formset.is_valid():
+
+                # Delete existing datasets
+                for ds in dataset:
+                    analysis = ds.analysis
+                    analysis.status = 'Ready'
+                    analysis.save()
+                    ds.delete()
+
                 # Create a calibration group for the user if one doesn't exist
                 group_exists = False
                 for f in calibration_samples:
