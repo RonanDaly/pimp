@@ -2955,7 +2955,18 @@
 						<div class="myspan9" style="height:100%;">
 							<div class="row-fluid" style="overflow: auto;height: 100%;position: relative;">
 								<div class="spreadsheet-content" style="overflow: auto;height: 100%;position: relative;">
+
 									<table id="pathway-table" class="table table-striped">
+						            	<thead>
+						            		<tr>
+				            	      			<th>Name</th>
+								                <th>ID</th>
+								                <th>Number of compounds</th>
+								                <th>Annotated</th>
+								                <th>Identified</th>
+								                <th>Coverage %</th>
+							                </tr>
+						              	</thead>
 						              <tbody>
 						              	{% for pathway in pathway_list %}
 						              	<tr map="{{ pathway.0.secondaryId }}/{% for id in pathway.4.1 %}{{ id }}%09blue/{% endfor %}{% for id in pathway.4.0 %}{{ id }}%09green/{% endfor %}"><td>{{ pathway.0.name }}</td>
