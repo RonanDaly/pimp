@@ -237,7 +237,8 @@ def submit_analysis(project, analysis, user):
           link=tasks.create_run_frank_chain.si(num_fragment_files, analysis,
                                                project, frank_experiment,
                                                fragmentation_set,
-                                               user))()
+                                               user),
+          link_error=tasks.error_handler.s(analysis, project, user, False))()
 
 
 def validate_analysis(analysis):
