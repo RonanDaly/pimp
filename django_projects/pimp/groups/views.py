@@ -298,13 +298,7 @@ def create_calibration_groups(request, project_id):
         assigned_samples = project.calibrationsample_set.all().filter(attribute=attribute)
         attribute_sample_association[attribute.name] = assigned_samples
 
-    dataset_exist = False
-    if assigned_calibration_samples:
-        dataset = Dataset.objects.filter(analysis__experiment__comparison__attribute__calibrationsample_in=assigned_calibration_samples).distinct()
-        print dataset
-        if dataset:
-            dataset_exist = [True, dataset.count()]
-
+    dataset = Dataset.objects.filter(analysis__experiment__comparison__attribute__calibrationsample_in=assigned_calibration_samples).distinct()
     error_message = False
 
     if request.method == "POST":
@@ -437,7 +431,7 @@ def create_calibration_groups(request, project_id):
             'unassigned_calibration_samples': unassigned_calibration_samples,
             'assigned_calibration_samples': assigned_calibration_samples,
             'attribute_sample_association': attribute_sample_association,
-            'dataset_exist': dataset_exist
+            'dataset_exist': [dataset.exists(), dataset.count()]
 
         }
 
