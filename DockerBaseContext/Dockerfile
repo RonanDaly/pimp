@@ -55,5 +55,6 @@ COPY docker-entrypoint.sh /usr/local/bin/
 COPY install_docker_cli.sh /tmp
 RUN /tmp/install_docker_cli.sh && rm /tmp/install_docker_cli.sh
 RUN groupadd pimp && useradd -g pimp -m pimp
+COPY bash_aliases /home/pimp/.bash_aliases
 RUN mkdir -m o-w -p /home/pimp/static /home/pimp/media /home/pimp/backups /home/pimp/frank/NISTQueryFiles
 RUN chown -R pimp:pimp /home/pimp
