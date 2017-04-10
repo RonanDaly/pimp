@@ -88,6 +88,7 @@ django_projects/TESTDATA*
 .idea
 # Virtual Environment Directories
 venv
+hostvenv
 # Local environment files
 .env
 packrat/lib*/

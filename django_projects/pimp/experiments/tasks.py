@@ -4,6 +4,7 @@ from celery import chain
 from celery.utils.log import get_task_logger
 
 import os
+import errno
 import subprocess
 import sys
 import pandas as pd
@@ -209,19 +210,21 @@ def start_pimp_pipeline(analysis, project):
     :type analysis: the analysis object
     :type project: the project object
     """
-    pipeline = Rpy2Pipeline(analysis, project)
-    logger.error('Testing logging system with error level message')
-    logger.info('Starting pipeline with analysis %s(%s) and project %s(%s)', analysis.id, analysis, project.id, project)
-    xml_file_path = pipeline.run_pipeline()
-    logger.info('xml_file_path is %s' % xml_file_path)
+    try:
+        pipeline = Rpy2Pipeline(analysis, project)
+        logger.error('Testing logging system with error level message')
+        logger.info('Starting pipeline with analysis %s(%s) and project %s(%s)', analysis.id, analysis, project.id, project)
+        xml_file_path = pipeline.run_pipeline()
+        logger.info('xml_file_path is %s' % xml_file_path)
 
-    if os.path.exists(xml_file_path):
-        logger.info('Populating database')
-        populate_database(xml_file_path)
-    else:
-        logger.info('XML file does not exist')
-
-    connection.close()
+        if os.path.exists(xml_file_path):
+            logger.info('Populating database')
+            populate_database(xml_file_path)
+        else:
+            logger.error('XML file does not exist')
+            raise IOError(errno.ENOENT, 'XML file does not exist', xml_file_path)
+    finally:
+        connection.close()
 
 @celery.task
 def end_pimp_pipeline(analysis, project, user, successful):
