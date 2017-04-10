@@ -388,7 +388,7 @@ def start_run(project, env, analysis):
     with env:
         logger.info('Using %s as database', settings.ACTUAL_DATABASE)
         #print 'Using %s as database' % env['PIMP_DATABASE_NAME']
-        start_pimp_pipeline(analysis, project, True)
+        start_pimp_pipeline(analysis, project)
         end_pimp_pipeline(analysis, project, create_test_user(), True)
 
 def create_database(fixture_dir, env):

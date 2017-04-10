@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from pimp.settings import getString, getNeededString
 import rpy2.robjects as robjects
+from support.rsupport import run_r
 
 from .helpers import get_pimp_wd
 
@@ -52,8 +53,7 @@ class Rpy2Pipeline(object):
         logger.info('******************************************')
 
         packrat_lib_path = self.get_env_packrat_lib_path()
-        set_lib_path = robjects.r['.libPaths']
-        set_lib_path(packrat_lib_path)
+        run_r('.libPaths', packrat_lib_path)
 
         base = importr('base')
         base.options(**{'java.parameters':"".join(["-Xmx",str(1024*8),"m"])})
@@ -75,8 +75,7 @@ class Rpy2Pipeline(object):
         # generate std xml
         stds = robjects.StrVector(self.metadata.stds)
         databases = robjects.StrVector(self.metadata.databases)
-        generate_std_xml = robjects.r('Pimp.generateStdXml')
-        output = generate_std_xml(stds, databases, self.pimp_params, self.working_dir)
+        output = run_r('Pimp.generateStdXml', stds, databases, self.pimp_params, self.working_dir)
         self.r_dbs = output[output.names.index('DBS')]
         self.r_databases = output[output.names.index('databases')]
 
@@ -103,14 +102,12 @@ class Rpy2Pipeline(object):
             assert pos == neg
 
     def get_analysis_params(self, analysis_id):
-        get_analysis_params = robjects.r['Pimp.getAnalysisParams']
-        pimp_params = get_analysis_params(analysis_id)
+        pimp_params = run_r('Pimp.getAnalysisParams', analysis_id)
         return pimp_params
 
     def create_analysis_dir(self, analysis_id, pimp_params):
-        create_analysis_dir = robjects.r['Pimp.createAnalysisDir']
         # pimp_params$mzmatch.outputs will be updated inside to point to the right analysis folder
-        pimp_params = create_analysis_dir(analysis_id, pimp_params, self.working_dir)
+        pimp_params = run_r('Pimp.createAnalysisDir', analysis_id, pimp_params, self.working_dir)
         return pimp_params
 
     ############################################################
@@ -119,9 +116,7 @@ class Rpy2Pipeline(object):
 
     def process_raw_data(self, polarity, xcms_params, mzmatch_params,
                          peakml_params, mzmatch_outputs, mzmatch_filters, n_slaves):
-
-        format_mzmatch_outputs = robjects.r['Pimp.getFormattedMzmatchOutputs']
-        formatted_mzmatch_outputs = format_mzmatch_outputs(self.analysis.id, polarity, mzmatch_outputs)
+        formatted_mzmatch_outputs = run_r('Pimp.getFormattedMzmatchOutputs', self.analysis.id, polarity, mzmatch_outputs)
         polarity_dir, combined_dir = self.create_input_directories(polarity, formatted_mzmatch_outputs)
 
         logger.info('------------------------------------------')
@@ -221,8 +216,7 @@ class Rpy2Pipeline(object):
         wd = self.working_dir
 
         save_fixtures = True
-        pimp_run_stats = robjects.r['Pimp.runStats.save']
-        pimp_run_stats(raw_data_dict['positive'], raw_data_dict['negative'], analysis_id,
+        run_r('Pimp.runStats.save', raw_data_dict['positive'], raw_data_dict['negative'], analysis_id,
                        r_factors, metadata, r_contrasts,
                        databases, dbs, mzmatch_outputs, mzmatch_params,
                        save_fixtures, wd)
@@ -311,25 +305,22 @@ class Rpy2Pipeline(object):
         return out_file
 
     def filter_final(self, in_file, mzmatch_filters, mzmatch_params, mzmatch_outputs):
-
-        noise_filter = robjects.r['Pimp.noiseFilter']
         apply_noise_filter = self.get_value(mzmatch_filters, 'noise')[0]
         if apply_noise_filter:
             noise = self.get_value(mzmatch_params, 'noise')[0]
             out_file = self.get_value(mzmatch_outputs, 'final.combined.noise.filtered.file')[0]
             out_file = os.path.abspath(out_file)
-            noise_filter(in_file, out_file, noise)
+            run_r('Pimp.noiseFilter', in_file, out_file, noise)
         else:
             out_file = in_file
 
-        simple_filter = robjects.r['Pimp.simpleFilter']
         in_file = out_file
         filter_ppm = self.get_value(mzmatch_params, 'ppm')[0]
         filter_minintensity = self.get_value(mzmatch_params, 'minintensity')[0]
         filter_mindetections = self.get_value(mzmatch_params, 'mindetections')[0]
         out_file = self.get_value(mzmatch_outputs, 'final.combined.simple.filtered.file')[0]
         out_file = os.path.abspath(out_file)
-        simple_filter(in_file, out_file, filter_ppm, filter_minintensity, filter_mindetections)
+        run_r('Pimp.simpleFilter', in_file, out_file, filter_ppm, filter_minintensity, filter_mindetections)
 
         return out_file
 
@@ -341,8 +332,7 @@ class Rpy2Pipeline(object):
         ionisation = self.get_value(peakml_params, 'ionisation')[0]
         ppm = self.get_value(peakml_params, 'ppm')[0]
         rtwindow = self.get_value(peakml_params, 'rtwin')[0]
-        gap_filler = robjects.r['Pimp.gapFilling']
-        gap_filler(in_file, out_file, ionisation, ppm, rtwindow)
+        run_r('Pimp.gapFilling', in_file, out_file, ionisation, ppm, rtwindow)
 
         return out_file
 
@@ -356,8 +346,7 @@ class Rpy2Pipeline(object):
 
         ppm = self.get_value(mzmatch_params, 'ppm')[0]
         rtwindow = self.get_value(mzmatch_params, 'rtwindow')[0]
-        related_peaks = robjects.r['Pimp.relatedPeaks']
-        related_peaks(in_file, out_file, basepeak_file, ppm, rtwindow)
+        run_r('Pimp.relatedPeaks', in_file, out_file, basepeak_file, ppm, rtwindow)
 
         return out_file, basepeak_file
 
@@ -387,8 +376,7 @@ class Rpy2Pipeline(object):
             'polarity'          : polarity
         }
 
-        pimp_identify = robjects.r['Pimp.identify.metabolites']
-        raw_data = pimp_identify(**args)
+        raw_data = run_r('Pimp.identify.metabolites', **args)
         return raw_data
 
     ############################################################
@@ -413,26 +401,21 @@ class Rpy2Pipeline(object):
         }
 
         # call centwave
-        xcms_set = robjects.r['xcmsSet']
-        xset = xcms_set(**args)
+        xset = run_r('xcmsSet', **args)
         return xset
 
     def rt_correct(self, xset, method):
 
         if method == 'obiwarp':
-            retcor = robjects.r['retcor']
-            xset_aln = retcor(xset, method='obiwarp', profStep=0.01)
+            xset_aln = run_r('retcor', xset, method='obiwarp', profStep=0.01)
         elif method == 'loess':
-            retcor = robjects.r['retcor']
-            xset_aln = retcor(xset, method='loess', family="symmetric")
+            xset_aln = run_r('retcor', xset, method='loess', family="symmetric")
         else:
             xset_aln = xset
 
-        filepaths = robjects.r['filepaths']
-        fp = filepaths(xset_aln)
+        fp = run_r('filepaths', xset_aln)
 
-        split = robjects.r['split']
-        xseto = split(xset_aln, fp)
+        xseto = run_r('split', xset_aln, fp)
         return xseto
 
     ############################################################
@@ -441,7 +424,6 @@ class Rpy2Pipeline(object):
 
     def generate_peakml_files(self, xseto, polarity_dir, peakml_params):
 
-        write_peakml = robjects.r['PeakML.xcms.write.SingleInstance']
         ionisation = self.get_value(peakml_params, 'ionisation')
         add_scans = self.get_value(peakml_params, 'addscans')
         write_rejected = self.get_value(peakml_params, 'writeRejected')
@@ -453,8 +435,7 @@ class Rpy2Pipeline(object):
         peakml_files = []
         regex = re.compile(re.escape('mzxml'), re.IGNORECASE)
 
-        names = robjects.r['names']
-        xset_names = names(xseto)
+        xset_names = run_r('names', xseto)
         for name in xset_names:
             replaced = regex.sub('peakml', name)
             outfile = os.path.join(polarity_dir, os.path.basename(replaced))
@@ -462,7 +443,7 @@ class Rpy2Pipeline(object):
 
         for i in range(len(peakml_files)):
             logger.debug('Now creating %s', peakml_files[i])
-            write_peakml(xseto[i], outputfile=peakml_files[i], ionisation=ionisation,
+            run_r('PeakML.xcms.write.SingleInstance', xseto[i], outputfile=peakml_files[i], ionisation=ionisation,
                          addscans=add_scans, writeRejected=write_rejected,
                          ApodisationFilter=apodisation_filter, ppm=ppm)
 
@@ -574,8 +555,7 @@ class Rpy2Pipeline(object):
 
         peakml_list_str = ','.join(in_files)
         files = robjects.StrVector([peakml_list_str])
-        combine_peakml = robjects.r['Pimp.combineSingle']
-        combine_peakml(files, out_file, label, ppm, rtwindow, combine_type)
+        run_r('Pimp.combineSingle', files, out_file, label, ppm, rtwindow, combine_type)
 
     ############################################################
     # filters --- can be chained together ??
@@ -583,13 +563,12 @@ class Rpy2Pipeline(object):
 
     def rsd_filter(self, in_peaksets, rsd):
 
-        rsd_filter_peakml = robjects.r['Pimp.rsdSingle']
         out_files = []
         for in_file in in_peaksets:
             basename, extension = os.path.splitext(in_file)
             out_file = basename + '_rsd' + extension
             rej_file = basename + '_rsdrej' + extension
-            rsd_filter_peakml(in_file, out_file, rej_file, rsd)
+            run_r('Pimp.rsdSingle', in_file, out_file, rej_file, rsd)
             out_files.append(os.path.abspath(out_file))
 
         return out_files
