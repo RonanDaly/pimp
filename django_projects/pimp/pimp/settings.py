@@ -44,9 +44,8 @@ REGISTRATION_OPEN = False
 
 ALLOWED_HOSTS = getList('PIMP_ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
-ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
-)
+adminEmails = getList('PIMP_ADMIN_EMAILS', [])
+ADMINS = zip(adminEmails, adminEmails)
 
 EMAIL_HOST = getString('PIMP_EMAIL_HOST', None)
 # EMAIL_USE_TLS = True
@@ -54,6 +53,7 @@ EMAIL_HOST = getString('PIMP_EMAIL_HOST', None)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 DEFAULT_FROM_EMAIL = getString('PIMP_DEFAULT_FROM_EMAIL', None)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # EMAIL_FILE_PATH = '/opt/django/projects/django_projects/tmp/app-messages'
 

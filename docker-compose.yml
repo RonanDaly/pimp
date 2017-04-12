@@ -20,6 +20,7 @@ services:
             - PIMP_LOG_LEVEL
             - PIMP_EMAIL_HOST
             - PIMP_DEFAULT_FROM_EMAIL
+            - PIMP_ADMIN_EMAILS
             - MSPEPSEARCH_IMAGE
             - INTERNAL_NIST_QUERY_DIR=/home/pimp/frank/NISTQueryFiles
         extends:
