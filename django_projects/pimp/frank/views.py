@@ -18,8 +18,9 @@ from django.core.exceptions import ValidationError
 # import PIL
 # import PIL.Image
 import StringIO
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.db import transaction
+from django.core.urlresolvers import reverse
 import json
 import csv
 import numpy as np
@@ -242,7 +243,7 @@ def get_ms2lda_vis_context_dict(fragmentation_set_name_slug, annotation_id):
     context_dict = {
         'fragment_slug': fragmentation_set_name_slug,
         'annotation_name': annotation_query.name,
-	'graph' : json.dumps(json_data),
+        'graph' : json.dumps(json_data),
         'topic_data' : json.dumps(topic_data)
     }
     return context_dict
@@ -829,9 +830,9 @@ def create_fragmentation_set(request, experiment_name_slug):
             if num_source_files > 0:
                 new_fragmentation_set.save()              # Begin the background process of deriving the peaks from the sample files
                 input_peak_list_to_database(experiment_name_slug, new_fragmentation_set.id)
-                # Render the experiment page, which should display the new fragmentation set
-                context_dict = get_experiment_summary_context_dict(experiment_name_slug)
-                return render(request, 'frank/experiment.html', context_dict)
+                # Redirect to the the experiment page, which should display the new fragmentation set
+                url = reverse('experiment_summary', kwargs={'experiment_name_slug': experiment_name_slug})
+                return HttpResponseRedirect(url)
             else:
                 # However, if there are no sample files uploaded, then an error is added to the form
                 fragment_set_form.add_error("name", "No source files found for experiment.")
@@ -1021,10 +1022,9 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             # End of Simon's addition
             # Finally, begin running the retrieval of the annotations as a background process
             generate_annotations(paramaterised_query_object,user = request.user)
-            # Return the user to the 'fragmentation_set' page
-            form = AnnotationToolSelectionForm(experiment_object=experiment)
-            context_dict = get_fragmentation_set_context_dict(fragmentation_set_name_slug, form)
-            return render(request, 'frank/fragmentation_set.html', context_dict)
+            # Redirect the user to their 'fragmentation_set' page
+            url = reverse('fragmentation_set', kwargs={'fragmentation_set_name_slug': fragmentation_set_name_slug})
+            return HttpResponseRedirect(url)
         else:
             # If the form is invalid then display the form errors back to the user
             context_dict = get_define_annotation_query_context_dict(
@@ -1170,13 +1170,13 @@ def generate_annotations(annotation_query_object,user = None):
     elif annotation_tool.name == 'NIST':
         print "as NIST annotation tool"
         # If NIST is to be queried, run the batch service as a background process
-        tasks.nist_batch_search(annotation_query_object.id)
+        tasks.nist_batch_search.delay(annotation_query_object.id)
     elif annotation_tool.name == 'Network Sampler':
         tasks.runNetworkSampler(annotation_query_object.id)
     elif annotation_tool.name == 'Precursor Mass Filter':
-        tasks.precursor_mass_filter(annotation_query_object.id)
+        tasks.precursor_mass_filter.delay(annotation_query_object.id)
     elif annotation_tool.name == 'Clean Annotations':
-        tasks.clean_filter(annotation_query_object.id,user)
+        tasks.clean_filter.delay(annotation_query_object.id,user)
     elif annotation_tool.name == 'MS2LDA':
         tasks.run_ms2lda_analysis(annotation_query_object.id)
 
