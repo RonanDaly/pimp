@@ -229,7 +229,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     :return: True   Boolean value denoting the completion of the task
     Passing the MS1 peaks from Pimp when they are run together.
     """
-    print ('In MSN generate peak list')
+    logger.info('In MSN generate peak list')
     # Determine the directory of the experiment
     experiment_object = Experiment.objects.get(slug=experiment_slug)
     # From the experiment object derive the file directory of the .mzXML files
@@ -255,8 +255,6 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
             experimental_condition.slug,
             sample.slug
         )
-
-    print ('The filepath is,', filepath)
 
     # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
@@ -299,17 +297,16 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
         elif p == "negative":
             pol_dir = "Negative"
         else:
-            print "we have a polarity issue"
+            logger.waring("we have a polarity issue")
 
         polarity_fp = os.path.join(filepath, pol_dir)
         files_in_dir = os.listdir(polarity_fp)
 
-        print ("The location of the file should be " + polarity_fp+" the files are "+files_in_dir)
+        logger.info("The location of the file should be %s and the file is %s", polarity_fp, files_in_dir)
+        # If we have a file in the directory we are looking at (should always be true for stand-alone FrAnK)
+        # This catch is present in case the user has a dual polarity MS1 experiment but only adds fragments of a
+        # single polarity
 
-        """If we have a file in the directory we are looking at (should always be true for stand-alone FrAnK)
-        This catch is present in case the user has a dual polarity MS1 experiment but only adds fragments of a
-        single polarity.
-        """
         #If there are files in the directory
         if files_in_dir:
 
@@ -329,13 +326,14 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
             df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
             pandas2ri.activate()
             f_pol_df = pandas2ri.py2ri(df)
-            print "The polarity_dataframe is", f_pol_df
 
     # If no MS1 peaks, generate the peak matrix for Frank
     if ms1_peaks is None:
+        logger.info("There are no MS1 peaks, stand-alone FrAnk used")
         output = r_frank_pimp_prepare(filepath)
         # Else there are MS1 peaks and we want to prepare the files for Method 3
     else:
+        logger.info("we have ms1 peaks from Method3")
         output = r_frank_pimp_prepare(filepath, ms1_peaks, f_pol_df)
 
     try:
