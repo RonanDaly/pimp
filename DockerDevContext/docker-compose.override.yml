@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 
 services:
     pimp:
@@ -14,6 +14,6 @@ services:
             - EXTERNAL_NIST_QUERY_DIR=${PWD}/frank/NISTQueryFiles
     mysql:
         ports:
-            - "3306:3306"
+            - "${MYSQL_PORT:-3306}:3306"
         volumes:
             - ./mysql:/var/lib/mysql
