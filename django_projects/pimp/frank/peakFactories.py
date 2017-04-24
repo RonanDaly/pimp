@@ -89,6 +89,7 @@ class MSNPeakBuilder(PeakBuilder):
             self.from_method_3 = True
             print("MS1 peaks came from Pimp")
 
+
         # sample_file_vector contains the 'name' (not filepath) of the source file from which the peak was derived
         # e.g. "Beer3_Top10_POS.mzXML"
         self.sample_file_vector = r_dataframe.rx2('SourceFile')
@@ -129,14 +130,8 @@ class MSNPeakBuilder(PeakBuilder):
                 try:
                     parent_peak_object = self._get_parent_peak(parent_peak_id)
                     self._create_a_peak(peak_array_index, parent_peak_object)
-                except ValidationError:
+                except Exception:
                     raise
-
-                    # # If the data comes from method 3
-                    # if self.from_method_3:
-                    #     # Link the parent peak object to the MS1 peak in Frank from which it came
-                    #     self._link_frank_pimp_peaks()
-                    #     print ('Finished linking peaks')
 
         # Else ignore the peak
         # Here peaks without any precursor ion are ignored, however,
@@ -206,16 +201,6 @@ class MSNPeakBuilder(PeakBuilder):
         peak_intensity = self.intensity_vector[peak_array_index]
         peak_msn_level = int(self.msn_level_vector[peak_array_index])
 
-        #print "peak level is" + str(peak_msn_level)
-        if peak_msn_level == 1:
-            #print 'Parent peak and MS1 ID is:'
-            ms1_id = self.ms1_peak_id_vector[peak_array_index]
-            #print ms1_id
-
-        if peak_msn_level > 1:
-            pass
-            #print 'not parent peak and MS1 ID is'
-            #print self.ms1_peak_id_vector[peak_array_index]
 
         try:
             newly_created_peak = Peak.objects.create(
@@ -231,16 +216,13 @@ class MSNPeakBuilder(PeakBuilder):
             self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
             # If we have a parent peak link it back to Pimp
             #KMCL: This should only be created if it doesn't already exist.
-            if peak_msn_level == 1:
+            if (peak_msn_level == 1) and self.from_method_3:
                 #print ("we are linking")
                 self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
 
-        except ValidationError:
+        except Exception:
             raise
-        except IntegrityError:
-            print 'Cannot insert'
-            raise
-
+        print ("created a new peak")
         return newly_created_peak
 
     def _link_frank_pimp_peaks(self, frank_parent, pimp_ms1):
@@ -257,7 +239,7 @@ class MSNPeakBuilder(PeakBuilder):
         #     # a Pimp peak object
 
         #Only create if it doesn't already exist.
-        pimp_frank_link = PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
+        PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
         #print "The link is" + str(pimp_frank_link)
 
 
