@@ -1,2 +1,2 @@
-ipython # debugging via jupyter notebook environment
-jupyter # debugging via jupyter notebook environment
+ipython==5.2.2
+jupyter==1.0
