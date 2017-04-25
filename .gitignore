@@ -105,3 +105,5 @@ packrat/src/*
 DockerDevContext/media
 DockerDevContext/mysql
 DockerDevContext/frank
+django_projects/pimp/notebooks/*
+!django_projects/pimp/notebooks/ipython_config.py 
