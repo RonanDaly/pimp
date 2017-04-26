@@ -232,29 +232,21 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     logger.info('In MSN generate peak list')
     # Determine the directory of the experiment
     experiment_object = Experiment.objects.get(slug=experiment_slug)
-    # From the experiment object derive the file directory of the .mzXML files
-    # If the MS1 peaks don't exist, don't touch this but not sure how it works as Frank seems to store differently.
-    if ms1_peaks is None:
-        filepath = os.path.join(
-            settings.MEDIA_ROOT,
-            'frank',
-            experiment_object.created_by.username,
-            experiment_object.slug,
-        )
+    experimental_condition = ExperimentalCondition.objects.filter(experiment=experiment_object)[0]
+    print "EXP " + str(experimental_condition)
+    sample = Sample.objects.filter(experimental_condition=experimental_condition)[0]
+    print "sample " + str(sample)
 
-    else:  # This path needs to be different for passing to method 3
-        experimental_condition = ExperimentalCondition.objects.filter(experiment=experiment_object)[0]
-        print "EXP " + str(experimental_condition)
-        sample = Sample.objects.filter(experimental_condition=experimental_condition)[0]
-        print "sample " + str(sample)
-        filepath = os.path.join(
-            settings.MEDIA_ROOT,
-            'frank',
-            experiment_object.created_by.username,
-            experiment_object.slug,
-            experimental_condition.slug,
-            sample.slug
-        )
+    # Filepath takes us to the directory above the polarity dirs (Positive and Negative)
+    # in which the files are stored.
+    filepath = os.path.join(
+        settings.MEDIA_ROOT,
+        'frank',
+        experiment_object.created_by.username,
+        experiment_object.slug,
+        experimental_condition.slug,
+        sample.slug
+    )
 
     # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)

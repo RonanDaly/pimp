@@ -233,12 +233,17 @@ def submit_analysis(project, analysis, user):
 
     # Start the PiMP pipeline and send to the run FrAnK chain to check for fragments
     celery_tasks = [tasks.start_pimp_pipeline.si(analysis, project)]
-    chain(celery_tasks,
-          link=tasks.create_run_frank_chain.si(num_fragment_files, analysis,
-                                               project, frank_experiment,
-                                               fragmentation_set,
-                                               user),
-          link_error=tasks.error_handler.s(analysis, project, user, False))()
+    # chain(celery_tasks,
+    #       link=tasks.create_run_frank_chain.si(num_fragment_files, analysis,
+    #                                            project, frank_experiment,
+    #                                            fragmentation_set,
+    #                                            user),
+    #       link_error=tasks.error_handler.s(analysis, project, user, False))()
+
+    logger.warning("This is set up not to Run PiMP, change back here!")
+    tasks.create_run_frank_chain(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user)
+    print ("running FrAnK only from PiMP analysis")
+
 
 
 def validate_analysis(analysis):

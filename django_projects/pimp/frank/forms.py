@@ -215,7 +215,7 @@ class SampleFileForm(forms.ModelForm):
     # A simple alternative to the drag and drop file upload, requested by
     # the client. However, this will be removed in subsequent iterations.
     address = forms.FileField(
-        help_text="Please select the file for upload."
+        help_text="Please select the .mzXML file for upload."
     )
 
     class Meta:
