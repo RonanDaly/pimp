@@ -193,6 +193,12 @@ build.hmdb.xml <- function(files=character(), outxml="hmdb.xml") {
 
 }
 
+update.hmdb.xml <- function(inxml="hmdb.xml", outxml="hmdb-new.xml") {
+	doc = read_xml(inxml)
+	ids = xml_text(xml_find_all(doc, '/compounds/compound/id/text()'))
+
+}
+
 build.lipidmaps.xml <- function(file=character(), outxml="lipidmaps.xml") {
 	if(length(file)==0) {
 		stop("No file")
