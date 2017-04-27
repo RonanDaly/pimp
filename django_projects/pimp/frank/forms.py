@@ -4,8 +4,6 @@ from django import forms
 from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol,\
     Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, AnnotationTool, \
     IONISATION_PROTOCOLS, FILE_TYPES, PimpAnalysisFrankFs
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe 
 
 # From SIRIUS documentation:
@@ -242,11 +240,11 @@ class SampleFileForm(forms.ModelForm):
             filename = input_file.name
             # check the file extension is '.mzXML'
             if filename.endswith('.mzXML') is False:
-                self.add_error("address", "Incorrect file format. Please upload an mzXML file")
+                self.add_error("address", "Incorrect file format. Please upload an mzML file")
                 raise forms.ValidationError("Incorrect file format")
         else:
             # In the event no file is provided, notify the user
-            self.add_error("address", "No file selected. Please upload an mzXML file")
+            self.add_error("address", "No file selected. Please upload an mzML file")
             raise forms.ValidationError("No file selected.")
 
 

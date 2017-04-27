@@ -41,7 +41,7 @@ def response_mimetype(request):
     else:
         return "text/plain"
 
-
+# These two files have been made static but should probably be moved to a utility file.
 def findpolarity(file):
     tree = etree.parse(file)
     handler = MyContentHandler()
@@ -49,6 +49,15 @@ def findpolarity(file):
     return handler.polarity
 
 
+def getfragpolarity(polarity):
+    if polarity == "-":
+        frag_pol = "Negative"
+    elif polarity == "+":
+        frag_pol = "Positive"
+    else:
+        raise ValueError ("Error in the polarity of the file")
+
+    return frag_pol
 
 class MyContentHandler(ContentHandler):
     def __init__(self):
@@ -139,12 +148,6 @@ class PictureCreateView(CreateView):
         context_data.update({'project': self.project, 'storage_remaining': storage_remaining}) #,'new_project': new_project, 'calibration': calibration})
         # context_data.['pictures'] = Picture.objects.all()
         return context_data
-    
-    def findpolarity(self, file):
-        tree = etree.parse(file)
-        handler = MyContentHandler()
-        lxml.sax.saxify(tree, handler)
-        return handler.polarity        
 
     def form_valid(self, form):
         #print "form is valid, go to the next step!"
@@ -165,7 +168,7 @@ class PictureCreateView(CreateView):
         self.project.save()
         file = self.request.FILES['file']
         print "first file name : ",file.name
-        polarity = self.findpolarity(file)
+        polarity = findpolarity(file)
         print "HERE polarity in the view : ",polarity
         if file.name.replace(" ", "_") not in samples:
             self.object = Picture.objects.create(project=self.project)
@@ -292,23 +295,9 @@ class FragfileCreateView(CreateView):
         print "Fragment Context data is", context_data
         return context_data
 
-    def findpolarity(self, file):
-        tree = etree.parse(file)
-        handler = MyContentHandler()
-        lxml.sax.saxify(tree, handler)
-        return handler.polarity
 
     # Get the polarity in a format suitable for the frAnk Samplefile.
-    def getfragpolarity(self, polarity):
 
-        if polarity == "-":
-            frag_pol = "Negative"
-        elif polarity == "+":
-            frag_pol = "Positive"
-        else:
-            print "Error in polarity file"
-
-        return frag_pol
 
     def getfragsample(self):
 
@@ -348,9 +337,9 @@ class FragfileCreateView(CreateView):
             file_name = file.name.replace(" ", "_")
             print "Name of the fragment file is", file.name
 
-            polarity = self.findpolarity(file)
+            polarity = findpolarity(file)
             print "The file polarity is ", polarity
-            frag_pol = self.getfragpolarity(polarity)
+            frag_pol = getfragpolarity(polarity)
             print "The fragment polarity is ", frag_pol
 
             # If we don't have a smaple file of that name or polarity
@@ -377,7 +366,7 @@ class FragfileCreateView(CreateView):
                     logger.info("A file of this name already exists, checking polarity")
                     stored_files = SampleFile.objects.filter(sample=fragment_sample, name=file_name)
                     file_found =False
-                    frag_pol = self.getfragpolarity(polarity)
+                    frag_pol = getfragpolarity(polarity)
 
                     #Check if the same file already exists.
                     for stored_file in stored_files:
@@ -458,12 +447,6 @@ class ProjfileCreateView(CreateView):
 
         return context_data
 
-    def findpolarity(self, file):
-        tree = etree.parse(file)
-        handler = MyContentHandler()
-        lxml.sax.saxify(tree, handler)
-        return handler.polarity
-
     def form_valid(self, form):
         print "here"
         calibrationsamples = [sample.name for sample in self.project.calibrationsample_set.all()]
@@ -479,7 +462,7 @@ class ProjfileCreateView(CreateView):
             if file.name.split(".")[1:][0].upper() == "MZXML":
                 print "this is mzxml file"
                 self.object = ProjFile.objects.create(project=self.project)
-                polarity = self.findpolarity(file)
+                polarity = findpolarity(file)
                 self.object.file.save(file.name, file)
                 f = self.request.FILES.get('file')
                 #remettre :
@@ -511,7 +494,6 @@ class ProjfileCreateView(CreateView):
             elif file.name.split(".")[1:][0].upper() == "CSV":
                 print "this is csv file"
                 self.object = ProjFile.objects.create(project=self.project)
-                # polarity = self.findpolarity(file)
                 self.object.file.save(file.name, file)
                 f = self.request.FILES.get('file')
                 #remettre :
@@ -531,7 +513,7 @@ class ProjfileCreateView(CreateView):
         else:
             if file.name.split(".")[1:][0].upper() == "MZXML":
                 sample = self.project.calibrationsample_set.get(name=file.name.replace(" ", "_"))
-                polarity = self.findpolarity(file)
+                polarity = findpolarity(file)
                 print "calibration sample found"
                 print "posdata :",sample.standardFile.posdata
                 print "negdata :",sample.standardFile.negdata
