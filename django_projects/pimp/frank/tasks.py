@@ -14,6 +14,7 @@ import os
 import sys
 import logging
 from frank.models import *
+from frank.fragfile_extraction import *
 import frank.network_sampler as ns
 import jsonpickle
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
@@ -233,9 +234,7 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     # Determine the directory of the experiment
     experiment_object = Experiment.objects.get(slug=experiment_slug)
     experimental_condition = ExperimentalCondition.objects.filter(experiment=experiment_object)[0]
-    print "EXP " + str(experimental_condition)
     sample = Sample.objects.filter(experimental_condition=experimental_condition)[0]
-    print "sample " + str(sample)
 
     # Filepath takes us to the directory above the polarity dirs (Positive and Negative)
     # in which the files are stored.
@@ -248,21 +247,24 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
         sample.slug
     )
 
+    logger.info("The filepath is %s ", filepath)
     # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
     # Store the source function as a variable
-    r_source = robjects.r['source']
+    #r_source = robjects.r['source']
     # If no MS1 peaks were passed in, the ms1_peak parameter is set to NULL for rpy2
-    if ms1_peaks is None:
-        location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
-        r_source(location_of_script)
-        r_frank_pimp_prepare = robjects.globalenv['frankMSnPeakMatrix']
-
+    # if ms1_peaks is None:
+    #
+    #
+    #     location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
+    #     r_source(location_of_script)
+    #     r_frank_pimp_prepare = robjects.globalenv['frankMSnPeakMatrix']
+    #
     # Else there are MS1 peaks
-    else:
-        location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankPimpPrepare.R')
-        r_source(location_of_script)
-        r_frank_pimp_prepare = robjects.globalenv['frankPimpPrepare']
+
+    # location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankPimpPrepare.R')
+    # r_source(location_of_script)
+    # r_frank_pimp_prepare = robjects.globalenv['frankPimpPrepare']
 
     # Function of an R script if the fragments were passed from Pimp
 
@@ -278,85 +280,101 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     # This tells us which files and polarites have been added for the fragments
 
     # If the ms1_peaks are passed in here then we have to work out the polarity for method 3
-    if ms1_peaks is not None:
-        file_pol_dict = {}
+    # if ms1_peaks is not None:
+    #     file_pol_dict = {}
+    #
+    #     polarity_vector = ms1_peaks.rx2('polarity')
+    #     p = polarity_vector.levels[0]  # The polarity of the MS1 peaks
+    #
+    #     if p == "positive":
+    #         pol_dir = "Positive" #Polarity of directory
+    #     elif p == "negative":
+    #         pol_dir = "Negative"
+    #     else:
+    #         logger.waring("we have a polarity issue")
+    #
+    #     polarity_fp = os.path.join(filepath, pol_dir)
+    #     files_in_dir = os.listdir(polarity_fp)
 
-        polarity_vector = ms1_peaks.rx2('polarity')
-        p = polarity_vector.levels[0]  # The polarity of the MS1 peaks
-
-        if p == "positive":
-            pol_dir = "Positive" #Polarity of directory
-        elif p == "negative":
-            pol_dir = "Negative"
-        else:
-            logger.waring("we have a polarity issue")
-
-        polarity_fp = os.path.join(filepath, pol_dir)
-        files_in_dir = os.listdir(polarity_fp)
-
-        logger.info("The location of the file should be %s and the file is %s", polarity_fp, files_in_dir)
         # If we have a file in the directory we are looking at (should always be true for stand-alone FrAnK)
         # This catch is present in case the user has a dual polarity MS1 experiment but only adds fragments of a
         # single polarity
 
-        #If there are files in the directory
-        if files_in_dir:
-
-            for f in files_in_dir:
-                if f.endswith(".mzML"):
-                    path = os.path.join(polarity_fp, f)
-                    pol = findpolarity(path)
-                    if pol == "+":
-                        polarity = "positive"
-                    elif pol is "-":
-                        polarity = "negative"
-                    file_pol_dict[path] = polarity #The file polarity mapping Path:polarity
-                else:
-                    print 'no file of mzML type here'
-
-            # Put dictionary into dataframe for passing to R
-            df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
-            pandas2ri.activate()
-            f_pol_df = pandas2ri.py2ri(df)
+        # #If there are files in the directory
+        # if files_in_dir:
+        #
+        #     for f in files_in_dir:
+        #         if f.endswith(".mzML"):
+        #             path = os.path.join(polarity_fp, f)
+        #             pol = findpolarity(path)
+        #             if pol == "+":
+        #                 polarity = "positive"
+        #             elif pol is "-":
+        #                 polarity = "negative"
+        #             file_pol_dict[path] = polarity #The file polarity mapping Path:polarity
+        #         else:
+        #             print 'no file of mzML type here'
+        #
+        #     # Put dictionary into dataframe for passing to R
+        #     df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
+        #     pandas2ri.activate()
+        #     f_pol_df = pandas2ri.py2ri(df)
 
     # If no MS1 peaks, generate the peak matrix for Frank
     if ms1_peaks is None:
         logger.info("There are no MS1 peaks, stand-alone FrAnk used")
-        output = r_frank_pimp_prepare(filepath)
-        # Else there are MS1 peaks and we want to prepare the files for Method 3
-    else:
-        logger.info("we have ms1 peaks from Method3")
-        output = r_frank_pimp_prepare(filepath, ms1_peaks, f_pol_df)
+        polarity_dirs = os.listdir(filepath)
 
-    try:
-        # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
-        # into the database.
-        # Pass the experiment name slug in order to grab the experiment.
-        peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
-        # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
-        # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
-        peak_generator.populate_database_peaks()
-        # Upon completion the status of the fragmentation set is updated, to inform the user of completion
-        fragmentation_set_object.status = 'Completed Successfully'
-    # Should the addition of the peaks to the database fail, the exceptions are passed back up
-    # and the status is updated.
-    except ValueError as value_error:
-        print value_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except TypeError as type_error:
-        print type_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except ValidationError as validation_error:
-        print validation_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except MultipleObjectsReturned as multiple_error:
-        print multiple_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except ObjectDoesNotExist as object_error:
-        print object_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except Exception:
-        fragmentation_set_object.status = 'Completed with Errors'
+        #For stand-alone FrAnK we may have several of each files in the polarity folders.
+        for d in polarity_dirs: #For each polarity directory
+            filepath_pol = os.path.join(filepath, d)
+
+            print (filepath_pol)
+            files = os.listdir(filepath_pol) #Get a list of the files
+            print files
+
+            # For each file run the python code to process the peaks.
+            for f in files:
+                print "The file is ", f
+                input_file = os.path.join(filepath_pol, f)
+                logger.info("The input file is %s", input_file)
+                if ms1_peaks is None:
+                    logger.info("Running stand-alone FrAnK, no MS1 peaks")
+                    mzML_loader = LoadMZML()
+                    output = mzML_loader.load_spectra(input_file)
+                else:
+                    logger.info("Running FrAnK from PiMP using PiMP MS1 peaks")
+                    mzML_loader = LoadMZML(ms1_peaks)
+                    output = mzML_loader.load_spectra(input_file)
+            try:
+                # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
+                # into the database.
+                # Pass the experiment name slug in order to grab the experiment.
+                peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
+                # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
+                # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
+                peak_generator.populate_database_peaks()
+                # Upon completion the status of the fragmentation set is updated, to inform the user of completion
+                fragmentation_set_object.status = 'Completed Successfully'
+            # Should the addition of the peaks to the database fail, the exceptions are passed back up
+            # and the status is updated.
+            except ValueError as value_error:
+                print value_error.message
+                fragmentation_set_object.status = 'Completed with Errors'
+            except TypeError as type_error:
+                print type_error.message
+                fragmentation_set_object.status = 'Completed with Errors'
+            except ValidationError as validation_error:
+                print validation_error.message
+                fragmentation_set_object.status = 'Completed with Errors'
+            except MultipleObjectsReturned as multiple_error:
+                print multiple_error.message
+                fragmentation_set_object.status = 'Completed with Errors'
+            except ObjectDoesNotExist as object_error:
+                print object_error.message
+                fragmentation_set_object.status = 'Completed with Errors'
+            except Exception:
+                fragmentation_set_object.status = 'Completed with Errors'
 
     fragmentation_set_object.save()
 

@@ -213,7 +213,7 @@ class SampleFileForm(forms.ModelForm):
     # A simple alternative to the drag and drop file upload, requested by
     # the client. However, this will be removed in subsequent iterations.
     address = forms.FileField(
-        help_text="Please select the .mzXML file for upload."
+        help_text="Please select the .mzML file for upload."
     )
 
     class Meta:
@@ -239,7 +239,7 @@ class SampleFileForm(forms.ModelForm):
             # derive the name of the file
             filename = input_file.name
             # check the file extension is '.mzXML'
-            if filename.endswith('.mzXML') is False:
+            if filename.endswith('.mzML') is False:
                 self.add_error("address", "Incorrect file format. Please upload an mzML file")
                 raise forms.ValidationError("Incorrect file format")
         else:
