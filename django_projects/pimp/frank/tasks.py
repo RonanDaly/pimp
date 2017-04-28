@@ -320,36 +320,34 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
         #     pandas2ri.activate()
         #     f_pol_df = pandas2ri.py2ri(df)
 
-    # If no MS1 peaks, generate the peak matrix for Frank
-    if ms1_peaks is None:
-        logger.info("There are no MS1 peaks, stand-alone FrAnk used")
-        polarity_dirs = os.listdir(filepath)
+    polarity_dirs = os.listdir(filepath)
 
         #For stand-alone FrAnK we may have several of each files in the polarity folders.
-        for d in polarity_dirs: #For each polarity directory
-            filepath_pol = os.path.join(filepath, d)
+    for d in polarity_dirs: #For each polarity directory
+        filepath_pol = os.path.join(filepath, d)
 
-            print (filepath_pol)
-            files = os.listdir(filepath_pol) #Get a list of the files
-            print files
+        print (filepath_pol)
+        files = os.listdir(filepath_pol) #Get a list of the files
+        print files
 
-            # For each file run the python code to process the peaks.
-            for f in files:
-                print "The file is ", f
-                input_file = os.path.join(filepath_pol, f)
-                logger.info("The input file is %s", input_file)
-                if ms1_peaks is None:
-                    logger.info("Running stand-alone FrAnK, no MS1 peaks")
-                    mzML_loader = LoadMZML()
-                    output = mzML_loader.load_spectra(input_file)
-                else:
-                    logger.info("Running FrAnK from PiMP using PiMP MS1 peaks")
-                    mzML_loader = LoadMZML(ms1_peaks)
-                    output = mzML_loader.load_spectra(input_file)
+        # For each file run the python code to process the peaks.
+        for f in files:
+            print "The file is--- ", f
+            input_file = os.path.join(filepath_pol, f)
+            logger.info("The input file is %s", input_file)
+            if ms1_peaks is None:
+                logger.info("Running stand-alone FrAnK, no MS1 peaks")
+                mzML_loader = LoadMZML()
+                output = mzML_loader.load_spectra(input_file)
+            else:
+                logger.info("Running FrAnK from PiMP using PiMP MS1 peaks")
+                mzML_loader = LoadMZML(ms1_peaks)
+                output = mzML_loader.load_spectra(input_file)
             try:
                 # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
                 # into the database.
                 # Pass the experiment name slug in order to grab the experiment.
+                print "we are in the try block"
                 peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
                 # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
                 # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method

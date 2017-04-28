@@ -33,8 +33,8 @@ logger = get_task_logger(__name__)
 @celery.task
 def error_handler(task_id, analysis, project, user, success):
     result = AsyncResult(task_id)
-    print "We are in the celery error handler routine and running end of pipeline as failed"
-    print "The traceback result: %s", result.traceback
+    logger.info("We are in the celery error handler routine and running end of pipeline as failed")
+    logger.info("The traceback result: %s", result.traceback)
     end_pimp_pipeline(analysis, project, user, success)
 
 #@celery.task
@@ -43,19 +43,17 @@ def run_frags(pimp_analysis, frank_expt, fragmentation_set):
     #Get dataframe of ms1 peaks
     df = get_ms1_df(pimp_analysis)
 
-    print "The dataframe is", df
-
     populate_tasks = []
 
-    # Get the polarities for the MS1 peaks and for each polarity add the peak processing to the chain.
+    # Get the polarities for the MS1 peaks and for each polarity add the peaklist to the chain for processing.
     polarities = df.polarity.unique()
     for p in polarities:
         df_pol = df[df.polarity == p]
-        pandas2ri.activate()
-        ms1_df_pol = pandas2ri.py2ri(df_pol)
+        del df_pol['polarity'] #Delete the polarity column
+        ms1_peaks_pol = df_pol.values.tolist() # get a peak list for a single polarity to pass (pimp_id, mz, rt, intensity)
 
         # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
-        populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_df_pol))
+        populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_peaks_pol))
 
     return chain(populate_tasks)
 

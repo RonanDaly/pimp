@@ -258,10 +258,6 @@ class LoadMZML(Loader):
         self.ms1_peaks = sorted(self.ms1_peaks,key = lambda x: x[0])
         print "Loaded {} ms1 peaks from {}".format(len(self.ms1_peaks),self.peaklist)
 
-        # ms1_peaks = []
-        # for p in Peak:
-        #     val = (p.mz, p.rt, p.intensity)
-        #     ms1_peaks.append(val)
 
 
 def filter_ms1_intensity(ms1, ms2, min_ms1_intensity=1e6):
