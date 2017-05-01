@@ -1365,7 +1365,7 @@ class MSNPeakBuilderTests(TestCase):
         peak_array_index = 2
         parent_peak_object = Peak.objects.filter(fragmentation_set=self.fragmentation_set)[0]
         peak_builder_object = MSNPeakBuilder(self.valid_r_dataframe_input, self.valid_fragmentation_set_id_input)
-        self.assertTrue(isinstance(peak_builder_object._create_a_peak(peak_array_index, parent_peak_object), Peak))
+        self.assertTrue(isinstance(peak_builder_object._create_a_ms1_peak(peak_array_index, parent_peak_object), Peak))
 
     def test_getParentPeak(self):
 

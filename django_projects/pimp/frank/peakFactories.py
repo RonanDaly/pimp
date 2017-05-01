@@ -9,6 +9,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from data.models import Peak as PimpPeak
 import sys
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
 
 class PeakBuilder:
     """
@@ -35,33 +37,40 @@ class MSNPeakBuilder(PeakBuilder):
     Inherits from the Abstract PeakBuilder class
     """
 
-    def __init__(self, r_dataframe, fragmentation_set_id, experiment_slug):
+    def __init__(self, output, fragmentation_set_id, experiment_slug):
         """
         Constructor for the msnPeakBuilder. Validates all input required for the populating of peak database
-        :param r_dataframe: The output of the R script (a dataframe). An rpy2.robjects dataframe.
+        :param output: The output of the fragfile_extraction script: ms1: list of ms1 objetcs, ms2 list of tuples
+        and for a particular one, the third value is a reference to the corresponding ms1 and some metadata.
         :param fragmentation_set_id: The unique database 'id' of the FragmentationSet to be populated
         :return: None
         """
+        self.ms1, self.ms2, self.metadata = output
         # Assume that this is not from Method 3 ar the start.
-        self.from_method_3 = False
+        self.from_pimp = False
+
+        print "ms1", len(self.ms1)
+        print len(self.ms2)
+        print len(self.metadata)
 
         #print ("The head of the R data frame is")
-        head_df = robjects.r['head']
+        #head_df = robjects.r['head']
         #print(head_df(r_dataframe, 50))
         #print ("The tail of the R data frame is")
-        tail_df = robjects.r['tail']
+        #tail_df = robjects.r['tail']
         #print(tail_df(r_dataframe, 50))
 
         # Ensure correct argument types are passed
-        if r_dataframe is None or isinstance(r_dataframe, robjects.DataFrame) is False:
-            raise TypeError('Invalid R dataframe - should be of type robjects.DataFrame')
-        required_fields = ['peakID', 'MSnParentPeakID', 'msLevel', 'rt', 'mz', 'intensity', 'SourceFile']
-        # Ensure dictionary keys (column names) of dataframe are correct
-        for field in required_fields:
-            if field not in r_dataframe.colnames:
-                raise ValueError(
-                    'Invalid R dataframe - column \'' + field + '\' is required'
-                )
+        if (len(self.ms1) == 0) or (len(self.ms2) == 0) or (len(self.metadata) == 0):
+            raise TypeError('Invalid output from processing of the Fragmentation files')
+
+        # required_fields = ['peakID', 'MSnParentPeakID', 'msLevel', 'rt', 'mz', 'intensity', 'SourceFile']
+        # # Ensure dictionary keys (column names) of dataframe are correct
+        # for field in required_fields:
+        #     if field not in r_dataframe.colnames:
+        #         raise ValueError(
+        #             'Invalid R dataframe - column \'' + field + '\' is required'
+        #         )
         # Ensure value of fragmentation set is valid
         try:
             self.fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
@@ -72,39 +81,43 @@ class MSNPeakBuilder(PeakBuilder):
         except TypeError:
             raise
 
-        # Extract the peak data from the R dataframe output
-        self.peak_ID_vector = r_dataframe.rx2('peakID')
-        self.parent_peak_id_vector = r_dataframe.rx2('MSnParentPeakID')
-        self.msn_level_vector = r_dataframe.rx2('msLevel')
-        self.retention_time_vector = r_dataframe.rx2('rt')
-        self.mz_ratio_vector = r_dataframe.rx2('mz')
-        self.intensity_vector = r_dataframe.rx2('intensity')
-
+        # # Extract the peak data from the fragfile_extraction output
+        #
+        # self.peak_ID_vector = r_dataframe.rx2('peakID')
+        # self.parent_peak_id_vector = r_dataframe.rx2('MSnParentPeakID')
+        # self.msn_level_vector = r_dataframe.rx2('msLevel')
+        # self.retention_time_vector = r_dataframe.rx2('rt')
+        # self.mz_ratio_vector = r_dataframe.rx2('mz')
+        # self.intensity_vector = r_dataframe.rx2('intensity')
+        #
         self.experiment = Experiment.objects.get(slug=experiment_slug)
-
-        # If we pass in pimpID as a row in the dataframe, it came from method 3
-        if 'pimpID' in r_dataframe.colnames:
-            # A vector to store the related pimp_peak IDs for pimp/frank integration.
-            self.ms1_peak_id_vector = r_dataframe.rx2('pimpID')
-            self.from_method_3 = True
-            print("MS1 peaks came from Pimp")
+        #
+        # # If we pass in pimpID as a row in the dataframe, it came from method 3
+        # if 'pimpID' in r_dataframe.colnames:
+        #     # A vector to store the related pimp_peak IDs for pimp/frank integration.
+        #     self.ms1_peak_id_vector = r_dataframe.rx2('pimpID')
+        #     self.from_method_3 = True
+        #     print("MS1 peaks came from Pimp")
 
 
         # sample_file_vector contains the 'name' (not filepath) of the source file from which the peak was derived
         # e.g. "Beer3_Top10_POS.mzXML"
-        self.sample_file_vector = r_dataframe.rx2('SourceFile')
-        if isinstance(self.sample_file_vector, robjects.FactorVector) is False:
-            raise TypeError('Invalid R dataframe - SourceFile field should be Factor Vector')
-        self.total_number_of_peaks = len(self.peak_ID_vector)
-        if self.total_number_of_peaks <= 1:
-            raise ValueError('No peaks were returned in R dataframe')
+        # self.sample_file_vector = r_dataframe.rx2('SourceFile')
+        # if isinstance(self.sample_file_vector, robjects.FactorVector) is False:
+        #     raise TypeError('Invalid R dataframe - SourceFile field should be Factor Vector')
+        #
+
+        #self.total_number_of_peaks = len(self.peak_ID_vector)
+        if (len(self.ms1) or len(self.ms2)) <= 1:
+            raise ValueError('No peaks were returned in by fragfile_extraction.py')
         # A dictionary used to store and match the corresponding allocated R id and a django model object
         # primary key id for each peak created
         self.created_peaks_dict = {}
         experiment = self.fragmentation_set.experiment
+
         # Limit the sample files to those in the experiment
         self.sample_files = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
-
+        logger.info("Finished initalising the peakbuiler")
     def populate_database_peaks(self):
         """
         Method to populate the database peaks using the output of the R scripts
@@ -112,24 +125,25 @@ class MSNPeakBuilder(PeakBuilder):
         :return: True:  Indicates that the database has been populated
         """
 
-        print 'Populating database peaks...'
-        # The starting index is the last element in the r_dataframe
-        starting_index = self.total_number_of_peaks-1
-        # Iterate through the peaks in reverse order
-        for peak_array_index in range(starting_index, -1, -1):
-            #print 'Processing Peak: '+str(peak_array_index+1)+' of '+str(self.total_number_of_peaks)
-            # Determine the peak id and the id of any precursor peak
-            parent_peak_id = int(self.parent_peak_id_vector[peak_array_index])
-            peak_id = int(self.peak_ID_vector[peak_array_index])
-            # If the peak has a parent peak in the peak list and the product peak has yet been previously created
-            existing_peak = False
-            if peak_id in self.created_peaks_dict:
-                existing_peak = True
-            if parent_peak_id != 0 and existing_peak is False:
-                # Obtain the database object for the parent ion
+        logger.info('Populating database peaks...')
+        # # The starting index is the last element in the r_dataframe
+        # starting_index = self.total_number_of_peaks-1
+        # # Iterate through the peaks in reverse order
+        # for peak_array_index in range(starting_index, -1, -1):
+        #     #print 'Processing Peak: '+str(peak_array_index+1)+' of '+str(self.total_number_of_peaks)
+        #     # Determine the peak id and the id of any precursor peak
+        #     parent_peak_id = int(self.parent_peak_id_vector[peak_array_index])
+        #     peak_id = int(self.peak_ID_vector[peak_array_index])
+        #     # If the peak has a parent peak in the peak list and the product peak has yet been previously created
+        #     existing_peak = False
+        #     if peak_id in self.created_peaks_dict:
+        #         existing_peak = True
+        #     if parent_peak_id != 0 and existing_peak is False:
+        #         # Obtain the database object for the parent ion
+        for ms1_object in self.ms1:
                 try:
-                    parent_peak_object = self._get_parent_peak(parent_peak_id)
-                    self._create_a_peak(peak_array_index, parent_peak_object)
+                    #parent_peak_object = self._get_parent_peak(parent_peak_id)
+                    self._create_a_ms1_peak(ms1_object)
                 except Exception:
                     raise
 
@@ -137,7 +151,7 @@ class MSNPeakBuilder(PeakBuilder):
         # Here peaks without any precursor ion are ignored, however,
         # the recursive method _get_parent_peak() will follow the hierarchy
         # of precursor ions, creating those that have fragments associated with them
-        print 'This is from method 3 ' + str(self.from_method_3)
+        logger.info('This is from the integrated system %s', str(self.from_pimp))
 
         print 'Finished populating peaks...'
         return True
@@ -165,7 +179,7 @@ class MSNPeakBuilder(PeakBuilder):
                 if int(self.peak_ID_vector[peak_number]) == parent_id_from_r:
                     array_index_of_parent_ion = peak_number
                     break
-                if self.from_method_3:
+                if self.from_pimp:
                     pimp_id = self.ms1_peak_id_vector[array_index_of_parent_ion]
 
             # The parent_peak may itself have a precursor
@@ -178,12 +192,12 @@ class MSNPeakBuilder(PeakBuilder):
                 precursor_peak_object = self._get_parent_peak(parent_precursor_peak_id_in_r)
             # Finally, create the parent peak
             try:
-                parent_peak_object = self._create_a_peak(array_index_of_parent_ion, precursor_peak_object)
+                parent_peak_object = self._create_a_ms1_peak(array_index_of_parent_ion, precursor_peak_object)
             except ValidationError:
                 raise
             return parent_peak_object
 
-    def _create_a_peak(self, peak_array_index, parent_peak_object):
+    def _create_a_ms1_peak(self, ms1_peak_object):
         """
         Method to add a peak to the database
         :param peak_array_index:    The index of the peak data in the R-dataframe to be added to the database
@@ -194,12 +208,13 @@ class MSNPeakBuilder(PeakBuilder):
         fragment_files = SampleFile.objects.filter(sample__experimental_condition__experiment=self.experiment)
 
         # If valid parameters then create the peak model instance
-        sample_file_name = self.sample_file_vector.levels[self.sample_file_vector[peak_array_index] - 1]
+        sample_file_name = ms1_peak_object.file_name
         peak_source_file = fragment_files.get(name=sample_file_name)
-        peak_mass = self.mz_ratio_vector[peak_array_index]
-        peak_retention_time = self.retention_time_vector[peak_array_index]
-        peak_intensity = self.intensity_vector[peak_array_index]
-        peak_msn_level = int(self.msn_level_vector[peak_array_index])
+
+        peak_mass = ms1_peak_object.mz
+        peak_retention_time = ms1_peak_object.rt
+        peak_intensity = ms1_peak_object.rt
+        peak_msn_level = 1
 
 
         try:
@@ -208,15 +223,14 @@ class MSNPeakBuilder(PeakBuilder):
                 mass=peak_mass,
                 retention_time=peak_retention_time,
                 intensity=peak_intensity,
-                parent_peak=parent_peak_object,
                 msn_level=peak_msn_level,
                 fragmentation_set=self.fragmentation_set,
             )
 
-            self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
+            #self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
             # If we have a parent peak link it back to Pimp
             #KMCL: This should only be created if it doesn't already exist.
-            if (peak_msn_level == 1) and self.from_method_3:
+            if (peak_msn_level == 1) and self.from_pimp:
                 #print ("we are linking")
                 self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
 
