@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:xenial-20160818
 MAINTAINER Rónán Daly <Ronan.Daly@glasgow.ac.uk>
 
 ENV DEBIAN_FRONTEND noninteractive
