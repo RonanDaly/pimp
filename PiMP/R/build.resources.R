@@ -193,10 +193,47 @@ build.hmdb.xml <- function(files=character(), outxml="hmdb.xml") {
 
 }
 
+build.hmdb.xml.from.file <- function(infile='hmdb_metabolites.xml', outxml="hmdb.xml") {
+    doc <- read_xml(infile)
+
+    ids = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:accession/text()'))
+    cat('Found ids\n', file=stderr())
+    names = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:name/text()'))
+    cat('Found names\n', file=stderr())
+    formulas = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:chemical_formula/text()'))
+    cat('Found formulas\n', file=stderr())
+    inchis = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:inchikey/text()'))
+    cat('Found inchis\n', file=stderr())
+    smiles = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:smiles/text()'))
+    cat('Found smiles\n', file=stderr())
+    description <- ""
+    other.names = xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:synonyms')
+    cat('Found other.names\n', file=stderr())
+
+    newdoc = xml_new_document()
+    compounds = xml_add_child(newdoc, 'compounds')
+    pb <- txtProgressBar(min=1, max=length(ids), style=3)
+    for (i in 1:length(ids)) {
+        setTxtProgressBar(pb, i)
+        compound = xml_add_child(compounds, 'compound')
+        xml_add_child(compound, 'id', ids[i])
+        xml_add_child(compound, 'name', names[i])
+        xml_add_child(compound, 'formula', formulas[i])
+        xml_add_child(compound, 'inchi', inchis[i])
+        xml_add_child(compound, 'smiles', smiles[i])
+        xml_add_child(compound, 'description')
+        synonyms = xml_add_child(compound, 'synonyms')
+        sapply(xml_text(xml_children(other.names[i])), function(x) xml_add_child(synonyms, 'synonym', x))
+    }
+    close(pb)
+    write_xml(newdoc, file=outxml)
+}
+
 update.hmdb.xml <- function(inxml="hmdb.xml", outxml="hmdb-new.xml") {
 	doc = read_xml(inxml)
 	ids = xml_text(xml_find_all(doc, '/compounds/compound/id/text()'))
-
+	urls = paste(get.hmdb.url(ids), '.xml', sep='')
+    build.hmdb.xml(files=urls, outxml=outxml)
 }
 
 build.lipidmaps.xml <- function(file=character(), outxml="lipidmaps.xml") {
