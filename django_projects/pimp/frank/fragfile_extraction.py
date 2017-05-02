@@ -6,7 +6,7 @@ import bisect
 class MS1(object):
     def __init__(self, id ,mz, rt, intensity, file_name, scan_number = None):
         #self.from_pimp = from_pimp #Need to add this when we are working on the integrated system (note)
-        self.id = id
+        self.id = id #This id will be the ID from the PiMP peak?
         self.mz = mz
         self.rt = rt
         self.intensity = intensity

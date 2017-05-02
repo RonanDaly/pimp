@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from data.models import Peak as PimpPeak
-import sys
+import inspect
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
@@ -113,11 +113,15 @@ class MSNPeakBuilder(PeakBuilder):
         # A dictionary used to store and match the corresponding allocated R id and a django model object
         # primary key id for each peak created
         self.created_peaks_dict = {}
+
+        # A dictionary used to store and match the corresponding ms1 peak from the fragfile_extraction
+        #  and a django model object primary key id for each FrAnK peak created
+        self.ms1obj_frankpeak_dict = {}
         experiment = self.fragmentation_set.experiment
 
         # Limit the sample files to those in the experiment
         self.sample_files = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
-        logger.info("Finished initalising the peakbuiler")
+        logger.info("Finished initalising the peakbuilder")
     def populate_database_peaks(self):
         """
         Method to populate the database peaks using the output of the R scripts
@@ -140,20 +144,29 @@ class MSNPeakBuilder(PeakBuilder):
         #         existing_peak = True
         #     if parent_peak_id != 0 and existing_peak is False:
         #         # Obtain the database object for the parent ion
+        logger.info("Initially, populating the MS1 Peak tables in FrAnk")
         for ms1_object in self.ms1:
                 try:
                     #parent_peak_object = self._get_parent_peak(parent_peak_id)
-                    self._create_a_ms1_peak(ms1_object)
+                    self._create_ms1_peak(ms1_object)
+
                 except Exception:
                     raise
 
+        logger.info("...and now populating the MS2 Peak tables in FrAnk")
+        for ms2_tuple in self.ms2:
+            try:
+                self._create_ms2_peak(ms2_tuple)
+
+            except Exception:
+                raise
         # Else ignore the peak
         # Here peaks without any precursor ion are ignored, however,
         # the recursive method _get_parent_peak() will follow the hierarchy
         # of precursor ions, creating those that have fragments associated with them
-        logger.info('This is from the integrated system %s', str(self.from_pimp))
+        logger.info('This is from the integrated system: %s', str(self.from_pimp))
 
-        print 'Finished populating peaks...'
+        logger.info('Finished populating peaks...')
         return True
 
     def _get_parent_peak(self, parent_id_from_r):
@@ -192,12 +205,13 @@ class MSNPeakBuilder(PeakBuilder):
                 precursor_peak_object = self._get_parent_peak(parent_precursor_peak_id_in_r)
             # Finally, create the parent peak
             try:
-                parent_peak_object = self._create_a_ms1_peak(array_index_of_parent_ion, precursor_peak_object)
+                parent_peak_object = self._create_ms1_peak(array_index_of_parent_ion, precursor_peak_object)
             except ValidationError:
                 raise
             return parent_peak_object
 
-    def _create_a_ms1_peak(self, ms1_peak_object):
+
+    def _create_ms1_peak(self, ms1_peak_object):
         """
         Method to add a peak to the database
         :param peak_array_index:    The index of the peak data in the R-dataframe to be added to the database
@@ -213,9 +227,8 @@ class MSNPeakBuilder(PeakBuilder):
 
         peak_mass = ms1_peak_object.mz
         peak_retention_time = ms1_peak_object.rt
-        peak_intensity = ms1_peak_object.rt
+        peak_intensity = ms1_peak_object.intensity
         peak_msn_level = 1
-
 
         try:
             newly_created_peak = Peak.objects.create(
@@ -227,16 +240,54 @@ class MSNPeakBuilder(PeakBuilder):
                 fragmentation_set=self.fragmentation_set,
             )
 
+            self.ms1obj_frankpeak_dict[ms1_peak_object.id] = newly_created_peak.id
+
             #self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
             # If we have a parent peak link it back to Pimp
             #KMCL: This should only be created if it doesn't already exist.
-            if (peak_msn_level == 1) and self.from_pimp:
-                #print ("we are linking")
-                self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
+            # if (peak_msn_level == 1) and self.from_pimp:
+            #     #print ("we are linking")
+            #     self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
 
         except Exception:
             raise
-        print ("created a new peak")
+
+        return newly_created_peak
+
+    def _create_ms2_peak(self, ms2_tuple):
+
+        #The MS2 tuple contains: mz ([0]), current_ms1_rt ([1]), ms2_intensity ([3]), related ms1 object, file_name ([4]), ms2_id(float)
+
+        fragment_files = SampleFile.objects.filter(sample__experimental_condition__experiment=self.experiment)
+
+        # If valid parameters then create the peak model instance
+        sample_file_name = ms2_tuple[4]
+        peak_source_file = fragment_files.get(name=sample_file_name)
+
+        peak_mass = ms2_tuple[0]
+        peak_retention_time = ms2_tuple[1]
+        peak_intensity = ms2_tuple[2]
+        peak_msn_level = 2
+
+        related_ms1 = ms2_tuple[3]
+
+        ms1_peak_id = self.ms1obj_frankpeak_dict[related_ms1.id]
+        ms1_peak = Peak.objects.get(id=ms1_peak_id)
+
+        try:
+            newly_created_peak = Peak.objects.create(
+                source_file=peak_source_file,
+                mass=peak_mass,
+                retention_time=peak_retention_time,
+                intensity=peak_intensity,
+                msn_level=peak_msn_level,
+                fragmentation_set=self.fragmentation_set,
+                parent_peak=ms1_peak,
+            )
+
+        except Exception:
+            raise
+
         return newly_created_peak
 
     def _link_frank_pimp_peaks(self, frank_parent, pimp_ms1):
