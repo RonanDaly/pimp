@@ -23,7 +23,7 @@ import json
 import pprint
 
 from chemspipy import ChemSpider
-
+from celery.utils.log import get_task_logger
 logger = logging.getLogger(__name__)
 
 MASS_OF_AN_PROTON = 1.00727645199076
@@ -769,20 +769,6 @@ class NISTQueryTool:
             str(self.annotation_query.id)+'_nist_out.txt'
             )
         
-#         self.query_file_name = os.path.join(
-#             os.path.dirname(BASE_DIR),
-#             'pimp',
-#             'frank',
-#             'NISTQueryFiles',
-#             str(self.annotation_query.id)+'.msp'
-#         )
-#         self.nist_output_file_name = os.path.join(
-#             os.path.dirname(BASE_DIR),
-#             'pimp',
-#             'frank',
-#             'NISTQueryFiles',
-#             str(self.annotation_query.id)+'_nist_out.txt'
-#         )
 
     def get_nist_annotations(self):
 
@@ -792,19 +778,19 @@ class NISTQueryTool:
         """
 
         try:
-            print 'Writing MSP File...'
+            logger.info('Writing MSP File...')
             # Write the query spectrum to a temporary file
             self._write_nist_msp_file()
             # Generate the subprocess call, ensuring that the user-specified parameters are included
-            print 'Generating NIST subprocess call...'
+            logger.info('Generating NIST subprocess call...')
             nist_query_call = self._generate_nist_call()
-            print 'Querying NIST...'
+            logger.info('Querying NIST...')
             # Query the NIST reference database, generating an output file
             self._query_nist(nist_query_call)
-            print 'Populating Annotations Table...'
+            logger.info('Populating Annotations Table...')
             # Read in the NIST output file and populate the database
             self._populate_annotation_list()
-            print 'Annotations Completed'
+            logger.info('Annotations Completed')
             # Finally upon completion, delete both the temporary files for NIST
             # os.remove(self.nist_output_file_name)
             # os.remove(self.query_file_name)
@@ -896,9 +882,9 @@ class NISTQueryTool:
 
         try:
             # Make the call to NIST to write the candidate annotations to the output file
-            print "Calling the nist_query_call %s" % nist_query_call
+            logger.info("Calling the nist_query_call %s" % nist_query_call)
             call(nist_query_call)
-            print "Finished the nist_query_call"
+            logger.info("Finished the nist_query_call")
         except CalledProcessError:
             raise
         except OSError as e:
@@ -934,7 +920,7 @@ class NISTQueryTool:
         # Conversely, massbank's search API does not
         output_file = None
         # Open new MSP file for writing
-        logger.warning('query_file_name: %s', self.query_file_name)
+        logger.info('query_file_name: %s', self.query_file_name)
         make_sure_path_exists(os.path.dirname(self.query_file_name))
         with open(self.query_file_name, "w") as output_file:
             # Retrieve all the peaks in the fragmentation set
@@ -1139,7 +1125,7 @@ class ChemSpiderQueryTool:
 
     def search(self, identifier):
 
-        print "the identifier is " + identifier
+        logger.info("the identifier is %s" + identifier)
 
         csresults = self.cs.search("'" + identifier + "'")  # search DB using the cas-code
         # If there is a result from chemSpider

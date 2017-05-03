@@ -53,24 +53,11 @@ class MSNPeakBuilder(PeakBuilder):
         print len(self.ms2)
         print len(self.metadata)
 
-        #print ("The head of the R data frame is")
-        #head_df = robjects.r['head']
-        #print(head_df(r_dataframe, 50))
-        #print ("The tail of the R data frame is")
-        #tail_df = robjects.r['tail']
-        #print(tail_df(r_dataframe, 50))
 
         # Ensure correct argument types are passed
         if (len(self.ms1) == 0) or (len(self.ms2) == 0) or (len(self.metadata) == 0):
             raise TypeError('Invalid output from processing of the Fragmentation files')
 
-        # required_fields = ['peakID', 'MSnParentPeakID', 'msLevel', 'rt', 'mz', 'intensity', 'SourceFile']
-        # # Ensure dictionary keys (column names) of dataframe are correct
-        # for field in required_fields:
-        #     if field not in r_dataframe.colnames:
-        #         raise ValueError(
-        #             'Invalid R dataframe - column \'' + field + '\' is required'
-        #         )
         # Ensure value of fragmentation set is valid
         try:
             self.fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
@@ -124,49 +111,52 @@ class MSNPeakBuilder(PeakBuilder):
         logger.info("Finished initalising the peakbuilder")
     def populate_database_peaks(self):
         """
-        Method to populate the database peaks using the output of the R scripts
-        which extract the peaks data from the mzXML files.
+        Method to populate the database peaks using the output of fragfile_extration code
+        which extract the peaks data from the mzML files.
         :return: True:  Indicates that the database has been populated
         """
 
         logger.info('Populating database peaks...')
-        # # The starting index is the last element in the r_dataframe
-        # starting_index = self.total_number_of_peaks-1
-        # # Iterate through the peaks in reverse order
-        # for peak_array_index in range(starting_index, -1, -1):
-        #     #print 'Processing Peak: '+str(peak_array_index+1)+' of '+str(self.total_number_of_peaks)
-        #     # Determine the peak id and the id of any precursor peak
-        #     parent_peak_id = int(self.parent_peak_id_vector[peak_array_index])
-        #     peak_id = int(self.peak_ID_vector[peak_array_index])
-        #     # If the peak has a parent peak in the peak list and the product peak has yet been previously created
-        #     existing_peak = False
-        #     if peak_id in self.created_peaks_dict:
-        #         existing_peak = True
-        #     if parent_peak_id != 0 and existing_peak is False:
-        #         # Obtain the database object for the parent ion
+
         logger.info("Initially, populating the MS1 Peak tables in FrAnk")
         for ms1_object in self.ms1:
                 try:
                     #parent_peak_object = self._get_parent_peak(parent_peak_id)
                     self._create_ms1_peak(ms1_object)
-
                 except Exception:
                     raise
 
         logger.info("...and now populating the MS2 Peak tables in FrAnk")
-        for ms2_tuple in self.ms2:
-            try:
-                self._create_ms2_peak(ms2_tuple)
 
-            except Exception:
-                raise
+        for ms2_tuple in self.ms2:
+                try:
+                    #parent_peak_object = self._get_parent_peak(parent_peak_id)
+                    self._create_ms2_peak_objects(ms2_tuple)
+                except Exception:
+                    raise
+
+        # This can be added once the slugs are removed from FrAnK
+        # for ms2_tuple in self.ms2:
+        #     try:
+        #         peak_objects = self._create_ms2_peak_objects(ms2_tuple)
+        #     except Exception:
+        #         raise
+        #
+        # try:
+        #     logger.info("Bulk creating the MS2 Peak objects")
+        #     #Peak.objects.bulk_create(peak_objects)
+        # except Exception:
+        #     raise
+
+        #print self.ms1obj_frankpeak_dict
+
         # Else ignore the peak
         # Here peaks without any precursor ion are ignored, however,
         # the recursive method _get_parent_peak() will follow the hierarchy
         # of precursor ions, creating those that have fragments associated with them
         logger.info('This is from the integrated system: %s', str(self.from_pimp))
-
         logger.info('Finished populating peaks...')
+
         return True
 
     def _get_parent_peak(self, parent_id_from_r):
@@ -210,7 +200,6 @@ class MSNPeakBuilder(PeakBuilder):
                 raise
             return parent_peak_object
 
-
     def _create_ms1_peak(self, ms1_peak_object):
         """
         Method to add a peak to the database
@@ -238,6 +227,7 @@ class MSNPeakBuilder(PeakBuilder):
                 intensity=peak_intensity,
                 msn_level=peak_msn_level,
                 fragmentation_set=self.fragmentation_set,
+
             )
 
             self.ms1obj_frankpeak_dict[ms1_peak_object.id] = newly_created_peak.id
@@ -254,8 +244,14 @@ class MSNPeakBuilder(PeakBuilder):
 
         return newly_created_peak
 
-    def _create_ms2_peak(self, ms2_tuple):
+    def _create_ms2_peak_objects(self, ms2_tuple):
 
+        """
+        This method is kept separate from the MS1 peak creation as it is designed to populate the DB in batch.
+        This is not possible with the MS1 peaks as an entry to the ms1obj_frankpeak_dict is amended each time an MS1 peak is created.
+        :param ms2_tuple: A tuple entry from the list of ms2 tuples returned from fragfile_extraction.
+        :return: list of peak objects to be populated in the DB
+        """
         #The MS2 tuple contains: mz ([0]), current_ms1_rt ([1]), ms2_intensity ([3]), related ms1 object, file_name ([4]), ms2_id(float)
 
         fragment_files = SampleFile.objects.filter(sample__experimental_condition__experiment=self.experiment)
@@ -269,13 +265,13 @@ class MSNPeakBuilder(PeakBuilder):
         peak_intensity = ms2_tuple[2]
         peak_msn_level = 2
 
+        #Get the parent peak (MS1) object
         related_ms1 = ms2_tuple[3]
-
         ms1_peak_id = self.ms1obj_frankpeak_dict[related_ms1.id]
         ms1_peak = Peak.objects.get(id=ms1_peak_id)
 
         try:
-            newly_created_peak = Peak.objects.create(
+            Peak.objects.create(
                 source_file=peak_source_file,
                 mass=peak_mass,
                 retention_time=peak_retention_time,
@@ -284,11 +280,23 @@ class MSNPeakBuilder(PeakBuilder):
                 fragmentation_set=self.fragmentation_set,
                 parent_peak=ms1_peak,
             )
-
         except Exception:
             raise
 
-        return newly_created_peak
+        #This can be used once the slugs are removed from FrAnK
+        # peak_objects = [
+        #     Peak(
+        #         source_file=peak_source_file,
+        #         mass=peak_mass,
+        #         retention_time=peak_retention_time,
+        #         intensity=peak_intensity,
+        #         msn_level=peak_msn_level,
+        #         fragmentation_set=self.fragmentation_set,
+        #         parent_peak=ms1_peak,
+        #     )
+        # ]
+        #return peak_objects
+
 
     def _link_frank_pimp_peaks(self, frank_parent, pimp_ms1):
 

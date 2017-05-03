@@ -1,7 +1,8 @@
 # coding=utf8
 import pymzml
 import bisect
-
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
 
 class MS1(object):
     def __init__(self, id ,mz, rt, intensity, file_name, scan_number = None):
@@ -39,8 +40,8 @@ class Loader(object):
 # keeping the ms1 objects that can be matched. The matching is done with plus and minus the mz_tol (ppm)
 # and plus and minus the rt_tol
 class LoadMZML(Loader):
-    def __init__(self,min_ms1_intensity = 0.0,peaklist = None,isolation_window = 1.0,mz_tol = 5,rt_tol=5.0,duplicate_filter_mz_tol = 0.5,duplicate_filter_rt_tol = 16,duplicate_filter = True,repeated_precursor_match = None,
-                    min_ms1_rt = 0.0, max_ms1_rt = 1e6, min_ms2_intensity = 0.0):
+    def __init__(self,min_ms1_intensity = 1.3E5,peaklist = None,isolation_window = 1.0,mz_tol = 5,rt_tol=10,duplicate_filter_mz_tol = 0.5,duplicate_filter_rt_tol = 16,duplicate_filter = True,repeated_precursor_match = None,
+                    min_ms1_rt = 180, max_ms1_rt = 1260, min_ms2_intensity = 5000):
         self.min_ms1_intensity = min_ms1_intensity
         self.peaklist = peaklist
         self.isolation_window = isolation_window
@@ -61,6 +62,8 @@ class LoadMZML(Loader):
         return "mzML loader"
     def load_spectra(self,input_file):
 
+        logger.info("Extracting peaks from the mzML files (in fragfile_extraction)")
+
         ms1 = []
         ms2 = []
         metadata = {}
@@ -68,8 +71,8 @@ class LoadMZML(Loader):
         ms2_id = 0
         ms1_id = 0
 
-        print "duplicate filter is", self.duplicate_filter
-        print "Loading spectra from {}".format(input_file)
+        logger.info("duplicate filter is %s", str(self.duplicate_filter))
+        logger.info("Loading spectra from {}".format(input_file))
         current_ms1_scan_mz = None
         current_ms1_scan_intensity = None
         current_ms1_scan_rt = None
@@ -160,7 +163,7 @@ class LoadMZML(Loader):
                                 ms2.append((mz,current_ms1_scan_rt,intensity,new_ms1,file_name,float(ms2_id)))
                                 ms2_id += 1
 
-        print "Found {} ms2 spectra, and {} individual ms2 objects".format(len(ms1),len(ms2))
+        logger.info("Found {} ms2 spectra, and {} individual ms2 objects".format(len(ms1),len(ms2)))
 
         if self.min_ms1_intensity>0.0:
             ms1,ms2 = filter_ms1_intensity(ms1,ms2,min_ms1_intensity = self.min_ms1_intensity)
@@ -224,7 +227,7 @@ class LoadMZML(Loader):
             ms1 = new_ms1_list
             ms2 = new_ms2_list
             metadata = new_metadata
-            print "Peaklist filtering results in {} documents".format(len(ms1))
+            logger.info("Peaklist filtering results in {} documents".format(len(ms1)))
 
         if self.duplicate_filter:
             ms1,ms2 = filter_ms1(ms1,ms2,mz_tol = self.duplicate_filter_mz_tol,rt_tol = self.duplicate_filter_rt_tol)
@@ -257,30 +260,30 @@ class LoadMZML(Loader):
 
         # sort them by mass
         self.ms1_peaks = sorted(self.ms1_peaks,key = lambda x: x[0])
-        print "Loaded {} ms1 peaks from {}".format(len(self.ms1_peaks),self.peaklist)
+        logger.info("Loaded {} ms1 peaks from {}".format(len(self.ms1_peaks),self.peaklist))
 
 
 
 def filter_ms1_intensity(ms1, ms2, min_ms1_intensity=1e6):
     ## Use filter function to simplify code
-    print "Filtering MS1 on intensity"
+    logger.info("Filtering MS1 on intensity")
     ## Sometimes ms1 intensity could be None
     ms1 = filter(lambda x: False if x.intensity and x.intensity < min_ms1_intensity else True, ms1)
-    print "{} MS1 remaining".format(len(ms1))
+    logger.info("{} MS1 remaining".format(len(ms1)))
     ms2 = filter(lambda x: x[3] in set(ms1), ms2)
-    print "{} MS2 remaining".format(len(ms2))
+    logger.info("{} MS2 remaining".format(len(ms2)))
     return ms1, ms2
 
 
 def filter_ms2_intensity(ms2, min_ms2_intensity=1e6):
-    print "Filtering MS2 on intensity"
+    logger.info("Filtering MS2 on intensity")
     ms2 = filter(lambda x: x[2] >= min_ms2_intensity, ms2)
-    print "{} MS2 remaining".format(len(ms2))
+    logger.info("{} MS2 remaining".format(len(ms2)))
     return ms2
 
 
 def filter_ms1(ms1, ms2, mz_tol=0.5, rt_tol=16):
-    print "Filtering MS1 to remove duplicates"
+    print logger.info("Filtering MS1 to remove duplicates")
     # Filters the loaded ms1s to reduce the number of times that the same molecule has been fragmented
 
 
@@ -311,10 +314,10 @@ def filter_ms1(ms1, ms2, mz_tol=0.5, rt_tol=16):
             pos = ms1_by_intensity.index(hit)
             del ms1_by_intensity[pos]
 
-    print "{} MS1 remaining".format(len(final_ms1_list))
+    logger.info("{} MS1 remaining".format(len(final_ms1_list)))
     for m in ms2:
         if m[3] in final_ms1_list:
             final_ms2_list.append(m)
 
-    print "{} MS2 remaining".format(len(final_ms2_list))
+    logger.info("{} MS2 remaining".format(len(final_ms2_list)))
     return final_ms1_list, final_ms2_list

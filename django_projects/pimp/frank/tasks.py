@@ -326,17 +326,16 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_peaks):
     for d in polarity_dirs: #For each polarity directory
         filepath_pol = os.path.join(filepath, d)
 
-        print (filepath_pol)
+        logger.info('The current filepath is %s', filepath_pol)
         files = os.listdir(filepath_pol) #Get a list of the files
-        print files
+        logger.info('The files in this directory are %s', files)
 
         # For each file run the python code to process the peaks.
         for f in files:
-            print "The file is--- ", f
             input_file = os.path.join(filepath_pol, f)
             logger.info("The input file is %s", input_file)
             if ms1_peaks is None:
-                logger.info("Running stand-alone FrAnK, no MS1 peaks")
+                logger.info("Running stand-alone FrAnK, no PiMP MS1 peaks")
                 mzML_loader = LoadMZML()
                 output = mzML_loader.load_spectra(input_file)
             else:
