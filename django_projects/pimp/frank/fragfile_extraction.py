@@ -5,8 +5,8 @@ from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
 class MS1(object):
-    def __init__(self, id ,mz, rt, intensity, file_name, scan_number = None):
-        #self.from_pimp = from_pimp #Need to add this when we are working on the integrated system (note)
+    def __init__(self, id ,mz, rt, intensity, file_name, scan_number = None, pimp_id = None):
+        self.pimp_id = pimp_id #Added to set up Pimp/FrAnk link for the integrated system (note)
         self.id = id #This id will be the ID from the PiMP peak?
         self.mz = mz
         self.rt = rt
@@ -18,15 +18,10 @@ class MS1(object):
     def __str__(self):
         return self.name
 
-
-
-
 # Abstract loader class
 class Loader(object):
     def load_spectra(self, input_set):
         raise NotImplementedError("load spectra method must be implemented")
-
-
 
 
 # A class to load mzml files
@@ -145,7 +140,7 @@ class LoadMZML(Loader):
                         if not max_intensity_pos == None:
                         # mz,rt,intensity,file_name,scan_number = None):
                             new_ms1 = MS1(ms1_id,current_ms1_scan_mz[max_intensity_pos],
-                                          current_ms1_scan_rt,max_intensity,file_name,scan_number = nc)
+                                          current_ms1_scan_rt,max_intensity,file_name,scan_number = nc,)
                             metadata[new_ms1.name] = {'parentmass':current_ms1_scan_mz[max_intensity_pos],
                                                       'parentrt':current_ms1_scan_rt,'scan_number':nc,
                                                       'precursor_mass':precursor_mz}
@@ -169,27 +164,39 @@ class LoadMZML(Loader):
             ms1,ms2 = filter_ms1_intensity(ms1,ms2,min_ms1_intensity = self.min_ms1_intensity)
 
         if self.peaklist:
-            ms1_peaks = self._load_peak_list()
+            #ms1_peaks = self._load_peak_list()
+
+            ms1_peaks = sorted(self.peaklist, key=lambda x: x[0])
+            logger.info("Loaded {} ms1 peaks from {}".format(len(ms1_peaks), len(self.peaklist)))
+
+            #Assuming these are the MS1 peaks from the fragmentation file.
             ms1 = sorted(ms1,key = lambda x: x.mz)
             new_ms1_list = []
             new_ms2_list = []
             new_metadata = {}
             # ms1_mz = [x.mz for z in ms1]
             n_peaks_checked = 0
-            for n_peaks_checked,peak in enumerate(self.ms1_peaks):
+            for n_peaks_checked,peak in enumerate(ms1_peaks):
                 if n_peaks_checked % 500 == 0:
-                    print n_peaks_checked
+                    logger.info("n_peaks_checked %d", n_peaks_checked)
                 peak_mz = peak[0]
                 peak_rt = peak[1]
                 peak_intensity = peak[2]
+                pimp_id = peak[3]
 
+                # print "pmz, prt, pI, pimp_id", peak_mz, peak_rt, peak_intensity, pimp_id
                 min_mz = peak_mz - self.mz_tol*peak_mz/1e6
                 max_mz = peak_mz + self.mz_tol*peak_mz/1e6
                 min_rt = peak_rt - self.rt_tol
                 max_rt = peak_rt + self.rt_tol
 
-
+                #ms1_hits = []
+                # for x in ms1:
+                #     if x.mz >= min_mz and x.mz <= max_mz and x.rt >= min_rt and x.rt <= max_rt:
+                #          ms1_hits.append(x)
                 ms1_hits = filter(lambda x: x.mz >= min_mz and x.mz <= max_mz and x.rt >= min_rt and x.rt <= max_rt,ms1)
+                # if not len(ms1_hits)==0:
+                #     print 'ms1_hits', ms1_hits
 
                 if len(ms1_hits) == 1:
                     # Found one hit, easy
@@ -209,7 +216,8 @@ class LoadMZML(Loader):
                     continue
 
                 # make a new ms1 object
-                new_ms1 = MS1(old_ms1.id,peak_mz,peak_rt,peak_intensity,old_ms1.file_name,old_ms1.scan_number)
+                new_ms1 = MS1(old_ms1.id,peak_mz,peak_rt,peak_intensity,old_ms1.file_name,old_ms1.scan_number,
+                              pimp_id=pimp_id)
                 new_ms1_list.append(new_ms1)
                 new_metadata[new_ms1.name] = metadata[old_ms1.name]
 
@@ -250,17 +258,18 @@ class LoadMZML(Loader):
 
     #May not need - peak list from DF
     def _load_peak_list(self):
-        self.ms1_peaks = []
-        with open(self.peaklist,'r') as f:
-            heads = f.readline()
-            for line in f:
-                tokens = line.split(',')
-                # get mx,rt,intensity
-                self.ms1_peaks.append((float(tokens[1]),float(tokens[2]),float(tokens[3])))
+        #self.ms1_peaks = []
+        self.ms1_peaks = self.peaklist
+        # with open(self.peaklist,'r') as f:
+        #     heads = f.readline()
+        #     for line in f:
+        #         tokens = line.split(',')
+        #         # get mx,rt,intensity
+        #         self.ms1_peaks.append((float(tokens[1]),float(tokens[2]),float(tokens[3])))
 
         # sort them by mass
         self.ms1_peaks = sorted(self.ms1_peaks,key = lambda x: x[0])
-        logger.info("Loaded {} ms1 peaks from {}".format(len(self.ms1_peaks),self.peaklist))
+        logger.info("Loaded {} ms1 peaks from {}".format(len(self.ms1_peaks),len(self.peaklist)))
 
 
 
@@ -283,7 +292,7 @@ def filter_ms2_intensity(ms2, min_ms2_intensity=1e6):
 
 
 def filter_ms1(ms1, ms2, mz_tol=0.5, rt_tol=16):
-    print logger.info("Filtering MS1 to remove duplicates")
+    logger.info("Filtering MS1 to remove duplicates")
     # Filters the loaded ms1s to reduce the number of times that the same molecule has been fragmented
 
 

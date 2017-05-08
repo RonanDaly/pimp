@@ -48,12 +48,9 @@ def run_frags(pimp_analysis, frank_expt, fragmentation_set):
     # Get the polarities for the MS1 peaks and for each polarity add the peaklist to the chain for processing.
     polarities = df.polarity.unique()
     for p in polarities:
-        df_pol = df[df.polarity == p]
-        del df_pol['polarity'] #Delete the polarity column
-        ms1_peaks_pol = df_pol.values.tolist() # get a peak list for a single polarity to pass (pimp_id, mz, rt, intensity)
-
+        ms1_df_pol = df[df.polarity == p]
         # Append to the celery_tasks peaks extraction for the fragmentation files using Frank and the ms1 peaks
-        populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_peaks_pol))
+        populate_tasks.append(input_peak_list_to_database_signature(frank_expt.slug, fragmentation_set.slug, ms1_df_pol))
 
     return chain(populate_tasks)
 
@@ -227,7 +224,7 @@ def start_pimp_pipeline(analysis, project):
 @celery.task
 def end_pimp_pipeline(analysis, project, user, successful):
 
-    print "In the end of the pimp pipeline"
+    logger.info("In the end of the pimp pipeline")
 
     # when pimp R analysis with or without fragments has finished
     if successful and frank_success(analysis):
@@ -238,10 +235,10 @@ def end_pimp_pipeline(analysis, project, user, successful):
         analysis_succeeded = False
 
     analysis.save(update_fields=['status'])
-    print 'the status of the analysis is', analysis.status
+    logger.info('the status of the analysis is %s', analysis.status)
 
     try:
-        print 'analysis succeeded is', analysis_succeeded
+        logger.info('analysis succeeded is %s', analysis_succeeded)
         send_email(analysis, project, user, analysis_succeeded)
         print 'An email should have been sent'
 
@@ -256,7 +253,7 @@ def frank_success(analysis):
     success = True
     analysis_frag_link = PimpAnalysisFrankFs.objects.get(pimp_analysis=analysis)
     frag_set = analysis_frag_link.frank_fs
-    print "Frag set status is:", frag_set.status
+    logger.info("Frag set status is: %s", frag_set.status)
     annot_queries = AnnotationQuery.objects.filter(fragmentation_set=frag_set)
 
     for a_query in annot_queries:
@@ -264,10 +261,9 @@ def frank_success(analysis):
             success = False
 
     if frag_set.status is "Completed with Errors":
-        print "In frag set staus"
         success = False
 
-    print "The success of the FrAnK run is", success
+    logger.info("The success of the FrAnK run is %s", success)
 
     return success
 
@@ -275,14 +271,14 @@ def frank_success(analysis):
 def get_ms1_df(analysis):
 
     #Get the MS1 peaks associated with this analysis
-    print "Getting the MS1 dataframe"
-    ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("id", "mass", "rt", "polarity")
+    logger.info("Getting the MS1 dataframe")
+    ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("mass", "rt", "id", "polarity")
     # Put the data into a dataFrame format in order to be passed to R.
     # Intensity set to -0.25 until we decide what should be done with it.
     data = []
-    for id, mass, rt, polarity in ms1_peaks:
-        value = (id, float(mass), float(rt), -0.25, polarity)
+    for mass, rt, id, polarity in ms1_peaks:
+        value = (float(mass), float(rt), -0.25, id, polarity)
         data.append(value)
-    df = pd.DataFrame(data, columns=['pimp_id', 'mz', 'rt', 'intensity', 'polarity'])
+    df = pd.DataFrame(data, columns=['mz', 'rt', 'intensity', 'pimp_id', 'polarity'])
 
     return df

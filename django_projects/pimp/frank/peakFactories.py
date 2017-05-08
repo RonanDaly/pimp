@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from data.models import Peak as PimpPeak
-import inspect
+import sys
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
@@ -49,14 +49,12 @@ class MSNPeakBuilder(PeakBuilder):
         # Assume that this is not from Method 3 ar the start.
         self.from_pimp = False
 
-        print "ms1", len(self.ms1)
-        print len(self.ms2)
-        print len(self.metadata)
-
+        logger.info("We have {} MS1 and {} MS2 peaks".format(len(self.ms1), len(self.ms2)))
 
         # Ensure correct argument types are passed
         if (len(self.ms1) == 0) or (len(self.ms2) == 0) or (len(self.metadata) == 0):
-            raise TypeError('Invalid output from processing of the Fragmentation files')
+            raise ValueError('No peaks were returned in by fragfile_extraction.py')
+
 
         # Ensure value of fragmentation set is valid
         try:
@@ -94,9 +92,6 @@ class MSNPeakBuilder(PeakBuilder):
         #     raise TypeError('Invalid R dataframe - SourceFile field should be Factor Vector')
         #
 
-        #self.total_number_of_peaks = len(self.peak_ID_vector)
-        if (len(self.ms1) or len(self.ms2)) <= 1:
-            raise ValueError('No peaks were returned in by fragfile_extraction.py')
         # A dictionary used to store and match the corresponding allocated R id and a django model object
         # primary key id for each peak created
         self.created_peaks_dict = {}
@@ -109,6 +104,7 @@ class MSNPeakBuilder(PeakBuilder):
         # Limit the sample files to those in the experiment
         self.sample_files = SampleFile.objects.filter(sample__experimental_condition__experiment=experiment)
         logger.info("Finished initalising the peakbuilder")
+
     def populate_database_peaks(self):
         """
         Method to populate the database peaks using the output of fragfile_extration code
@@ -117,22 +113,20 @@ class MSNPeakBuilder(PeakBuilder):
         """
 
         logger.info('Populating database peaks...')
-
         logger.info("Initially, populating the MS1 Peak tables in FrAnk")
         for ms1_object in self.ms1:
                 try:
-                    #parent_peak_object = self._get_parent_peak(parent_peak_id)
                     self._create_ms1_peak(ms1_object)
                 except Exception:
+                    logger.warning("Can't create this MS1 peak")
                     raise
 
         logger.info("...and now populating the MS2 Peak tables in FrAnk")
-
         for ms2_tuple in self.ms2:
                 try:
-                    #parent_peak_object = self._get_parent_peak(parent_peak_id)
                     self._create_ms2_peak_objects(ms2_tuple)
                 except Exception:
+                    logger.warning("Can't create this MS2 peak")
                     raise
 
         # This can be added once the slugs are removed from FrAnK
@@ -148,13 +142,6 @@ class MSNPeakBuilder(PeakBuilder):
         # except Exception:
         #     raise
 
-        #print self.ms1obj_frankpeak_dict
-
-        # Else ignore the peak
-        # Here peaks without any precursor ion are ignored, however,
-        # the recursive method _get_parent_peak() will follow the hierarchy
-        # of precursor ions, creating those that have fragments associated with them
-        logger.info('This is from the integrated system: %s', str(self.from_pimp))
         logger.info('Finished populating peaks...')
 
         return True
@@ -207,8 +194,8 @@ class MSNPeakBuilder(PeakBuilder):
         :param parent_peak_object:  The parent peak object corresponding to the precursor ion of the peak to be created
         :return newly_created_peak: The created Peak model object
         """
-
         fragment_files = SampleFile.objects.filter(sample__experimental_condition__experiment=self.experiment)
+        pimp_id = ms1_peak_object.pimp_id
 
         # If valid parameters then create the peak model instance
         sample_file_name = ms1_peak_object.file_name
@@ -230,16 +217,16 @@ class MSNPeakBuilder(PeakBuilder):
 
             )
 
+            #Link between the MS1 peak object returned from fragfile_extration and this frank Peak
             self.ms1obj_frankpeak_dict[ms1_peak_object.id] = newly_created_peak.id
 
-            #self.created_peaks_dict[int(self.peak_ID_vector[peak_array_index])] = newly_created_peak.id
-            # If we have a parent peak link it back to Pimp
-            #KMCL: This should only be created if it doesn't already exist.
-            # if (peak_msn_level == 1) and self.from_pimp:
-            #     #print ("we are linking")
-            #     self._link_frank_pimp_peaks(newly_created_peak, self.ms1_peak_id_vector[peak_array_index])
+            #  If the MS1 peaks came from PimP create a link between Pimp and Frank
+            if pimp_id is not None:
+                    logger.info("We are linking PimP and FrAnK as MS1 peaks came from PimP")
+                    self.link_frank_pimp_peaks(newly_created_peak, pimp_id)
 
         except Exception:
+            logger.error("create MS1 failed")
             raise
 
         return newly_created_peak
@@ -281,6 +268,7 @@ class MSNPeakBuilder(PeakBuilder):
                 parent_peak=ms1_peak,
             )
         except Exception:
+            logger.error("create MS2 failed")
             raise
 
         #This can be used once the slugs are removed from FrAnK
@@ -297,24 +285,15 @@ class MSNPeakBuilder(PeakBuilder):
         # ]
         #return peak_objects
 
-
-    def _link_frank_pimp_peaks(self, frank_parent, pimp_ms1):
+    def link_frank_pimp_peaks(self, frank_parent, pimp_ms1):
 
         ms1_peak = PimpPeak.objects.get(id=pimp_ms1)
 
-        #print ms1_peak.mass
-        #print ms1_peak.id
-        #print frank_parent.mass
-        #print frank_parent.id
+        #Create a link if itdoesn't already exist.
+        pimp_frank_link = PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
+        logger.info("Linked FrAnK and PimP MS1s %s ", pimp_frank_link)
 
-        #     If a peak has an pimpID i.e it is not "None" .
-        #     then this is an MS1 peak and should be linked directly to
-        #     # a Pimp peak object
-
-        #Only create if it doesn't already exist.
-        PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
-        #print "The link is" + str(pimp_frank_link)
-
+###Delete all this.
 
 class GCMSPeakBuilder(PeakBuilder):
     """
