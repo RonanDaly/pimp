@@ -246,161 +246,74 @@ def msn_generate_peak_list(experiment_slug, fragmentation_set_id, ms1_df):
         experimental_condition.slug,
         sample.slug
     )
-
-    logger.info("The filepath is %s ", filepath)
+    logger.info("The fragment filepath is %s ", filepath)
     # Get the fragmentation set object from the database
     fragmentation_set_object = FragmentationSet.objects.get(id=fragmentation_set_id)
-    # Store the source function as a variable
-    #r_source = robjects.r['source']
-    # If no MS1 peaks were passed in, the ms1_peak parameter is set to NULL for rpy2
-    # if ms1_peaks is None:
-    #
-    #
-    #     location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankMSnPeakMatrix.R')
-    #     r_source(location_of_script)
-    #     r_frank_pimp_prepare = robjects.globalenv['frankMSnPeakMatrix']
-    #
-    # Else there are MS1 peaks
-
-    # location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'frankPimpPrepare.R')
-    # r_source(location_of_script)
-    # r_frank_pimp_prepare = robjects.globalenv['frankPimpPrepare']
-
-    # Function of an R script if the fragments were passed from Pimp
 
     # Update the status of the task for the user
     fragmentation_set_object.status = 'Processing'
     fragmentation_set_object.save()
 
-    # The script can then be run by passing the root directory of the experiment to the R script
-    # The script goes through the hierarchy and finds all mzXML files for processing
-    # The script should also take ms1_peaks and mzMl files when run from Pimp.
-
-    # Find out the polarity of the file and pass in a dataframe to represent the relationship
-    # This tells us which files and polarites have been added for the fragments
-
-    # If the ms1_peaks are passed in here then we have to work out the polarity for method 3
-    # if ms1_peaks is not None:
-    #     file_pol_dict = {}
-    #
-    #     polarity_vector = ms1_peaks.rx2('polarity')
-    #     p = polarity_vector.levels[0]  # The polarity of the MS1 peaks
-    #
-    #     if p == "positive":
-    #         pol_dir = "Positive" #Polarity of directory
-    #     elif p == "negative":
-    #         pol_dir = "Negative"
-    #     else:
-    #         logger.waring("we have a polarity issue")
-    #
-    #     polarity_fp = os.path.join(filepath, pol_dir)
-    #     files_in_dir = os.listdir(polarity_fp)
-
-        # If we have a file in the directory we are looking at (should always be true for stand-alone FrAnK)
-        # This catch is present in case the user has a dual polarity MS1 experiment but only adds fragments of a
-        # single polarity
-
-        # #If there are files in the directory
-        # if files_in_dir:
-        #
-        #     for f in files_in_dir:
-        #         if f.endswith(".mzML"):
-        #             path = os.path.join(polarity_fp, f)
-        #             pol = findpolarity(path)
-        #             if pol == "+":
-        #                 polarity = "positive"
-        #             elif pol is "-":
-        #                 polarity = "negative"
-        #             file_pol_dict[path] = polarity #The file polarity mapping Path:polarity
-        #         else:
-        #             print 'no file of mzML type here'
-        #
-        #     # Put dictionary into dataframe for passing to R
-        #     df = pd.DataFrame(file_pol_dict.items(), columns=['filename', 'polarity'])
-        #     pandas2ri.activate()
-        #     f_pol_df = pandas2ri.py2ri(df)
-
     polarity_dirs = os.listdir(filepath)
-
-
-    #For stand-alone FrAnK we may have several of each files in the polarity folders.
-
 
     if ms1_df is None:
         logger.info("Running stand-alone FrAnK, no PiMP MS1 peaks")
         for d in polarity_dirs: #For each polarity directory
-            filepath_pol = os.path.join(filepath, d)
-
-            logger.info('The current filepath is %s', filepath_pol)
-            files = os.listdir(filepath_pol) #Get a list of the files
-            logger.info('The files in this directory are %s', files)
-
-            # For each file run the python code to process the peaks.
-            for f in files:
-                input_file = os.path.join(filepath_pol, f)
-                logger.info("The input file is %s", input_file)
-                mzML_loader = LoadMZML()
-                output = mzML_loader.load_spectra(input_file)
+            process_and_populate(filepath, d, ms1_df, fragmentation_set_object, experiment_slug)
 
     else: #We have passed MS1 peaks from PIMP
         logger.info("Running FrAnK from PiMP using PiMP MS1 peaks")
-        df_polarity = ms1_df.polarity.unique()
 
+        df_polarity = ms1_df.polarity.unique() #The unique polarity passed from the integrated system
         if df_polarity == 'negative':
             d = 'Negative'
         elif df_polarity == 'positive':
             d = 'Positive'
         else:
-            logger.waring("A horrible polarity problem has arisen")
+            logger.error("A horrible polarity problem has arisen")
 
-        filepath_pol = os.path.join(filepath, d)
+          # Get a list of the files
+        process_and_populate(filepath, d, ms1_df, fragmentation_set_object, experiment_slug)
 
-        logger.info('The current filepath is %s', filepath_pol)
-        files = os.listdir(filepath_pol)  # Get a list of the files
-        logger.info('The files in this directory are %s', files)
-
-        del ms1_df['polarity']  # Delete the polarity column
-        ms1_peaks = ms1_df.values.tolist()
-
-        for f in files:
-            input_file = os.path.join(filepath_pol, f)
-            logger.info("The input file is %s", input_file)
-            mzML_loader = LoadMZML(peaklist=ms1_peaks, min_ms1_intensity=-10, rt_tol=30)
-            output = mzML_loader.load_spectra(input_file)
-
-    try:
-        # The MSNPeakBuilder is a class which takes the output of the R script and populates the peaks
-        # into the database.
-        # Pass the experiment name slug in order to grab the experiment.
-        print "we are in the try block"
-        peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id, experiment_slug)
-        # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
-        # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
-        peak_generator.populate_database_peaks()
-        # Upon completion the status of the fragmentation set is updated, to inform the user of completion
-        fragmentation_set_object.status = 'Completed Successfully'
-    # Should the addition of the peaks to the database fail, the exceptions are passed back up
-    # and the status is updated.
-    except ValueError as value_error:
-        print value_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except TypeError as type_error:
-        print type_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except ValidationError as validation_error:
-        print validation_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except MultipleObjectsReturned as multiple_error:
-        print multiple_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except ObjectDoesNotExist as object_error:
-        print object_error.message
-        fragmentation_set_object.status = 'Completed with Errors'
-    except Exception:
-        fragmentation_set_object.status = 'Completed with Errors'
-
+    # Upon completion the status of the fragmentation set is updated, to inform the user of completion
+    fragmentation_set_object.status = 'Completed Successfully'
     fragmentation_set_object.save()
 
+def process_and_populate(filepath, dir, ms1_df, frag_set_object, experiment_slug):
+
+    filepath_pol = os.path.join(filepath, dir)
+    files = os.listdir(filepath_pol)
+
+    logger.info('The current filepath is %s and the files are %s', filepath_pol, files)
+
+    #For stand-alone FrAnK we may have several of each files in the polarity folders.
+    for f in files:
+        input_file = os.path.join(filepath_pol, f)
+        logger.info("The input file is %s", input_file)
+
+        if ms1_df is None:
+            mzML_loader = LoadMZML()
+        else:
+            del ms1_df['polarity']  # Delete the polarity column to pass to ffile_extraction
+            ms1_peaks = ms1_df.values.tolist() #Prepare the peaklist
+            mzML_loader = LoadMZML(peaklist=ms1_peaks, min_ms1_intensity=-10, rt_tol=30)
+
+        output = mzML_loader.load_spectra(input_file)
+
+        try:
+            # Pass the experiment name slug in order to grab the experiment.
+            print "we are in the try block"
+            peak_generator = MSNPeakBuilder(output, frag_set_object.id, experiment_slug)
+            # peak_generator = MSNPeakBuilder(output, fragmentation_set_object.id)
+            # Each of sub class of the 'Abstract' PeakBuilder class will have the populate_database_peaks() method
+            peak_generator.populate_database_peaks()
+
+        # Should the addition of the peaks to the database fail, the exceptions are passed back up
+        # and the status is updated.
+        except Exception as e:
+            logger.error("An error has occurred populating the DB: %s", e.message)
+            frag_set_object.status = 'Completed with Errors'
+            raise
 
 @celery.task
 def massbank_batch_search(annotation_query_id):
