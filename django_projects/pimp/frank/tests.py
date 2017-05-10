@@ -14,7 +14,7 @@ from django.conf import settings
 import os
 from django.core.files import File
 import populate_pimp as population_script
-from peakFactories import MSNPeakBuilder, GCMSPeakBuilder, PeakBuilder
+from peakFactories import MSNPeakBuilder, PeakBuilder
 import rpy2.robjects as robjects
 import rpy2.rlike.container as rlc
 import mock

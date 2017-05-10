@@ -38,7 +38,7 @@ ANALYSIS_STATUS = (
 # Define the choices for ionisation protocol
 IONISATION_PROTOCOLS = (
     ('ESI', 'Electrospray Ionisation'),
-    ('EII', 'Electron Impact Ionisation'),
+    #('EII', 'Electron Impact Ionisation'),
     # Additional ionisation protocols could be added here if necessary
 )
 

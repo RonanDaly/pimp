@@ -8,7 +8,7 @@ from djcelery import celery
 from celery import chain
 from celery.utils.log import get_task_logger
 from decimal import *
-from frank.peakFactories import MSNPeakBuilder, GCMSPeakBuilder
+from frank.peakFactories import MSNPeakBuilder
 from suds.client import WebFault
 import os
 import sys
@@ -636,67 +636,6 @@ def clean_filter(annotation_query_id, user):
     annotation_query.status = 'Completed Successfully'
     annotation_query.save()
     print ("At the end of the clean filter tool")
-
-
-@celery.task
-def gcms_generate_peak_list(experiment_name_slug, fragmentation_set_id):
-    """
-    Method to derive peak data from GCMS peak data from a collection of source files
-    :param experiment_name_slug: Integer id for the experiment
-    :param fragmentation_set_id:    Integer id for the fragmentation set
-    :return:True    Boolean indicating the completion of the task
-    """
-
-    # Get the fragmentation set object corresponding to the id
-    fragmentation_set = FragmentationSet.objects.get(id=fragmentation_set_id)
-    # Update the status of the set
-    fragmentation_set.status = 'Processing'
-    fragmentation_set.save()
-    # Obtain the experiment corresponding to the id
-    experiment_object = Experiment.objects.get(slug=experiment_name_slug)
-    # From the experiment object derive the file directory of the .mzXML files
-    filepath = os.path.join(
-        settings.MEDIA_ROOT,
-        'frank',
-        experiment_object.created_by.username,
-        experiment_object.slug,
-    )
-    # Store the source function
-    r_source = robjects.r['source']
-    # Derive the source of the GCMS R script from the local install
-    location_of_script = os.path.join(settings.BASE_DIR, 'frank', 'Frank_R', 'gcmsGeneratePeakList.R')
-    # The script is then sourced in R
-    r_source(location_of_script)
-    # Then store the function for extracting the peak data
-    r_generate_gcms_peak_matrix = robjects.globalenv['generateGCMSPeakMatrix']
-    output = r_generate_gcms_peak_matrix(input_directory=filepath)
-    try:
-        # The peak generator takes the R dataframe output of the R script and populates the database
-        # from the peak list
-        peak_generator = GCMSPeakBuilder(output, fragmentation_set.id)
-        peak_generator.populate_database_peaks()
-        # Finally, update the status of the process for display to the user
-        fragmentation_set.status = 'Completed Successfully'
-    except IOError as io_error:
-        print io_error.message
-        fragmentation_set.status = 'Completed with Errors'
-    except TypeError as type_error:
-        print type_error.message
-        fragmentation_set.status = 'Completed with Errors'
-    except ValueError as value_error:
-        print value_error.message
-        fragmentation_set.status = 'Completed with Errors'
-    except InvalidOperation as invalid_op_error:
-        print invalid_op_error.message
-        fragmentation_set.status = 'Completed with Errors'
-    except ValidationError as validation_error:
-        print validation_error.message
-        fragmentation_set.status = 'Completed with Errors'
-    except MultipleObjectsReturned as multiple_error:
-        print multiple_error.message
-        fragmentation_set.status = 'Completed with Errors'
-    fragmentation_set.save()
-    return True
 
 
 @celery.task

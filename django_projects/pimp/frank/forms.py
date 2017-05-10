@@ -120,8 +120,8 @@ class ExperimentForm(forms.ModelForm):
         help_text="Enter a description of the experiment (optional).",
         required=False
     )
-    # A user must select the ionisation source for the experiment
-    # IONISATION_PROTOCOLS is declared in 'frank.models'
+    #A user must select the ionisation source for the experiment
+    #IONISATION_PROTOCOLS is declared in 'frank.models'
     ionisation_method = forms.ChoiceField(
         choices=IONISATION_PROTOCOLS,
         help_text="Select the ionisation source.",

@@ -913,7 +913,7 @@ class NISTQueryTool:
 
         experiment_protocol = self.fragmentation_set.experiment.detection_method
         include_precursor_mz = False
-        if experiment_protocol.name == 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition':
+        if experiment_protocol.name == 'Liquid-Chromatography Mass-Spectroscopy':
             include_precursor_mz = True
         # Due to the use of a pseudo ms1 peak in the gcms datasets, the stored precursor is not a genuine precursor
         # Therefore, its mass should not be submitted to NIST which takes this into account.
