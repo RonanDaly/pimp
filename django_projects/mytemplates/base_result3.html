@@ -515,7 +515,7 @@
                     headerInfoToPass.push($(headers[idx]).html());
                 })
 
-                var rowInfo = [data[0], data[1], data[2], data[data.length - 1]];
+                var rowInfo = [data[0], data[1], data[2], data[data.length - 2], data[data.length - 1]];
 
                 var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
                 updatePeakRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
@@ -2239,8 +2239,13 @@
             function updatePeakRightPanel(rowInfo, header, innerSidePanel){
                 $(innerSidePanel).empty();
                 var newDom = '<div class="span12"><h3 class="right-side-title evidence-title">Evidence</h3></div>';
-                console.log('dans la fonction pathway');
-                newDom += '<div class="card"><div class="span12 card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak</h5><span class="card-face__title"></span></div><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Id</strong>: '+ rowInfo[0] +'</span><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+ rowInfo[2] +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Mass</strong>: '+ rowInfo[1] +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+ rowInfo[3] +'</span><div class="span12" style="min-height:10px;margin-left:0px"><span class="card-face__title"></span></div>';
+                console.log('rowInfo '+rowInfo);
+                newDom += '<div class="card"><div class="span12 card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak</h5><span class="card-face__title"></span></div><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Id</strong>: '+ rowInfo[0] +
+                        '</span><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+ rowInfo[2] +
+                        '</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Mass</strong>: '+ rowInfo[1]
+                        +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+ rowInfo[3] +
+                        '</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>FrAnK Annotation:</strong>: '+ rowInfo[4]
+                        +'</span><div class="span12" style="min-height:10px;margin-left:0px"><span class="card-face__title"></span></div>';
 
                 // Div where the plots are displayed
                 newDom += '<div class="span12" id="peakcard-content-peak-'+ rowInfo[0] +'" content-displayed="none" style="margin-left:0px;display:none;"><div class="span12" data-exist="false" id="peakcard-intensity-'+ rowInfo[0] +'" style="display:none;"></div><div class="span12" data-exist="false" id="peakcard-chromatogram-'+ rowInfo[0] +'" style="display:none;"></div></div>';
