@@ -128,6 +128,7 @@ class MSNPeakBuilder(PeakBuilder):
 
         # If valid parameters then create the peak model instance
         sample_file_name = ms1_peak_object.file_name
+        print 'sample_file_name ', sample_file_name
         peak_source_file = fragment_files.get(name=sample_file_name)
 
         peak_mass = ms1_peak_object.mz
@@ -150,7 +151,6 @@ class MSNPeakBuilder(PeakBuilder):
 
             #  If the MS1 peaks came from PimP create a link between Pimp and Frank
             if pimp_id is not None:
-                    logger.info("We are linking PimP and FrAnK as MS1 peaks came from PimP")
                     self.link_frank_pimp_peaks(newly_created_peak, pimp_id)
 
         except Exception:
@@ -219,4 +219,3 @@ class MSNPeakBuilder(PeakBuilder):
 
         #Create a link if itdoesn't already exist.
         pimp_frank_link = PimpFrankPeakLink.objects.get_or_create(pimp_peak=ms1_peak, frank_peak=frank_parent)
-        logger.info("Linked FrAnK and PimP MS1s %s ", pimp_frank_link)

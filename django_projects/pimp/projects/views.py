@@ -18,7 +18,8 @@ from frank.models import FragmentationSet, UserExperiment
 from frank.models import Sample as FrankSample
 from frank.models import SampleFile as FrankSampleFile
 
-
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
 
 
 from groups.models import Attribute, Group
@@ -93,14 +94,13 @@ def create_frank_project_objects(user, title, description, new_project):
 	frank_experimental_condition = FrankExpCondition.objects.create(name=exCond_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
 
 	#Create user experiment for Frank so that it can be used as a stand alone.
-	print "creating userexperiment"
+	logger.info("Creating userexperiment")
 	UserExperiment.objects.create(user=user, experiment=frank_experiment)
 
-	print "created user experiment"
 	#Create the sample file here as the name is auto-generated
 
 	sample_name =title+"-fragments"
-	sample_desc="Frank sample loaded with Pimp project "+title
+	sample_desc="FrAnK sample loaded with PiMP project "+title
 	FrankSample.objects.create(experimental_condition = frank_experimental_condition, name=sample_name, description=sample_desc)
 
 	#Create the fragmention set that will be linked to the Experiement

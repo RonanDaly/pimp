@@ -294,9 +294,10 @@ def process_and_populate(filepath, dir, ms1_df, frag_set_object, experiment_slug
         if ms1_df is None:
             mzML_loader = LoadMZML()
         else:
+            print ("setting dup filter to False")
             del ms1_df['polarity']  # Delete the polarity column to pass to ffile_extraction
             ms1_peaks = ms1_df.values.tolist() #Prepare the peaklist
-            mzML_loader = LoadMZML(peaklist=ms1_peaks, min_ms1_intensity=-10, rt_tol=30)
+            mzML_loader = LoadMZML(peaklist=ms1_peaks, min_ms1_intensity=-10, duplicate_filter=False)
 
         output = mzML_loader.load_spectra(input_file)
 
