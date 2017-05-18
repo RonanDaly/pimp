@@ -21,7 +21,7 @@ from compound.models import logging, Compound, RepositoryCompound, DataSourceSup
 from data.models import Analysis, Dataset, Peak, Comparison, PeakDtComparison, Sample, PeakDTSample, CalibrationSample, PeakQCSample
 from experiments.pimpxml_parser.pimpxml_parser import Xmltree
 from experiments.pipelines.pipeline_rpy2 import Rpy2Pipeline
-
+from support import logging_support
 
 from frank.models import PimpAnalysisFrankFs, AnnotationQuery
 from frank.views import input_peak_list_to_database_signature
@@ -215,6 +215,8 @@ def start_pimp_pipeline(analysis, project):
     :type analysis: the analysis object
     :type project: the project object
     """
+    logging_support.ContextFilter.instance.attach_project(project.id)
+    logging_support.ContextFilter.instance.attach_analysis(analysis.id)
     try:
         pipeline = Rpy2Pipeline(analysis, project)
         logger.error('Testing logging system with error level message')
