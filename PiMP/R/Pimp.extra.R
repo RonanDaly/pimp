@@ -65,6 +65,10 @@ initialisePiMPLogging = function() {
 	logging::logReset()
 	logging::basicConfig(logLevel)
 	logger <- getPiMPLogger('Pimp.extra.initialisePiMPLogging')
+	handler = getHandler('basic.stdout')
+	handler$formatter = function (record) {
+	    text <- paste(record$levelname, record$timestamp, record$logger, '0', '0', '|', record$msg)
+	}
 	logerror('Logging at ERROR level', logger=logger)
 	logwarn('Logging at WARNING level', logger=logger)
 	loginfo('Logging at INFO level', logger=logger)
@@ -86,8 +90,7 @@ setPiMPLoggerAnalysisID = function(analysis.id) {
 	loginfo('Setting analysis ID in logger to %s', analysis.id, logger=logger)
 	handler = getHandler('basic.stdout')
 	handler$formatter = function (record) {
-    	text <- paste(record$timestamp, paste(analysis.id, record$levelname, record$logger,
-        	record$msg, sep = ":"))
+	    text <- paste(record$levelname, record$timestamp, record$logger, '0', analysis.id, '|', record$msg)
 	}
 	loginfo('Analysis id set', logger=logger)
 }

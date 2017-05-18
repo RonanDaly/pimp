@@ -58,6 +58,24 @@ Pimp.statistics.differential <- function(data=matrix(), contrasts=NULL, method="
 	return(retval)
 }
 
+removeColinearFactors <- function(factor.metadata, factorName) {
+    logger <- getPiMPLogger('Pimp.statistics.differential.removeColinearFactors')
+
+    otherFactors = setdiff(colnames(factor.metadata), factorName)
+    colinearFactors = c()
+    for ( f in otherFactors ) {
+        md = factor.metadata[,c(factorName, f)]
+        design = model.matrix(~.-1, data=md)
+        if ( ncol(design) - rankMatrix(design) > 0 ) {
+            logger$warn('%s is colinear with %s: removing %s from design matrix for %s comparison', f, factorName,
+                factorName, f)
+            colinearFactors = append(colinearFactors, f)
+        }
+    }
+    goodFactors = setdiff(colnames(factor.metadata), colinearFactors)
+    return(factor.metadata[,goodFactors,drop=FALSE])
+}
+
 makeContrastStringMultiFactorial <- function(contrast) {
   splitContrast = split(contrast$level, contrast$group)
   groups = as.numeric(names(splitContrast))
@@ -117,7 +135,8 @@ Pimp.statistics.differential.MultiFactorial <- function(data=matrix(), contrasts
 	      #combined.classvector <- sample.metadata[,factorName]
 	      #design <- model.matrix(~0+combined.classvector)
 	      #colnames(design) <- levels(combined.classvector)
-	      design = model.matrix(~.-1, data=factor.metadata, contrasts.arg=lapply(factor.metadata, contrasts, contrasts=FALSE))
+	      reducedMetadata = removeColinearFactors(factor.metadata, factorName)
+	      design = model.matrix(~.-1, data=reducedMetadata, contrasts.arg=lapply(reducedMetadata, contrasts, contrasts=FALSE))
 	      contrastColumns = paste(as.character(contrast$factor), as.character(contrast$level), sep='')
 	      factorNonContrastColumns = setdiff(paste(as.character(contrast$factor), as.character(unique(factor.metadata[,factorName])), sep=''), contrastColumns)
 		  designReduced = design[,factorNonContrastColumns != colnames(design)]

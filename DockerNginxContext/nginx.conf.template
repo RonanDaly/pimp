@@ -15,7 +15,7 @@ server {
         proxy_read_timeout          2000;
         send_timeout                2000;
         location / {
-                client_max_body_size 150M;
+                client_max_body_size ${NGINX_MAX_FILE_SIZE};
                 proxy_pass   http://pimp:8000;
                 proxy_redirect http://pimp:8000/ http://${EXTERNAL_HOST_AND_PORT}/;
 

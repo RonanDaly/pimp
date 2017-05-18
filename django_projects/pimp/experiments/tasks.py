@@ -21,7 +21,7 @@ from compound.models import logging, Compound, RepositoryCompound, DataSourceSup
 from data.models import Analysis, Dataset, Peak, Comparison, PeakDtComparison, Sample, PeakDTSample, CalibrationSample, PeakQCSample
 from experiments.pimpxml_parser.pimpxml_parser import Xmltree
 from experiments.pipelines.pipeline_rpy2 import Rpy2Pipeline
-
+from support import logging_support
 
 from frank.models import PimpAnalysisFrankFs, AnnotationQuery
 from frank.views import input_peak_list_to_database_signature
@@ -32,8 +32,8 @@ logger = get_task_logger(__name__)
 
 @celery.task
 def error_handler(task_id, analysis, project, user, success):
-    result = AsyncResult(task_id)
     logger.info("We are in the celery error handler routine and running end of pipeline as failed")
+    result = AsyncResult(task_id)
     logger.info("The traceback result: %s", result.traceback)
     end_pimp_pipeline(analysis, project, user, success)
 
@@ -42,7 +42,6 @@ def run_frags(pimp_analysis, frank_expt, fragmentation_set):
 
     #Get dataframe of ms1 peaks
     df = get_ms1_df(pimp_analysis)
-
     populate_tasks = []
 
     # Get the polarities for the MS1 peaks and for each polarity add the peaklist to the chain for processing.
@@ -57,10 +56,10 @@ def run_frags(pimp_analysis, frank_expt, fragmentation_set):
 def populate_database(xml_file_path):
 
     compound_id_map = {}
-    print "Database population started!"
+    logger.info("Database population started")
     xmltree = Xmltree(xml_file_path)
     anaysis_id = xmltree.getAnalysisId()
-    print anaysis_id
+    logger.info('Analysis id: %s', anaysis_id)
     analysis = Analysis.objects.get(id=anaysis_id)
     dataset = Dataset(analysis=analysis)
     dataset.save()
@@ -162,9 +161,11 @@ def populate_database(xml_file_path):
                         compound = Compound.objects.get(id=compound_id)
                         CompoundPathway.objects.create(compound=compound, pathway=datasource_super_pathway)
 
+    logger.info('Finished database population for analysis %s', anaysis_id)
+
 def send_email(analysis, project, user, success):
 
-    print "In the send email function"
+    logger.info("In the send email function")
 
     ctx_dict = {'analysis_name': analysis.experiment.title,
                 'analysis': analysis,
@@ -175,7 +176,7 @@ def send_email(analysis, project, user, success):
     subject = ''.join(subject.splitlines())
     from_email, to = settings.DEFAULT_FROM_EMAIL, user.email
 
-    print "The user's email is, ", user.email
+    logger.info("The user's email is, %s", user.email)
 
     if success: # analysis has run successfully
         text_content = render_to_string('email_templates/analysis_status_success_email.txt', ctx_dict)
@@ -190,11 +191,14 @@ def send_email(analysis, project, user, success):
 @celery.task
 def create_run_frank_chain(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user):
     celery_tasks=[]
+    logger.info('We have %s fragment files', num_fragment_files)
     if num_fragment_files > 0:
+        logger.info('Creating fragment tasks')
         populate_tasks = run_frags(analysis, frank_experiment, fragmentation_set)
         celery_tasks.append(populate_tasks)
         celery_tasks.append(run_default_annotations.si(fragmentation_set, user))
     celery_tasks.append(end_pimp_pipeline.si(analysis, project, user, True))
+    logger.info('Running frank stage of pipeline')
     chain(celery_tasks, link_error=error_handler.s(analysis, project, user, False))()
 
 
@@ -205,6 +209,8 @@ def start_pimp_pipeline(analysis, project):
     :type analysis: the analysis object
     :type project: the project object
     """
+    logging_support.ContextFilter.instance.attach_project(project.id)
+    logging_support.ContextFilter.instance.attach_analysis(analysis.id)
     try:
         pipeline = Rpy2Pipeline(analysis, project)
         logger.error('Testing logging system with error level message')
@@ -240,12 +246,9 @@ def end_pimp_pipeline(analysis, project, user, successful):
     try:
         logger.info('analysis succeeded is %s', analysis_succeeded)
         send_email(analysis, project, user, analysis_succeeded)
-        print 'An email should have been sent'
-
+        logger.info('An email should have been sent')
     except Exception as e:
         logger.info('Sending email failed: %s', e)
-        print 'email failed'
-
 
 #Check that the Frank run associated with this analysis was successful
 def frank_success(analysis):
@@ -261,6 +264,7 @@ def frank_success(analysis):
             success = False
 
     if frag_set.status is "Completed with Errors":
+
         success = False
 
     logger.info("The success of the FrAnK run is %s", success)
@@ -273,6 +277,7 @@ def get_ms1_df(analysis):
     #Get the MS1 peaks associated with this analysis
     logger.info("Getting the MS1 dataframe")
     ms1_peaks = Peak.objects.filter(dataset__analysis=analysis).values_list("mass", "rt", "id", "polarity")
+
     # Put the data into a dataFrame format in order to be passed to R.
     # Intensity set to -0.25 until we decide what should be done with it.
     data = []
