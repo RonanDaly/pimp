@@ -297,7 +297,8 @@ def process_and_populate(filepath, dir, ms1_df, frag_set_object, experiment_slug
             print ("setting dup filter to False")
             del ms1_df['polarity']  # Delete the polarity column to pass to ffile_extraction
             ms1_peaks = ms1_df.values.tolist() #Prepare the peaklist
-            mzML_loader = LoadMZML(peaklist=ms1_peaks, min_ms1_intensity=-10, duplicate_filter=False)
+            #We are not filtering out duplicates and have set the max_ms1_rt to 4000 when the peaks are passed from PiMP
+            mzML_loader = LoadMZML(peaklist=ms1_peaks, min_ms1_intensity=-10, max_ms1_rt = 4000, duplicate_filter=False)
 
         output = mzML_loader.load_spectra(input_file)
 

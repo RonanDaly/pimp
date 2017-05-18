@@ -34,6 +34,8 @@ class Loader(object):
 # If a peak list is provided it then tries to match the peaks in the peaklist to the ms1 objects, just
 # keeping the ms1 objects that can be matched. The matching is done with plus and minus the mz_tol (ppm)
 # and plus and minus the rt_tol
+
+#Ultimately these parameters should be put in a form for the user.
 class LoadMZML(Loader):
     def __init__(self,min_ms1_intensity = 1.3E5,peaklist = None,isolation_window = 1.0,mz_tol = 5,rt_tol=10,duplicate_filter_mz_tol = 0.5,duplicate_filter_rt_tol = 16,duplicate_filter = True,repeated_precursor_match = None,
                     min_ms1_rt = 180, max_ms1_rt = 1260, min_ms2_intensity = 5000):
@@ -330,3 +332,10 @@ def filter_ms1(ms1, ms2, mz_tol=0.5, rt_tol=16):
 
     logger.info("{} MS2 remaining".format(len(final_ms2_list)))
     return final_ms1_list, final_ms2_list
+
+#For testing certain peaks - delete later
+# if __name__ == '__main__':
+#
+#     input_file = "/Users/Karen/pimp2/pimp/DockerDevContext/media/frank/admin/1/1/1/Negative/FRAG_NEG_POOL.mzML"
+#     mzML_loader = LoadMZML(duplicate_filter = False, min_ms1_intensity=-10, peaklist=[(143.1078850919,247.5499820709, -0.25, 2030),(275.0181,718.97, -0.25, 2308)])
+#     output = mzML_loader.load_spectra(input_file)
