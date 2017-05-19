@@ -5,7 +5,6 @@
 <html>
 	<head>
 		<title>PiMP</title>
-
         <meta name="author" content="Glasgow Polyomics, University of Glasgow, UK">
         <meta name="author" content="Yoann Gloaguen">
         <meta name="author" content="Fraser Morton">
@@ -1934,13 +1933,14 @@
                             }
 
                             // Add all info about the peak - two per line - odd and even lines have different colours for clarity
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Peak ID</strong>: '+peaksData[peakDataId][0]+'</span>');
                             peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info style="padding-top: 8px;line-height: 12px;"><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</span>');
                             peakDiv.append('<span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Type</strong>: '+peaksData[peakDataId][4]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 4px;line-height: 12px;"><strong>Type</strong>: '+peaksData[peakDataId][4]+'</span>');
                             peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>Ion</strong>: '+peaksData[peakDataId][5]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>FrAnK Annotation</strong>: '+peaksData[peakDataId][9]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info" style="line-height: 12px;"><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info" style="line-height: 12px;"><strong>FrAnK Annotation</strong>: '+peaksData[peakDataId][9]+'</span>');
                             peakDiv.append('<div class="span12" style="min-height:10px;"><span class="card-face__title"></span></div>');
 
                             // Div where the plots are displayed
