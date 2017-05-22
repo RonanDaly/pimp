@@ -514,7 +514,7 @@
                     headerInfoToPass.push($(headers[idx]).html());
                 })
 
-                var rowInfo = [data[0], data[1], data[2], data[data.length - 2], data[data.length - 1]];
+                var rowInfo = [data[0], data[1], data[2], data[data.length - 3], data[data.length - 2]];
 
                 var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
                 updatePeakRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
