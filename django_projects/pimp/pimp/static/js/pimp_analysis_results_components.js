@@ -510,7 +510,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
                                         //     metExploreViz.GraphMapping.removeMappingData({"title": "Global Mapping"});
                                         // });
 
-                                        // Extract mapping info only and stringify 
+                                        // Extract mapping info only and stringify
                                         var mappingJSON = response['mappingdata'];
                                         var mapping=JSON.stringify(mappingJSON[0]);
 
@@ -522,7 +522,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
                                         var colorMax = generalStyle.getColorMaxMappingContinuous();
                                         metExploreViz.getGeneralStyle().setMaxColorMappingContinuous('red');
                                         metExploreViz.getGeneralStyle().setMinColorMappingContinuous('blue');
-                                        
+
                                         //Run graph
                                         metExploreViz.GraphPanel.refreshPanel(mapJSON, function(){
                                             metExploreViz.onloadSession(function(){
@@ -537,8 +537,8 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
                                                 metExploreViz.GraphMapping.mapNodes("Global Mapping");
                                                 //Color nodes
                                                 // metExploreViz.GraphMapping.graphMappingContinuousData("mapping1", "conditionName1");
-                                            }); 
-                                        }); 
+                                            });
+                                        });
                                     });
                                 }
                             },
@@ -930,7 +930,7 @@ function set_peaktable(url, samplesGroupsNum, callback){
 							// 	var seconds = Math.round(rt % 60); // Rounded to nearest second
 							// 	return rt + " ("+ minutes + " min "+ seconds + " s)";
 							// }
-						}],
+						// }],
                     "oColVis": {
                         "sButtonText": "Switch display",
                         "aiExclude": excludeColIdx
