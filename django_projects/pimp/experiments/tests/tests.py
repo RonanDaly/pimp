@@ -4,6 +4,7 @@ import os
 import shutil
 from test.test_support import EnvironmentVarGuard
 import logging
+from support import logging_support
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -205,6 +206,7 @@ def create_analysis(experiment_title, user):
     )
 
     analysis.save()
+    logging_support.ContextFilter.instance.attach_analysis(analysis.id)
     return experiment, analysis
 
 def setup_run(fixture_dir, env,
@@ -222,6 +224,7 @@ def setup_run(fixture_dir, env,
         modified = datetime.now()
     )
     project.save()
+    logging_support.ContextFilter.instance.attach_project(project.id)
     user_project = UserProject.objects.create(
         project=project,
         user=user,

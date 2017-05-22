@@ -3,6 +3,7 @@ from collections import OrderedDict
 from collections import defaultdict
 import os
 import shutil
+from support import logging_support
 
 from django.contrib.auth.decorators import login_required
 from django.core.context_processors import csrf
@@ -264,6 +265,8 @@ def start_analysis(request, project_id):
     if request.is_ajax():
 
         analysis_id = int(request.GET['id'])
+        logging_support.ContextFilter.instance.attach_project(project_id)
+        logging_support.ContextFilter.instance.attach_analysis(analysis_id)
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
         user = request.user
