@@ -1,5 +1,6 @@
 import itertools
 from collections import OrderedDict
+from collections import defaultdict
 import os
 import shutil
 
@@ -627,6 +628,22 @@ def has_frank_annotation(peak_id):
     return found
 
 
+def get_pimp_annotations(dataset):
+
+    res = RepositoryCompound.objects.filter(compound__peak__dataset=dataset) \
+        .select_related('compound__peak')
+    list(res)
+
+    names = defaultdict(set)
+    for r in res:
+        names[r.compound.peak].add(r.compound_name)
+
+    annots = {}
+    for peak in names:
+        annots[peak.secondaryId] = ','.join(sorted(names[peak]))
+
+    return annots
+
 def get_metabolite_info(request, project_id, analysis_id):
     """
     AJAX view to return information on a metabolite.
@@ -709,14 +726,17 @@ def get_peak_table(request, project_id, analysis_id):
             first_peaks_ids.append(peak.id)
         frank_annotations = get_frank_annotations(first_peaks_ids)
 
+        # get the pimp annotations
+        pimp_annotations = get_pimp_annotations(dataset)
+
         data = [
             [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] +
             [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
              peakgroup] +
             [str(peakgroup[0].peak.polarity)] +
-            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[
-                                                                 0].peak.id in frank_annotations else 'No Fragments']
-            for peakgroup in pp]
+            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[0].peak.id in frank_annotations else 'No Fragments'] +
+            [pimp_annotations.get(peakgroup[0].peak.secondaryId, '')]
+        for peakgroup in pp]
 
         response = simplejson.dumps({"aaData": data})
 

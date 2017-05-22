@@ -498,7 +498,7 @@
 
 			});
 
-            var peakTable = set_peaktable(peak_table_url);
+            var peakTable = set_peaktable(peak_table_url, samplesGroupsNum);
             $('#peak-table tbody').on('click', 'tr', function() {
                 // Row selection
                 peakTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
@@ -3053,6 +3053,7 @@
 						                  {% endfor %}
 						                  <th rowspan="2">Polarity</th>
 						                  <th rowspan="2">FrAnK Annotation</th>
+						                  <th rowspan="2">PiMP Annotation</th>
 						                 </tr>
 						                 <tr>
 						                  {% for sublist in sample_list %}
