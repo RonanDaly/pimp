@@ -908,7 +908,16 @@ jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
 	return b - a;
 };
 
-function set_peaktable(url, callback){
+function set_peaktable(url, samplesGroupsNum, callback){
+
+    var numSamples = samplesGroupsNum[2];
+    var excludeColIdx = [0, 1, 2]; // peak id, mass, RT
+    i = 3
+    for (var n=0; n<numSamples; n++) {
+        excludeColIdx.push(i++); // samples in the different comparisons
+    }
+    excludeColIdx.push(i++); // polarity
+
 	var peakTable = $('#peak-table').DataTable( {
 					// "sDom": '<"toolbar">frtip',
 					// "sDom": 't',
@@ -921,8 +930,12 @@ function set_peaktable(url, callback){
 							// 	var seconds = Math.round(rt % 60); // Rounded to nearest second
 							// 	return rt + " ("+ minutes + " min "+ seconds + " s)";
 							// }
-					//	}],
-					"sDom": '<"peak-table_wrapper_toolbar"liT>rtp',
+						}],
+                    "oColVis": {
+                        "sButtonText": "Switch display",
+                        "aiExclude": excludeColIdx
+                    },
+					"sDom": '<"peak-table_wrapper_toolbar"CliT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
 			            "aButtons": [
