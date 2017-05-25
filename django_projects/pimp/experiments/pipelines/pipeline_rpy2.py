@@ -18,7 +18,7 @@ from pimp.settings import getString, getNeededString
 import rpy2.robjects as robjects
 from support.rsupport import run_r
 
-from .helpers import get_pimp_wd
+from .helpers import get_pimp_wd, convert_to_dataframe
 
 import logging
 
@@ -161,43 +161,6 @@ class Rpy2Pipeline(object):
         raw_data = self.identify(polarity, out_file, databases, non_empty, mzmatch_params, formatted_mzmatch_outputs)
         return raw_data
 
-    def convert_to_dataframe(self, factors):
-
-        # get unique samples (files) in sorted order
-        all_files = set()
-        for f in factors:
-            for lev in f.levels:
-                lev_files = f.level_files[lev]
-                all_files.update(lev_files)
-        all_files = sorted(list(all_files))
-
-        # get the levels for each sample
-        sample_levels = {}
-        for sample in all_files:
-            sample_levels[sample] = []
-
-        for sample in all_files:
-            for factor in factors:
-                val = factor.get_level(sample)
-                sample_levels[sample].append(val)
-
-        # construct the dataframe
-        data = []
-        file_type = 'sample'
-        for sample in sample_levels:
-            row = [sample]
-            row.extend(sample_levels[sample])
-            row.append(file_type)
-            data.append(row)
-
-        headers = ['sample']
-        for factor in factors:
-            headers.append(factor.label)
-        headers.append('file_type')
-        df = pd.DataFrame(data, columns=headers)
-
-        r_dataframe = pandas2ri.py2ri(df)
-        return df, r_dataframe
 
     def run_stats(self, raw_data_dict, mzmatch_outputs, mzmatch_params):
 
@@ -206,7 +169,7 @@ class Rpy2Pipeline(object):
         groups = self.metadata.get_groups()
         # We need to make sure we close the database connection when we are idle for long periods
         connection.close()
-        df, metadata = self.convert_to_dataframe(groups)
+        df, metadata = convert_to_dataframe(groups)
 
         r_factors = robjects.StrVector([f.label for f in groups])
         r_contrasts = pandas2ri.py2ri(self.metadata.contrasts)
