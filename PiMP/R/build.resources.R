@@ -196,15 +196,15 @@ build.hmdb.xml <- function(files=character(), outxml="hmdb.xml") {
 build.hmdb.xml.from.file <- function(infile='hmdb_metabolites.xml', outxml="hmdb.xml") {
     doc <- read_xml(infile)
 
-    ids = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:accession/text()'))
+    ids = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:accession'))
     cat('Found ids\n', file=stderr())
-    names = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:name/text()'))
+    names = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:name'))
     cat('Found names\n', file=stderr())
-    formulas = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:chemical_formula/text()'))
+    formulas = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:chemical_formula'))
     cat('Found formulas\n', file=stderr())
-    inchis = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:inchikey/text()'))
+    inchis = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:inchikey'))
     cat('Found inchis\n', file=stderr())
-    smiles = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:smiles/text()'))
+    smiles = xml_text(xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:smiles'))
     cat('Found smiles\n', file=stderr())
     description <- ""
     other.names = xml_find_all(doc, '/d1:hmdb/d1:metabolite/d1:synonyms')
@@ -214,6 +214,9 @@ build.hmdb.xml.from.file <- function(infile='hmdb_metabolites.xml', outxml="hmdb
     compounds = xml_add_child(newdoc, 'compounds')
     pb <- txtProgressBar(min=1, max=length(ids), style=3)
     for (i in 1:length(ids)) {
+        if ( ids[i] == "" || names[i] == "" || formulas[i] == "" || inchis[i] == "" || smiles[i] == "") {
+            next
+        }
         setTxtProgressBar(pb, i)
         compound = xml_add_child(compounds, 'compound')
         xml_add_child(compound, 'id', ids[i])
