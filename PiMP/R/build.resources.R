@@ -217,6 +217,11 @@ build.hmdb.xml.from.file <- function(infile='hmdb_metabolites.xml', outxml="hmdb
         if ( ids[i] == "" || names[i] == "" || formulas[i] == "" || inchis[i] == "" || smiles[i] == "") {
             next
         }
+        # This is to skip sub-formulae of the form (<sub-formula>)n, i.e. formulae with an undetermined number of
+        # repeating units.
+        if ( grepl(')n', formulas[i], fixed=TRUE) ) {
+            next
+        }
         setTxtProgressBar(pb, i)
         compound = xml_add_child(compounds, 'compound')
         xml_add_child(compound, 'id', ids[i])
