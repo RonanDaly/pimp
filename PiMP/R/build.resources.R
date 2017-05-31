@@ -227,7 +227,9 @@ build.hmdb.xml.from.file <- function(infile='hmdb_metabolites.xml', outxml="hmdb
         xml_add_child(compound, 'id', ids[i])
         xml_add_child(compound, 'name', names[i])
         xml_add_child(compound, 'formula', formulas[i])
-        xml_add_child(compound, 'inchi', inchis[i])
+        # Strip possible InChIKey= from start of inchis[i]
+        inchi = sub('InChIKey=', '', inchis[i], fixed=TRUE)
+        xml_add_child(compound, 'inchi', inchi)
         xml_add_child(compound, 'smiles', smiles[i])
         xml_add_child(compound, 'description')
         synonyms = xml_add_child(compound, 'synonyms')
