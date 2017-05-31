@@ -93,15 +93,15 @@ def create_frank_project_objects(user, title, description, new_project):
     frank_experimental_condition = FrankExpCondition.objects.create(name=exCond_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
 
 
-	#Create user experiment for Frank so that it can be used as a stand alone.
-	logger.info("Creating userexperiment")
-	UserExperiment.objects.create(user=user, experiment=frank_experiment)
+    #Create user experiment for Frank so that it can be used as a stand alone.
+    logger.info("Creating userexperiment")
+    UserExperiment.objects.create(user=user, experiment=frank_experiment)
 
-	#Create the sample file here as the name is auto-generated
+    #Create the sample file here as the name is auto-generated
 
-	sample_name =title+"-fragments"
-	sample_desc="FrAnK sample loaded with PiMP project "+title
-	FrankSample.objects.create(experimental_condition = frank_experimental_condition, name=sample_name, description=sample_desc)
+    sample_name =title+"-fragments"
+    sample_desc="FrAnK sample loaded with PiMP project "+title
+    FrankSample.objects.create(experimental_condition = frank_experimental_condition, name=sample_name, description=sample_desc)
 
 
     #Create the fragmention set that will be linked to the Experiement

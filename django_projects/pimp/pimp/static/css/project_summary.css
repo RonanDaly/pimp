@@ -566,11 +566,13 @@ box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
 }
 
 .peak-discovery{
-	background-image: url(peak_icon.png);
+	/*background-image: url(peak_icon.png);*/
+    background-image: url(../img/chromatogram_icon.svg);
+    background-repeat: no-repeat;
 	display:block;
 	float:left;
-	height: 30px;
-	width: 30px;
+	height: 40px;
+	width: 40px;
 	margin: 0 auto;
 }
 
