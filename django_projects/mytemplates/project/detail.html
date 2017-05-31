@@ -2675,7 +2675,7 @@ $(document).ready(function() {
 						{% if project.sample_set.all|length >= 1 %}
 						<div class="row-fluid">
 		        			<div class="span12 span-btn btn-del-file">
-		        				<a id="peak-discovery" class="peak-discovery" href="#" title="peak discovery" data-placement="bottom" role="button"></a> 
+		        				<a id="peak-discovery" class="peak-discovery" href="#" title="Peak discovery" data-placement="bottom" role="button"></a> 
 	        					<!--<a class="btn btn-danger btn-create-project" href="{% url 'delete-sample' project.id %}"><i class="icon-trash icon-white"></i> Delete files</a>-->
 		        			</div>
 		        		</div>
@@ -2745,6 +2745,7 @@ $(document).ready(function() {
 											<p class="text-in-table">TIC</p>
 										</div>
 										<div class="span4 center-text" style="min-height:10px;">
+                                            <a href="{% url 'edit_group' project.id group.id %}">Edit</a>
 										</div>
 									</div>
 									{% for attribute in group.attribute_set.all %}
