@@ -126,24 +126,24 @@ def populate(apps, schema_editor, superpathway_filename=None):
     )
 
     lcms_dda_experimental_protocol = add_experimental_protocol(
-        name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
+        name='Liquid-Chromatography Mass-Spectroscopy'
     )
 
-    gcms_dia_experimental_protocol = add_experimental_protocol(
-        name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
-    )
+    # gcms_dia_experimental_protocol = add_experimental_protocol(
+    #     name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation'
+    # )
 
     # lcms_dia_experimental_protocol = add_experimental_protocol(
     #     name = 'Liquid-Chromatography Data-Independent Acquisition'
     # )
 
     mass_bank_protocols = add_annotation_tool_protocols(
-        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        [lcms_dda_experimental_protocol],
         mass_bank_annotation_tool
     )
 
     NIST_protocols = add_annotation_tool_protocols(
-        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        [lcms_dda_experimental_protocol],
         NIST_annotation_tool
     )
 
@@ -158,7 +158,7 @@ def populate(apps, schema_editor, superpathway_filename=None):
     )
 
     network_sampler_annotation_tool = add_annotation_tool_protocols(
-        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        [lcms_dda_experimental_protocol],
         network_sampler_annotation_tool
     )
 
@@ -168,7 +168,7 @@ def populate(apps, schema_editor, superpathway_filename=None):
     )
 
     clean_filter_protocols = add_annotation_tool_protocols(
-        [lcms_dda_experimental_protocol,gcms_dia_experimental_protocol],
+        [lcms_dda_experimental_protocol],
         clean_annotation_tool
     )
 

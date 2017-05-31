@@ -4,8 +4,6 @@ from django import forms
 from frank.models import Experiment, ExperimentalCondition, ExperimentalProtocol,\
     Sample, SampleFile, FragmentationSet, AnnotationQuery, Peak, AnnotationTool, \
     IONISATION_PROTOCOLS, FILE_TYPES, PimpAnalysisFrankFs
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe 
 
 # From SIRIUS documentation:
@@ -122,8 +120,8 @@ class ExperimentForm(forms.ModelForm):
         help_text="Enter a description of the experiment (optional).",
         required=False
     )
-    # A user must select the ionisation source for the experiment
-    # IONISATION_PROTOCOLS is declared in 'frank.models'
+    #A user must select the ionisation source for the experiment
+    #IONISATION_PROTOCOLS is declared in 'frank.models'
     ionisation_method = forms.ChoiceField(
         choices=IONISATION_PROTOCOLS,
         help_text="Select the ionisation source.",
@@ -215,7 +213,7 @@ class SampleFileForm(forms.ModelForm):
     # A simple alternative to the drag and drop file upload, requested by
     # the client. However, this will be removed in subsequent iterations.
     address = forms.FileField(
-        help_text="Please select the file for upload."
+        help_text="Please select the .mzML file for upload."
     )
 
     class Meta:
@@ -241,12 +239,12 @@ class SampleFileForm(forms.ModelForm):
             # derive the name of the file
             filename = input_file.name
             # check the file extension is '.mzXML'
-            if filename.endswith('.mzXML') is False:
-                self.add_error("address", "Incorrect file format. Please upload an mzXML file")
+            if filename.endswith('.mzML') is False:
+                self.add_error("address", "Incorrect file format. Please upload an mzML file")
                 raise forms.ValidationError("Incorrect file format")
         else:
             # In the event no file is provided, notify the user
-            self.add_error("address", "No file selected. Please upload an mzXML file")
+            self.add_error("address", "No file selected. Please upload an mzML file")
             raise forms.ValidationError("No file selected.")
 
 

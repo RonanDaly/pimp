@@ -510,7 +510,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
                                         //     metExploreViz.GraphMapping.removeMappingData({"title": "Global Mapping"});
                                         // });
 
-                                        // Extract mapping info only and stringify 
+                                        // Extract mapping info only and stringify
                                         var mappingJSON = response['mappingdata'];
                                         var mapping=JSON.stringify(mappingJSON[0]);
 
@@ -522,7 +522,7 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
                                         var colorMax = generalStyle.getColorMaxMappingContinuous();
                                         metExploreViz.getGeneralStyle().setMaxColorMappingContinuous('red');
                                         metExploreViz.getGeneralStyle().setMinColorMappingContinuous('blue');
-                                        
+
                                         //Run graph
                                         metExploreViz.GraphPanel.refreshPanel(mapJSON, function(){
                                             metExploreViz.onloadSession(function(){
@@ -537,8 +537,8 @@ function set_click_actions(staticUrl, metexploreInfoUrl){
                                                 metExploreViz.GraphMapping.mapNodes("Global Mapping");
                                                 //Color nodes
                                                 // metExploreViz.GraphMapping.graphMappingContinuousData("mapping1", "conditionName1");
-                                            }); 
-                                        }); 
+                                            });
+                                        });
                                     });
                                 }
                             },
@@ -908,21 +908,34 @@ jQuery.fn.dataTableExt.oSort['formatted-rt-desc'] = function(a, b) {
 	return b - a;
 };
 
-function set_peaktable(url, callback){
+function set_peaktable(url, samplesGroupsNum, callback){
+
+    var numSamples = samplesGroupsNum[2];
+    var excludeColIdx = [0, 1, 2]; // peak id, mass, RT
+    i = 3
+    for (var n=0; n<numSamples; n++) {
+        excludeColIdx.push(i++); // samples in the different comparisons
+    }
+    excludeColIdx.push(i++); // polarity
+
 	var peakTable = $('#peak-table').DataTable( {
 					// "sDom": '<"toolbar">frtip',
 					// "sDom": 't',
 					"sAjaxSource": url,
-					"aoColumnDefs": [{
-							"aTargets": [2],
-							"sType": "formatted-rt",
+					//"aoColumnDefs": [{
+					//		"aTargets": [2],
+					//		"sType": "formatted-rt",
 							// "mRender": function(rt, type, full) {
 							// 	var minutes = Math.floor(rt / 60);
 							// 	var seconds = Math.round(rt % 60); // Rounded to nearest second
 							// 	return rt + " ("+ minutes + " min "+ seconds + " s)";
 							// }
-						}],
-					"sDom": '<"peak-table_wrapper_toolbar"liT>rtp',
+						// }],
+                    "oColVis": {
+                        "sButtonText": "Switch display",
+                        "aiExclude": excludeColIdx
+                    },
+					"sDom": '<"peak-table_wrapper_toolbar"CliT>rtp',
 					"tableTools": {
 			            "sSwfPath": "/static/swf/copy_csv_xls.swf",
 			            "aButtons": [

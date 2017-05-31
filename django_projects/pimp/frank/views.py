@@ -11,12 +11,6 @@ from django.db.models import Max
 import datetime
 import jsonpickle
 from django.core.exceptions import ValidationError
-# from matplotlib import patches as mpatches
-# from matplotlib import pyplot as plt
-# from matplotlib import pylab
-# from pylab import *
-# import PIL
-# import PIL.Image
 import StringIO
 from django.http import HttpResponse, HttpResponseRedirect
 from django.db import transaction
@@ -32,6 +26,11 @@ import PIL
 from experiments.models import Analysis
 from projects.models import Project
 from frank.annotationTools import ChemSpiderQueryTool
+import logging
+from celery.utils.log import get_task_logger
+
+celery_logger = get_task_logger(__name__)
+logger = logging.getLogger(__name__)
 
 from MS2LDA.visualisation.networkx import lda_visualisation
 
@@ -43,9 +42,6 @@ except:
 To reduce code repetition, add a method for the context_dict
 of each page here at the top of the page.
 """
-
-
-
 
 def get_my_experiments_context_dict(user):
     """
@@ -1132,26 +1128,15 @@ def input_peak_list_to_database(experiment_name_slug, fragmentation_set_id, ms1_
 def input_peak_list_to_database_signature(experiment_name_slug, fragmentation_set_id, ms1_peaks=None):
 
     """
-    Method to start the extraction of peaks from the uploaded mzXML data files
+    Method to start the extraction of peaks from the uploaded mzML data files
     :param experiment_name_slug: A string containing the unique slug of an experiment
     :param fragmentation_set_id: Integer id of the fragmentation set
     :param ms1_peaks: Table of MS1 peaks
     ms1_peaks will be none if this method is called from Frank, and will have a dataframe from Pimp
     """
-
-    print "In the peak list signature method"
-
-    experiment = Experiment.objects.get(slug=experiment_name_slug)
-    # Determine the type of experimental protocol used
-    experiment_type = experiment.detection_method.name
-    if experiment_type == 'Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition':
-        # Run the LCMS-DDA peak extraction task in the background
-        retval = tasks.msn_generate_peak_list.si(experiment_name_slug, fragmentation_set_id, ms1_peaks)
-    elif experiment_type == 'Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation':
-        retval = tasks.gcms_generate_peak_list.si(experiment_name_slug, fragmentation_set_id)
-        # Run the LCMS-DDA peak extraction task in the background
+    logger.info("In the modified peak list signature method")
+    retval = tasks.msn_generate_peak_list.si(experiment_name_slug, fragmentation_set_id, ms1_peaks)
     return retval
-
 
 def generate_annotations(annotation_query_object,user = None):
 

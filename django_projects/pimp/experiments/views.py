@@ -1,7 +1,9 @@
 import itertools
 from collections import OrderedDict
+from collections import defaultdict
 import os
 import shutil
+from support import logging_support
 
 from django.contrib.auth.decorators import login_required
 from django.core.context_processors import csrf
@@ -240,6 +242,11 @@ def submit_analysis(project, analysis, user):
                                                user),
           link_error=tasks.error_handler.s(analysis, project, user, False))()
 
+    # logger.warning("This is set up not to Run PiMP, change back here!")
+    # tasks.create_run_frank_chain(num_fragment_files, analysis, project, frank_experiment, fragmentation_set, user)
+    # print ("running FrAnK only from PiMP analysis")
+
+
 
 def validate_analysis(analysis):
     samples = Sample.objects.filter(attribute__comparison__experiment__analysis=
@@ -263,6 +270,8 @@ def start_analysis(request, project_id):
     if request.is_ajax():
 
         analysis_id = int(request.GET['id'])
+        logging_support.ContextFilter.instance.attach_project(project_id)
+        logging_support.ContextFilter.instance.attach_analysis(analysis_id)
         analysis = Analysis.objects.get(pk=analysis_id)
         project = Project.objects.get(pk=project_id)
         user = request.user
@@ -627,6 +636,22 @@ def has_frank_annotation(peak_id):
     return found
 
 
+def get_pimp_annotations(dataset):
+
+    res = RepositoryCompound.objects.filter(compound__peak__dataset=dataset) \
+        .select_related('compound__peak')
+    list(res)
+
+    names = defaultdict(set)
+    for r in res:
+        names[r.compound.peak].add(r.compound_name)
+
+    annots = {}
+    for peak in names:
+        annots[peak.secondaryId] = ','.join(sorted(names[peak]))
+
+    return annots
+
 def get_metabolite_info(request, project_id, analysis_id):
     """
     AJAX view to return information on a metabolite.
@@ -709,14 +734,17 @@ def get_peak_table(request, project_id, analysis_id):
             first_peaks_ids.append(peak.id)
         frank_annotations = get_frank_annotations(first_peaks_ids)
 
+        # get the pimp annotations
+        pimp_annotations = get_pimp_annotations(dataset)
+
         data = [
             [str(peakgroup[0].peak.secondaryId), round(peakgroup[0].peak.mass, 4), round(peakgroup[0].peak.rt, 2)] +
             [round(peakdtsample.intensity, 2) if peakdtsample.intensity != 0 else 'NA' for peakdtsample in
              peakgroup] +
             [str(peakgroup[0].peak.polarity)] +
-            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[
-                                                                 0].peak.id in frank_annotations else 'No Fragments']
-            for peakgroup in pp]
+            [str(frank_annotations[peakgroup[0].peak.id]) if peakgroup[0].peak.id in frank_annotations else 'No Fragments'] +
+            [pimp_annotations.get(peakgroup[0].peak.secondaryId, '')]
+        for peakgroup in pp]
 
         response = simplejson.dumps({"aaData": data})
 

@@ -5,7 +5,6 @@
 <html>
 	<head>
 		<title>PiMP</title>
-
         <meta name="author" content="Glasgow Polyomics, University of Glasgow, UK">
         <meta name="author" content="Yoann Gloaguen">
         <meta name="author" content="Fraser Morton">
@@ -498,7 +497,7 @@
 
 			});
 
-            var peakTable = set_peaktable(peak_table_url);
+            var peakTable = set_peaktable(peak_table_url, samplesGroupsNum);
             $('#peak-table tbody').on('click', 'tr', function() {
                 // Row selection
                 peakTable.$('tr.row_selected').removeClass('row_selected'); // Remove any selected rows
@@ -515,7 +514,7 @@
                     headerInfoToPass.push($(headers[idx]).html());
                 })
 
-                var rowInfo = [data[0], data[1], data[2], data[data.length - 1]];
+                var rowInfo = [data[0], data[1], data[2], data[data.length - 3], data[data.length - 2]];
 
                 var innerSidePanel = $(this).closest('.tab-pane').find('.right-side-bar-inner');
                 updatePeakRightPanel(rowInfo,headerInfoToPass,innerSidePanel);
@@ -1934,13 +1933,14 @@
                             }
 
                             // Add all info about the peak - two per line - odd and even lines have different colours for clarity
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Peak ID</strong>: '+peaksData[peakDataId][0]+'</span>');
                             peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+peaksData[peakDataId][1]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info style="padding-top: 8px;line-height: 12px;"><strong>Mass</strong>: '+peaksData[peakDataId][2]+'</span>');
                             peakDiv.append('<span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+peaksData[peakDataId][3]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Type</strong>: '+peaksData[peakDataId][4]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="padding-top: 4px;line-height: 12px;"><strong>Type</strong>: '+peaksData[peakDataId][4]+'</span>');
                             peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>Ion</strong>: '+peaksData[peakDataId][5]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</span>');
-                            peakDiv.append('<span class="span5 peak-info peak-info-odd" style="line-height: 12px;"><strong>FrAnK Annotation</strong>: '+peaksData[peakDataId][9]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info" style="line-height: 12px;"><strong>ppm error</strong>: '+peaksData[peakDataId][6]+'</span>');
+                            peakDiv.append('<span class="span5 peak-info peak-info" style="line-height: 12px;"><strong>FrAnK Annotation</strong>: '+peaksData[peakDataId][9]+'</span>');
                             peakDiv.append('<div class="span12" style="min-height:10px;"><span class="card-face__title"></span></div>');
 
                             // Div where the plots are displayed
@@ -2239,8 +2239,13 @@
             function updatePeakRightPanel(rowInfo, header, innerSidePanel){
                 $(innerSidePanel).empty();
                 var newDom = '<div class="span12"><h3 class="right-side-title evidence-title">Evidence</h3></div>';
-                console.log('dans la fonction pathway');
-                newDom += '<div class="card"><div class="span12 card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak</h5><span class="card-face__title"></span></div><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Id</strong>: '+ rowInfo[0] +'</span><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+ rowInfo[2] +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Mass</strong>: '+ rowInfo[1] +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+ rowInfo[3] +'</span><div class="span12" style="min-height:10px;margin-left:0px"><span class="card-face__title"></span></div>';
+                console.log('rowInfo '+rowInfo);
+                newDom += '<div class="card"><div class="span12 card-title" style="margin-left:0px;"><h5 class="right-side-title">Peak</h5><span class="card-face__title"></span></div><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>Id</strong>: '+ rowInfo[0] +
+                        '</span><span class="span5 peak-info peak-info-odd" style="padding-top: 8px;line-height: 12px;"><strong>RT (s)</strong>: '+ rowInfo[2] +
+                        '</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Mass</strong>: '+ rowInfo[1]
+                        +'</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>Polarity</strong>: '+ rowInfo[3] +
+                        '</span><span class="span5 peak-info peak-info" style="padding-top: 4px;line-height: 12px;"><strong>FrAnK Annotation:</strong>: '+ rowInfo[4]
+                        +'</span><div class="span12" style="min-height:10px;margin-left:0px"><span class="card-face__title"></span></div>';
 
                 // Div where the plots are displayed
                 newDom += '<div class="span12" id="peakcard-content-peak-'+ rowInfo[0] +'" content-displayed="none" style="margin-left:0px;display:none;"><div class="span12" data-exist="false" id="peakcard-intensity-'+ rowInfo[0] +'" style="display:none;"></div><div class="span12" data-exist="false" id="peakcard-chromatogram-'+ rowInfo[0] +'" style="display:none;"></div></div>';
@@ -2468,6 +2473,7 @@
 							{% if user.is_authenticated %}
 							<li><a href="{% url 'project_summary' %}">My projects</a></li>
 							<li><a href="{% url 'profile' %}">My account</a></li>
+							<li><a href="{% url 'frank_index' %}">Frank</a></li>
                             <li><a href="{% url 'userguide' %}">User guide</a></li>
 							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
 							{% else %}
@@ -3053,6 +3059,7 @@
 						                  {% endfor %}
 						                  <th rowspan="2">Polarity</th>
 						                  <th rowspan="2">FrAnK Annotation</th>
+						                  <th rowspan="2">PiMP Annotation</th>
 						                 </tr>
 						                 <tr>
 						                  {% for sublist in sample_list %}

@@ -5,6 +5,8 @@ import uuid
 
 import djcelery
 import distutils.util as du
+import logging
+from support import logging_support
 
 def getNeededString(name):
     if not os.environ.has_key(name):
@@ -257,11 +259,14 @@ LOGGING = {
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
+        },
+        'context_filter': {
+            '()': 'support.logging_support.ContextFilter',
         }
     },
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d | %(message)s'
+            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(project)s %(analysis)s | %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(filename)s:%(lineno)d | %(message)s'
@@ -276,7 +281,8 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'level': os.getenv('DJANGO_LOG_LEVEL', 'WARNING'),
-            'formatter': 'verbose', 
+            'formatter': 'verbose',
+            'filters': ['context_filter'],
         }
     },
     'loggers': {
