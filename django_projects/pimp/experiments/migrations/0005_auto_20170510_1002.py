@@ -7,15 +7,19 @@ def remove_gcms_protocols(apps, schema_editor):
 
     # for all projects
     ExperimentalProtocol = apps.get_model('frank', 'ExperimentalProtocol')
-    lcms_protocol = ExperimentalProtocol.objects.get(
-        name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
-    )
-    lcms_protocol.name = 'Liquid-Chromatography Mass-Spectroscopy'
-    lcms_protocol.save()
-    gcms_protocol = ExperimentalProtocol.objects.get(
-        name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation',
-    )
-    gcms_protocol.delete()
+    if ExperimentalProtocol.objects.filter(
+            name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition').exists():
+        lcms_protocol = ExperimentalProtocol.objects.get(
+            name='Liquid-Chromatography Mass-Spectroscopy Data-Dependent Acquisition'
+        )
+        lcms_protocol.name = 'Liquid-Chromatography Mass-Spectroscopy'
+        lcms_protocol.save()
+    if ExperimentalProtocol.objects.filter(
+            name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation').exists():
+        gcms_protocol = ExperimentalProtocol.objects.get(
+            name='Gas-Chromatography Mass-Spectroscopy Electron Impact Ionisation',
+        )
+        gcms_protocol.delete()
 
 
 class Migration(migrations.Migration):
