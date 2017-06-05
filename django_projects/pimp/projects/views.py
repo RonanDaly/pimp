@@ -94,7 +94,7 @@ def create_frank_project_objects(user, title, description, new_project):
 	frank_experimental_condition = FrankExpCondition.objects.create(name=exCond_name, description="Pimp generated FrAnk condition", experiment =frank_experiment)
 
 	#Create user experiment for Frank so that it can be used as a stand alone.
-	logger.info("Creating userexperiment")
+	logger.finest("Creating userexperiment")
 	UserExperiment.objects.create(user=user, experiment=frank_experiment)
 
 	#Create the sample file here as the name is auto-generated
