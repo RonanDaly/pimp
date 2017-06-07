@@ -73,6 +73,12 @@ This will build, create, start and attach the necessary containers and open
 up port 8000 (by default) for connections. You should now have a running
 PiMP system.
 
+### Keeping development stack up to date
+In order to bring the latest changes in, the following command can be
+run inside the docker container, from the ```django_projects/pimp``` directory.
+
+    $ ./update_pimp.sh
+
 ### Building and running the Release stack ###
 Change to the root directory and run:
 
