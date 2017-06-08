@@ -1,11 +1,12 @@
 import threading
 import logging
+import inspect
 
 
 class ContextLocal(threading.local):
     project = 0
     analysis = 0
-
+    user = 0
 
 class ContextFilter(logging.Filter):
     """
@@ -26,13 +27,36 @@ class ContextFilter(logging.Filter):
     def attach_project(self, project_id):
         self.cl.project = project_id
 
+    def attach_user(self, user_id):
+        self.cl.user = user_id
+
     def filter(self, record):
         record.project = self.cl.project
         record.analysis = self.cl.analysis
+        record.user = self.cl.user
         return True
 
     def __init__(self):
         super(ContextFilter, self).__init__()
+
+
+def attach_logging_info(func):
+    argspec = inspect.getargspec(func)
+    project_id_pos = argspec.args.index('project_id') if 'project_id' in argspec.args else None
+    analysis_id_pos = argspec.args.index('analysis_id') if 'analysis_id' in argspec.args else None
+    def wrapper(*args, **kwargs):
+        print args
+        print kwargs
+        if project_id_pos is not None:
+            ContextFilter.instance.attach_project(args[project_id_pos])
+        elif 'project_id' in kwargs:
+            ContextFilter.instance.attach_project(kwargs['project_id'])
+        if analysis_id_pos is not None:
+            ContextFilter.instance.attach_project(args[analysis_id_pos])
+        elif 'analysis_id' in kwargs:
+            ContextFilter.instance.attach_project(kwargs['analysis_id'])
+        func(*args, **kwargs)
+    return wrapper
 
 
 FINE = 7
