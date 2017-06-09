@@ -45,17 +45,15 @@ def attach_logging_info(func):
     project_id_pos = argspec.args.index('project_id') if 'project_id' in argspec.args else None
     analysis_id_pos = argspec.args.index('analysis_id') if 'analysis_id' in argspec.args else None
     def wrapper(*args, **kwargs):
-        print args
-        print kwargs
-        if project_id_pos is not None:
-            ContextFilter.instance.attach_project(args[project_id_pos])
-        elif 'project_id' in kwargs:
+        if 'project_id' in kwargs:
             ContextFilter.instance.attach_project(kwargs['project_id'])
-        if analysis_id_pos is not None:
-            ContextFilter.instance.attach_project(args[analysis_id_pos])
-        elif 'analysis_id' in kwargs:
-            ContextFilter.instance.attach_project(kwargs['analysis_id'])
-        func(*args, **kwargs)
+        elif project_id_pos is not None:
+            ContextFilter.instance.attach_project(args[project_id_pos])
+        if 'analysis_id' in kwargs:
+            ContextFilter.instance.attach_analysis(kwargs['analysis_id'])
+        elif analysis_id_pos is not None:
+            ContextFilter.instance.attach_analysis(args[analysis_id_pos])
+        return func(*args, **kwargs)
     return wrapper
 
 

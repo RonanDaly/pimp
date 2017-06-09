@@ -267,7 +267,7 @@ LOGGING = {
     },
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(project)s %(analysis)s | %(message)s'
+            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(user)s %(project)s %(analysis)s | %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(filename)s:%(lineno)d | %(message)s'

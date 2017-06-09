@@ -164,7 +164,7 @@ Pimp.exportToXML <- function(id=NULL, raw.data=data.frame(), identification=data
     #compound.id <- 1
     nrow.raw.data = nrow(raw.data)
     for(i in 1:nrow(raw.data)) {
-        logging::logfine('Peak %d of %d', i, nrow.raw.data, logger=logger)
+        logging::logfiner('Peak %d of %d', i, nrow.raw.data, logger=logger)
         #cat(paste(i,"of",nrow(raw.data), "my custom message", "\r"))
         peak.id <- rownames(raw.data)[i]
         peak = xml_add_child(peakset, 'peak', id=as.character(peak.id))
