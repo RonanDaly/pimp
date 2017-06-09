@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from data.models import Analysis
+from support.logging_support import attach_logging_info
 
 #For Frank Integration
 
@@ -97,7 +98,13 @@ def create_frank_project_objects(user, title, description, new_project):
     logger.info("Creating userexperiment")
     UserExperiment.objects.create(user=user, experiment=frank_experiment)
 
+<<<<<<< HEAD
     #Create the sample file here as the name is auto-generated
+=======
+	#Create user experiment for Frank so that it can be used as a stand alone.
+	logger.finest("Creating userexperiment")
+	UserExperiment.objects.create(user=user, experiment=frank_experiment)
+>>>>>>> master
 
     sample_name =title+"-fragments"
     sample_desc="FrAnK sample loaded with PiMP project "+title
@@ -154,6 +161,7 @@ def getIntensity(mzxmlFile):
     # print lineList 
     return lineList
 
+@attach_logging_info
 def peak_discovery(request, project_id):
     if request.is_ajax():
         print "AJAX call detected!"
@@ -264,7 +272,7 @@ def peak_discovery(request, project_id):
 
 
 
-
+@attach_logging_info
 def get_mzxml_tic(request, project_id, sample_id):
     if request.is_ajax():
         sample_type = request.GET['type']
@@ -355,6 +363,8 @@ def get_mzxml_tic(request, project_id, sample_id):
         response = simplejson.dumps(fileList)
         return HttpResponse(response, content_type='application/json')
 
+
+@attach_logging_info
 def get_scan_data(mzxmlFile, rt):
     xcms = importr("xcms")
     file = xcms.xcmsRaw(mzxmlFile.file.path)
@@ -401,6 +411,7 @@ def get_scan(request, project_id, sample_id):
         return HttpResponse(response, content_type='application/json')
 
 # We do not use this view anymore, the call to create_member_tic is now wrong as it requires 2 parameters: attribute id and sample type 
+@attach_logging_info
 def get_group_tic(request, project_id, group_id):
     if request.is_ajax():
         group_id = request.GET['id']
@@ -556,6 +567,7 @@ def create_member_tic(attribute_id, sample_type):
 # Ajax call for member TIC display -> forloop through the files, 
 # creation of tic curve if not there already, 
 # send back info to client side
+@attach_logging_info
 def get_tic(request, project_id, attribute_id):
     if request.is_ajax():
         attribute_id = request.GET['id']
@@ -567,6 +579,8 @@ def get_tic(request, project_id, attribute_id):
     else:
         print "request is not ajax, project: ",project_id," attribute: ",attribute_id
 
+
+@attach_logging_info
 def detail(request, project_id):
     if 'new_project' in request.session:
         print "my session : ",request.session['new_project']
@@ -636,6 +650,8 @@ def detail(request, project_id):
         print "At the end of the detail view"
         return render(request, 'project/detail.html', {'project': project, 'permission':permission, 'groups':groups, 'projfileattributes':projfileattributes, 'experiments':experiments, 'frank_sample':frank_sample, 'fragment_files':fragment_files})
 
+
+@attach_logging_info
 def sampleDelete(request, project_id):
     if request.method == 'POST':
         # nothing
@@ -650,6 +666,8 @@ def sampleDelete(request, project_id):
         files = project.picture_set.all()
         return render(request, 'project/delete_samples.html', {'project': project, 'permission':permission})
 
+
+@attach_logging_info
 def fragmentFileDelete(request, project_id):
     if request.method == 'POST':
         # nothing
@@ -664,7 +682,7 @@ def fragmentFileDelete(request, project_id):
         return render(request, 'project/delete_fragfile.html', {'project': project, 'permission':permission})
 
 
-
+@attach_logging_info
 def projectFileDelete(request, project_id):
     if request.method == 'POST':
         # nothing
@@ -679,6 +697,7 @@ def projectFileDelete(request, project_id):
         return render(request, 'project/delete_projectfile.html', {'project': project, 'permission':permission})
 
 
+@attach_logging_info
 def edit_title(request, project_id):
     p = Project.objects.get(pk=project_id)
 
@@ -705,6 +724,7 @@ def edit_title(request, project_id):
             return render(request, 'project/edit_title_form.html', {'form': form, 'project': p})
 
 
+@attach_logging_info
 def editdescription(request, project_id):
     if request.method == 'POST':
         form = EditDescriptionForm(request.POST)
@@ -727,6 +747,8 @@ def editdescription(request, project_id):
         else:
             return render(request, 'project/edit_description_form.html', {'form': form, 'project':p})
 
+
+@attach_logging_info
 def adduser(request, project_id):
     if request.method == 'POST':
         form = AddUserForm(request.POST)
@@ -789,7 +811,9 @@ def userpermission(request, project_id):
 
 def createdataset(request, file_path):
     pimpXmlFile = file_path
-    
+
+
+@attach_logging_info
 def removeUserProject(request,project_id,user_id):
     project = Project.objects.get(id = project_id)
     user_to_remove = User.objects.get(id = user_id)

@@ -252,6 +252,7 @@ ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, us
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+logging.setLoggerClass(logging_support.FineLogger)
 CELERYD_HIJACK_ROOT_LOGGER = False
 LOGGING = {
     'version': 1,
@@ -266,7 +267,7 @@ LOGGING = {
     },
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(project)s %(analysis)s | %(message)s'
+            'format': '%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(user)s %(project)s %(analysis)s | %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(filename)s:%(lineno)d | %(message)s'
@@ -293,7 +294,7 @@ LOGGING = {
         },
         '': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
             'propagate': False,
         },
         'celery': {
@@ -303,7 +304,7 @@ LOGGING = {
         },
         'celery.task': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
             'propagate': False,
         },
     }

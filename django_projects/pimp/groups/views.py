@@ -24,6 +24,7 @@ from rpy2.robjects.packages import importr
 
 from groups.forms import *
 from experiments.models import Analysis
+from support.logging_support import attach_logging_info
 
 import datetime
 
@@ -153,6 +154,7 @@ def createTic(fileList, attribute, polarity, project):
         negtic.save()
 
 
+@attach_logging_info
 def index(request, project_id):
     """
     Create empty forms for group creation and return to a GET request.
@@ -258,6 +260,7 @@ def index(request, project_id):
     return render(request, 'project/groupcreation_bs3.html', c)
 
 
+@attach_logging_info
 def edit(request, project_id, group_id):
     """
     Create empty forms for group creation and return to a GET request.
@@ -399,6 +402,7 @@ def edit(request, project_id, group_id):
     return render(request, 'project/groupedit_bs3.html', c)
 
 
+@attach_logging_info
 def create_calibration_groups(request, project_id):
     """
     A view to provide forms for assigning calibration samples to their groups (blank, QC, standard),
