@@ -30,6 +30,11 @@ class ContextFilter(logging.Filter):
     def attach_user(self, user_id):
         self.cl.user = user_id
 
+    def detach(self):
+        self.cl.analysis = 0
+        self.cl.project = 0
+        self.cl.user = 0
+
     def filter(self, record):
         record.project = self.cl.project
         record.analysis = self.cl.analysis
@@ -40,7 +45,7 @@ class ContextFilter(logging.Filter):
         super(ContextFilter, self).__init__()
 
 
-def attach_logging_info(func):
+def attach_detach_logging_info(func):
     argspec = inspect.getargspec(func)
     project_id_pos = argspec.args.index('project_id') if 'project_id' in argspec.args else None
     analysis_id_pos = argspec.args.index('analysis_id') if 'analysis_id' in argspec.args else None
@@ -53,7 +58,17 @@ def attach_logging_info(func):
             ContextFilter.instance.attach_analysis(kwargs['analysis_id'])
         elif analysis_id_pos is not None:
             ContextFilter.instance.attach_analysis(args[analysis_id_pos])
-        return func(*args, **kwargs)
+        retval = func(*args, **kwargs)
+        ContextFilter.instance.detach()
+        return retval
+    return wrapper
+
+
+def detach_logging_info(func):
+    def wrapper(*args, **kwargs):
+        retval = func(*args, **kwargs)
+        ContextFilter.instance.detach()
+        return retval
     return wrapper
 
 
