@@ -3,7 +3,7 @@ from collections import OrderedDict
 from collections import defaultdict
 import os
 import shutil
-from support.logging_support import ContextFilter, attach_logging_info
+from support.logging_support import ContextFilter, attach_detach_logging_info
 
 from django.contrib.auth.decorators import login_required
 from django.core.context_processors import csrf
@@ -56,7 +56,7 @@ import jsonpickle
 logger = logging.getLogger(__name__)
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def experiment(request, project_id):
     class RequiredComparisonFormSet(BaseFormSet):
         def __init__(self, *args, **kwargs):
@@ -267,7 +267,7 @@ def validate_analysis(analysis):
     return is_valid, pos_missing_samples, neg_missing_samples
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def start_analysis(request, project_id):
     if request.is_ajax():
 
@@ -301,7 +301,7 @@ def start_analysis(request, project_id):
                 return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def restart_analysis(request, project_id):
     analysis_id = int(request.GET['id'])
     ContextFilter.instance.attach_analysis(analysis_id)
@@ -342,7 +342,7 @@ def restart_analysis(request, project_id):
     return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def delete_analysis(request, project_id):
 
     analysis_id = int(request.GET['id'])
@@ -372,7 +372,7 @@ def delete_analysis(request, project_id):
     return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_metabolites_table(request, project_id, analysis_id):
     if request.is_ajax():
         logger.info("Metabolites table requested")
@@ -661,7 +661,7 @@ def get_pimp_annotations(dataset):
     return annots
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_metabolite_info(request, project_id, analysis_id):
     """
     AJAX view to return information on a metabolite.
@@ -717,7 +717,7 @@ def get_metabolite_info(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_peak_table(request, project_id, analysis_id):
     if request.is_ajax():
 
@@ -764,7 +764,7 @@ def get_peak_table(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_single_comparison_table(request, project_id, analysis_id, comparison_id):
     if request.is_ajax():
         logger.info("single comparison table requested - comparison id: %s", comparison_id)
@@ -797,7 +797,7 @@ def get_single_comparison_table(request, project_id, analysis_id, comparison_id)
 # @cache_page(60 * 60 * 24 * 100)
 @login_required
 # @profile("analysis_result.prof")
-@attach_logging_info
+@attach_detach_logging_info
 def analysis_result(request, project_id, analysis_id):
     if request.method == 'GET':
 
@@ -910,7 +910,7 @@ def analysis_result(request, project_id, analysis_id):
         return rendering
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_pathway_url(request, project_id, analysis_id):
     if request.is_ajax():
         project = Project.objects.get(pk=project_id)
@@ -1163,7 +1163,7 @@ def get_superpathway():
     return super_pathways_list
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_metexplore_biosource(request, project_id, analysis_id):
     if request.is_ajax():
         # Get the list of biosources from metexplore webservice
@@ -1190,7 +1190,7 @@ def get_metexplore_biosource(request, project_id, analysis_id):
         # return HttpResponse(contents, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_metexplore_pathways(request, project_id, analysis_id):
     # To limit the size of the network, we only display the pathways with metabolite match (at least 1),
     # the first call to MetExplore returns the list of pathways which will be then used to filter the network in the second call
@@ -1247,7 +1247,7 @@ def get_metexplore_pathways(request, project_id, analysis_id):
             return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_metexplore_network(request, project_id, analysis_id):
     if request.is_ajax():
         project = Project.objects.get(pk=project_id)
@@ -1334,7 +1334,7 @@ def get_metexplore_network(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_metexplore_info(request, project_id, analysis_id):
     if request.is_ajax():
         project = Project.objects.get(pk=project_id)
@@ -1395,7 +1395,7 @@ def get_metexplore_info(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def peak_info(request, project_id, analysis_id):
     if request.is_ajax():
         compound_id = int(request.GET['id'])
@@ -1477,7 +1477,7 @@ def peak_info(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def peak_info_peak_id(request, project_id, analysis_id):
     if request.is_ajax():
         peak_id = int(request.GET['id'])
@@ -1565,7 +1565,7 @@ def peak_info_peak_id(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_peaks_from_compound(request, project_id, analysis_id):
     if request.is_ajax():
         compound_id = int(request.GET['id'])
@@ -1644,7 +1644,7 @@ def get_peaks_from_compound(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_peaks_from_peak_id(request, project_id, analysis_id):
     if request.is_ajax():
         peak_id = int(request.GET['id'])
@@ -1720,7 +1720,7 @@ def get_peaks_from_peak_id(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def compound_info(request, project_id, analysis_id):
     if request.is_ajax():
         compound_id = int(request.GET['id'])
@@ -1741,7 +1741,7 @@ def compound_info(request, project_id, analysis_id):
         return HttpResponse(response, content_type='application/json')
 
 
-@attach_logging_info
+@attach_detach_logging_info
 def get_compounds_from_peak_id(request, project_id, analysis_id):
     if request.is_ajax():
         peak_id = int(request.GET['id'])
