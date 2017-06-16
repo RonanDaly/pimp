@@ -87,7 +87,13 @@ django_projects/TESTDATA*
 *.msp
 .idea
 # Virtual Environment Directories
-venv
+venv/**/*
+!venv/lib/
+!venv/lib/python2.7/
+!venv/lib/python2.7/site-packages/
+!venv/lib/python2.7/site-packages/pymzml/
+!venv/lib/python2.7/site-packages/pymzml/obo/
+!venv/lib/python2.7/site-packages/pymzml/obo/psi-ms-4.0.1.obo
 hostvenv
 # Local environment files
 .env

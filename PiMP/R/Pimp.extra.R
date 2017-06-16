@@ -90,7 +90,7 @@ setPiMPLoggerAnalysisID = function(analysis.id) {
 	loginfo('Setting analysis ID in logger to %s', analysis.id, logger=logger)
 	handler = getHandler('basic.stdout')
 	handler$formatter = function (record) {
-	    text <- paste(record$levelname, record$timestamp, record$logger, '0', analysis.id, '|', record$msg)
+	    text <- paste(record$levelname, record$timestamp, record$logger, '0', '0', analysis.id, '|', record$msg)
 	}
 	loginfo('Analysis id set', logger=logger)
 }

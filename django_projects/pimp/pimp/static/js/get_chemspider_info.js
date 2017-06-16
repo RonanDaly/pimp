@@ -25,8 +25,8 @@ $(document).ready(function() {
         	//If the CSID has been returned successfully from the server
         	if (response['csid'] != null) {
         		$('.cspider_info_btn.'+compound_id).replaceWith('<p>ChemSpider ID: '+ csid + '</p>');
-        		$('.cs_image.'+compound_id).append('<img src ="'+ image_url + '"  height="900" >'); 
-				$('.cs_url.'+compound_id).append('<a href ="'+ url + '" > ChemSpider </a>');
+        		$('.cs_image.'+compound_id).replaceWith('<img src ="'+ image_url + '"  height="900" >');
+				$('.cs_url.'+compound_id).replaceWith('<a href ="'+ url + '" > ChemSpider </a>');
 				$('.cs_name.'+compound_id).replaceWith(name);
 			}
 			else {

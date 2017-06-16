@@ -24,6 +24,7 @@ from rpy2.robjects.packages import importr
 
 from groups.forms import *
 from experiments.models import Analysis
+from support.logging_support import attach_detach_logging_info
 
 import datetime
 
@@ -153,6 +154,7 @@ def createTic(fileList, attribute, polarity, project):
         negtic.save()
 
 
+@attach_detach_logging_info
 def index(request, project_id):
     """
     Create empty forms for group creation and return to a GET request.
@@ -258,6 +260,149 @@ def index(request, project_id):
     return render(request, 'project/groupcreation_bs3.html', c)
 
 
+@attach_detach_logging_info
+def edit(request, project_id, group_id):
+    """
+    Create empty forms for group creation and return to a GET request.
+    Validate form data for group creation, save the data into the database, return user to project detail.
+
+    """
+    class RequiredFormSet(BaseFormSet):
+        def __init__(self, *args, **kwargs):
+            super(RequiredFormSet, self).__init__(*args, **kwargs)
+            for form in self.forms:
+                form.empty_permitted = False
+
+    try:
+        project = Project.objects.get(pk=project_id)
+        user = request.user
+        permission = project.userproject_set.get(user=user).permission
+        group = Group.objects.get(pk=group_id)
+    except Project.DoesNotExist:
+        raise Http404  # Http404 not imported, so this except does nothing...
+
+    # Get the list of attributes already created and attached to the group to be edited
+    existing_attribute = Attribute.objects.filter(group=group)
+    # This is created to populate the initial attribute formset
+    initial_attribute_list = [{ 'name':attribute.name } for attribute in existing_attribute]
+
+    # Get the list of samples already assigned to an attribute of the group to set the total number of forms (extra)
+    assigned_samples = project.sample_set.all().filter(attribute__group=group)
+
+    # Get the list of samples that are not assigned to an attribute of the group.
+    unassigned_samples = project.sample_set.all().exclude(attribute__group=group)
+
+    # Get the list of analyses that are attached to the attributes being edited
+    analysis_list = Analysis.objects.all().filter(experiment__comparison__attribute__in=existing_attribute).distinct()
+
+    # Please note: the maximum number of attribute is 20 per group
+    AttributeFormSet = formset_factory(AttributeForm, extra=0 , max_num=20, formset=RequiredFormSet)
+
+    SampleAttributeFormSet = formset_factory(SampleAttributeForm, extra=assigned_samples.count(), formset=RequiredFormSet)
+
+    # Create a dictonnary with attribute - sample association information {group1: [sample1, sample2], group2: [sample3, sample4], ...}
+    attribute_sample_association = {}
+    for attribute in existing_attribute:
+        attached_samples = project.sample_set.all().filter(attribute=attribute)
+        attribute_sample_association[attribute.name] = attached_samples
+
+    error_message = False
+
+    if request.method == 'POST':
+        print user.username + ' submitted a group creation form. Processing...'
+        group_form = GroupForm(request.POST)
+        attribute_formset = AttributeFormSet(request.POST, prefix='attributes')
+        sample_attribute_formset = SampleAttributeFormSet(request.POST, prefix='samplesattributes')
+
+        if attribute_formset.is_valid() and sample_attribute_formset.is_valid() and group_form.is_valid():
+
+            # This series of if statements is used to check if the user tried to create
+            # attributes without assigning samples to them, or tried to create a group
+            # without adding any attributes.
+            # Any attribute without samples is not saved to the database.
+            # A group without attributes is not saved to the database.
+
+            project.modified = datetime.datetime.now()
+
+            for analysis in analysis_list:
+                # deleting the params will cascade to the analysis and the dataset
+                experiment = analysis.experiment
+                analysis.params.delete()
+                experiment.delete()
+
+            group.delete()
+            existing_attribute.delete()
+
+            group = group_form.save(commit=False)
+            group_saved = False
+
+            for attribute_form in attribute_formset.forms: # for each attribute
+                attribute_object = attribute_form.save(commit=False)
+                attribute_saved = False
+                attribute_name = attribute_form.cleaned_data['name']
+                print '\tChecking if attribute ' + attribute_name + ' has been assigned any samples...'
+
+                for sample_attribute_form in sample_attribute_formset.forms: # for each sample
+                    sample_attribute = sample_attribute_form.cleaned_data['attribute']
+
+                    if sample_attribute == attribute_name: # if there is a sample assigned to the attribute, save it
+                        print '\tA sample has been assigned to attribute ' + attribute_name
+
+                        if not group_saved:  # ensure the group is only saved once
+                            print '\tSaving group ' + group_form.cleaned_data['name']
+                            group.save()
+                            group_saved = True
+
+                        if not attribute_saved:  # ensure the attribute is only saved once
+                            print '\tSaving attribute ' + attribute_name
+                            attribute_object.group = group
+                            attribute_object.save()
+                            attribute_saved = True
+
+                        sample_id = sample_attribute_form.cleaned_data['sample']
+                        print '\tSample ' + sample_id + ' has been added to ' + attribute_name + '\n'
+                        sample = project.sample_set.get(id=sample_id)
+                        attribute = group.attribute_set.get(name=attribute_name)
+                        SampleAttribute.objects.create(sample=sample, attribute=attribute)
+
+            project.save()
+            print "Group creation processing finished."
+
+            return HttpResponseRedirect(reverse('project_detail', args=(project.id,)))
+
+        else:  # at least one form isn't valid
+            print "At least one form in the group creation view wasn't valid."
+            error_message = True # Used on the template to display a general error message.
+            logger.warning("attribute_formset errors: %s", attribute_formset.errors)
+            logger.warning("sample_attribute_formset errors: %s", sample_attribute_formset.errors)
+            logger.warning("group_form errors: %s", group_form.errors)
+            group_form = GroupForm()
+            attribute_formset = AttributeFormSet(prefix='attributes')
+            sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
+
+    else:  # if the request method is GET
+        group_form = GroupForm(instance=group)
+        attribute_formset = AttributeFormSet(prefix='attributes', initial=initial_attribute_list)
+        sample_attribute_formset = SampleAttributeFormSet(prefix='samplesattributes')
+
+    c = {
+        'group_form': group_form,
+        'group': group,
+        'attribute_formset': attribute_formset,
+        'sample_attribute_formset': sample_attribute_formset,
+        'assigned_samples': assigned_samples,
+        'unassigned_samples': unassigned_samples,
+        'project': project,
+        'permission': permission,
+        'error_message': error_message,
+        'attribute_sample_association': attribute_sample_association,
+        'analysis_exist': [analysis_list.exists(), analysis_list.count()]
+    }
+
+    return render(request, 'project/groupedit_bs3.html', c)
+
+
+@attach_detach_logging_info
 def create_calibration_groups(request, project_id):
     """
     A view to provide forms for assigning calibration samples to their groups (blank, QC, standard),
@@ -276,7 +421,7 @@ def create_calibration_groups(request, project_id):
     except Project.DoesNotExist:
         raise Http404  # Http404 not imported, so this except does nothing...
 
-        # Get the list of samples already assigned to a calibration group to set the total number of forms (extra)
+    # Get the list of samples already assigned to a calibration group to set the total number of forms (extra)
     assigned_calibration_samples = project.calibrationsample_set.all().filter(attribute__isnull=False)
 
     # Create formset for calibration groups, the number of calibration groups is always 3 (extra=3)
@@ -287,7 +432,7 @@ def create_calibration_groups(request, project_id):
 
     # Get all calibration samples
     calibration_samples = project.calibrationsample_set.all()
-        # Get all samples not already assigned to a calibration group
+    # Get all samples not already assigned to a calibration group
     unassigned_calibration_samples = project.calibrationsample_set.all().filter(attribute__isnull=True)
     # Get the existing calibration groups
     attribute_list = Attribute.objects.filter(calibrationsample=calibration_samples).distinct()

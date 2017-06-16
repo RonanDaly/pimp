@@ -1,0 +1,269 @@
+{%  extends 'base_bs3.html' %}
+
+{% load staticfiles %}
+
+{% load group_tags %}
+
+{% block DataTables %}
+    <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'DataTables-1.10.9/DataTables-1.10.9/js/dataTables.bootstrap.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'DataTables-1.10.9/DataTables-1.10.9/css/dataTables.bootstrap.min.css' %}" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'DataTables-1.10.9/Select-1.0.1/css/select.bootstrap.min.css' %}"/>
+    <script type="text/javascript" src="{% static 'DataTables-1.10.9/Select-1.0.1/js/dataTables.select.min.js' %}"></script>
+{% endblock %}
+
+{% block custom_scripts_and_styles %}
+    <script src="{% static 'jquery-validation-1.14.0/jquery.validate.min.js' %}"></script>
+    <script src="{% static 'jquery-validation-1.14.0/additional-methods.min.js' %}"></script>
+    <script src="{% static 'js/group_creation_js.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h1>{{ project }}</h1>
+                    </div>
+                    <div class="col-md-4">
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-default btn-sm pull-right" data-toggle="modal" data-target="#myModalCancel">
+                            <span class="glyphicon glyphicon-step-backward"></span>
+                            Back to project page
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                            <p class="lead">Create experimental conditions and assign samples to them.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- A blank forms to use as a template for JavaScript-provided django forms -->
+    <!-- These can be included here without causing any changes to the database, as the formset will ignore forms that were not changed. -->
+    <div style="display:none" id="attribute_form_template">
+            {{ attribute_formset.empty_form.name }}
+    </div>
+
+    <div style="display:none" id="sampleattribute_form_template">
+        {{ sample_attribute_formset.empty_form.sample }}
+        {{ sample_attribute_formset.empty_form.attribute }}
+
+    </div>
+    <!-- end blank forms -->
+
+    {% if analysis_exist.0 %}
+    <div id='warning-msg' class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span> The conditions you are about to modify have been used in {{ analysis_exist.1 }} analys{{ analysis_exist.1|pluralize:"is,es" }}. The analys{{ analysis_exist.1|pluralize:"is,es" }} will be deleted if you make any changes.
+    </div>
+    {% endif %}
+
+
+    <form id="samples_attribute_form" method="post" action="{% url 'edit_group' project.id group.id %}">
+
+        {% if error_message %}
+            <div id="row">
+                <div class="col-sm-12">
+                    <div class="panel panel-danger">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Error</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p class="text-danger">At least one of your entries (sample assignments, experimental condition names, experiment title) was incorrect. Please check that each condition has at least one sample assigned to it, and that your experimental title and condition names are formatted correctly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+
+            {% csrf_token %}
+            {{ attribute_formset.management_form }}
+            {{ sample_attribute_formset.management_form }}
+
+            <!-- Start columns for steps -->
+                <div class="col-sm-6">
+
+                    <!-- Create experiment (group) title -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">1. Enter experiment title</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <label for="id_name" style="display: none;" generated="true" class="error"></label>
+                                {{ group_form.name }}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End create experiment (group) title -->
+
+                    <!-- Create experimental conditions (attributes) -->
+                    <div class="panel panel-default" id="create_attributes_step">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">2. Create experimental conditions</h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>Enter your condition name below and click the <span class="glyphicon glyphicon-plus"></span> button.</p>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input type="text" name="attribute_name_field" id="attribute_name_field" class="form-control noSubmitOnEnter" placeholder="Condition name">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default" id="create_attribute" type="button" data-toggle="tooltip" title="Create condition">
+                                            <span class="glyphicon glyphicon-plus"></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label for="attribute_name_field" generated="true" style="display: none"; class="error"></label>
+                        </div>
+                    </div>
+                    <!-- End create experimental conditions (attributes) -->
+
+                    <!-- Sample table -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">3. Add samples to experimental condtions</h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>Select samples from the table below and click the <span class="glyphicon glyphicon-plus"></span> button in the adjacent condition to add them.</p>
+                            <div id="samples">
+
+                                <table id="sample_list" class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Sample ID</th>
+                                            <th>File Name</th>
+                                            <th>Polarity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sample in unassigned_samples %}
+                                            <tr>
+                                                <td>{{ sample.id }}</td>
+                                                <td>{{ sample.name }}</td>
+                                                <td>{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.negdata %}-{% endif %}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End sample table -->
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">4. Save </h4>
+                        </div>
+                        <div class="panel-body">
+
+
+                            <p>When you are done, click the "Save" button below to store your changes.</p>
+                            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#submit_warning">
+                                Save
+                            </button>
+
+                        </div>
+                    </div>
+
+                </div>
+                <!-- End column for steps -->
+
+                <!-- Column for sample attributes -->
+                <div class="col-sm-6 pull-right" id="samples_attributes">
+                    <!-- Added for edit feature -->
+                    {% for form in attribute_formset %}
+                        <div class="panel panel-info" id="{{ form.name.value }}">
+                            <div class="panel-heading clearfix">
+                                <div class="btn-group pull-right">
+                                    <button id="{{ form.name.value }}-add-btn" data-toggle="tooltip" data-container="body" title="Add select samples" class="btn btn-sm btn-default add_samples" data-original-title="Add selected samples">
+                                        <span class="glyphicon glyphicon-plus"></span>
+                                    </button>
+                                    <button id="{{ form.name.value }}-remove-btn" data-toggle="tooltip" data-container="body" title="Remove all samples" class="btn btn-sm btn-default remove_samples" data-original-title="Remove all samples">
+                                        <span class="glyphicon glyphicon-eject"></span>
+                                    </button>
+                                    <button data-toggle="tooltip" data-container="body" title="Delete condition" class="btn btn-sm btn-danger delete_condition">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                    </button>
+                                </div>
+                                <h2 class="panel-title" style="padding-top: 5px;">{% if form.name.value == "qc" %}{{ form.name.value|upper }}{% else %}{{ form.name.value|title }}{% endif %}</h2>
+                            </div>
+                            {% with associated_samples=attribute_sample_association|get_dictionary_item:form.name.value %}
+                            <div class="panel-body">
+                                <ol class="list-group">
+                                {% if associated_samples %}
+                                    {% for sample in associated_samples %}
+                                    <li class="list-group-item" data-form_id="{{ assigned_samples|sample_index:sample }}" data-sample_id="{{ sample.id }}" data-polarity="{% if sample.samplefile.posdata and sample.samplefile.negdata %}+-{% elif sample.samplefile.posdata%}+{% elif sample.samplefile.negdata %}-{% else %}NA{% endif %}"><div class="sample_name" style="display:inline;">{{ sample.name }}</div><span class="pull-right"><a href="#" class="remove_sample btn btn-xs btn-default"><span class="glyphicon glyphicon-remove"></span></a></span></li>
+                                    <div class="item" style="display: none;">
+                                        <label for="id_samplesattributes-{{ assigned_samples|sample_index:sample }}-sample" style="display: none;">Sample:</label>
+                                        <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_samples|sample_index:sample }}-sample" name="samplesattributes-{{ assigned_samples|sample_index:sample }}-sample" rows="10" style="display: none;" value="{{ sample.id }}">{{ sample.id }}</textarea>
+                                        <label for="id_samplesattributes-{{ assigned_samples|sample_index:sample }}-attribute" style="display: none;">Attribute:</label>
+                                        <textarea class="sample_attribute_input" cols="40" id="id_samplesattributes-{{ assigned_samples|sample_index:sample }}-attribute" name="samplesattributes-{{ assigned_samples|sample_index:sample }}-attribute" rows="10" style="display: none;" value="{{ form.name.value }}">{{ form.name.value }}</textarea>
+                                    </div>
+                                    {% endfor %}
+                                </ol>
+                                {% else %}
+                                </ol>
+                                <p class="sample_placeholder">No samples</p>
+                                {% endif %}
+                                <div class="attribute-item" style="display: none;">{{ form.name }}</div>
+                            </div>
+                            {% endwith %}
+                        </div>
+                    {% endfor %}
+                    <!-- End added for edit feature -->
+                </div>
+                <!-- End column -->
+
+            </div><!-- /.row -->
+            <!-- modal -->
+            <div class="modal" id="submit_warning" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Create experimental conditions and assign samples to them.</h4>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure? All experimental conditions should have at least one sample, and duplicate conditions won't work.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">No, go back</button>
+                            <button type="submit" class="btn btn-primary">Yes, I'm sure. Save!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--/modal -->
+        </form>
+
+    <div id="myModalCancel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <h4 class="modal-title">Warning</h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+                    <p>Every change you may have made be will be lost.</p>
+
+                    <p>Do you want to continue?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" aria-hidden="true">
+                        Cancel
+                    </button>
+                    <a type="button" class="btn btn-sm btn-primary" href="{% url 'project_detail' project.id %}">Continue to project page</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

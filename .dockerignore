@@ -9,4 +9,5 @@ packrat/lib
 packrat/src
 !packrat/src/packrat/packrat_0.4.7-1.tar.gz
 venv
+!venv/lib/python2.7/site-packages/pymzml/obo/psi-ms-4.0.1.obo
 DockerDevContext

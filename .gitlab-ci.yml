@@ -21,6 +21,9 @@ pimp-base:
             $PROXY_SETTINGS
             .
     stage: build1
+    only:
+        - master
+        - tags
 
 nginx-pimp:
     script:
@@ -29,6 +32,9 @@ nginx-pimp:
             $PROXY_SETTINGS
             .
     stage: build1
+    only:
+        - master
+        - tags
 
 pimp:
     script:
@@ -36,8 +42,8 @@ pimp:
             $PROXY_SETTINGS
             .
     stage: build2
-    except:
-        - tags
+    only:
+        - master
 
 pimp-squash:
     script:
@@ -96,6 +102,9 @@ fetch-lfs:
     script:
         - git lfs pull
     stage: prebuild
+    only:
+        - master
+        - tags
 
 #    variables:
 #        CI_DEBUG_TRACE: "true"

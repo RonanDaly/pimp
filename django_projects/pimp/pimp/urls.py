@@ -111,6 +111,8 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/adduser/$', 'projects.views.adduser', name='add_user'),
     # upload and delete file
     url(r'^accounts/project/(?P<project_id>\d+)/upload/', include('fileupload.urls')),
+    # edit group
+    url(r'^accounts/project/(?P<project_id>\d+)/group/(?P<group_id>\d+)/edit/$', 'groups.views.edit', name='edit_group'),
     # create group
     url(r'^accounts/project/(?P<project_id>\d+)/group/', 'groups.views.index', name='add_group'),
     # assign file to group

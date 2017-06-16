@@ -15,6 +15,7 @@ import StringIO
 from django.http import HttpResponse, HttpResponseRedirect
 from django.db import transaction
 from django.core.urlresolvers import reverse
+from django.core.exceptions import PermissionDenied
 import json
 import csv
 import numpy as np
@@ -598,7 +599,7 @@ def add_experiment(request):
 
 
 
-
+@login_required
 def get_chemspider_info(request, compound_id):
 
     if request.is_ajax():
@@ -615,6 +616,8 @@ def get_chemspider_info(request, compound_id):
         print "the response is", response
 
         return HttpResponse(response, content_type='application/json')
+    else:
+        raise PermissionDenied
 
 
 
