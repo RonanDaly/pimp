@@ -67,7 +67,7 @@ initialisePiMPLogging = function() {
 	logger <- getPiMPLogger('Pimp.extra.initialisePiMPLogging')
 	handler = getHandler('basic.stdout')
 	handler$formatter = function (record) {
-	    text <- paste(record$levelname, record$timestamp, record$logger, '0', '0', '|', record$msg)
+	    text <- paste(record$levelname, record$timestamp, record$logger, '0', '0', '0', '|', record$msg)
 	}
 	logerror('Logging at ERROR level', logger=logger)
 	logwarn('Logging at WARNING level', logger=logger)
