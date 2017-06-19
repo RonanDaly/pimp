@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import os
 import collections
 import logging
 
@@ -135,6 +134,7 @@ class PlageAnalysis(object):
             activity_df = pd.DataFrame(pathway_activities).set_index([0])
             activity_df.columns = int_df.columns
             activity_df.index.name = "Pathways"
+            activity_df.name = self.analysis.experiment.title + "_" + str(self.analysis.id)
 
         return activity_df
 
@@ -199,3 +199,9 @@ class PlageAnalysis(object):
 
         return groups_dict
 
+    def write_activity_df (self, df):
+        del df.index.name
+        filename = df.name+'.csv'
+        df.to_csv(filename)
+        logger.info("Your file has been written to: %s ", filename)
+        
