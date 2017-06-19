@@ -166,7 +166,7 @@ class Rpy2Pipeline(object):
 
         analysis_id = self.analysis.id
 
-        groups = self.metadata.get_groups()
+        groups, _ = self.metadata.get_groups()
         # We need to make sure we close the database connection when we are idle for long periods
         connection.close()
         df, metadata = convert_to_dataframe(groups)
@@ -417,7 +417,7 @@ class Rpy2Pipeline(object):
     def generate_combinations(self, polarity, combined_dir):
 
         # create a big matrix where each factor is an axis
-        factors = self.metadata.get_groups(self.project)
+        factors, _ = self.metadata.get_groups(self.project)
         logger.debug(factors)
         dims = []
         for f in factors:
@@ -578,7 +578,7 @@ class Rpy2PipelineMetadata(object):
         self.experiment = self.analysis.experiment
 
         self.files = self.get_files()
-        self.groups = self.get_groups()
+        self.groups, _ = self.get_groups()
         self.stds = self.get_standards()
         self.contrasts = self.get_comparisons()
         self.databases = self.get_databases()
@@ -632,6 +632,7 @@ class Rpy2PipelineMetadata(object):
         df = pd.DataFrame(data, columns=headers)
 
         factors = []
+        sample_path = {}
         fs = df.factor.unique()
         for f_label in fs:
 
@@ -655,12 +656,13 @@ class Rpy2PipelineMetadata(object):
                 for samp in samples:
                     filename, file_extension = os.path.splitext(samp)
                     processed.append(filename)
+                    sample_path[filename] = samp
 
                 factor.add_level(level_label, processed)
 
             factors.append(factor)
 
-        return factors
+        return factors, sample_path
 
     def get_standards(self):
         standards = CalibrationSample.objects.filter(project=self.project, attribute__name='standard').values_list(

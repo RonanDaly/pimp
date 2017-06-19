@@ -18,6 +18,7 @@ from helpers import convert_to_dataframe
 
 logger = logging.getLogger(__name__)
 
+
 class PlageAnalysis(object):
 
     # The constructor just takes in the analysis and defines the project
@@ -73,13 +74,9 @@ class PlageAnalysis(object):
             pk_samp_intensities.append(peak_int_list)
 
         sample_fnames = [sample.name for sample in samples]
-        sample_names = []
-        for s in sample_fnames:
-            filename, file_extension = os.path.splitext(s)
-            sample_names.append(filename)
 
         int_df = pd.DataFrame(pk_samp_intensities).set_index([0])
-        int_df.columns = sample_names
+        int_df.columns = sample_fnames
         int_df.index.name = "ms1_peak_id"
         int_df.columns.name = "sample_name"
 
@@ -95,7 +92,7 @@ class PlageAnalysis(object):
         # Change the 0.00 intensities in the matrix to useable values
         np.array(self.change_zero_peak_ints(int_df))
 
-        logger.info("Scaling the data accross the sample: zero mean and unit variance")
+        logger.info("Scaling the data across the sample: zero mean and unit variance")
 
         # standardize the data across the samples (zero mean and unit variance))
         scaled_data = preprocessing.scale(np.array(int_df), axis=1)
@@ -186,19 +183,19 @@ class PlageAnalysis(object):
     """ Method to return a dictionary of the groups (factors) and sample names
     (adapted from Joe's code)
     :returns:groups_dict: A dictionary of the group (key) and samples in that group (values) """
-
     def get_groups(self):
 
         m = Rpy2PipelineMetadata(self.analysis, self.project)
-        groups = m.get_groups()
+        groups, paths = m.get_groups()
         groups_df, _ = convert_to_dataframe(groups)
 
         groups_dict = defaultdict(list)
         for idx, row in groups_df.iterrows():
             values = row.values
             sample_name = values[0]
+            file_name = paths[sample_name]
             factors = tuple(values[1:-1])
-            groups_dict[factors].append(sample_name)
+            groups_dict[factors].append(file_name)
 
         return groups_dict
 
