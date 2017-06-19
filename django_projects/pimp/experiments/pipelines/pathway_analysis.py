@@ -200,8 +200,6 @@ class PlageAnalysis(object):
         return groups_dict
 
     def write_activity_df (self, df):
-        del df.index.name
         filename = df.name+'.csv'
         df.to_csv(filename)
         logger.info("Your file has been written to: %s ", filename)
-        
