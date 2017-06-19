@@ -1,5 +1,6 @@
 from django.db import models
 from groups.models import Attribute
+from projects.models import Project
 
 # Create your models here.
 class Experiment(models.Model):
@@ -62,6 +63,12 @@ class Analysis(models.Model):
 
 	def __unicode__(self):
 		return self.experiment.title
+
+	def get_project(self):
+		projects = Project.objects.filter(sample__attribute__comparison__experiment__analysis=self.id).distinct()
+		if len(projects) != 1:
+			raise Exception('More or less than one project for an analysis: %d projects, analysis_id=%s' % (len(projects),self.id))
+		return projects[0]
 
 class DefaultParameter(models.Model):
 	name = models.CharField(max_length=100)

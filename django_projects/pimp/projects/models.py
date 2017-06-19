@@ -23,12 +23,6 @@ class Project(models.Model):
 	def __unicode__(self):
 		return self.title
 
-	def get_project(self, analysis_id):
-		projects = Project.objects.filter(sample__attribute__comparison__experiment__analysis=analysis_id).distinct()
-		if len(projects) != 1:
-			raise Exception('More or less than one project for an analysis: %d projects, analysis_id=%s' % (len(projects),analysis_id))
-		return projects[0]
-
 class UserProject(models.Model):
 	user = models.ForeignKey(User)
 	project = models.ForeignKey(Project)
