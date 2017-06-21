@@ -991,7 +991,7 @@ def define_annotation_query(request, fragmentation_set_name_slug, annotation_too
             annotation_query_form = CleanFilterForm(fragmentation_set_name_slug,request.POST)
         elif annotation_tool.name == 'Network Sampler':
             annotation_query_form = NetworkSamplerForm(fragmentation_set_name_slug,request.POST)
-       	elif annotation_tool.name == 'MS2LDA':
+        elif annotation_tool.name == 'MS2LDA':
             annotation_query_form = MS2LDAQueryForm(request.POST)
 
         # Check that the form is valid

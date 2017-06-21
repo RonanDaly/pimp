@@ -43,24 +43,24 @@ createBatchInformation <- function(sequenceFiles, typeColumnName, fileColumnName
     
     for (f in sequenceFiles) {
         data = read.csv(f, skip=1, header=TRUE, stringsAsFactors=FALSE)
-		idString = paste(data[[fileColumnName]], collapse='|')
+        idString = paste(data[[fileColumnName]], collapse='|')
     mzmlfs = dir(path=mzmlFileDirectory,pattern=paste0('(', idString, ').mzML'),recursive=TRUE,full.names=TRUE)
-		#rawfs = dir(path=rawFileDirectory,pattern=paste0('(', idString, ').raw'),recursive=TRUE,full.names=TRUE)
-		#mzxmlfs = dir(path=mzxmlFileDirectory,pattern=paste0('(', idString, ').mzXML'),recursive=TRUE,full.names=TRUE)
-		#peakmlfs = dir(path=peakmlFileDirectory,pattern=paste0('(', idString, ').peakml'),recursive=TRUE,full.names=TRUE)
-		
+        #rawfs = dir(path=rawFileDirectory,pattern=paste0('(', idString, ').raw'),recursive=TRUE,full.names=TRUE)
+        #mzxmlfs = dir(path=mzxmlFileDirectory,pattern=paste0('(', idString, ').mzXML'),recursive=TRUE,full.names=TRUE)
+        #peakmlfs = dir(path=peakmlFileDirectory,pattern=paste0('(', idString, ').peakml'),recursive=TRUE,full.names=TRUE)
+
         for (i in 1:nrow(data)) {
             dataFileId = data[i,fileColumnName]
             mzmlf = mzmlfs[grepl(paste0(dataFileId, '.mzML'), mzmlfs)]
             rawf = paste0(rawFileDirectory, '/', sub('\\.mzML', '\\.raw', mzmlf))
-			      #rawf = rawfs[grepl(paste0(dataFileId, '.raw'), rawfs)]
-			      mzxmlf = paste0(mzxmlFileDirectory, '/', sub('\\.mzML', '\\.mzXML', mzmlf))
-			      peakmlf = paste0(mzxmlFileDirectory, '/', sub('\\.mzML', '\\.peakml', mzmlf))
-			#print(rawf)
-			#print(mzxmlf)
-			#mzxmlf = mzxmlfs[grepl(paste0(dataFileId, '.mzXML'), mzxmlfs)]
-			#peakmlf = peakmlfs[grepl(paste0(dataFileId, '.peakml'), peakmlfs)]
-			
+                  #rawf = rawfs[grepl(paste0(dataFileId, '.raw'), rawfs)]
+                  mzxmlf = paste0(mzxmlFileDirectory, '/', sub('\\.mzML', '\\.mzXML', mzmlf))
+                  peakmlf = paste0(mzxmlFileDirectory, '/', sub('\\.mzML', '\\.peakml', mzmlf))
+            #print(rawf)
+            #print(mzxmlf)
+            #mzxmlf = mzxmlfs[grepl(paste0(dataFileId, '.mzXML'), mzxmlfs)]
+            #peakmlf = peakmlfs[grepl(paste0(dataFileId, '.peakml'), peakmlfs)]
+
             if ( length(mzmlf) > 0 && file.exists(mzmlf) ) {
                 ctime = getMLFileCreatedTime(mzmlf)
                 batchColumn = append(batchColumn, batch)
@@ -81,8 +81,8 @@ createBatchInformation <- function(sequenceFiles, typeColumnName, fileColumnName
     }
     offsets = as.numeric(difftime(timeColumn, timeColumn[1], units='hours'))    
     createBatchInformation = data.frame(row.names=idColumn, batchColumn, offsets,
-		sequenceFileColumn, as.factor(typeColumn), peakmlFileColumn, rawFileColumn,
-		mzxmlFileColumn, mzmlFileColumn, stringsAsFactors=FALSE)
+        sequenceFileColumn, as.factor(typeColumn), peakmlFileColumn, rawFileColumn,
+        mzxmlFileColumn, mzmlFileColumn, stringsAsFactors=FALSE)
     names(createBatchInformation) = c('batch', 'time', 'sequenceFile', 'type', 'peakmlFile', 'rawFile', 'mzxmlFile', 'mzmlFile')
     createBatchInformation
 }

@@ -6,13 +6,13 @@ setMethod("dbconnection", "PiMPDB", function(object) object@dbconnection)
 
 #' @export
 setMethod("querydb", "PiMPDB", function(object, query, bind) {
-	if(!missing(bind)) {
-		#query <- sprintf(query, bind)
+    if(!missing(bind)) {
+        #query <- sprintf(query, bind)
     query <- do.call(sprintf, c(list(query), bind))
-	}
-	tryCatch(result <- dbGetQuery(dbconnection(object), query),
-		error=function(e) { stop(e) })
-	return(result)
+    }
+    tryCatch(result <- dbGetQuery(dbconnection(object), query),
+        error=function(e) { stop(e) })
+    return(result)
 })
 
 setMethod("getExperimentID", "PiMPDB", function(object, analysis.id) {
@@ -23,32 +23,32 @@ setMethod("getExperimentID", "PiMPDB", function(object, analysis.id) {
 setMethod("getExperimentSamples", "PiMPDB", function(object, experiment.id) {
     samples <- querydb(object,
                        paste("select DISTINCT fileupload_sample.id, fileupload_sample.name",
-                      	 	 "from fileupload_sample, groups_sampleattribute, groups_attribute, experiments_attributecomparison, experiments_comparison",
-                        	 "where fileupload_sample.id = groups_sampleattribute.sample_id",
-                        	 "and groups_sampleattribute.attribute_id = groups_attribute.id",
-                        	 "and groups_attribute.id = experiments_attributecomparison.attribute_id",
-                        	 "and experiments_attributecomparison.comparison_id = experiments_comparison.id",
-                        	 "and experiments_comparison.experiment_id = %d"),
+                             "from fileupload_sample, groups_sampleattribute, groups_attribute, experiments_attributecomparison, experiments_comparison",
+                             "where fileupload_sample.id = groups_sampleattribute.sample_id",
+                             "and groups_sampleattribute.attribute_id = groups_attribute.id",
+                             "and groups_attribute.id = experiments_attributecomparison.attribute_id",
+                             "and experiments_attributecomparison.comparison_id = experiments_comparison.id",
+                             "and experiments_comparison.experiment_id = %d"),
                         bind=experiment.id
                     )
     return(samples)
 })
 
 setMethod("getExperimentControls", "PiMPDB", function(object, experiment.id) {
-	samples <- querydb(object,
-					   "SELECT DISTINCT fileupload_calibrationsample.id, fileupload_calibrationsample.name, T11.name AS type
-						FROM fileupload_calibrationsample
-						INNER JOIN projects_project ON ( fileupload_calibrationsample.project_id = projects_project.id )
-						INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )
-						INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )
-						INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id )
-						INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id )
-						INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id )
-						INNER JOIN experiments_experiment ON ( experiments_comparison.experiment_id = experiments_experiment.id )
-						INNER JOIN groups_projfileattribute ON ( fileupload_calibrationsample.id = groups_projfileattribute.calibrationsample_id )
-						INNER JOIN groups_attribute T11 ON ( groups_projfileattribute.attribute_id = T11.id ) WHERE (experiments_experiment.id = %d)",
-						bind=experiment.id)
-						return(samples)
+    samples <- querydb(object,
+                       "SELECT DISTINCT fileupload_calibrationsample.id, fileupload_calibrationsample.name, T11.name AS type
+                        FROM fileupload_calibrationsample
+                        INNER JOIN projects_project ON ( fileupload_calibrationsample.project_id = projects_project.id )
+                        INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )
+                        INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )
+                        INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id )
+                        INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id )
+                        INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id )
+                        INNER JOIN experiments_experiment ON ( experiments_comparison.experiment_id = experiments_experiment.id )
+                        INNER JOIN groups_projfileattribute ON ( fileupload_calibrationsample.id = groups_projfileattribute.calibrationsample_id )
+                        INNER JOIN groups_attribute T11 ON ( groups_projfileattribute.attribute_id = T11.id ) WHERE (experiments_experiment.id = %d)",
+                        bind=experiment.id)
+                        return(samples)
 })
 
 
@@ -136,13 +136,13 @@ setMethod("getControlMemberSamples", "PiMPDB", function(object, member.id) {
 setMethod("getExperimentComparisons", "PiMPDB", function(object, experiment.id) {
     comparisons <- querydb(object,
                     paste("select experiments_comparison.id, experiments_comparison.name, group_concat(groups_attribute.name) AS contrast, group_concat(experiments_attributecomparison.group) AS control",
-                    	  "from experiments_comparison, experiments_attributecomparison, groups_attribute",
-                    	  "where experiments_comparison.id = experiments_attributecomparison.comparison_id",
-                    	  "and experiments_attributecomparison.attribute_id = groups_attribute.id",
-                    	  "and experiments_comparison.experiment_id = %d",
-                    	  "group by comparison_id",
-                    	  "order by experiments_attributecomparison.group DESC"),
-                    	  bind=experiment.id)
+                          "from experiments_comparison, experiments_attributecomparison, groups_attribute",
+                          "where experiments_comparison.id = experiments_attributecomparison.comparison_id",
+                          "and experiments_attributecomparison.attribute_id = groups_attribute.id",
+                          "and experiments_comparison.experiment_id = %d",
+                          "group by comparison_id",
+                          "order by experiments_attributecomparison.group DESC"),
+                          bind=experiment.id)
 
     return(comparisons)
 })
@@ -167,20 +167,20 @@ setMethod("getAnalysisParameters", "PiMPDB", function(object, analysis.id) {
 })
 
 setMethod("getProjectID", "PiMPDB", function(object, analysis.id) {
-	id <- querydb(object,
-						    paste("SELECT DISTINCT projects_project.id",
-						  		"FROM projects_project",
-								"INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )",
-								"INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )",
-								"INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id )",
-								"INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id )",
-								"INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id )",
-								"INNER JOIN experiments_experiment ON ( experiments_comparison.experiment_id = experiments_experiment.id )",
-								"INNER JOIN experiments_analysis ON ( experiments_experiment.id = experiments_analysis.experiment_id )",
-								"WHERE experiments_analysis.id = %d"),
-								bind=analysis.id)
-	return(as.integer(id$id))
-	})
+    id <- querydb(object,
+                            paste("SELECT DISTINCT projects_project.id",
+                                "FROM projects_project",
+                                "INNER JOIN fileupload_sample ON ( projects_project.id = fileupload_sample.project_id )",
+                                "INNER JOIN groups_sampleattribute ON ( fileupload_sample.id = groups_sampleattribute.sample_id )",
+                                "INNER JOIN groups_attribute ON ( groups_sampleattribute.attribute_id = groups_attribute.id )",
+                                "INNER JOIN experiments_attributecomparison ON ( groups_attribute.id = experiments_attributecomparison.attribute_id )",
+                                "INNER JOIN experiments_comparison ON ( experiments_attributecomparison.comparison_id = experiments_comparison.id )",
+                                "INNER JOIN experiments_experiment ON ( experiments_comparison.experiment_id = experiments_experiment.id )",
+                                "INNER JOIN experiments_analysis ON ( experiments_experiment.id = experiments_analysis.experiment_id )",
+                                "WHERE experiments_analysis.id = %d"),
+                                bind=analysis.id)
+    return(as.integer(id$id))
+    })
 
 setMethod("getAnnotationDatabases", "PiMPDB", function(object, analysis.id) {
 

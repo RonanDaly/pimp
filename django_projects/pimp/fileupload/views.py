@@ -9,9 +9,9 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DeleteView
 from django.http import HttpResponse, HttpResponseRedirect
 try:
-	from django.utils import simplejson
+    from django.utils import simplejson
 except:
-	import json as simplejson
+    import json as simplejson
 from django.core.urlresolvers import reverse
 
 # import os specific info

@@ -15,14 +15,14 @@
 
             {% for field in frag_set_form.visible_fields %}
                 {{ field.errors }}
-		<br>
+        <br>
                 {{ field.help_text }}
-		<br>
+        <br>
                 {{ field }}
-		<br>
+        <br>
             {% endfor %}
-	<button class="btn btn-large btn-primary" type="submit">Extract Peaks</button>
-	<a href="{% url 'experiment_summary' experiment.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
-	</form>
+    <button class="btn btn-large btn-primary" type="submit">Extract Peaks</button>
+    <a href="{% url 'experiment_summary' experiment.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+    </form>
 
 {% endblock %}

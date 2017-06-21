@@ -650,7 +650,7 @@ def run_ms2lda_analysis(annotation_query_id):
         - save data into ms2lda object
         - run an LDA analysis on the data
         - run thresholding on the data
-	- save the project file so that visualisation can be done at a later stage
+    - save the project file so that visualisation can be done at a later stage
           for this annotation query
     """
 

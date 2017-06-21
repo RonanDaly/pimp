@@ -7,35 +7,35 @@ attrs_dict = {'class': 'required'}
 attrs_condition_dict = {'class': 'required pull-right form-control'}
 
 class ExperimentForm(ModelForm):
-	class Meta:
-		model = Experiment
-		fields = ('title',)
-		widgets = {
-		'title' : TextInput(attrs={'placeholder': 'Analysis title', 'class':'experimentInput form-control'}),
-		}
+    class Meta:
+        model = Experiment
+        fields = ('title',)
+        widgets = {
+        'title' : TextInput(attrs={'placeholder': 'Analysis title', 'class':'experimentInput form-control'}),
+        }
 
 class ComparisonForm(forms.Form):
-	name = forms.RegexField(regex=r'^[\w.@+-]+$',
-	                        max_length=200,
-                        	widget=forms.TextInput(attrs={'placeholder': 'Title', 'style': 'display: none;'}),
+    name = forms.RegexField(regex=r'^[\w.@+-]+$',
+                            max_length=200,
+                            widget=forms.TextInput(attrs={'placeholder': 'Title', 'style': 'display: none;'}),
                             label=_("Title"),
                             error_messages={'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-	attribute1 = forms.ChoiceField(widget=forms.Select(attrs=attrs_condition_dict),
-							label=_("Condition"))
-	attribute2 = forms.ChoiceField(widget=forms.Select(attrs=attrs_condition_dict),
-							label=_("Control"))
+    attribute1 = forms.ChoiceField(widget=forms.Select(attrs=attrs_condition_dict),
+                            label=_("Condition"))
+    attribute2 = forms.ChoiceField(widget=forms.Select(attrs=attrs_condition_dict),
+                            label=_("Control"))
 
 class ParameterForm(ModelForm):
-	class Meta:
-		model = Parameter
-		fields = ('name','value','state',)
-		widgets = {
-		'name' : TextInput(attrs={'class':'parameterName'}),
-		'value' : TextInput(attrs={'placeholder': 'Enter value', 'class':'parameterInput form-control'}),
-		'state' : CheckboxInput(attrs={'name': 'onoffswitch', 'class': 'onoffswitch-checkbox', 'value':True}),#BooleanField()required=False,
-								#initial=False,),
-								# widget=forms.RadioSelect(attrs={'name': 'onoffswitch', 'class': 'onoffswitch-checkbox'})),
-		}
+    class Meta:
+        model = Parameter
+        fields = ('name','value','state',)
+        widgets = {
+        'name' : TextInput(attrs={'class':'parameterName'}),
+        'value' : TextInput(attrs={'placeholder': 'Enter value', 'class':'parameterInput form-control'}),
+        'state' : CheckboxInput(attrs={'name': 'onoffswitch', 'class': 'onoffswitch-checkbox', 'value':True}),#BooleanField()required=False,
+                                #initial=False,),
+                                # widget=forms.RadioSelect(attrs={'name': 'onoffswitch', 'class': 'onoffswitch-checkbox'})),
+        }
 
 class DatabaseForm(forms.ModelForm):
     databases = forms.ModelMultipleChoiceField(queryset=Database.objects.all(), required=False, widget=forms.CheckboxSelectMultiple)
@@ -49,9 +49,9 @@ class DatabaseForm(forms.ModelForm):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         if no_standards:
             self.fields['databases'].choices = Database.objects.all().exclude(name='standards').values_list('id', 'name')
-		# widgets = {
-		# 'name' : TextInput(attrs={'placeholder': 'Experiment title', 'class':'experimentInput'}),
-		# }
+        # widgets = {
+        # 'name' : TextInput(attrs={'placeholder': 'Experiment title', 'class':'experimentInput'}),
+        # }
 #class FooForm(forms.Form):
 #    def __init__(self, arg1, *args, **kwargs):
 #        self.arg1 = arg1

@@ -10,11 +10,11 @@ def mysplit(value, sep = "."):
 
 @register.filter(name='count')
 def count(list, sep = "."):
-	mzxml = 0
-	csv = 0
-	for file in list:
-		if file.name.split(sep)[1:].upper() == "MZXML": 
-			mzxml += 1
-		else:
-			csv +=1
-	return (mzxml, csv)
+    mzxml = 0
+    csv = 0
+    for file in list:
+        if file.name.split(sep)[1:].upper() == "MZXML":
+            mzxml += 1
+        else:
+            csv +=1
+    return (mzxml, csv)

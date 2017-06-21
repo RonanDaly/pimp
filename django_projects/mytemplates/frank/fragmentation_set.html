@@ -15,8 +15,8 @@
 <div class="row">
   <div class="col-md-12">
       <div class="page-header"><h1>{{fragment_set.name}}</h1></div>
-      	<p class="lead">{{fragment_set.experiment}}</p>
-      	<p class="lead">Number of MS1 Peaks: {{number_of_peaks}}</p>
+        <p class="lead">{{fragment_set.experiment}}</p>
+        <p class="lead">Number of MS1 Peaks: {{number_of_peaks}}</p>
   </div>
 </div>
 
@@ -25,110 +25,110 @@
     <h4>Create Annotation</h4>
     <p>Select a tool to generate candidate annotations</p>
    {% if annotation_tool_form %}
-	   <form id="annotation_tool_form" method="post" class="form-horizontal" action="{% url 'fragmentation_set' fragment_set.slug %}">
+       <form id="annotation_tool_form" method="post" class="form-horizontal" action="{% url 'fragmentation_set' fragment_set.slug %}">
        {% csrf_token %}
        {% for field in annotation_tool_form.visible_fields %}
        {{ field }}
        {% if field.errors %}<span class="help-inline">{{ field.errors }}</span>{% endif %}
        {% endfor %}
        <button class="btn btn-default btn-xs" type="submit" name="submit">Create New Annotation Query</button>
-  		</form>
+        </form>
     {% endif %}
   </div>
 </div>
 
 <div class="row">
   <div class="col-md-12">
-  	{% if annotations %}
-  		<table class="table" id="annotation-set">
+    {% if annotations %}
+        <table class="table" id="annotation-set">
         <thead>
-  			<tr>
-  				<th>Name</th>
-  				<th>Time Created</th>
-  				<th>Current Status</th>
-  				<th>Parent(s)</th>
-  				<th>Children</th>
-  				<th></th>
-  			</tr>
+            <tr>
+                <th>Name</th>
+                <th>Time Created</th>
+                <th>Current Status</th>
+                <th>Parent(s)</th>
+                <th>Children</th>
+                <th></th>
+            </tr>
       </thead>
       <tbody>
-  			{% for annotation in annotations %}
-  				<tr>
-  					<td>{{annotation.name}}</td>
-  					<td>{{annotation.time_created}}</td>
-  					<td>{{annotation.status}}</td>
-  					<td>
-  						{% for a in annotation.source_annotation_queries.all %}
-  							{{ a.name }}
-  						{% endfor %}
-  					</td>
-  					<td>
-  						{% for a in annotation.annotationquery_set.all %}
-  							{{ a.name }}
-  						{% endfor %}
-  					</td>
+            {% for annotation in annotations %}
+                <tr>
+                    <td>{{annotation.name}}</td>
+                    <td>{{annotation.time_created}}</td>
+                    <td>{{annotation.status}}</td>
                     <td>
-					<a href="{% url 'delete_annotation_query' fragment_set.slug annotation.slug %}">delete</a>&nbsp&nbsp&nbsp
-					 </td>
-					<td>
-					{% if annotation.annotation_tool|stringformat:"s" == 'MS2LDA' %}
-                                        	<a href="{% url 'ms2lda_vis' fragment_set.slug annotation.id %}" target="_blank">
-						<input type="button" class="btn btn-small btn-primary" value ="MS2LDA visualisation">
-						</input></a>
+                        {% for a in annotation.source_annotation_queries.all %}
+                            {{ a.name }}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for a in annotation.annotationquery_set.all %}
+                            {{ a.name }}
+                        {% endfor %}
+                    </td>
+                    <td>
+                    <a href="{% url 'delete_annotation_query' fragment_set.slug annotation.slug %}">delete</a>&nbsp&nbsp&nbsp
+                     </td>
+                    <td>
+                    {% if annotation.annotation_tool|stringformat:"s" == 'MS2LDA' %}
+                                            <a href="{% url 'ms2lda_vis' fragment_set.slug annotation.id %}" target="_blank">
+                        <input type="button" class="btn btn-small btn-primary" value ="MS2LDA visualisation">
+                        </input></a>
                                         {% endif %}
-					 </td>
-  				</tr>
-  			{% endfor %}
+                     </td>
+                </tr>
+            {% endfor %}
       </tbody>
-  		</table>
-  	{% else %}
-  		<p>No annotation queries have been performed on this peak set</p>
-  	{% endif %}
-  	<a class="btn btn-default" href="{% url 'remove_preferred_annotations' fragment_set.slug %}">Clear Preferred Annotations</a>
+        </table>
+    {% else %}
+        <p>No annotation queries have been performed on this peak set</p>
+    {% endif %}
+    <a class="btn btn-default" href="{% url 'remove_preferred_annotations' fragment_set.slug %}">Clear Preferred Annotations</a>
   </div>
 </div>
 
 <div class="row">
   <div class="col-md-12">
-	<h3>MS1 Peaks</h3>
-	{% if peaks_by_file %}
-		{% for file,peak_values in peaks_by_file.items %}
-			<div>
-				<h5>{{file}}&nbsp;<a data-toggle="collapse" data-target="#{{forloop.counter}}" class="btn btn-default btn-xs">Show</a></h5>
-				<div id="{{forloop.counter}}" class="collapse">
-					<table class="table MS1-peaks">
+    <h3>MS1 Peaks</h3>
+    {% if peaks_by_file %}
+        {% for file,peak_values in peaks_by_file.items %}
+            <div>
+                <h5>{{file}}&nbsp;<a data-toggle="collapse" data-target="#{{forloop.counter}}" class="btn btn-default btn-xs">Show</a></h5>
+                <div id="{{forloop.counter}}" class="collapse">
+                    <table class="table MS1-peaks">
             <thead>
-						<tr>
-							<th>Identifier</th>
-							<th>Mass</th>
-							<th>Retention Time</th>
-							<th>Intensity</th>
-							<th>Preferred Annotation</th>
-							<th>Compound Formula</th>
-						</tr>
+                        <tr>
+                            <th>Identifier</th>
+                            <th>Mass</th>
+                            <th>Retention Time</th>
+                            <th>Intensity</th>
+                            <th>Preferred Annotation</th>
+                            <th>Compound Formula</th>
+                        </tr>
           </thead>
           <tbody>
-						{% for peak in peak_values %}
-							<tr>
-								<td><a href="{% url 'peak_summary' fragment_set.slug peak.slug %}">{{peak.id}}</a></td>
-								<td>{{peak.mass|floatformat:4}}</td>
-								<td>{{peak.retention_time|floatformat:4}}</td>
-								<td>{{peak.intensity|floatformat:4}}</td>
-								<td>{{peak.preferred_candidate_annotation.compound.name}}</td>
-								<td>{{peak.preferred_candidate_annotation.compound.formula}}</td>
-							</tr>
-						{% endfor %}
+                        {% for peak in peak_values %}
+                            <tr>
+                                <td><a href="{% url 'peak_summary' fragment_set.slug peak.slug %}">{{peak.id}}</a></td>
+                                <td>{{peak.mass|floatformat:4}}</td>
+                                <td>{{peak.retention_time|floatformat:4}}</td>
+                                <td>{{peak.intensity|floatformat:4}}</td>
+                                <td>{{peak.preferred_candidate_annotation.compound.name}}</td>
+                                <td>{{peak.preferred_candidate_annotation.compound.formula}}</td>
+                            </tr>
+                        {% endfor %}
           </tbody>
-					</table>
-				</div>
-			</div>
-		{% endfor %}
-	{% endif %}
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 </div>
 </div>
-	<table>
-		<tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragment Sets</a></td></tr>
-		<tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
-	</table>
+    <table>
+        <tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragment Sets</a></td></tr>
+        <tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
+    </table>
 
 {% endblock %}

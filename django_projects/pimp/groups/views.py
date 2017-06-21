@@ -10,9 +10,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 try:
-	from django.utils import simplejson
+    from django.utils import simplejson
 except:
-	import json as simplejson
+    import json as simplejson
 
 # Pygal import for SVG file creation
 # import pygal

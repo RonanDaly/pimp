@@ -15,14 +15,14 @@
 
             {% for field in sample_form.visible_fields %}
                 {{ field.errors }}
-		<br>
+        <br>
                 {{ field.help_text }}
-		<br>
+        <br>
                 {{ field }}
-		<br>
+        <br>
             {% endfor %}
-	<button class="btn btn-large btn-primary" type="submit">Add Sample</button>
-	<a href="{% url 'condition_summary' experiment.slug condition.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
-	</form>
+    <button class="btn btn-large btn-primary" type="submit">Add Sample</button>
+    <a href="{% url 'condition_summary' experiment.slug condition.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+    </form>
 
 {% endblock %}

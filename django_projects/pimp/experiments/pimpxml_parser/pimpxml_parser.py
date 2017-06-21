@@ -6,1142 +6,1142 @@ from lxml import etree
 
 class Xmltree:
 
-	"""
-	Xmltree is the based object that allow you to access all object in your xml file
-	"""
-
-	def __init__(self, inputDoc):
-		self.file = inputDoc
-		self.tree = etree.parse(inputDoc)
-		self.root = self.tree.getroot()
-
-	def getAnalysisId(self):
-
-		""" 
-		return analysis id in the file
-		"""
-
-		# pathway_id = str(id)
-		analysis_id = self.tree.xpath('/gpimp:pimp_analysis/@id',
-									  namespaces={'gpimp':'http://puma.ibls.gla.ac.uk/ns/gpimp/1.0'})
-		if len(analysis_id) > 0:
-			return int(analysis_id[0])
-		else:
-			return None
-
-	def allGroups(self):
-
-		""" 
-		return all groups in the file
-		"""
-
-		groups = self.tree.xpath("//group")
-		if len(groups) > 0:
-			return groups
-		else:
-			return None
-
-	def allMembers(self):
-
-		""" 
-		return all members in the file
-		"""
-
-		members = self.tree.xpath("//member")
-		if len(members) > 0:
-			return members
-		else:
-			return None
-
-	def allSamples(self):
-
-		"""
-		return all samples in the file
-		"""
-
-		samples = self.tree.xpath("//sample")
-		if len(samples) > 0:
-			return samples
-		else:
-			return None
-
-	def allMemberComparisons(self):
-
-		""" 
-		return all member_comparisons in the file
-		"""
-
-		memberComparisons = self.tree.xpath("//member_comparison")
-		if len(memberComparisons) > 0:
-			return memberComparisons
-		else:
-			return None
-
-	def allParameters(self):
-
-		"""
-		return all parameters in the file
-		"""
-
-		parameters = self.tree.xpath("//parameter")
-		if len(parameters) > 0:
-			return parameters
-		else:
-			return None
-
-	def allPeaks(self):
-
-		"""
-		return all peaks in the file
-		"""
-
-		peaks = self.tree.xpath("//peak")
-		if len(peaks) > 0:
-			return peaks
-		else:
-			return None
-
-	def allCompounds(self):
-
-		""" 
-		return all compopunds in the file
-		"""
-
-		compounds = self.tree.xpath("//compound")
-		if len(compounds) > 0:
-			return compounds
-		else:
-			return None
-
-	def allComparisons(self):
-
-		""" 
-		return all comparisons in the file
-		"""
-
-		comparisons = self.tree.xpath("//comparison")
-		if len(comparisons) > 0:
-			return comparisons
-		else:
-			return None
-
-	def allSampleReferences(self):
-
-		""" 
-		return all sample_reference in the file
-		"""
-
-		sampleReferences = self.tree.xpath("//sample_reference")
-		if len(sampleReferences) > 0:
-			return sampleReferences
-		else:
-			return None
-
-	def allPathways(self):
-
-		""" 
-		return all pathways in the file
-		"""
-
-		pathways = self.tree.xpath("//pathway")
-		if len(pathways) > 0:
-			return pathways
-		else:
-			return None
-
-	def allCompoundInPathways(self):
-
-		""" 
-		return all compound_in_pathway in the file
-		"""
-
-		compoundInPathways = self.tree.xpath("//compound_in_pathway")
-		if len(compoundInPathways) > 0:
-			return compoundInPathways
-		else:
-			return None
-
-	def getMembers(self,id):
-
-		""" 
-		return list of members in a group from group id
-		"""
-
-		group_id = str(id)
-		members = self.tree.xpath("//group[@id='"+group_id+"']/memberset/member")
-		if len(members) > 0:
-			return members
-		else:
-			return None
-
-	def getGroupName(self,id):
-
-		""" 
-		return group name from group id
-		"""
-
-		group_id = str(id)
-		if len(self.tree.xpath("//group[@id='"+group_id+"']")) > 0:
-			group_name = self.tree.xpath("//group[@id='"+group_id+"']/name/text()")[0]
-			return group_name
-		else:
-			return None
-	
-	def getMemberName(self,id):
-
-		""" 
-		return member name from member id
-		"""
-
-		member_id = str(id)
-		if len(self.tree.xpath("//member[@id='"+member_id+"']")) > 0:
-			member_name = self.tree.xpath("//member[@id='"+member_id+"']/name/text()")[0]
-			return member_name
-		else:
-			return None
-
-	def getSamples(self,id):
-
-		""" 
-		return list of samples in a member from member id
-		"""
-
-		member_id = str(id)
-		samples = self.tree.xpath("//member[@id='"+member_id+"']/sampleset/sample")
-		if len(samples) > 0:
-			return samples
-		else:
-			return None
+    """
+    Xmltree is the based object that allow you to access all object in your xml file
+    """
+
+    def __init__(self, inputDoc):
+        self.file = inputDoc
+        self.tree = etree.parse(inputDoc)
+        self.root = self.tree.getroot()
+
+    def getAnalysisId(self):
+
+        """ 
+        return analysis id in the file
+        """
+
+        # pathway_id = str(id)
+        analysis_id = self.tree.xpath('/gpimp:pimp_analysis/@id',
+                                      namespaces={'gpimp':'http://puma.ibls.gla.ac.uk/ns/gpimp/1.0'})
+        if len(analysis_id) > 0:
+            return int(analysis_id[0])
+        else:
+            return None
+
+    def allGroups(self):
+
+        """ 
+        return all groups in the file
+        """
+
+        groups = self.tree.xpath("//group")
+        if len(groups) > 0:
+            return groups
+        else:
+            return None
+
+    def allMembers(self):
+
+        """ 
+        return all members in the file
+        """
+
+        members = self.tree.xpath("//member")
+        if len(members) > 0:
+            return members
+        else:
+            return None
+
+    def allSamples(self):
+
+        """
+        return all samples in the file
+        """
+
+        samples = self.tree.xpath("//sample")
+        if len(samples) > 0:
+            return samples
+        else:
+            return None
+
+    def allMemberComparisons(self):
+
+        """ 
+        return all member_comparisons in the file
+        """
+
+        memberComparisons = self.tree.xpath("//member_comparison")
+        if len(memberComparisons) > 0:
+            return memberComparisons
+        else:
+            return None
+
+    def allParameters(self):
+
+        """
+        return all parameters in the file
+        """
+
+        parameters = self.tree.xpath("//parameter")
+        if len(parameters) > 0:
+            return parameters
+        else:
+            return None
+
+    def allPeaks(self):
+
+        """
+        return all peaks in the file
+        """
+
+        peaks = self.tree.xpath("//peak")
+        if len(peaks) > 0:
+            return peaks
+        else:
+            return None
+
+    def allCompounds(self):
+
+        """ 
+        return all compopunds in the file
+        """
+
+        compounds = self.tree.xpath("//compound")
+        if len(compounds) > 0:
+            return compounds
+        else:
+            return None
+
+    def allComparisons(self):
+
+        """ 
+        return all comparisons in the file
+        """
+
+        comparisons = self.tree.xpath("//comparison")
+        if len(comparisons) > 0:
+            return comparisons
+        else:
+            return None
+
+    def allSampleReferences(self):
+
+        """ 
+        return all sample_reference in the file
+        """
+
+        sampleReferences = self.tree.xpath("//sample_reference")
+        if len(sampleReferences) > 0:
+            return sampleReferences
+        else:
+            return None
+
+    def allPathways(self):
+
+        """ 
+        return all pathways in the file
+        """
+
+        pathways = self.tree.xpath("//pathway")
+        if len(pathways) > 0:
+            return pathways
+        else:
+            return None
+
+    def allCompoundInPathways(self):
+
+        """ 
+        return all compound_in_pathway in the file
+        """
+
+        compoundInPathways = self.tree.xpath("//compound_in_pathway")
+        if len(compoundInPathways) > 0:
+            return compoundInPathways
+        else:
+            return None
+
+    def getMembers(self,id):
+
+        """ 
+        return list of members in a group from group id
+        """
 
-	def getSampleName(self,id):
+        group_id = str(id)
+        members = self.tree.xpath("//group[@id='"+group_id+"']/memberset/member")
+        if len(members) > 0:
+            return members
+        else:
+            return None
 
-		""" 
-		return sample name from sample id
-		"""
+    def getGroupName(self,id):
+
+        """ 
+        return group name from group id
+        """
+
+        group_id = str(id)
+        if len(self.tree.xpath("//group[@id='"+group_id+"']")) > 0:
+            group_name = self.tree.xpath("//group[@id='"+group_id+"']/name/text()")[0]
+            return group_name
+        else:
+            return None
 
-		sample_id = str(id)
-		if len(self.tree.xpath("//sample[@id='"+sample_id+"']")) > 0:
-			sample_name = self.tree.xpath("//sample[@id='"+sample_id+"']/name/text()")[0]
-			return sample_name
-		else:
-			return None
+    def getMemberName(self,id):
 
-	def getMemberReferenceId(self,id):
-
-		""" 
-		return list of members id in a member_comparison element from member_comparison id
-		"""
-
-		member_comparison_id = str(id)
-		if len(self.tree.xpath("//member_comparison[@id='"+member_comparison_id+"']")) > 0:
-			member_id_1 = self.tree.xpath("//member_comparison[@id='"+member_comparison_id+"']/member_reference")[0].attrib["id"]
-			member_id_2 = self.tree.xpath("//member_comparison[@id='"+member_comparison_id+"']/member_reference")[1].attrib["id"]
-			return map(int, [member_id_1,member_id_2])
-		else:
-			return None
+        """ 
+        return member name from member id
+        """
 
+        member_id = str(id)
+        if len(self.tree.xpath("//member[@id='"+member_id+"']")) > 0:
+            member_name = self.tree.xpath("//member[@id='"+member_id+"']/name/text()")[0]
+            return member_name
+        else:
+            return None
+
+    def getSamples(self,id):
 
-	def getPeakIds(self):
+        """ 
+        return list of samples in a member from member id
+        """
 
-		""" 
-		return list of peak ids
-		"""
+        member_id = str(id)
+        samples = self.tree.xpath("//member[@id='"+member_id+"']/sampleset/sample")
+        if len(samples) > 0:
+            return samples
+        else:
+            return None
 
-		peaks = self.tree.xpath("//peak/@id")
-		if len(peaks) > 0:
-			return peaks
-		else:
-			return None
+    def getSampleName(self,id):
 
-	def getPeaks(self):
+        """ 
+        return sample name from sample id
+        """
 
-		"""
-		return peak elements list
-		"""
+        sample_id = str(id)
+        if len(self.tree.xpath("//sample[@id='"+sample_id+"']")) > 0:
+            sample_name = self.tree.xpath("//sample[@id='"+sample_id+"']/name/text()")[0]
+            return sample_name
+        else:
+            return None
 
-		peaks = self.tree.xpath("//peak")
-		if len(peaks) > 0:
-			return peaks
-		else:
-			return None		
+    def getMemberReferenceId(self,id):
 
+        """ 
+        return list of members id in a member_comparison element from member_comparison id
+        """
 
-	def getPeakMass(self,id):
-
-		""" 
-		return peak mass from peak id
-		"""
+        member_comparison_id = str(id)
+        if len(self.tree.xpath("//member_comparison[@id='"+member_comparison_id+"']")) > 0:
+            member_id_1 = self.tree.xpath("//member_comparison[@id='"+member_comparison_id+"']/member_reference")[0].attrib["id"]
+            member_id_2 = self.tree.xpath("//member_comparison[@id='"+member_comparison_id+"']/member_reference")[1].attrib["id"]
+            return map(int, [member_id_1,member_id_2])
+        else:
+            return None
 
-		peak_id = str(id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
-			mass = self.tree.xpath("//peak[@id='"+peak_id+"']/mass/text()")[0]
-			return float(mass)
-		else:
-			return None
 
-	def getPeakMassFromElement(self,peak):
+    def getPeakIds(self):
 
-		""" 
-		return peak mass from peak element
-		"""
+        """ 
+        return list of peak ids
+        """
 
-		mass = peak.xpath("./mass/text()")[0]
-		return float(mass)
+        peaks = self.tree.xpath("//peak/@id")
+        if len(peaks) > 0:
+            return peaks
+        else:
+            return None
 
-	def getPeakRT(self,id):
+    def getPeaks(self):
 
-		""" 
-		return peak retention time from peak id
-		"""
+        """
+        return peak elements list
+        """
 
-		peak_id = str(id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
-			rt = self.tree.xpath("//peak[@id='"+peak_id+"']/retention_time/text()")[0]
-			return float(rt)
-		else:
-			return None
+        peaks = self.tree.xpath("//peak")
+        if len(peaks) > 0:
+            return peaks
+        else:
+            return None
 
-	def getPeakRtFromElement(self,peak):
 
-		""" 
-		return peak retention time from peak element
-		"""
+    def getPeakMass(self,id):
 
-		rt = peak.xpath("./retention_time/text()")[0]
-		return float(rt)
+        """ 
+        return peak mass from peak id
+        """
 
-	def getPeakPolarity(self,id):
+        peak_id = str(id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
+            mass = self.tree.xpath("//peak[@id='"+peak_id+"']/mass/text()")[0]
+            return float(mass)
+        else:
+            return None
 
-		""" 
-		return peak polarity from peak id
-		"""
+    def getPeakMassFromElement(self,peak):
 
-		peak_id = str(id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
-			polarity = self.tree.xpath("//peak[@id='"+peak_id+"']/polarity/text()")[0]
-			return polarity
-		else:
-			return None
+        """ 
+        return peak mass from peak element
+        """
 
-	def getPeakPolarityFromElement(self,peak):
+        mass = peak.xpath("./mass/text()")[0]
+        return float(mass)
 
-		""" 
-		return peak polarity from peak element
-		"""
+    def getPeakRT(self,id):
 
-		polarity = peak.xpath("./polarity/text()")[0]
-		return polarity
+        """ 
+        return peak retention time from peak id
+        """
 
-	def getPeakTypeFromElement(self,peak):
+        peak_id = str(id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
+            rt = self.tree.xpath("//peak[@id='"+peak_id+"']/retention_time/text()")[0]
+            return float(rt)
+        else:
+            return None
 
-		""" 
-		return peak polarity from peak element
-		"""
+    def getPeakRtFromElement(self,peak):
 
-		peak_type = peak.xpath("./type/text()")[0]
-		return peak_type
+        """ 
+        return peak retention time from peak element
+        """
 
-	def getPeakInfo(self, id):
+        rt = peak.xpath("./retention_time/text()")[0]
+        return float(rt)
 
-		""" 
-		return peak info from peak id
-		"""
+    def getPeakPolarity(self,id):
 
-		peak_id = str(id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
-			mass = self.getPeakMass(id)
-			rt = self.getPeakRT(id)
-			polarity = self.getPeakPolarity(id)
-			return {"mass":mass,"retention_time":rt,"polarity":polarity}
-		else:
-			return None
+        """ 
+        return peak polarity from peak id
+        """
 
-	def getPeakInfoFromElement(self, peak):
+        peak_id = str(id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
+            polarity = self.tree.xpath("//peak[@id='"+peak_id+"']/polarity/text()")[0]
+            return polarity
+        else:
+            return None
 
-		""" 
-		return peak info from peak element
-		"""
+    def getPeakPolarityFromElement(self,peak):
 
-		mass = self.getPeakMassFromElement(peak)
-		rt = self.getPeakRtFromElement(peak)
-		polarity = self.getPeakPolarityFromElement(peak)
-		peak_type = self.getPeakTypeFromElement(peak)
-		return {"mass":mass,"retention_time":rt,"polarity":polarity,"peak_type":peak_type}
+        """ 
+        return peak polarity from peak element
+        """
 
+        polarity = peak.xpath("./polarity/text()")[0]
+        return polarity
 
-	def getCompounds(self,id):
+    def getPeakTypeFromElement(self,peak):
 
-		""" 
-		return list of compounds in a peak from peak id
-		"""
+        """ 
+        return peak polarity from peak element
+        """
 
-		peak_id = str(id)
-		compounds = self.tree.xpath("//peak[@id='"+peak_id+"']/compoundset/compound")
-		if len(compounds) > 0:
-			return compounds
-		else:
-			return None
+        peak_type = peak.xpath("./type/text()")[0]
+        return peak_type
 
+    def getPeakInfo(self, id):
 
-	def getCompoundsFromElement(self,peak):
+        """ 
+        return peak info from peak id
+        """
 
-		""" 
-		return list of compounds in a peak from peak element
-		"""
+        peak_id = str(id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']")) > 0:
+            mass = self.getPeakMass(id)
+            rt = self.getPeakRT(id)
+            polarity = self.getPeakPolarity(id)
+            return {"mass":mass,"retention_time":rt,"polarity":polarity}
+        else:
+            return None
 
-		compounds = peak.xpath("./compoundset/compound")
-		if len(compounds) > 0:
-			return compounds
-		else:
-			return None
+    def getPeakInfoFromElement(self, peak):
 
-	
-	def getCompoundIds(self,id):
+        """ 
+        return peak info from peak element
+        """
 
-		""" 
-		return list of compound ids in a peak from peak id
-		"""
+        mass = self.getPeakMassFromElement(peak)
+        rt = self.getPeakRtFromElement(peak)
+        polarity = self.getPeakPolarityFromElement(peak)
+        peak_type = self.getPeakTypeFromElement(peak)
+        return {"mass":mass,"retention_time":rt,"polarity":polarity,"peak_type":peak_type}
 
-		peak_id = str(id)
-		compounds = self.tree.xpath("//peak[@id='"+peak_id+"']/compoundset/compound/@id")
-		if len(compounds) > 0:
-			return map(int, compounds)
-		else:
-			return None
 
+    def getCompounds(self,id):
 
-	def getCompoundId(self,compound):
+        """ 
+        return list of compounds in a peak from peak id
+        """
 
-		""" 
-		return if of compound from compound element
-		"""
+        peak_id = str(id)
+        compounds = self.tree.xpath("//peak[@id='"+peak_id+"']/compoundset/compound")
+        if len(compounds) > 0:
+            return compounds
+        else:
+            return None
 
-		id = compound.xpath("./@id")[0]
-		return int(id)
 
+    def getCompoundsFromElement(self,peak):
 
-	def getCompoundFormula(self, id):
+        """ 
+        return list of compounds in a peak from peak element
+        """
 
-		""" 
-		return compound formula from compound id
-		"""
+        compounds = peak.xpath("./compoundset/compound")
+        if len(compounds) > 0:
+            return compounds
+        else:
+            return None
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			formula = self.tree.xpath("//compound[@id='"+compound_id+"']/formula/text()")[0]
-			return formula
-		else:
-			return None
 
-	def getCompoundFormulaFromElement(self, compound):
+    def getCompoundIds(self,id):
 
-		""" 
-		return compound formula from compound element
-		"""
+        """ 
+        return list of compound ids in a peak from peak id
+        """
 
-		formula = compound.xpath("./formula/text()")[0]
-		return formula
+        peak_id = str(id)
+        compounds = self.tree.xpath("//peak[@id='"+peak_id+"']/compoundset/compound/@id")
+        if len(compounds) > 0:
+            return map(int, compounds)
+        else:
+            return None
 
 
-	def getCompoundInchikeyFromElement(self, compound):
+    def getCompoundId(self,compound):
 
-		""" 
-		return compound inchikey from compound element
-		"""
-		if compound.xpath("./inchikey/text()"):
-			inchikey = compound.xpath("./inchikey/text()")[0]
-			return inchikey
-		else:
-			return None
+        """ 
+        return if of compound from compound element
+        """
 
+        id = compound.xpath("./@id")[0]
+        return int(id)
 
-	def getCompoundName(self, id):
 
-		""" 
-		return compound name from compound id
-		"""
+    def getCompoundFormula(self, id):
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			name = self.tree.xpath("//compound[@id='"+compound_id+"']/name/text()")[0]
-			return name
-		else:
-			return None
+        """ 
+        return compound formula from compound id
+        """
 
-	# Deprecated
-	# def getCompoundNameFromElement(self, compound):
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            formula = self.tree.xpath("//compound[@id='"+compound_id+"']/formula/text()")[0]
+            return formula
+        else:
+            return None
 
-	# 	""" 
-	# 	return compound name from compound element
-	# 	"""
+    def getCompoundFormulaFromElement(self, compound):
 
-	# 	name = compound.xpath("./name/text()")[0]
-	# 	return name
+        """ 
+        return compound formula from compound element
+        """
 
+        formula = compound.xpath("./formula/text()")[0]
+        return formula
 
-	def getCompoundDb(self, id):
 
-		""" 
-		return compound database from compound id
-		"""
+    def getCompoundInchikeyFromElement(self, compound):
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			db = self.tree.xpath("//compound[@id='"+compound_id+"']/db/text()")[0]
-			return db
-		else:
-			return None
+        """ 
+        return compound inchikey from compound element
+        """
+        if compound.xpath("./inchikey/text()"):
+            inchikey = compound.xpath("./inchikey/text()")[0]
+            return inchikey
+        else:
+            return None
 
 
-	def getCompoundDbFromElement(self, compound):
+    def getCompoundName(self, id):
 
-		""" 
-		return compound database from compound element
-		"""
+        """ 
+        return compound name from compound id
+        """
 
-		db = compound.xpath("./db/text()")[0]
-		return db
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            name = self.tree.xpath("//compound[@id='"+compound_id+"']/name/text()")[0]
+            return name
+        else:
+            return None
 
+    # Deprecated
+    # def getCompoundNameFromElement(self, compound):
 
-	def getCompoundDbId(self, id):
+    # 	"""
+    # 	return compound name from compound element
+    # 	"""
 
-		""" 
-		return compound database id from compound id
-		"""
+    # 	name = compound.xpath("./name/text()")[0]
+    # 	return name
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			dbId = self.tree.xpath("//compound[@id='"+compound_id+"']/dbid/text()")[0]
-			return dbId
-		else:
-			return None
 
+    def getCompoundDb(self, id):
 
-	def getCompoundDbIdFromElement(self, compound):
+        """ 
+        return compound database from compound id
+        """
 
-		""" 
-		return compound database id from compound element
-		"""
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            db = self.tree.xpath("//compound[@id='"+compound_id+"']/db/text()")[0]
+            return db
+        else:
+            return None
 
-		dbId = compound.xpath("./dbid/text()")[0]
-		return dbId
 
+    def getCompoundDbFromElement(self, compound):
 
-	def getCompoundDbLink(self, id):
+        """ 
+        return compound database from compound element
+        """
 
-		"""
-		Deprecated
-		"""
+        db = compound.xpath("./db/text()")[0]
+        return db
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			dbLink = self.tree.xpath("//compound[@id='"+compound_id+"']/dblink/text()")[0]
-			return dbLink
-		else:
-			return None
 
-	def getCompoundPpm(self, id):
+    def getCompoundDbId(self, id):
 
-		""" 
-		return compound ppm from compound id
-		"""
+        """ 
+        return compound database id from compound id
+        """
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			ppm = self.tree.xpath("//compound[@id='"+compound_id+"']/ppm/text()")[0]
-			return float(ppm)
-		else:
-			return None
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            dbId = self.tree.xpath("//compound[@id='"+compound_id+"']/dbid/text()")[0]
+            return dbId
+        else:
+            return None
 
 
-	def getCompoundPpmFromElement(self, compound):
+    def getCompoundDbIdFromElement(self, compound):
 
-		""" 
-		return compound ppm from compound element
-		"""
+        """ 
+        return compound database id from compound element
+        """
 
-		ppm = compound.xpath("./ppm/text()")[0]
-		return float(ppm)
+        dbId = compound.xpath("./dbid/text()")[0]
+        return dbId
 
 
-	def getCompoundAdduct(self, id):
+    def getCompoundDbLink(self, id):
 
-		""" 
-		return compound adduct from compound id
-		"""
+        """
+        Deprecated
+        """
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			adduct = self.tree.xpath("//compound[@id='"+compound_id+"']/adduct/text()")[0]
-			return adduct
-		else:
-			return None
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            dbLink = self.tree.xpath("//compound[@id='"+compound_id+"']/dblink/text()")[0]
+            return dbLink
+        else:
+            return None
 
-	def getCompoundAdductFromElement(self, compound):
+    def getCompoundPpm(self, id):
 
-		""" 
-		return compound adduct from compound element
-		"""
+        """ 
+        return compound ppm from compound id
+        """
 
-		adduct = compound.xpath("./adduct/text()")[0]
-		return adduct
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            ppm = self.tree.xpath("//compound[@id='"+compound_id+"']/ppm/text()")[0]
+            return float(ppm)
+        else:
+            return None
 
 
-	def getCompoundIdentified(self, id):
+    def getCompoundPpmFromElement(self, compound):
 
-		""" 
-		return compound identification status from compound id
-		"""
+        """ 
+        return compound ppm from compound element
+        """
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			identified = self.tree.xpath("//compound[@id='"+compound_id+"']/identified/text()")[0]
-			if (identified == "True") or (identified == "Identified"):
-				return True
-			else:
-				return False
-		else:
-			return None
+        ppm = compound.xpath("./ppm/text()")[0]
+        return float(ppm)
 
-	def getCompoundIdentifiedFromElement(self, compound):
 
-		""" 
-		return compound identification status from compound element
-		"""
+    def getCompoundAdduct(self, id):
 
-		identified = compound.xpath("./identified/text()")[0]
-		if (identified == "True") or (identified == "Identified"):
-			return True
-		else:
-			return False
+        """ 
+        return compound adduct from compound id
+        """
 
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            adduct = self.tree.xpath("//compound[@id='"+compound_id+"']/adduct/text()")[0]
+            return adduct
+        else:
+            return None
 
-	def getCompoundInfo(self, id):
+    def getCompoundAdductFromElement(self, compound):
 
-		""" 
-		return all compound information from compound id
-		"""
+        """ 
+        return compound adduct from compound element
+        """
 
-		compound_id = str(id)
-		if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
-			formula = self.getCompoundFormula(id)
-			# name = self.getCompoundName(id)
-			# db = self.getCompoundDb(id)
-			# dbId = self.getCompoundDbId(id)
-			# dbLink = self.getCompoundDbLink(id)
-			ppm = self.getCompoundPpm(id)
-			adduct = self.getCompoundAdduct(id)
-			identified = self.getCompoundIdentified(id)
-			return {"formula":formula,"ppm":ppm,"adduct":adduct,"identified":identified}
-		else:
-			return None	
+        adduct = compound.xpath("./adduct/text()")[0]
+        return adduct
 
-	def getCompoundInfoFromElement(self, compound):
 
-		""" 
-		return all compound information from compound element
-		"""
-		id = self.getCompoundId(compound)
-		formula = self.getCompoundFormulaFromElement(compound)
-		# name = self.getCompoundNameFromElement(compound)
-		# db = self.getCompoundDbFromElement(compound)
-		# dbId = self.getCompoundDbIdFromElement(compound)
-		# dbLink = self.getCompoundDbLink(id)
-		inchikey = self.getCompoundInchikeyFromElement(compound)
-		ppm = self.getCompoundPpmFromElement(compound)
-		adduct = self.getCompoundAdductFromElement(compound)
-		identified = self.getCompoundIdentifiedFromElement(compound)
-		return {"id":id,"formula":formula, "inchikey":inchikey, "ppm":ppm,"adduct":adduct,"identified":identified}
+    def getCompoundIdentified(self, id):
 
-	def getCompoundDbsFromElement(self, compound):
+        """ 
+        return compound identification status from compound id
+        """
 
-		""" 
-		return list of dbs in a compound from compound element
-		"""
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            identified = self.tree.xpath("//compound[@id='"+compound_id+"']/identified/text()")[0]
+            if (identified == "True") or (identified == "Identified"):
+                return True
+            else:
+                return False
+        else:
+            return None
 
-		dbs = compound.xpath("./dbset/db")
-		if len(dbs) > 0:
-			return dbs
-		else:
-			return None
+    def getCompoundIdentifiedFromElement(self, compound):
 
+        """ 
+        return compound identification status from compound element
+        """
 
-	def getDbNameFromElement(self, db):
+        identified = compound.xpath("./identified/text()")[0]
+        if (identified == "True") or (identified == "Identified"):
+            return True
+        else:
+            return False
 
-		"""
-		return db name from a db element
-		"""
 
-		db_name = db.xpath("./db_name/text()")[0]
-		return db_name
+    def getCompoundInfo(self, id):
 
+        """ 
+        return all compound information from compound id
+        """
 
-	def getDbIdentifierFromElement(self, db):
+        compound_id = str(id)
+        if len(self.tree.xpath("//compound[@id='"+compound_id+"']")) > 0:
+            formula = self.getCompoundFormula(id)
+            # name = self.getCompoundName(id)
+            # db = self.getCompoundDb(id)
+            # dbId = self.getCompoundDbId(id)
+            # dbLink = self.getCompoundDbLink(id)
+            ppm = self.getCompoundPpm(id)
+            adduct = self.getCompoundAdduct(id)
+            identified = self.getCompoundIdentified(id)
+            return {"formula":formula,"ppm":ppm,"adduct":adduct,"identified":identified}
+        else:
+            return None
 
-		"""
-		return db name from a db element
-		"""
+    def getCompoundInfoFromElement(self, compound):
 
-		identifier = db.xpath("./identifier/text()")[0]
-		return identifier
+        """ 
+        return all compound information from compound element
+        """
+        id = self.getCompoundId(compound)
+        formula = self.getCompoundFormulaFromElement(compound)
+        # name = self.getCompoundNameFromElement(compound)
+        # db = self.getCompoundDbFromElement(compound)
+        # dbId = self.getCompoundDbIdFromElement(compound)
+        # dbLink = self.getCompoundDbLink(id)
+        inchikey = self.getCompoundInchikeyFromElement(compound)
+        ppm = self.getCompoundPpmFromElement(compound)
+        adduct = self.getCompoundAdductFromElement(compound)
+        identified = self.getCompoundIdentifiedFromElement(compound)
+        return {"id":id,"formula":formula, "inchikey":inchikey, "ppm":ppm,"adduct":adduct,"identified":identified}
 
+    def getCompoundDbsFromElement(self, compound):
 
-	def getCompoundNameFromElement(self, db):
+        """ 
+        return list of dbs in a compound from compound element
+        """
 
-		"""
-		return db name from a db element
-		"""
+        dbs = compound.xpath("./dbset/db")
+        if len(dbs) > 0:
+            return dbs
+        else:
+            return None
 
-		compound_name = db.xpath("./compound_name/text()")[0]
-		return compound_name
 
+    def getDbNameFromElement(self, db):
 
-	def getDbInfoFromElement(self, db):
+        """
+        return db name from a db element
+        """
 
-		""" 
-		return all db information from db element
-		"""
+        db_name = db.xpath("./db_name/text()")[0]
+        return db_name
 
-		db_name = self.getDbNameFromElement(db)
-		identifier = self.getDbIdentifierFromElement(db)
-		compound_name = self.getCompoundNameFromElement(db)
-		return {"db_name":db_name, "identifier":identifier, "compound_name":compound_name}
 
+    def getDbIdentifierFromElement(self, db):
 
-	def getComparisons(self,id):
+        """
+        return db name from a db element
+        """
 
-		""" 
-		return list of comparison in a peak from peak id
-		"""
+        identifier = db.xpath("./identifier/text()")[0]
+        return identifier
 
-		peak_id = str(id)
-		comparisons = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison")
-		if len(comparisons) > 0:
-			return comparisons
-		else:
-			return None
 
+    def getCompoundNameFromElement(self, db):
 
-	def getComparisonsFromElement(self, peak):
+        """
+        return db name from a db element
+        """
 
-		""" 
-		return list of comparisons in a peak from peak element
-		"""
+        compound_name = db.xpath("./compound_name/text()")[0]
+        return compound_name
 
-		comparisons = peak.xpath("./comparisonset/comparison")
-		if len(comparisons) > 0:
-			return comparisons
-		else:
-			return None
 
+    def getDbInfoFromElement(self, db):
 
-	def getComparisonId(self,comparison):
+        """ 
+        return all db information from db element
+        """
 
-		""" 
-		return id of comparison from comparison element
-		"""
+        db_name = self.getDbNameFromElement(db)
+        identifier = self.getDbIdentifierFromElement(db)
+        compound_name = self.getCompoundNameFromElement(db)
+        return {"db_name":db_name, "identifier":identifier, "compound_name":compound_name}
 
-		id = comparison.xpath("./@id")[0]
-		return int(id)
 
+    def getComparisons(self,id):
 
-	def getComparisonIds(self,id):
+        """ 
+        return list of comparison in a peak from peak id
+        """
 
-		""" 
-		return list of comparison ids in a peak from peak id
-		"""
+        peak_id = str(id)
+        comparisons = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison")
+        if len(comparisons) > 0:
+            return comparisons
+        else:
+            return None
 
-		peak_id = str(id)
-		comparisons = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison/@id")
-		if len(comparisons) > 0:
-			return map(int, comparisons)
-		else:
-			return None
 
-	def getComparisonLogfc(self, peak_id, comparison_id):
+    def getComparisonsFromElement(self, peak):
 
-		""" 
-		return comparison log fold change from peak and comparison id
-		"""
+        """ 
+        return list of comparisons in a peak from peak element
+        """
 
-		peak_id = str(peak_id)
-		comparison_id = str(comparison_id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']")) > 0:
-			logFC = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']/logfc/text()")[0]
-			return float(logFC)
-		else:
-			return None
+        comparisons = peak.xpath("./comparisonset/comparison")
+        if len(comparisons) > 0:
+            return comparisons
+        else:
+            return None
 
 
-	def getComparisonLogfcFromElement(self, comparison):
+    def getComparisonId(self,comparison):
 
-		""" 
-		return comparison log fold change from comparison element
-		"""
+        """ 
+        return id of comparison from comparison element
+        """
 
-		logfc = comparison.xpath("./logfc/text()")[0]
-		return logfc
+        id = comparison.xpath("./@id")[0]
+        return int(id)
 
 
-	def getComparisonPvalue(self, peak_id, comparison_id):
+    def getComparisonIds(self,id):
 
-		""" 
-		return comparison p-value from peak and comparison id
-		"""
+        """ 
+        return list of comparison ids in a peak from peak id
+        """
 
-		peak_id = str(peak_id)
-		comparison_id = str(comparison_id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']")) > 0:
-			pvalue = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']/pvalue/text()")[0]
-			return float(pvalue)
-		else:
-			return None
+        peak_id = str(id)
+        comparisons = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison/@id")
+        if len(comparisons) > 0:
+            return map(int, comparisons)
+        else:
+            return None
 
+    def getComparisonLogfc(self, peak_id, comparison_id):
 
-	def getComparisonPvalueFromElement(self, comparison):
+        """ 
+        return comparison log fold change from peak and comparison id
+        """
 
-		""" 
-		return comparison Pvalue from comparison element
-		"""
+        peak_id = str(peak_id)
+        comparison_id = str(comparison_id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']")) > 0:
+            logFC = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']/logfc/text()")[0]
+            return float(logFC)
+        else:
+            return None
 
-		pvalue = comparison.xpath("./pvalue/text()")[0]
-		return pvalue
 
+    def getComparisonLogfcFromElement(self, comparison):
 
-	def getComparisonAdjPvalue(self, peak_id, comparison_id):
+        """ 
+        return comparison log fold change from comparison element
+        """
 
-		""" 
-		return comparison adjusted p-value from peak and comparison id
-		"""
+        logfc = comparison.xpath("./logfc/text()")[0]
+        return logfc
 
-		peak_id = str(peak_id)
-		comparison_id = str(comparison_id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']")) > 0:
-			adjPvalue = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']/adjpvalue/text()")[0]
-			return float(adjPvalue)
-		else:
-			return None
 
+    def getComparisonPvalue(self, peak_id, comparison_id):
 
-	def getComparisonAdjPvalueFromElement(self, comparison):
+        """ 
+        return comparison p-value from peak and comparison id
+        """
 
-		""" 
-		return comparison adjusted Pvalue from comparison element
-		"""
+        peak_id = str(peak_id)
+        comparison_id = str(comparison_id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']")) > 0:
+            pvalue = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']/pvalue/text()")[0]
+            return float(pvalue)
+        else:
+            return None
 
-		adjPvalue = comparison.xpath("./adjpvalue/text()")[0]
-		return adjPvalue
 
+    def getComparisonPvalueFromElement(self, comparison):
 
-	def getComparisonLogOddsFromElement(self, comparison):
+        """ 
+        return comparison Pvalue from comparison element
+        """
 
-		""" 
-		return comparison log odds from comparison element
-		"""
+        pvalue = comparison.xpath("./pvalue/text()")[0]
+        return pvalue
 
-		logOdds = comparison.xpath("./logodds/text()")[0]
-		return logOdds
 
+    def getComparisonAdjPvalue(self, peak_id, comparison_id):
 
-	def getComparisonInfo(self, peak_id, comparison_id):
+        """ 
+        return comparison adjusted p-value from peak and comparison id
+        """
 
-		""" 
-		return all comparison information from peak and comparison id
-		"""
+        peak_id = str(peak_id)
+        comparison_id = str(comparison_id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']")) > 0:
+            adjPvalue = self.tree.xpath("//peak[@id='"+peak_id+"']/comparisonset/comparison[@id='"+comparison_id+"']/adjpvalue/text()")[0]
+            return float(adjPvalue)
+        else:
+            return None
 
-		peakId = str(peak_id)
-		comparisonId = str(comparison_id)
-		if len(self.tree.xpath("//peak[@id='"+peakId+"']/comparisonset/comparison[@id='"+comparisonId+"']")) > 0:
-			logFC = self.getComparisonLogfc(peak_id,comparison_id)
-			pvalue = self.getComparisonPvalue(peak_id,comparison_id)
-			adjPvalue = self.getComparisonAdjPvalue(peak_id,comparison_id)
-			return {"logfc":logFC,"pvalue":pvalue,"adjpvalue":adjPvalue}
-		else:
-			return None
 
+    def getComparisonAdjPvalueFromElement(self, comparison):
 
-	def getComparisonInfoFromElement(self, comparison):
+        """ 
+        return comparison adjusted Pvalue from comparison element
+        """
 
-		""" 
-		return all db information from db element
-		"""
+        adjPvalue = comparison.xpath("./adjpvalue/text()")[0]
+        return adjPvalue
 
-		id = self.getComparisonId(comparison)
-		logfc = self.getComparisonLogfcFromElement(comparison)
-		pvalue = self.getComparisonPvalueFromElement(comparison)
-		adjpvalue = self.getComparisonAdjPvalueFromElement(comparison)
-		logodds = self.getComparisonLogOddsFromElement(comparison)
-		return {"id":id, "logfc":logfc, "pvalue":pvalue, "adjpvalue":adjpvalue, "logodds":logodds}
 
+    def getComparisonLogOddsFromElement(self, comparison):
 
-	def getSampleReferenceIds(self,id):
+        """ 
+        return comparison log odds from comparison element
+        """
 
-		""" 
-		return list of samples ids in a peak from peak id
-		"""
+        logOdds = comparison.xpath("./logodds/text()")[0]
+        return logOdds
 
-		peak_id = str(id)
-		sampleReferences = self.tree.xpath("//peak[@id='"+peak_id+"']/sample_intensity_set/sample_reference/@id")
-		if len(sampleReferences) > 0:
-			return map(int, sampleReferences)
-		else:
-			return None
 
-	def getSampleReferenceIdsFromElement(self,peak):
+    def getComparisonInfo(self, peak_id, comparison_id):
 
-		""" 
-		return list of samples ids in a peak from peak id
-		"""
+        """ 
+        return all comparison information from peak and comparison id
+        """
 
-		sampleReferences = peak.xpath("./sample_intensity_set/sample_reference/@id")
-		if len(sampleReferences) > 0:
-			return map(int, sampleReferences)
-		else:
-			return None
+        peakId = str(peak_id)
+        comparisonId = str(comparison_id)
+        if len(self.tree.xpath("//peak[@id='"+peakId+"']/comparisonset/comparison[@id='"+comparisonId+"']")) > 0:
+            logFC = self.getComparisonLogfc(peak_id,comparison_id)
+            pvalue = self.getComparisonPvalue(peak_id,comparison_id)
+            adjPvalue = self.getComparisonAdjPvalue(peak_id,comparison_id)
+            return {"logfc":logFC,"pvalue":pvalue,"adjpvalue":adjPvalue}
+        else:
+            return None
 
-	def getSampleReferencesFromElement(self,peak):
 
-		""" 
-		return list of sample elements in a peak from peak element
-		"""
+    def getComparisonInfoFromElement(self, comparison):
 
-		sampleReferences = peak.xpath("./sample_intensity_set/sample_reference")
-		if len(sampleReferences) > 0:
-			return sampleReferences
-		else:
-			return None
+        """ 
+        return all db information from db element
+        """
 
-	def getCalibrationReferencesFromElement(self,peak):
+        id = self.getComparisonId(comparison)
+        logfc = self.getComparisonLogfcFromElement(comparison)
+        pvalue = self.getComparisonPvalueFromElement(comparison)
+        adjpvalue = self.getComparisonAdjPvalueFromElement(comparison)
+        logodds = self.getComparisonLogOddsFromElement(comparison)
+        return {"id":id, "logfc":logfc, "pvalue":pvalue, "adjpvalue":adjpvalue, "logodds":logodds}
 
-		""" 
-		return list of calibration sample elements in a peak from peak element
-		"""
 
-		calibrationReferences = peak.xpath("./calibration_intensity_set/calibration_reference")
-		if len(calibrationReferences) > 0:
-			return calibrationReferences
-		else:
-			return None
+    def getSampleReferenceIds(self,id):
 
-	def getSampleReferenceIntensity(self, peak_id, sampleReference_id):
+        """ 
+        return list of samples ids in a peak from peak id
+        """
 
-		""" 
-		return sample peak intensity from peak id and sample id
-		"""
+        peak_id = str(id)
+        sampleReferences = self.tree.xpath("//peak[@id='"+peak_id+"']/sample_intensity_set/sample_reference/@id")
+        if len(sampleReferences) > 0:
+            return map(int, sampleReferences)
+        else:
+            return None
 
-		peak_id = str(peak_id)
-		sampleReference_id = str(sampleReference_id)
-		if len(self.tree.xpath("//peak[@id='"+peak_id+"']/sample_intensity_set/sample_reference[@id='"+sampleReference_id+"']")) > 0:
-			intensity = self.tree.xpath("//peak[@id='"+peak_id+"']/sample_intensity_set/sample_reference[@id='"+sampleReference_id+"']/intensity/text()")[0]
-			return float(intensity)
-		else:
-			return None
+    def getSampleReferenceIdsFromElement(self,peak):
 
-	def getSampleReferenceIntensityFromElement(self, sampleReference):
+        """ 
+        return list of samples ids in a peak from peak id
+        """
 
-		""" 
-		return sample peak intensity from sample reference element
-		"""
+        sampleReferences = peak.xpath("./sample_intensity_set/sample_reference/@id")
+        if len(sampleReferences) > 0:
+            return map(int, sampleReferences)
+        else:
+            return None
 
-		intensity = sampleReference.xpath("./intensity/text()")[0]
-		try:
-			return float(intensity)
-		except ValueError:
-			return 0
+    def getSampleReferencesFromElement(self,peak):
 
-	def getCalibrationReferenceIntensityFromElement(self, calibrationReference):
+        """ 
+        return list of sample elements in a peak from peak element
+        """
 
-		""" 
-		return sample peak intensity from sample reference element
-		"""
+        sampleReferences = peak.xpath("./sample_intensity_set/sample_reference")
+        if len(sampleReferences) > 0:
+            return sampleReferences
+        else:
+            return None
 
-		intensity = calibrationReference.xpath("./intensity/text()")[0]
-		try:
-			return float(intensity)
-		except ValueError:
-			return 0
+    def getCalibrationReferencesFromElement(self,peak):
 
-	def getSampleReferenceId(self, sampleReference):
+        """ 
+        return list of calibration sample elements in a peak from peak element
+        """
 
-		""" 
-		return sample reference id from sample reference element
-		"""
+        calibrationReferences = peak.xpath("./calibration_intensity_set/calibration_reference")
+        if len(calibrationReferences) > 0:
+            return calibrationReferences
+        else:
+            return None
 
-		id = sampleReference.xpath("./@id")[0]
-		return int(id)
+    def getSampleReferenceIntensity(self, peak_id, sampleReference_id):
 
-	def getCalibrationReferenceId(self, calibrationReference):
+        """ 
+        return sample peak intensity from peak id and sample id
+        """
 
-		""" 
-		return sample reference id from sample reference element
-		"""
+        peak_id = str(peak_id)
+        sampleReference_id = str(sampleReference_id)
+        if len(self.tree.xpath("//peak[@id='"+peak_id+"']/sample_intensity_set/sample_reference[@id='"+sampleReference_id+"']")) > 0:
+            intensity = self.tree.xpath("//peak[@id='"+peak_id+"']/sample_intensity_set/sample_reference[@id='"+sampleReference_id+"']/intensity/text()")[0]
+            return float(intensity)
+        else:
+            return None
 
-		id = calibrationReference.xpath("./@id")[0]
-		return int(id)
+    def getSampleReferenceIntensityFromElement(self, sampleReference):
 
-	def getPathways(self):
+        """ 
+        return sample peak intensity from sample reference element
+        """
 
-		"""
-		return pathway elements list
-		"""
+        intensity = sampleReference.xpath("./intensity/text()")[0]
+        try:
+            return float(intensity)
+        except ValueError:
+            return 0
 
-		pathways = self.tree.xpath("//pathway")
-		return pathways
-		#if len(pathways) > 0:
-		#	return pathways
-		#else:
-		#	return None
+    def getCalibrationReferenceIntensityFromElement(self, calibrationReference):
 
+        """ 
+        return sample peak intensity from sample reference element
+        """
 
-	def getPathwayId(self,pathway):
+        intensity = calibrationReference.xpath("./intensity/text()")[0]
+        try:
+            return float(intensity)
+        except ValueError:
+            return 0
 
-		""" 
-		return id of pathway from pathway element
-		"""
+    def getSampleReferenceId(self, sampleReference):
 
-		id = pathway.xpath("./@id")[0]
-		return id
+        """ 
+        return sample reference id from sample reference element
+        """
 
+        id = sampleReference.xpath("./@id")[0]
+        return int(id)
 
-	def getPathwayIds(self):
+    def getCalibrationReferenceId(self, calibrationReference):
 
-		""" 
-		return list of pathway ids in the file
-		"""
+        """ 
+        return sample reference id from sample reference element
+        """
 
-		# pathway_id = str(id)
-		pathways = self.tree.xpath("//pathway/@id")
-		if len(pathways) > 0:
-			return pathways
-		else:
-			return None
+        id = calibrationReference.xpath("./@id")[0]
+        return int(id)
 
-	def getPathwayName(self,id):
+    def getPathways(self):
 
-		""" 
-		return pathway name from pathway id
-		"""
+        """
+        return pathway elements list
+        """
 
-		pathway_id = str(id)
-		if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
-			name = self.tree.xpath("//pathway[@id='"+pathway_id+"']/name/text()")[0]
-			return name
-		else:
-			return None
+        pathways = self.tree.xpath("//pathway")
+        return pathways
+        #if len(pathways) > 0:
+        #	return pathways
+        #else:
+        #	return None
 
 
-	def getPathwayNameFromElement(self,pathway):
+    def getPathwayId(self,pathway):
 
-		""" 
-		return pathway name from pathway element
-		"""
+        """ 
+        return id of pathway from pathway element
+        """
 
-		name = pathway.xpath("./name/text()")[0]
-		return name
+        id = pathway.xpath("./@id")[0]
+        return id
 
 
-	def getPathwayCompoundNumber(self,id):
+    def getPathwayIds(self):
 
-		""" 
-		return number of compound in pathway from pathway id
-		"""
+        """ 
+        return list of pathway ids in the file
+        """
 
-		pathway_id = str(id)
-		if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
-			compoundNumber = self.tree.xpath("//pathway[@id='"+pathway_id+"']/compound_number/text()")[0]
-			return int(compoundNumber)
-		else:
-			return None
+        # pathway_id = str(id)
+        pathways = self.tree.xpath("//pathway/@id")
+        if len(pathways) > 0:
+            return pathways
+        else:
+            return None
 
+    def getPathwayName(self,id):
 
-	def getPathwayCompoundNumberFromElement(self,pathway):
+        """ 
+        return pathway name from pathway id
+        """
 
-		""" 
-		return number of compound in pathway from pathway element
-		"""
+        pathway_id = str(id)
+        if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
+            name = self.tree.xpath("//pathway[@id='"+pathway_id+"']/name/text()")[0]
+            return name
+        else:
+            return None
 
-		compoundNumber = pathway.xpath("./compound_number/text()")[0]
-		return int(compoundNumber)
 
+    def getPathwayNameFromElement(self,pathway):
 
-	def getPathwayMap(self,id):
+        """ 
+        return pathway name from pathway element
+        """
 
-		""" 
-		Deprecated 
-		"""
+        name = pathway.xpath("./name/text()")[0]
+        return name
 
-		pathway_id = str(id)
-		if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
-			pathwayMap = self.tree.xpath("//pathway[@id='"+pathway_id+"']/pathway_map/text()")[0]
-			return pathwayMap
-		else:
-			return None	
 
-	def getPathwayInfo(self, id):
+    def getPathwayCompoundNumber(self,id):
 
-		""" 
-		return all pathway info from pathway id
-		"""
+        """ 
+        return number of compound in pathway from pathway id
+        """
 
-		pathway_id = str(id)
-		if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
-			name = self.getPathwayName(id)
-			compoundNumber = self.getPathwayCompoundNumber(id)
-			# pathwayMap = self.getPathwayMap(id)
-			return {"name":name,"compoundNumber":compoundNumber}
-		else:
-			return None
+        pathway_id = str(id)
+        if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
+            compoundNumber = self.tree.xpath("//pathway[@id='"+pathway_id+"']/compound_number/text()")[0]
+            return int(compoundNumber)
+        else:
+            return None
 
 
-	def getPathwayInfoFromElement(self, pathway):
+    def getPathwayCompoundNumberFromElement(self,pathway):
 
-		"""
-		return all pathway info from pathway element
-		"""
+        """ 
+        return number of compound in pathway from pathway element
+        """
 
-		id = self.getPathwayId(pathway)
-		name = self.getPathwayNameFromElement(pathway)
-		compoundNumber = self.getPathwayCompoundNumberFromElement(pathway)
-		return {"id":id,"name":name,"compoundNumber":compoundNumber}
+        compoundNumber = pathway.xpath("./compound_number/text()")[0]
+        return int(compoundNumber)
 
 
-	def getCompoundsInPathwayFromElement(self, pathway):
+    def getPathwayMap(self,id):
 
-		"""
-		return list of compound in pathway from pathway element
-		"""
+        """ 
+        Deprecated 
+        """
 
-		compoundsInPathway = pathway.xpath("./compound_in_pathwayset/compound_in_pathway")
-		if len(compoundsInPathway) > 0:
-			return compoundsInPathway
-		else:
-			return None	
+        pathway_id = str(id)
+        if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
+            pathwayMap = self.tree.xpath("//pathway[@id='"+pathway_id+"']/pathway_map/text()")[0]
+            return pathwayMap
+        else:
+            return None
 
+    def getPathwayInfo(self, id):
 
-	def getCompoundInPathwayIdFromElement(self, compound_in_pathway):
+        """ 
+        return all pathway info from pathway id
+        """
 
-		""" 
-		return id of compound_in_pathway from compound_in_pathway element
-		"""
+        pathway_id = str(id)
+        if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
+            name = self.getPathwayName(id)
+            compoundNumber = self.getPathwayCompoundNumber(id)
+            # pathwayMap = self.getPathwayMap(id)
+            return {"name":name,"compoundNumber":compoundNumber}
+        else:
+            return None
 
-		id = compound_in_pathway.xpath("./@id")[0]
-		return int(id)
 
+    def getPathwayInfoFromElement(self, pathway):
 
+        """
+        return all pathway info from pathway element
+        """
 
-	def getCompoundInPathway(self, id):
+        id = self.getPathwayId(pathway)
+        name = self.getPathwayNameFromElement(pathway)
+        compoundNumber = self.getPathwayCompoundNumberFromElement(pathway)
+        return {"id":id,"name":name,"compoundNumber":compoundNumber}
 
-		""" 
-		return list of compound ids in pathway from pathway id
-		"""
 
-		pathway_id = str(id)
-		if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
-			compoundIds = self.tree.xpath("//pathway[@id='"+pathway_id+"']/compound_in_pathwayset/compound_in_pathway/@id")
-			if len(compoundIds) > 0:
-				return map(int, compoundIds)
-			else:
-				return None
+    def getCompoundsInPathwayFromElement(self, pathway):
+
+        """
+        return list of compound in pathway from pathway element
+        """
+
+        compoundsInPathway = pathway.xpath("./compound_in_pathwayset/compound_in_pathway")
+        if len(compoundsInPathway) > 0:
+            return compoundsInPathway
+        else:
+            return None
+
+
+    def getCompoundInPathwayIdFromElement(self, compound_in_pathway):
+
+        """ 
+        return id of compound_in_pathway from compound_in_pathway element
+        """
+
+        id = compound_in_pathway.xpath("./@id")[0]
+        return int(id)
+
+
+
+    def getCompoundInPathway(self, id):
+
+        """ 
+        return list of compound ids in pathway from pathway id
+        """
+
+        pathway_id = str(id)
+        if len(self.tree.xpath("//pathway[@id='"+pathway_id+"']")) > 0:
+            compoundIds = self.tree.xpath("//pathway[@id='"+pathway_id+"']/compound_in_pathwayset/compound_in_pathway/@id")
+            if len(compoundIds) > 0:
+                return map(int, compoundIds)
+            else:
+                return None
 
 # class Peak:
 

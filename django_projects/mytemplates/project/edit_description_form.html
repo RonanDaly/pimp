@@ -8,17 +8,17 @@
 {% block content %}
 {% if user.is_authenticated %}
 <div class="row">
-	<div class="span8"><h1>{{ project }}</h1></div>
-	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="{% url 'project_detail' project.id %}">Cancel</a></div>
+    <div class="span8"><h1>{{ project }}</h1></div>
+    <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="{% url 'project_detail' project.id %}">Cancel</a></div>
 </div>
 <form class="form-signin" method="POST">
-	{% csrf_token %}
-	<h2 class="form-signin-heading">Description</h2>
-	<span style="color:red; font-size:11px">
-		{{ form.description.errors }}
-	</span>
-	{{ form.description }}
-	<button class="btn btn-large btn-primary" type="submit">Save</button>
+    {% csrf_token %}
+    <h2 class="form-signin-heading">Description</h2>
+    <span style="color:red; font-size:11px">
+        {{ form.description.errors }}
+    </span>
+    {{ form.description }}
+    <button class="btn btn-large btn-primary" type="submit">Save</button>
 </form>
 {% else %}
 <p>Please log in or register to create project</p>

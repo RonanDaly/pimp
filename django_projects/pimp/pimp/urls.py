@@ -105,7 +105,7 @@ urlpatterns = patterns('',
     url(r'^accounts/project/(?P<project_id>\d+)/sample/(?P<sample_id>\d+)/scan/$', 'projects.views.get_scan', name='get_scan'),
     # project description page : form to edit description in a project
     url(r'^accounts/project/(?P<project_id>\d+)/edit_description/$', 'projects.views.editdescription', name='edit_description'),
-	# project description page: form to edit title of a project
+    # project description page: form to edit title of a project
     url(r'^accounts/project/(?P<project_id>\d+)/edit_title/$', 'projects.views.edit_title', name='edit_title'),
     # add user on project page : form to add a user to a project
     url(r'^accounts/project/(?P<project_id>\d+)/adduser/$', 'projects.views.adduser', name='add_user'),

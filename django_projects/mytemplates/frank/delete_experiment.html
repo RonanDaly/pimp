@@ -8,16 +8,16 @@
 
         <p>Are you sure you want to delete {{experiment}}?</p>
 
-	<p>Deleting this experiment will remove all related fragmentation sets, peaks and annotation queries and candidate annotations</p>
+    <p>Deleting this experiment will remove all related fragmentation sets, peaks and annotation queries and candidate annotations</p>
 
-	<p>If any fragmentation sets or annotation queries are still being processed the experiment will not be deleted at this time.<p>
-	
-	<form id="confirm_form" method="post" action="{% url 'delete_experiment' experiment.slug %}">
-		{% csrf_token %}
-		<input type = "submit" name="confirm" value="Confirm">
-	</form>
-	<form action="{% url 'my_experiments' %}">
-		<input type = "submit" value="Cancel">
-	</form>
+    <p>If any fragmentation sets or annotation queries are still being processed the experiment will not be deleted at this time.<p>
+
+    <form id="confirm_form" method="post" action="{% url 'delete_experiment' experiment.slug %}">
+        {% csrf_token %}
+        <input type = "submit" name="confirm" value="Confirm">
+    </form>
+    <form action="{% url 'my_experiments' %}">
+        <input type = "submit" value="Cancel">
+    </form>
 
 {% endblock %}

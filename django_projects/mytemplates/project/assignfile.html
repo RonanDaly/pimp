@@ -14,67 +14,67 @@
 {% if user.is_authenticated %}
 {% ifnotequal permission 'read' %}
 <div class="row">
-	<div class="span8"><h1>{{ project }}</h1></div>
-	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="{% url project_detail project.id %}">Cancel</a></div>
+    <div class="span8"><h1>{{ project }}</h1></div>
+    <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="{% url project_detail project.id %}">Cancel</a></div>
 </div>
 <div class="row-fluid">
-	<div class="container-fluid">
-		<form id="group_creat" method="post" action="." enctype="multipart/form-data">{% csrf_token %}	
-		<div class="span12"><h2>{{ form.group_name }}</h2></div>
-			<div class="row-fluid">
-				<div class="span6 project-span">
-					<div class="row-fluid">
-						<div class="span12 description-span"><h3>Files :</h3></div>
-						<div class="row-fluid">
-							<div class="span12 description-span date-span">
-								{% if project.picture_set.all %}
-								<div class="row-fluid">
-									<div class="grid_8 height250">
-										<table class="table table-hover file-table fancyTable" id="myTable02">
-			          						<thead>
-			            						<tr>
-			              							<th id="th-hidden">File Name</th>
-			              							<th id="th-hidden">Size</th>
-			              							<th id="th-hidden">Uploaded</th>
-			            						</tr>
-			          						</thead>
-			          						<tbody>
-											{% for sample in project.picture_set.all %}
-												<tr>
-			                  						<td>{{ sample.name|truncatechars:25 }}</td>
-			                  						<td>{{ sample.file.size|filesizeformat }}</td>
-			                  						<td>{{ sample.uploaded|truncatewords:"1" }}</td>
-			                					</tr>
-											{% endfor %}
-											</tbody>
-			        					</table>
-		        					</div>
-		        				</div>
-								{% else %}
-								<p>No files in this project, please click "upload files" on the project page to continue</p>
-								{% endif %}
-							</div>
-						</div>
-					</div>
-			  	</div>
-			  	<div class="span6">
-			  		<div id="categorie-container" class="row-fluid">
-			  			<div class="span12 project-span">
-							<div class="span12 description-span"><h3>Add Categories :</h3></div>
-							<div class="row-fluid">
-								<div class="span12 description-span">
-									<div class="span8 description-span">{{ form.categorie_name }}</div>
-									<div class="span4 span-btn">
-										<a id="add-categorie-btn" class="btn btn-primary btn-create-project">Create</a>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-			  	</div>
-			</div>
-		</form>
-	</div>
+    <div class="container-fluid">
+        <form id="group_creat" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+        <div class="span12"><h2>{{ form.group_name }}</h2></div>
+            <div class="row-fluid">
+                <div class="span6 project-span">
+                    <div class="row-fluid">
+                        <div class="span12 description-span"><h3>Files :</h3></div>
+                        <div class="row-fluid">
+                            <div class="span12 description-span date-span">
+                                {% if project.picture_set.all %}
+                                <div class="row-fluid">
+                                    <div class="grid_8 height250">
+                                        <table class="table table-hover file-table fancyTable" id="myTable02">
+                                            <thead>
+                                                <tr>
+                                                    <th id="th-hidden">File Name</th>
+                                                    <th id="th-hidden">Size</th>
+                                                    <th id="th-hidden">Uploaded</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for sample in project.picture_set.all %}
+                                                <tr>
+                                                    <td>{{ sample.name|truncatechars:25 }}</td>
+                                                    <td>{{ sample.file.size|filesizeformat }}</td>
+                                                    <td>{{ sample.uploaded|truncatewords:"1" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <p>No files in this project, please click "upload files" on the project page to continue</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="span6">
+                    <div id="categorie-container" class="row-fluid">
+                        <div class="span12 project-span">
+                            <div class="span12 description-span"><h3>Add Categories :</h3></div>
+                            <div class="row-fluid">
+                                <div class="span12 description-span">
+                                    <div class="span8 description-span">{{ form.categorie_name }}</div>
+                                    <div class="span4 span-btn">
+                                        <a id="add-categorie-btn" class="btn btn-primary btn-create-project">Create</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
  </div>
 {% endifnotequal %}	
 {% else %}

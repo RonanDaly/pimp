@@ -464,21 +464,21 @@ console.log(url.split("/")[url.split("/").length-2]);
 </div>
 {% endif %}
 <div class="row">
-	<div class="span8"><h1>{{ project }}</h1></div>
-	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
+    <div class="span8"><h1>{{ project }}</h1></div>
+    <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
 </div>
 <div class="row-fluid">
-	<div class="container-fluid">
-		<form id="group_creat" method="post" action="{% url 'projfile_attribute' project.id %}" enctype="multipart/form-data">{% csrf_token %}	
+    <div class="container-fluid">
+        <form id="group_creat" method="post" action="{% url 'projfile_attribute' project.id %}" enctype="multipart/form-data">{% csrf_token %}
         {{ attribute_formset.management_form }}
             <div id="sample-attribute-formset">
             {{ sample_attribute_formset.management_form }}
             </div>
-			<!--second part of the form is here and display only when we click next-->
-			<div id="second-step" class="row">
+            <!--second part of the form is here and display only when we click next-->
+            <div id="second-step" class="row">
                 <div class="span12 white-span">
                     <div class="row-fluid">
-				        <div class="span6">
+                        <div class="span6">
                             <div class="span12 bs-docs-sidebar">
                                 <div class="project-span bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="295" data-offset-bottom="270" id="initFilediv"><!-- id="initFilediv" id="span-fix" data-spy="affix-top" data-offset-top="10" -->
                                     <div id="title-container" class="row-fluid">
@@ -491,7 +491,7 @@ console.log(url.split("/")[url.split("/").length-2]);
                                                 <div class="grid_8 height250">
                                                     <table class="table table-hover file-table fancyTable" id="initFiletable">
                                                         <thead>
-        		            						        <tr>
+                                                            <tr>
                                                                 <th id="th-hidden" style="font-size:13px">File Name</th>
                                                                 <th id="th-hidden" style="font-size:13px">Polarity</th>
                                                                 <th id="th-hidden" style="font-size:13px">Uploaded</th>
@@ -510,12 +510,12 @@ console.log(url.split("/")[url.split("/").length-2]);
                                                         {% endfor %}
                                                         </tbody>
                                                   </table>
-          	        					        </div>
+                                                </div>
                                             </div>
                                         {% else %}
                                             <p>No files in this project, please click "upload files" on the project page to continue</p>
                                         {% endif %}
-          						        </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -558,9 +558,9 @@ console.log(url.split("/")[url.split("/").length-2]);
                     </div>
                     {% endfor %}
                 </div>
-			</div>
-		</form>
-	</div>
+            </div>
+        </form>
+    </div>
 </div>
 <div id="myModalCancel" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-header">

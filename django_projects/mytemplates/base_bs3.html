@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>PiMP</title>
+    <head>
+        <title>PiMP</title>
 
         <meta name="author" content="Glasgow Polyomics, University of Glasgow, UK">
         <meta name="author" content="Yoann Gloaguen">
@@ -13,78 +13,78 @@
         <meta name="author" content="Karl Burgess">
         <meta name="author" content="Karen McLuskey">
 
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="shortcut icon" href="{{ STATIC_URL }}img/logo_blue_white_icon_large.png">
-		{% load staticfiles %}
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="shortcut icon" href="{{ STATIC_URL }}img/logo_blue_white_icon_large.png">
+        {% load staticfiles %}
 
-		{% block jQuery %}
-		<link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.fileupload-ui.css">
-		<script src="{% static 'js/jquery-2.1.4.min.js' %}"></script>
-		{% endblock %}
+        {% block jQuery %}
+        <link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.fileupload-ui.css">
+        <script src="{% static 'js/jquery-2.1.4.min.js' %}"></script>
+        {% endblock %}
 
-		{% block Bootstrap %}
-		<link href="{% static 'bootstrap-3.3.5/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
-		<script src="{% static 'bootstrap-3.3.5/js/bootstrap.min.js' %}"></script>
-		<script type="text/javascript" src="{{ STATIC_URL }}js/prefixfree.min.js"></script>
-		{% endblock %}
+        {% block Bootstrap %}
+        <link href="{% static 'bootstrap-3.3.5/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+        <script src="{% static 'bootstrap-3.3.5/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}js/prefixfree.min.js"></script>
+        {% endblock %}
 
-		{% block DataTables %} {% endblock %}
+        {% block DataTables %} {% endblock %}
 
         {% block custom_scripts_and_styles %}{% endblock %}
 
         {% block head %} {% endblock %}
 
-		<link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" media="screen"/>
 
-		<style type="text/css">
-			h1.unimg{
-				position: relative;
-				background: transparent;
-				background-image: url({{ STATIC_URL }}/img/PiMP_logo_no_background.png);
-				background-repeat:no-repeat;
-				/*background-size: 170px 145px;*/
-				background-size: 110px 110px;
-				width: 110px;
-				height: 110px;
-				left: 0px;
-				}
-			div.gpimg{
-				position: absolute;
-				background: transparent;
-				background-image: url({{ STATIC_URL }}/img/logo_white.png);
-				background-repeat:no-repeat;
-				background-size: 100px 68px;
-				width: 100px;
-				height: 68px;
-				right: 10px;
-				top:50px;
-				}
-			.navbar{
-				background-color: rgba(236,234,232, 1);
-				}
-		</style>
+        <style type="text/css">
+            h1.unimg{
+                position: relative;
+                background: transparent;
+                background-image: url({{ STATIC_URL }}/img/PiMP_logo_no_background.png);
+                background-repeat:no-repeat;
+                /*background-size: 170px 145px;*/
+                background-size: 110px 110px;
+                width: 110px;
+                height: 110px;
+                left: 0px;
+                }
+            div.gpimg{
+                position: absolute;
+                background: transparent;
+                background-image: url({{ STATIC_URL }}/img/logo_white.png);
+                background-repeat:no-repeat;
+                background-size: 100px 68px;
+                width: 100px;
+                height: 68px;
+                right: 10px;
+                top:50px;
+                }
+            .navbar{
+                background-color: rgba(236,234,232, 1);
+                }
+        </style>
 
-	</head>
+    </head>
 
-	<body>
+    <body>
 
-		<div class="navbar navbar-default navbar-fixed-top">
-			<div class="container">
-				<div class="navbar-header navbar-right">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-		  			<span class="icon-bar"></span>
-	    			<span class="icon-bar"></span>
-	    			<span class="icon-bar"></span>
-					</button>
+        <div class="navbar navbar-default navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header navbar-right">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    </button>
                     <a class="navbar-brand" href="{% url 'index' %}" style="padding-top: 8px;"><img src="{{ STATIC_URL }}/img/PiMP_logo_no_background.png" style="height:37px;height: 37px;border-radius: 50px;border: 1px solid #ddd;" id="pimp_icon"></a>
-				</div>
+                </div>
 
-				<div class="collapse navbar-collapse">
-					<ul class="nav navbar-nav">
-						{% if user.is_authenticated %}
-							<li><a href="{% url 'project_summary' %}">My projects</a></li>
-							<li><a href="{% url 'profile' %}">My account</a></li>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        {% if user.is_authenticated %}
+                            <li><a href="{% url 'project_summary' %}">My projects</a></li>
+                            <li><a href="{% url 'profile' %}">My account</a></li>
 {#							<li class="dropdown">#}
 {#								<a class"=dropdown-toggle" data-toggle="dropdown" href="#">FrAnK#}
 {#									<span class="caret"></span></a>#}
@@ -96,17 +96,17 @@
 {#							</li>#}
                             <li><a href="{% url 'frank_index' %}">FrAnK</a></li>
                             <li><a href="{% url 'userguide' %}">User guide</a></li>
-							<li><a href="{% url 'auth_logout' %}">Logout</a></li>
-						{% else %}
-							<li><a href="{% url 'auth_login' %}">Login</a></li>
-							<!-- <li><a href="{% url 'registration_register' %}">Register</a></li> -->
+                            <li><a href="{% url 'auth_logout' %}">Logout</a></li>
+                        {% else %}
+                            <li><a href="{% url 'auth_login' %}">Login</a></li>
+                            <!-- <li><a href="{% url 'registration_register' %}">Register</a></li> -->
                             <li><a href="{% url 'userguide' %}">User guide</a></li>
-						{% endif %}
+                        {% endif %}
 {#						<li><a href="{% url 'about' %}">About</a></li>#}
-					</ul>
-				</div>
-			</div>
-		</div>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
         <div class="container" id="base_container">
             <div class="row" style="padding-top:20px;">
@@ -118,22 +118,22 @@
 
         <div class="push"></div>
 
-		<footer class="footer navbar navbar-fixed-bottom">
-				<p>
-					Designed and built by Glasgow Polyomics <a href="http://twitter.com/polyomics">@polyomics</a>.
-				</p>
-				<ul class="footer-links">
-					<li>
-						<a href="http://www.polyomics.gla.ac.uk/">Polyomics website</a>
-					</li>
-					<li class="muted">·</li>
-					<li>
-						<a href="{% url 'licence' %}">Licence</a>
-					</li>
-					<li class="muted">·</li>
-					<li>
-						<a href="{% url 'credits' %}">Credits</a>
-					</li>
-		</footer>
-	</body>
+        <footer class="footer navbar navbar-fixed-bottom">
+                <p>
+                    Designed and built by Glasgow Polyomics <a href="http://twitter.com/polyomics">@polyomics</a>.
+                </p>
+                <ul class="footer-links">
+                    <li>
+                        <a href="http://www.polyomics.gla.ac.uk/">Polyomics website</a>
+                    </li>
+                    <li class="muted">·</li>
+                    <li>
+                        <a href="{% url 'licence' %}">Licence</a>
+                    </li>
+                    <li class="muted">·</li>
+                    <li>
+                        <a href="{% url 'credits' %}">Credits</a>
+                    </li>
+        </footer>
+    </body>
 </html>

@@ -629,9 +629,9 @@ class PimpProjectFrankExp(models.Model):
 
 
 class PimpAnalysisFrankFs(models.Model):
-	# Object that links a PiMP analysis with a Frank fragmentation set
-	pimp_analysis = models.ForeignKey(PimpAnalysis,unique=True)
-	frank_fs = models.ForeignKey(FragmentationSet)
-	status = models.CharField(max_length = 500)
-	def __unicode__(self):
-	    return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name
+    # Object that links a PiMP analysis with a Frank fragmentation set
+    pimp_analysis = models.ForeignKey(PimpAnalysis,unique=True)
+    frank_fs = models.ForeignKey(FragmentationSet)
+    status = models.CharField(max_length = 500)
+    def __unicode__(self):
+        return  self.pimp_analysis.experiment.title + "<-->" + self.frank_fs.name

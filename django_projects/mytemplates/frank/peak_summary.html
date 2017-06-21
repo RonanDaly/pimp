@@ -4,259 +4,259 @@
 {% block content %}
 
     <h2>Peak {{peak.id}}</h2>
-	<p>Mass: {{peak.mass|floatformat:4}}</p>
-	<p>Retention Time: {{peak.retention_time|floatformat:4}}</p>
-	<p>Intensity: {{peak.intensity|stringformat:".4e"}}</p>
-	<p>Number of Fragments: {{number_of_fragments}}</p>
-	</br>
-	{% if preferred_annotation %}
-		<div>Preferred Annotation: <b>{{preferred_annotation.compound.name}}</b> ({{preferred_annotation.compound.formula|safe}})</div>
-		<div>Selected By: {{peak.preferred_candidate_user_selector}} ({{peak.preferred_candidate_updated_date}})</div>
-		<div>Selection Criteria: {{peak.preferred_candidate_description}}</div>
-		</br>
-	{% else %}
-		<p>No Specified Preferred Annotation</p>
-	{% endif %}
+    <p>Mass: {{peak.mass|floatformat:4}}</p>
+    <p>Retention Time: {{peak.retention_time|floatformat:4}}</p>
+    <p>Intensity: {{peak.intensity|stringformat:".4e"}}</p>
+    <p>Number of Fragments: {{number_of_fragments}}</p>
+    </br>
+    {% if preferred_annotation %}
+        <div>Preferred Annotation: <b>{{preferred_annotation.compound.name}}</b> ({{preferred_annotation.compound.formula|safe}})</div>
+        <div>Selected By: {{peak.preferred_candidate_user_selector}} ({{peak.preferred_candidate_updated_date}})</div>
+        <div>Selection Criteria: {{peak.preferred_candidate_description}}</div>
+        </br>
+    {% else %}
+        <p>No Specified Preferred Annotation</p>
+    {% endif %}
 
-	{% if fragments %}
-	<h3>MS2 Fragment Spectrum</h3>     
+    {% if fragments %}
+    <h3>MS2 Fragment Spectrum</h3>
 
-		<!-- <div>
-			<img src="{% url 'make_spectra_plot' peak.fragmentation_set.slug peak.slug %}">
-		</div> -->
-		<!-- The svg that will be filled by D3 -->
-		<div border="20" padding="20">
-			<svg width="700" height="300"></svg>
-	    </div>
-		</br>
-		<table class="table">
-			<tr>
-				<th>Fragment Identifier</th>
-				<th>Mass</th>
-				<th>Retention Time</th>
-				<th>Intensity</th>
-				<th>Relative Intensity</th>
-				<th>Selected Annotation</th>
-			</tr>
-			{% for fragment,relative_intensity in fragments %}
-			<tr>
-				<td><a href="{% url 'peak_summary' fragment.fragmentation_set.slug fragment.slug %}">{{fragment}}</a></td>
-				<td>{{fragment.mass|floatformat:4}}</td>
-				<td>{{fragment.retention_time|floatformat:4}}</td>
-				<td>{{fragment.intensity|stringformat:".4e"}}</td>
-				<td>{{relative_intensity|floatformat:0}}%</td>
-				<td>{{fragment.preferred_candidate_annotation.compound.formula}} {{fragment.preferred_candidate_annotation.adduct}}</td>
-			</tr>
-			{% endfor %}
-		</table>
-	<p style="text-align:center;">
-		Download spectrum as <a href="{% url 'get_fragments_as_text' peak.slug 'list' %}">list</a>&nbsp;<a href="{% url 'get_fragments_as_text' peak.slug 'mona' %}">mona string</a>
-	</p>
-	{% else %}
-		<p>There are no fragments for this peak</p>
-	{% endif %}
-	<br/>
-	<h3>Candidate Annotations</h3>
-	{% if candidate_annotations %}
-		{% for annotation_query,annotations in candidate_annotations.items %}
-	  		<h5>{{annotation_query.name}}&nbsp;<a data-toggle="collapse" data-target="#{{forloop.counter}}">[Show]</a></h5>
-	  		
-	  		<div id="{{forloop.counter}}" class="collapse out">
-				<table class="table">
-					{% if annotations %}				
-					<tr>
-						<th>Compound Name</th>
-						<th>Compound Formula</th>
-						<th>Compound Mass</th>
-						<th>Confidence Value</th>
-						<th>Difference In Mass</th>
-						<th>Adduct</th>
-						<th>Collision Energy</th>
-						<th>Get CSID</th>
-						<th>Molecule</th>		
-						<th>Additional Information</th>
-						<th>Annotation Selection</th>
-						<th></th>
-					</tr>
-					{% for annotation in annotations %}
-						<tr>
-							<td><p class="cs_name {{annotation.compound.id}}">{{annotation.compound.name}}</p></td>
-							<td><p>{{annotation.compound.formula|safe}}</p></td>
-							<td><p>{{annotation.compound.exact_mass|floatformat:4}}</p></td>
-							<td><p>{{annotation.confidence|floatformat:3}}</p></td>		
-							<td><p {% if annotation.mass_match == True %}style="color: rgb(59, 182, 59);"{% endif %}{% if annotation.mass_match == False %}style="color: rgb(232, 45, 45);"{% endif %}>{{annotation.difference_from_peak_mass|floatformat:3}}</p></td>
-							<td><p>{{annotation.adduct}}</p></td>
-							<td><p>{{annotation.collision_energy}}</p></td>	
-							<td>
-							{% if annotation.compound.csid = None %}   
-							<a class ="cspider_info_btn {{annotation.compound.id}}" compound_id="{{annotation.compound.id}}" href={{cs_url}}>Get ChemSpider Info</a></td>
-							<td><p class="cs_image {{annotation.compound.id}}"></p></td>
-							<td><p class="cs_url {{annotation.compound.id}}"></p></td>
-							{% else %}
-							<p class ="show_cs {{annotation.compound.id}}"> ChemSpider ID: {{annotation.compound.csid}}</p></td>
-							<!--<td><p>{{annotation.compound.csid}}</p></td>-->
-							<td><p class="cs_image {{annotation.compound.id}}"> <img src="{{ annotation.compound.image_url }}" height="900"></p></td>
-							<td><p class="cs_url {{annotation.compound.id}}"><a href ="{{annotation.compound.cs_url}}">ChemSpider</a></p></td>
-							{% endif %}
-							<!--<td><p>{{annotation.additional_information}}</p></td>-->
-							<td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
-						</tr>
-					{% endfor %}
-					{% endif %}
-				</table>
-			</div>
-	  	{% endfor %}
-	{% else %}
-		<p>No current annotations for this peak</p>
-	{% endif %}
+        <!-- <div>
+            <img src="{% url 'make_spectra_plot' peak.fragmentation_set.slug peak.slug %}">
+        </div> -->
+        <!-- The svg that will be filled by D3 -->
+        <div border="20" padding="20">
+            <svg width="700" height="300"></svg>
+        </div>
+        </br>
+        <table class="table">
+            <tr>
+                <th>Fragment Identifier</th>
+                <th>Mass</th>
+                <th>Retention Time</th>
+                <th>Intensity</th>
+                <th>Relative Intensity</th>
+                <th>Selected Annotation</th>
+            </tr>
+            {% for fragment,relative_intensity in fragments %}
+            <tr>
+                <td><a href="{% url 'peak_summary' fragment.fragmentation_set.slug fragment.slug %}">{{fragment}}</a></td>
+                <td>{{fragment.mass|floatformat:4}}</td>
+                <td>{{fragment.retention_time|floatformat:4}}</td>
+                <td>{{fragment.intensity|stringformat:".4e"}}</td>
+                <td>{{relative_intensity|floatformat:0}}%</td>
+                <td>{{fragment.preferred_candidate_annotation.compound.formula}} {{fragment.preferred_candidate_annotation.adduct}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    <p style="text-align:center;">
+        Download spectrum as <a href="{% url 'get_fragments_as_text' peak.slug 'list' %}">list</a>&nbsp;<a href="{% url 'get_fragments_as_text' peak.slug 'mona' %}">mona string</a>
+    </p>
+    {% else %}
+        <p>There are no fragments for this peak</p>
+    {% endif %}
+    <br/>
+    <h3>Candidate Annotations</h3>
+    {% if candidate_annotations %}
+        {% for annotation_query,annotations in candidate_annotations.items %}
+            <h5>{{annotation_query.name}}&nbsp;<a data-toggle="collapse" data-target="#{{forloop.counter}}">[Show]</a></h5>
 
-	<table>	
-		<tr><td><a href="{% url 'fragmentation_set' peak.fragmentation_set.slug %}">{{peak.fragmentation_set.name}}</a></td></tr>
-		<tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragmentation Sets</a></td></tr>
-		<tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
-	</table>	
+            <div id="{{forloop.counter}}" class="collapse out">
+                <table class="table">
+                    {% if annotations %}
+                    <tr>
+                        <th>Compound Name</th>
+                        <th>Compound Formula</th>
+                        <th>Compound Mass</th>
+                        <th>Confidence Value</th>
+                        <th>Difference In Mass</th>
+                        <th>Adduct</th>
+                        <th>Collision Energy</th>
+                        <th>Get CSID</th>
+                        <th>Molecule</th>
+                        <th>Additional Information</th>
+                        <th>Annotation Selection</th>
+                        <th></th>
+                    </tr>
+                    {% for annotation in annotations %}
+                        <tr>
+                            <td><p class="cs_name {{annotation.compound.id}}">{{annotation.compound.name}}</p></td>
+                            <td><p>{{annotation.compound.formula|safe}}</p></td>
+                            <td><p>{{annotation.compound.exact_mass|floatformat:4}}</p></td>
+                            <td><p>{{annotation.confidence|floatformat:3}}</p></td>
+                            <td><p {% if annotation.mass_match == True %}style="color: rgb(59, 182, 59);"{% endif %}{% if annotation.mass_match == False %}style="color: rgb(232, 45, 45);"{% endif %}>{{annotation.difference_from_peak_mass|floatformat:3}}</p></td>
+                            <td><p>{{annotation.adduct}}</p></td>
+                            <td><p>{{annotation.collision_energy}}</p></td>
+                            <td>
+                            {% if annotation.compound.csid = None %}
+                            <a class ="cspider_info_btn {{annotation.compound.id}}" compound_id="{{annotation.compound.id}}" href={{cs_url}}>Get ChemSpider Info</a></td>
+                            <td><p class="cs_image {{annotation.compound.id}}"></p></td>
+                            <td><p class="cs_url {{annotation.compound.id}}"></p></td>
+                            {% else %}
+                            <p class ="show_cs {{annotation.compound.id}}"> ChemSpider ID: {{annotation.compound.csid}}</p></td>
+                            <!--<td><p>{{annotation.compound.csid}}</p></td>-->
+                            <td><p class="cs_image {{annotation.compound.id}}"> <img src="{{ annotation.compound.image_url }}" height="900"></p></td>
+                            <td><p class="cs_url {{annotation.compound.id}}"><a href ="{{annotation.compound.cs_url}}">ChemSpider</a></p></td>
+                            {% endif %}
+                            <!--<td><p>{{annotation.additional_information}}</p></td>-->
+                            <td><a href="{% url 'specify_preferred_annotation' peak.fragmentation_set.slug peak.slug annotation.id %}">Select Annotation</td>
+                        </tr>
+                    {% endfor %}
+                    {% endif %}
+                </table>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No current annotations for this peak</p>
+    {% endif %}
+
+    <table>
+        <tr><td><a href="{% url 'fragmentation_set' peak.fragmentation_set.slug %}">{{peak.fragmentation_set.name}}</a></td></tr>
+        <tr><td><a href="{% url 'fragmentation_set_summary' %}">My Fragmentation Sets</a></td></tr>
+        <tr><td><a href="{% url 'frank_index' %}">Home</a></td></tr>
+    </table>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 <script type="text/javascript">
 
-	// var dataset = [[123,25],[356,5],[55,4]]
-	var dataset = {{plot_fragments}}
-	var parentData = {{plot_parent}}
+    // var dataset = [[123,25],[356,5],[55,4]]
+    var dataset = {{plot_fragments}}
+    var parentData = {{plot_parent}}
 
 
-	max_mass = d3.max(dataset,function(d) {return d[0]+50})
-	if (max_mass < parentData[0][0]+50) {
-		max_mass = parentData[0][0] + 50;
-	}
-	// Width and height should correspond to svg element
-	// ver and hor are the margins
-	var width=700
-	var height=300
-	var ver_margin = 30
-	var hor_margin = 50
+    max_mass = d3.max(dataset,function(d) {return d[0]+50})
+    if (max_mass < parentData[0][0]+50) {
+        max_mass = parentData[0][0] + 50;
+    }
+    // Width and height should correspond to svg element
+    // ver and hor are the margins
+    var width=700
+    var height=300
+    var ver_margin = 30
+    var hor_margin = 50
 
-	var svg = d3.select("svg")
+    var svg = d3.select("svg")
 
-	// Create the line objects
-	lines = svg.selectAll("line")
-	        .data(dataset)
-	        .enter()
-	        .append("line")
-	        .on("click",function(d) {
-	        	console.log(d);
-	        })
+    // Create the line objects
+    lines = svg.selectAll("line")
+            .data(dataset)
+            .enter()
+            .append("line")
+            .on("click",function(d) {
+                console.log(d);
+            })
 
 
-	// Axis scale objects
-	var xScale = d3.scale.linear()
-	xScale.domain([0, max_mass])
-	xScale.range([ hor_margin,width-hor_margin])
-	var yScale = d3.scale.linear()
-	yScale.domain([0,d3.max(dataset,function(d) {return d[1];})])
-	yScale.range([height-ver_margin,ver_margin])
+    // Axis scale objects
+    var xScale = d3.scale.linear()
+    xScale.domain([0, max_mass])
+    xScale.range([ hor_margin,width-hor_margin])
+    var yScale = d3.scale.linear()
+    yScale.domain([0,d3.max(dataset,function(d) {return d[1];})])
+    yScale.range([height-ver_margin,ver_margin])
 
-	// Set the line attributes
-	lines.attr("x1",function(d) {return xScale(d[0]);})
-	      .attr("x2",function(d) {return xScale(d[0]);})
-	      .attr("y1",height-ver_margin)
-	      .attr("y2",function(d) {return yScale(d[1]);})
-	      .attr("stroke","red")
-	      .attr("stroke-width",2)
-	      .on("mouseover",function(d) {
-	      	d3.select(this)
-	      		.attr("stroke","green")
-	      		.attr("stroke-width",4);
+    // Set the line attributes
+    lines.attr("x1",function(d) {return xScale(d[0]);})
+          .attr("x2",function(d) {return xScale(d[0]);})
+          .attr("y1",height-ver_margin)
+          .attr("y2",function(d) {return yScale(d[1]);})
+          .attr("stroke","red")
+          .attr("stroke-width",2)
+          .on("mouseover",function(d) {
+            d3.select(this)
+                .attr("stroke","green")
+                .attr("stroke-width",4);
 
-	      	var xPos = parseFloat(d3.select(this).attr("x1"))
-	      	var yPos = parseFloat(d3.select(this).attr("y2"))
-	      	svg.append("line")
-	      		.attr("id","lossline")
-	      		.attr("x1",xPos)
-	      		.attr("x2",xScale(parentData[0][0]))
-	      		.attr("y1",yPos+5)
-	      		.attr("y2",yPos+5)
-	      		.attr("stroke","green")
-	      		.attr("stroke-width",2)
-	      		.attr("stroke-dasharray","5,5")
+            var xPos = parseFloat(d3.select(this).attr("x1"))
+            var yPos = parseFloat(d3.select(this).attr("y2"))
+            svg.append("line")
+                .attr("id","lossline")
+                .attr("x1",xPos)
+                .attr("x2",xScale(parentData[0][0]))
+                .attr("y1",yPos+5)
+                .attr("y2",yPos+5)
+                .attr("stroke","green")
+                .attr("stroke-width",2)
+                .attr("stroke-dasharray","5,5")
 
-	      	svg.append("text")
-	      		.attr("id","losstext")
-	      		.text("Loss mass: " + ((parentData[0][0]-d[0]).toFixed(4)))
-	      		.attr("y",yPos+15)
-	      		.attr("x",xScale(d[0] + 0.5*(parentData[0][0]-d[0]))-20)
-	      		.attr("font-family","sans-serif")
-	      		.attr("font-size","10px")
-	      		.attr("fill","green")
+            svg.append("text")
+                .attr("id","losstext")
+                .text("Loss mass: " + ((parentData[0][0]-d[0]).toFixed(4)))
+                .attr("y",yPos+15)
+                .attr("x",xScale(d[0] + 0.5*(parentData[0][0]-d[0]))-20)
+                .attr("font-family","sans-serif")
+                .attr("font-size","10px")
+                .attr("fill","green")
 
-	      	svg.append("text")
-	      		.attr("id","tooltip")
-	      		.attr("x",xPos-50)
-	      		.attr("y",yPos-5)
-	      		.attr("font-family","sans-serif")
-	      		.attr("font-size","12px")
-	      		.attr("font-weight","bold")
-	      		.text("Mass:" + (d[0].toFixed(4)) + ", intensity: " + (d[1].toFixed(0)) + "%");
+            svg.append("text")
+                .attr("id","tooltip")
+                .attr("x",xPos-50)
+                .attr("y",yPos-5)
+                .attr("font-family","sans-serif")
+                .attr("font-size","12px")
+                .attr("font-weight","bold")
+                .text("Mass:" + (d[0].toFixed(4)) + ", intensity: " + (d[1].toFixed(0)) + "%");
 
-	      	
-	      })
-	      .on("mouseout",function() {
-	      	d3.select(this)
-	      		.transition()
-	      		.duration(250)
-	      		.attr("stroke","red")
-	      		.attr("stroke-width",2);
-	      	d3.select("#tooltip").remove()
-	      	d3.select("#lossline").remove()
-	      	d3.select("#losstext").remove()
-	      })
-	      // .append("title")
-	      // .text(function(d) {
-	      // 	return "Mass: " + d[0] + ", Intensity: " + d[1]
-	      // })
+
+          })
+          .on("mouseout",function() {
+            d3.select(this)
+                .transition()
+                .duration(250)
+                .attr("stroke","red")
+                .attr("stroke-width",2);
+            d3.select("#tooltip").remove()
+            d3.select("#lossline").remove()
+            d3.select("#losstext").remove()
+          })
+          // .append("title")
+          // .text(function(d) {
+          // 	return "Mass: " + d[0] + ", Intensity: " + d[1]
+          // })
 
     // Axes
-	var xAxis = d3.svg.axis()
+    var xAxis = d3.svg.axis()
         .scale(xScale)
         .orient("bottom");
-	svg.append("g")
-	    .attr("class", "axis")
-	    .attr("transform", "translate(0," + (height-ver_margin) + ")")
-	    .call(xAxis);
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0," + (height-ver_margin) + ")")
+        .call(xAxis);
 
-	var yAxis = d3.svg.axis()
-	    .scale(yScale)
-	    .orient("left")
-	svg.append("g")
-		.attr("class","axis")
-		.attr("transform","translate(" + hor_margin + ",0)")
-	  	.call(yAxis)
+    var yAxis = d3.svg.axis()
+        .scale(yScale)
+        .orient("left")
+    svg.append("g")
+        .attr("class","axis")
+        .attr("transform","translate(" + hor_margin + ",0)")
+        .call(yAxis)
 
-	// Axes labels
-	svg.append("text")
-	    .text("Mass")
-	    .attr("x",width/2)
-	    .attr("y",height)
-	    .attr("class","axis-label")
+    // Axes labels
+    svg.append("text")
+        .text("Mass")
+        .attr("x",width/2)
+        .attr("y",height)
+        .attr("class","axis-label")
 
-	svg.append("text")
-	    .text("Relative Intensity")
-	    .attr("x",0)
-	    .attr("y",0)
-	    .attr("class","axis-label")
-	    .attr("transform","translate(10," + (30+height/2) + ")rotate(-90)");
+    svg.append("text")
+        .text("Relative Intensity")
+        .attr("x",0)
+        .attr("y",0)
+        .attr("class","axis-label")
+        .attr("transform","translate(10," + (30+height/2) + ")rotate(-90)");
 
-	svg.append("line")
-		.attr("x1",xScale(parentData[0][0]))
-		.attr("x2",xScale(parentData[0][0]))
-		.attr("y1",height-ver_margin)
-		.attr("y2",yScale(parentData[0][1]))
-		.attr("stroke","blue")
-		.attr("stroke-width",3)
+    svg.append("line")
+        .attr("x1",xScale(parentData[0][0]))
+        .attr("x2",xScale(parentData[0][0]))
+        .attr("y1",height-ver_margin)
+        .attr("y2",yScale(parentData[0][1]))
+        .attr("stroke","blue")
+        .attr("stroke-width",3)
 
-	svg.append("text")
-		.text("Parent Ion (" + parentData[0][0].toFixed(4) + ")")
-		.attr("class","axis-label")
-		.attr("transform","translate("+ (xScale(parentData[0][0])-5) + "," + (50+height/2) + ")rotate(-90)")
+    svg.append("text")
+        .text("Parent Ion (" + parentData[0][0].toFixed(4) + ")")
+        .attr("class","axis-label")
+        .attr("transform","translate("+ (xScale(parentData[0][0])-5) + "," + (50+height/2) + ")rotate(-90)")
 
 </script>
 

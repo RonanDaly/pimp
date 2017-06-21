@@ -117,7 +117,7 @@ $(document).ready(function() {
   $('#id_attributes-0-name').val('comparison_1');
 
   function changeOptionSelected(element) {	
-	  var str = "";
+      var str = "";
 
     var selectId = $(element).attr('id');
     var selectedOption = $('#' + selectId + ' option:selected')[0];
@@ -565,13 +565,13 @@ $(document).ready(function() {
   </div>
 </div>
 <div class="row">
-	<div class="container-fluid">
-		<form id="experiment_creat" method="POST" action="{% url 'create_experiment' project.id %}" enctype="multipart/form-data">{% csrf_token %}	
+    <div class="container-fluid">
+        <form id="experiment_creat" method="POST" action="{% url 'create_experiment' project.id %}" enctype="multipart/form-data">{% csrf_token %}
     {{ comparison_formset.management_form }}
     {{ parameter_formset.management_form }}
-  		<div id="first-step" class="row">
-  			<div class="col-md-12">
-  				<div class="row">
+        <div id="first-step" class="row">
+            <div class="col-md-12">
+                <div class="row">
 
             <!-- Left column where analysis title form and comparison form are displayed -->
             <div class="col-md-6 description-span">
@@ -708,11 +708,11 @@ $(document).ready(function() {
             </div>
               
           </div>
-  			</div>
-		  </div>
+            </div>
+          </div>
 
     </form>
-	</div>
+    </div>
 </div>
 <div class="modal fade" id="myModal_nofooter" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">

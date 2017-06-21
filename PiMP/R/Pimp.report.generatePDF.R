@@ -1,10 +1,10 @@
 Pimp.report.generatePDF <- function(peakml=NULL, xlsx=NULL, databases=character(), outDirectory="chromatograms", sampleGroups = NULL, layoutMtx = NULL, ppm = 3, trendPlots = NULL, useArea = FALSE, peakRTWindow = 30, excludeFromPlots = NULL) {
     logger <- getPiMPLogger('Pimp.processRawData.report.generatePDF')
-	##Read PeakML data
-	PeakMLData <- PeakML.Read(peakml, ionisation = "neutral", NULL)
+    ##Read PeakML data
+    PeakMLData <- PeakML.Read(peakml, ionisation = "neutral", NULL)
 
-	##Read from report
-	if (file.exists(xlsx)) {
+    ##Read from report
+    if (file.exists(xlsx)) {
         xls.rawData <- readWorksheetFromFile(file=xlsx, sheet="RawData")#read.xlsx(xlsx, sheetName="RawData")
         xls.identification <- readWorksheetFromFile(file=xlsx, sheet="Identification")
     }

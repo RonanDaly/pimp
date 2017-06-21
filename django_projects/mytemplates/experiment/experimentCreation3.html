@@ -34,7 +34,7 @@ $(document).ready(function() {
 }
 
   function changeOptionSelected(element) {	
-	  var str = "";
+      var str = "";
 
     // console.log("select change");
     console.log("previous: "+previous)
@@ -406,36 +406,36 @@ $(document).ready(function() {
 {% if user.is_authenticated %}
 {% ifnotequal permission 'read' %}
 <div class="row">
-	<div class="span8"><h1>{{ project }}</h1></div>
-	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
+    <div class="span8"><h1>{{ project }}</h1></div>
+    <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#myModalCancel" role="button" data-toggle="modal">Cancel</a></div>
 </div>
 <div class="row-fluid">
-	<div class="container-fluid">
-		<form id="experiment_creat" method="post" action="{% url create_experiment project.id %}" enctype="multipart/form-data">{% csrf_token %}	
+    <div class="container-fluid">
+        <form id="experiment_creat" method="post" action="{% url create_experiment project.id %}" enctype="multipart/form-data">{% csrf_token %}
     {{ comparison_formset.management_form }}
     {{ parameter_formset.management_form }}
-  		<div id="first-step" class="row-fluid">
-  			<div class="span12">
-  				<div class="row-fluid">
-  					<div class="span12 white-span">
-  						<div class="row-fluid">
+        <div id="first-step" class="row-fluid">
+            <div class="span12">
+                <div class="row-fluid">
+                    <div class="span12 white-span">
+                        <div class="row-fluid">
                 <div class="span6 description-span">
-    							<div class="span12 description-span"><h3>Experiment title :</h3></div>
-    							<div class="row-fluid">
-    								<div class="span12 description-span date-span">
-    									{{ experiment_form.title.errors }}
-    									{{ experiment_form.title }}
-    								</div>
-    							</div>
+                                <div class="span12 description-span"><h3>Experiment title :</h3></div>
+                                <div class="row-fluid">
+                                    <div class="span12 description-span date-span">
+                                        {{ experiment_form.title.errors }}
+                                        {{ experiment_form.title }}
+                                    </div>
+                                </div>
                 </div>
                 <div id="advanced" class="span6 right-span">
                   <p>
                     <a id="advancedSettings">Advanced Settings</a>
                   </p>
                 </div>
-  						</div>
-            		<div class="row-fluid">
-                	<div id="comparisonPanel" class="span6 center-span" style="float:none;margin: 0 auto;">
+                        </div>
+                    <div class="row-fluid">
+                    <div id="comparisonPanel" class="span6 center-span" style="float:none;margin: 0 auto;">
                     <div class="row-fluid">
                       <div class="span12">
                         <div class="span12 description-span"><h3>Comparisons :</h3></div>
@@ -450,7 +450,7 @@ $(document).ready(function() {
                     <div class="row-fluid">
                       <div class="span12"><a id="add" class="btn btn-primary btn-create-project">Add attribute</a></div>
                     </div>
-                	</div>
+                    </div>
                   <div id="settinsPanel" class="span6" style="display:none;">
                     <div class="row-fluid">
                       <div class="span12">
@@ -489,15 +489,15 @@ $(document).ready(function() {
                       </div>
                     </div> 
                   </div>
-            		</div>
-  				  	</div>
-          		<div class="row-fluid">
-            		<div class="span12"><input class="btn btn-success btn-create-project" type="submit" value="Create experiment"/><!a id="next" class="btn btn-success btn-create-project"><!/a></div>
-          		</div>
-  				</div>
-  			</div>
-  		</div>
-	</div>
+                    </div>
+                    </div>
+                <div class="row-fluid">
+                    <div class="span12"><input class="btn btn-success btn-create-project" type="submit" value="Create experiment"/><!a id="next" class="btn btn-success btn-create-project"><!/a></div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-header">

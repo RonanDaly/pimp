@@ -59,33 +59,33 @@ tGradSum = function(params, models) gradSum(tpGradient, params, models)
 removeOutliers <- function(y, p.value=0.05) {
     logger <- getPiMPLogger('Pimp.gpModel.removeOutliers')
 
-	retval = rep(TRUE, length(y))
-	testY = y
-	
-	if (length(testY) < 6) {
-		return(retval)
-	}
-	while ( TRUE ) {
-		o = tryCatch(outlier(testY),    warning=function(w) {
-		                                    logwarn(w, logger=logger); stop()
-		                                },
-		                                error=function(e) {
-		                                    logerror(e, logger=logger);
-		                                    logerror(testY, logger=logger);
-		                                    logerror(y, logger=logger)
-		                                }
-		)
-		pos = which(y == o)
-		testResult = tryCatch(grubbs.test(testY), warning=function(w) { logwarn(w, logger=logger);
-		                                                                logwarn(testY, logger=logger);
-		                                                                stop() })
-		if ( testResult$p.value < p.value && length(testY) > 5 ) {
-			retval[pos] = FALSE
-		} else {
-			return(retval)
-		}
-		testY = rm.outlier(testY)
-	}
+    retval = rep(TRUE, length(y))
+    testY = y
+
+    if (length(testY) < 6) {
+        return(retval)
+    }
+    while ( TRUE ) {
+        o = tryCatch(outlier(testY),    warning=function(w) {
+                                            logwarn(w, logger=logger); stop()
+                                        },
+                                        error=function(e) {
+                                            logerror(e, logger=logger);
+                                            logerror(testY, logger=logger);
+                                            logerror(y, logger=logger)
+                                        }
+        )
+        pos = which(y == o)
+        testResult = tryCatch(grubbs.test(testY), warning=function(w) { logwarn(w, logger=logger);
+                                                                        logwarn(testY, logger=logger);
+                                                                        stop() })
+        if ( testResult$p.value < p.value && length(testY) > 5 ) {
+            retval[pos] = FALSE
+        } else {
+            return(retval)
+        }
+        testY = rm.outlier(testY)
+    }
 }
 
 tp4Create = function(q, d, X, y, options) tpCreate(4, q, d, X, y, options)
@@ -156,12 +156,12 @@ gpRegress <- function(processCreate, objectiveFun, gradFun, expandParamFun, data
     options$kern$comp = list("rbf","white")
     models = list()
     numModels = length(uniqueGroups) * length(peaks)
-	loginfo('Num models: %s', numModels, logger=logger)
-	
-	peakMeans = list()
-	for (peak in peaks) {
+    loginfo('Num models: %s', numModels, logger=logger)
+
+    peakMeans = list()
+    for (peak in peaks) {
     m = mean(data[data$peak == peak,'intensity'])
-		peakMeans[[peak]] = m
+        peakMeans[[peak]] = m
   }
 
     outputGroup = vector(mode="numeric", length=numModels)
@@ -169,34 +169,34 @@ gpRegress <- function(processCreate, objectiveFun, gradFun, expandParamFun, data
     outputMean = vector(mode="numeric", length=numModels)
     models = vector(mode="list", length=numModels)
 
-	for ( i in 1:length(uniqueGroups) ) {
-		batch = uniqueGroups[i]
-		loginfo('Batch %s', batch, logger=logger)
+    for ( i in 1:length(uniqueGroups) ) {
+        batch = uniqueGroups[i]
+        loginfo('Batch %s', batch, logger=logger)
         batchData = data[data$group == batch,]
-		for ( j in 1:length(peaks) ) {
-			peak = peaks[j]
-			#cat('Peak', peak, '\n')
+        for ( j in 1:length(peaks) ) {
+            peak = peaks[j]
+            #cat('Peak', peak, '\n')
             peakData = batchData[batchData$peak == peak,]
-			modelNum = (i - 1) * length(peaks) + j
-			logdebug('Batch %s peak %s numSamples %s modelNum %s %s %s %s', batch, peak,
-				dim(peakData)[1], modelNum, length(outputGroup), length(outputPeak), length(models), logger=logger)
+            modelNum = (i - 1) * length(peaks) + j
+            logdebug('Batch %s peak %s numSamples %s modelNum %s %s %s %s', batch, peak,
+                dim(peakData)[1], modelNum, length(outputGroup), length(outputPeak), length(models), logger=logger)
       model = buildModel(processCreate, peakData, removeOutliers, options)
-			outputGroup[modelNum] = as.character(batch)
-			outputPeak[modelNum] = peak
+            outputGroup[modelNum] = as.character(batch)
+            outputPeak[modelNum] = peak
       outputMean[modelNum] = peakMeans[[peak]]
-			models[modelNum] = list(model)
+            models[modelNum] = list(model)
             #outputGroup = append(outputGroup, batch)
             #outputPeak = append(outputPeak, peak)
             #models = append(models, list(model))
         }
     }
 
-	# If we haven't specified any hyper parameters, try to optimise them.
+    # If we haven't specified any hyper parameters, try to optimise them.
     if ( is.null(hyperParameters) ) {
       hyperParameters = getOptimalParameters(models, objectiveFun, gradFun)
     }
 
-	# Make sure the models have the correct hyper parameters.
+    # Make sure the models have the correct hyper parameters.
     optimisedModels = lapply(models, function(model) if (is.null(model)) { model } else { expandParamFun(model, hyperParameters)})
     models = data.frame(group=factor(outputGroup), peak=outputPeak, mean=outputMean)
     models$model = optimisedModels
@@ -231,38 +231,38 @@ predictFromModel = function(meanVarFunction, model, times, varsigma.return=FALSE
 }
 
 predictFromModels <- function(meanVarFunction, output, group, peak, times, intensities) {
-	# m is the overall mean for a peak (over all batches)
-	#m = output$mean[[peak]]
-	#if ( is.null(m) ) {
-		# There is no mean for this peak, therefore there are no QC samples
-		# for this peak
-	#	return(intensities)
-	#}
+    # m is the overall mean for a peak (over all batches)
+    #m = output$mean[[peak]]
+    #if ( is.null(m) ) {
+        # There is no mean for this peak, therefore there are no QC samples
+        # for this peak
+    #	return(intensities)
+    #}
 
-	if ( ! peak %in% output$peak ) {
-		return(rep(0, length(intensities)))
-	}
+    if ( ! peak %in% output$peak ) {
+        return(rep(0, length(intensities)))
+    }
     selectedModels = output$model[output$group == group & output$peak == peak]
-	if ( length(selectedModels) != 1 ) {
-		# Sanity check
-		show(group)
-		show(peak)
-		stop('Should not be getting here')
-	}
+    if ( length(selectedModels) != 1 ) {
+        # Sanity check
+        show(group)
+        show(peak)
+        stop('Should not be getting here')
+    }
   m = output$mean[output$group == group & output$peak == peak]
-	
-	# We are dealing with log intensities in the models.
-	intensities = log(intensities)
+
+    # We are dealing with log intensities in the models.
+    intensities = log(intensities)
     model = selectedModels[[1]]
     
     if ( is.null(model) ) {
-		# If the model is NULL, we simply do a correction to the mean (inter-batch correction)
+        # If the model is NULL, we simply do a correction to the mean (inter-batch correction)
         predictedIntensities = intensities - mean(intensities) + m
     } else {
-		# Else we do an inter- and intra-batch correction
+        # Else we do an inter- and intra-batch correction
         predictedIntensities = intensities - predictFromModel(meanVarFunction, model, times) + m
     }
-	# The outputs are in linear space
+    # The outputs are in linear space
     outputIntensities = exp(predictedIntensities)
 }
 
@@ -284,26 +284,26 @@ correctPeaks <- function(meanVarFunction, output, data, batchInformation, types)
     wantedIds = getWantedIds(batchInformation, types)
 
     for (peak in allPeaks) {
-		logdebug(peak, logger=logger)
+        logdebug(peak, logger=logger)
         for (batch in batches) {
-			# For each peak and batch, find which samples we are interested in and get the peaks out
+            # For each peak and batch, find which samples we are interested in and get the peaks out
             batchFiles = intersect(wantedIds, rownames(batchInformation[batchInformation$batch == batch,]))
             selectedPeaks = which(dataMtx[,dataPeakColumn] == peak & measurementNames %in% batchFiles)
             if ( length(selectedPeaks) == 0 ) {
                 next
             }
-			# Find the times and intensities for the peaks of interest
+            # Find the times and intensities for the peaks of interest
             times = batchInformation[measurementNames[selectedPeaks],'time']
             intensities = dataMtx[selectedPeaks,dataIntensityColumn]
-			# Find what intensities that model predicts for 
+            # Find what intensities that model predicts for
             correctedIntensities = predictFromModels(meanVarFunction, output, batch, peak, times, intensities)
-			# Find the scaling factors in linear space
+            # Find the scaling factors in linear space
             scaling = correctedIntensities / intensities
-			# Do the correction, for the max intensity and sum intensity columns
+            # Do the correction, for the max intensity and sum intensity columns
             data$peakDataMtx[selectedPeaks,dataIntensityColumn] = correctedIntensities
             data$peakDataMtx[selectedPeaks,dataSumIntensityColumn] = data$peakDataMtx[selectedPeaks,dataSumIntensityColumn] * scaling
 
-			# Also do the correction for each of the chromatograms
+            # Also do the correction for each of the chromatograms
             for (i in 1:length(selectedPeaks)) {
                 p = selectedPeaks[i]
                 scale = scaling[i]

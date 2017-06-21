@@ -30,7 +30,7 @@ body {
         <img src="{{ STATIC_URL }}/img/PiMP_logo_no_background.png"
         style="position: relative; top: 10px; left: 10px; width: 110px; height: 110px;">
         <img src="{{ STATIC_URL }}/img/pattern.png"
-	style="position: absolute; top: 0px; right: 0px; width: 200px; height: 110px; ">
+    style="position: absolute; top: 0px; right: 0px; width: 200px; height: 110px; ">
     </head>
 </html>
 
@@ -46,448 +46,448 @@ body {
 <script type="text/javascript" src="{{ STATIC_URL }}js/d3.v3.min.js"></script>
 
 <script>
-	var w = window.innerWidth;
-	var h = window.innerHeight;
-	var keyh = true;
-	var focus_node = null,
-	    highlight_node = null;
-	var text_center = true;
-	var outline = false;
-	var min_score = 0;
-	var max_score = 1;
-	var highlight_color = "blue";
-	var highlight_trans = 0.1;
-	var default_node_color = "#ccc";
-	var special_node_color = "#CC0000";
-	//var default_node_color = "rgb(3,190,100)";
-	var default_link_color = "#888";
-	var nominal_base_node_size = 8;
-	var nominal_text_size = 10;
-	var max_text_size = 24;
-	var nominal_stroke = 1.5;
-	var max_stroke = 4.5;
-	var max_base_node_size = 36;
-	var min_zoom = 0.1;
-	var max_zoom = 7;
-	var svg = d3.select("body").append("svg")
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    var keyh = true;
+    var focus_node = null,
+        highlight_node = null;
+    var text_center = true;
+    var outline = false;
+    var min_score = 0;
+    var max_score = 1;
+    var highlight_color = "blue";
+    var highlight_trans = 0.1;
+    var default_node_color = "#ccc";
+    var special_node_color = "#CC0000";
+    //var default_node_color = "rgb(3,190,100)";
+    var default_link_color = "#888";
+    var nominal_base_node_size = 8;
+    var nominal_text_size = 10;
+    var max_text_size = 24;
+    var nominal_stroke = 1.5;
+    var max_stroke = 4.5;
+    var max_base_node_size = 36;
+    var min_zoom = 0.1;
+    var max_zoom = 7;
+    var svg = d3.select("body").append("svg")
                 .attr("width",200)
                 .attr("height",200)
                 .attr("id","ms1_plot")
 
-	var zoom = d3.behavior.zoom().scaleExtent([min_zoom, max_zoom])
-	var circle_opacity = 0.9
+    var zoom = d3.behavior.zoom().scaleExtent([min_zoom, max_zoom])
+    var circle_opacity = 0.9
 
-	var color = d3.scale.linear()
-	    .domain([min_score, (min_score + max_score) / 2, max_score])
-	    .range(["#1f77b4", "#2ca02c", "#ff7f0e"]);
+    var color = d3.scale.linear()
+        .domain([min_score, (min_score + max_score) / 2, max_score])
+        .range(["#1f77b4", "#2ca02c", "#ff7f0e"]);
 
-	var size = d3.scale.pow().exponent(1)
-	    .domain([1, 100])
-	    .range([8, 24]);
+    var size = d3.scale.pow().exponent(1)
+        .domain([1, 100])
+        .range([8, 24]);
 
-	var force = d3.layout.force()
-	    .linkDistance(60)
-	    .charge(-300)
-	    .size([w, h]);
+    var force = d3.layout.force()
+        .linkDistance(60)
+        .charge(-300)
+        .size([w, h]);
 
-	// Create a group for the graph plot
-	var g = svg.append("g")
-	    .attr("id", "vis-graph")
-	    .attr("transform", "translate(267.1187199163185,285.8524262385378)scale(0.28677675605654135)")
-	svg.style("cursor", "move");
+    // Create a group for the graph plot
+    var g = svg.append("g")
+        .attr("id", "vis-graph")
+        .attr("transform", "translate(267.1187199163185,285.8524262385378)scale(0.28677675605654135)")
+    svg.style("cursor", "move");
 
-	// global functions and variables to be called from parent window too
-	var set_focus = undefined;
-	var set_highlight = undefined;
-	var exit_highlight = undefined;
-	var graph_circle = undefined;
-	var graph_link = undefined;
-	var graph_nodes = undefined;
-	var graph_linked_by_index = undefined;
+    // global functions and variables to be called from parent window too
+    var set_focus = undefined;
+    var set_highlight = undefined;
+    var exit_highlight = undefined;
+    var graph_circle = undefined;
+    var graph_link = undefined;
+    var graph_nodes = undefined;
+    var graph_linked_by_index = undefined;
 
-	d3.json("/static/graph.json", function(error, graph) {
+    d3.json("/static/graph.json", function(error, graph) {
 
-	    graph_nodes = graph.nodes; // to be used in parent window later
+        graph_nodes = graph.nodes; // to be used in parent window later
 
-	    var linkedByIndex = {};
-	    graph.links.forEach(function(d) {
-	        linkedByIndex[d.source + "," + d.target] = true;
-	    });
-	    graph_linked_by_index = linkedByIndex;
+        var linkedByIndex = {};
+        graph.links.forEach(function(d) {
+            linkedByIndex[d.source + "," + d.target] = true;
+        });
+        graph_linked_by_index = linkedByIndex;
 
-	    function isConnected(a, b) {
-	        return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
-	    }
+        function isConnected(a, b) {
+            return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+        }
 
- 	    function hasConnections(a) {
-	        for (var property in linkedByIndex) {
-	            s = property.split(",");
-	            if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property])
-	                return true;
-	        }
-	        return false;
-	    }
+        function hasConnections(a) {
+            for (var property in linkedByIndex) {
+                s = property.split(",");
+                if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property])
+                    return true;
+            }
+            return false;
+        }
 
- 	    force.nodes(graph.nodes).links(graph.links).start();
+        force.nodes(graph.nodes).links(graph.links).start();
 
-	    var link = g.selectAll(".link")
-	        .data(graph.links)
-	        .enter().append("line")
-	        .attr("class", "link")
-	        .style("stroke-width", nominal_stroke)
-	        .style("stroke", function(d) {
-	            if (isNumber(d.score) && d.score >= 0) {
-	            	return color(d.score);
-	            } else {
-	            	return default_link_color;
-	            }
-	        });
-	    graph_link = link;
+        var link = g.selectAll(".link")
+            .data(graph.links)
+            .enter().append("line")
+            .attr("class", "link")
+            .style("stroke-width", nominal_stroke)
+            .style("stroke", function(d) {
+                if (isNumber(d.score) && d.score >= 0) {
+                    return color(d.score);
+                } else {
+                    return default_link_color;
+                }
+            });
+        graph_link = link;
 
-	    var node = g.selectAll(".node")
-	        .data(graph.nodes)
-	        .enter().append("g")
-	        .attr("class", "node")
-	        .call(force.drag)
+        var node = g.selectAll(".node")
+            .data(graph.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(force.drag)
 
-	    node.on("dblclick.zoom", function(d) {
-	        d3.event.stopPropagation();
-	        var dcx = (window.innerWidth / 2 - d.x * zoom.scale());
-	        var dcy = (window.innerHeight / 2 - d.y * zoom.scale());
-	        zoom.translate([dcx, dcy]);
-	        g.attr("transform", "translate(" + dcx + "," + dcy + ")scale(" + zoom.scale() + ")");
-	    }); // end d3.json("graph.json", function(error, graph)
+        node.on("dblclick.zoom", function(d) {
+            d3.event.stopPropagation();
+            var dcx = (window.innerWidth / 2 - d.x * zoom.scale());
+            var dcy = (window.innerHeight / 2 - d.y * zoom.scale());
+            zoom.translate([dcx, dcy]);
+            g.attr("transform", "translate(" + dcx + "," + dcy + ")scale(" + zoom.scale() + ")");
+        }); // end d3.json("graph.json", function(error, graph)
 
-	    var tocolor = "fill";
-	    var towhite = "stroke";
-	    if (outline) {
-	        tocolor = "stroke"
-	        towhite = "fill"
-	    }
+        var tocolor = "fill";
+        var towhite = "stroke";
+        if (outline) {
+            tocolor = "stroke"
+            towhite = "fill"
+        }
 
-	    var circle = node.append("path")
-	        .attr("d", d3.svg.symbol()
-	            .size(function(d) {
-	                return Math.PI * Math.pow(size(d.size) || nominal_base_node_size, 2);
-	            })
-	            .type(function(d) {
-	                return d.type;
-	            }))
-	        .style(tocolor, function(d) {
-            	if (d.special == true) {
-            		if (d.hasOwnProperty('highlight_colour')) {
-            			return d.highlight_colour; // returns the user-defined highlight colour
-            		} else {
-                		return special_node_color; // returns the default colour for highlighted item
-            		}
-            	} else {
-    	            if (isNumber(d.score) && d.score >= 0) return color(d.score);
-    	            else {
-    	            	return default_node_color;
-    	            }
-            	}
-	        })
-	        //.attr("r", function(d) { return size(d.size)||nominal_base_node_size; })
-	        .style("stroke-width", nominal_stroke)
-	        .style(towhite, "white")
-	        .style("opacity", circle_opacity);
-		graph_circle = circle;
+        var circle = node.append("path")
+            .attr("d", d3.svg.symbol()
+                .size(function(d) {
+                    return Math.PI * Math.pow(size(d.size) || nominal_base_node_size, 2);
+                })
+                .type(function(d) {
+                    return d.type;
+                }))
+            .style(tocolor, function(d) {
+                if (d.special == true) {
+                    if (d.hasOwnProperty('highlight_colour')) {
+                        return d.highlight_colour; // returns the user-defined highlight colour
+                    } else {
+                        return special_node_color; // returns the default colour for highlighted item
+                    }
+                } else {
+                    if (isNumber(d.score) && d.score >= 0) return color(d.score);
+                    else {
+                        return default_node_color;
+                    }
+                }
+            })
+            //.attr("r", function(d) { return size(d.size)||nominal_base_node_size; })
+            .style("stroke-width", nominal_stroke)
+            .style(towhite, "white")
+            .style("opacity", circle_opacity);
+        graph_circle = circle;
 
-	    var text = g.selectAll(".text")
-	        .data(graph.nodes)
-	        .enter().append("text")
-	        .attr("dy", ".35em")
-	        .style("font-size", function (d) {
-	        	if (d.name.indexOf("topic")>-1) {
-		        	return max_text_size*2 + "px"
-	        	} else {
-		        	return nominal_text_size + "px"
-	        	}
-	        })
-	        .attr("fill", function (d) {
-	        	return "black"
-	        })
-	        .style("opacity", 0)
+        var text = g.selectAll(".text")
+            .data(graph.nodes)
+            .enter().append("text")
+            .attr("dy", ".35em")
+            .style("font-size", function (d) {
+                if (d.name.indexOf("topic")>-1) {
+                    return max_text_size*2 + "px"
+                } else {
+                    return nominal_text_size + "px"
+                }
+            })
+            .attr("fill", function (d) {
+                return "black"
+            })
+            .style("opacity", 0)
 
-	    if (text_center) {
-	        text.text(function(d) {
-	                return d.name;
-	            })
-	            .style("text-anchor", "middle");
-	    } else {
-	        text.attr("dx", function(d) {
-	                return (size(d.size) || nominal_base_node_size);
-	            })
-	            .text(function(d) {
-	                return '\u2002' + d.name;
-	            });
-	    }
+        if (text_center) {
+            text.text(function(d) {
+                    return d.name;
+                })
+                .style("text-anchor", "middle");
+        } else {
+            text.attr("dx", function(d) {
+                    return (size(d.size) || nominal_base_node_size);
+                })
+                .text(function(d) {
+                    return '\u2002' + d.name;
+                });
+        }
 
-	    node
-	        .on("mouseover", function(d) {
+        node
+            .on("mouseover", function(d) {
 
-	            set_highlight(d);
-	        })
-	        .on("mousedown", function(d) {
+                set_highlight(d);
+            })
+            .on("mousedown", function(d) {
 
 
                     // update the topic fragment spectrum graph
-	            tokens = d.name.split('_')
+                tokens = d.name.split('_')
                     display_fragment_spectrum('first',tokens[1]);
 
-	            d3.event.stopPropagation();
+                d3.event.stopPropagation();
 
-	            focus_node = d;
-	            set_focus(d)
+                focus_node = d;
+                set_focus(d)
 
-	            if (highlight_node === null) {
-	            	set_highlight(d)
-	            }
-
-
-
-	            // highlight the topic in the main window too
-	            tokens = d.name.split('_')
-				node_type = tokens[0]
-
-	        })
-	        .on("mouseout", function(d) {
-	            exit_highlight();
-	        });
+                if (highlight_node === null) {
+                    set_highlight(d)
+                }
 
 
-	    d3.select(window).on("mouseup", function() {
-	        if (focus_node !== null) {
-	            focus_node = null;
-	            if (highlight_trans < 1) {
-	                circle.style("opacity", circle_opacity);
-	                // text.style("opacity", 1);
-	                link.style("opacity", 1);
-	            }
-	        }
-	        if (highlight_node === null) {
-	        	exit_highlight();
-	        }
-	    });
 
-	    exit_highlight = function() {
-	        highlight_node = null;
-	        if (focus_node === null) {
-	            svg.style("cursor", "move");
-	            if (highlight_color != "white") {
-	                circle.style(towhite, "white");
-	                text.style("font-weight", "normal");
-		            text.style("opacity", 0);
-	                link.style("stroke", function(o) {
-	                    return (isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color
-	                });
-	            }
-	        }
-	    }
+                // highlight the topic in the main window too
+                tokens = d.name.split('_')
+                node_type = tokens[0]
 
-	    set_focus = function(d) {
-	        if (highlight_trans < 1) {
-	            circle.style("opacity", function(o) {
-	                return isConnected(d, o) ? 1 : highlight_trans;
-	            });
-	            text.style("opacity", function(o) {
-	            	if (isConnected(d, o)) {
-	            		if (o.name.indexOf("topic")>-1) {
-		            		return 1;
-	            		} else {
-		            		return 0.5;
-	            		}
-	            	} else {
-	            		return highlight_trans;
-	            	}
-	            });
-	            link.style("opacity", function(o) {
-	                return o.source.index == d.index || o.target.index == d.index ? 1 : highlight_trans;
-	            });
-	        }
-	    }
-
-	    set_highlight = function(d) {
-	        svg.style("cursor", "pointer");
-	        if (focus_node !== null) d = focus_node;
-	        highlight_node = d;
-	        if (highlight_color != "white") {
-	            circle.style(towhite, function(o) {
-	                return isConnected(d, o) ? highlight_color : "white";
-	            });
-	            text.style("font-weight", function(o) {
-	                return isConnected(d, o) ? "bold" : "normal";
-	            });
-	            text.style("opacity", function(o) {
-	            	if (isConnected(d, o)) {
-	            		if (o.name.indexOf("topic")>-1) {
-		            		return 1;
-	            		} else {
-		            		return 0.5;
-	            		}
-	            	} else {
-	            		return highlight_trans;
-	            	}
-	            });
-	            link.style("stroke", function(o) {
-	                return o.source.index == d.index || o.target.index == d.index ? highlight_color : ((isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color);
-	            });
-	        }
-	    }
-
-	    zoom.on("zoom", function() {
-
-	        var stroke = nominal_stroke;
-	        if (nominal_stroke * zoom.scale() > max_stroke) stroke = max_stroke / zoom.scale();
-	        link.style("stroke-width", stroke);
-	        circle.style("stroke-width", stroke);
-
-	        var base_radius = nominal_base_node_size;
-	        if (nominal_base_node_size * zoom.scale() > max_base_node_size) base_radius = max_base_node_size / zoom.scale();
-	        circle.attr("d", d3.svg.symbol()
-	            .size(function(d) {
-	                return Math.PI * Math.pow(size(d.size) * base_radius / nominal_base_node_size || base_radius, 2);
-	            })
-	            .type(function(d) {
-	                return d.type;
-	            }))
-
-	        //circle.attr("r", function(d) { return (size(d.size)*base_radius/nominal_base_node_size||base_radius); })
-	        if (!text_center) text.attr("dx", function(d) {
-	            return (size(d.size) * base_radius / nominal_base_node_size || base_radius);
-	        });
-
-	        var text_size = nominal_text_size;
-	        if (nominal_text_size * zoom.scale() > max_text_size) text_size = max_text_size / zoom.scale();
-			text.style("font-size", function(d) {
-	        	if (d.name.indexOf("topic")>-1) {
-		        	return max_text_size*2 + "px"
-	        	} else {
-		        	return text_size + "px"
-	        	}
-			});
-
-	        g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-	    });
-
-	    svg.call(zoom);
-
-	    resize();
-	    //window.focus();
-	    d3.select(window).on("resize", resize).on("keydown", keydown);
-
-	    force.on("tick", function() {
-
-	        node.attr("transform", function(d) {
-	            return "translate(" + d.x + "," + d.y + ")";
-	        });
-	        text.attr("transform", function(d) {
-	            return "translate(" + d.x + "," + d.y + ")";
-	        });
-
-	        link.attr("x1", function(d) {
-	                return d.source.x;
-	            })
-	            .attr("y1", function(d) {
-	                return d.source.y;
-	            })
-	            .attr("x2", function(d) {
-	                return d.target.x;
-	            })
-	            .attr("y2", function(d) {
-	                return d.target.y;
-	            });
-
-	        node.attr("cx", function(d) {
-	                return d.x;
-	            })
-	            .attr("cy", function(d) {
-	                return d.y;
-	            });
-
-	    });
-
-	    function resize() {
-	        var width = window.innerWidth,
-	            height = window.innerHeight;
-	        svg.attr("width", width).attr("height", height);
-	        force.size([force.size()[0] + (width - w) / zoom.scale(), force.size()[1] + (height - h) / zoom.scale()]).resume();
-	        w = width;
-	        h = height;
-	    }
+            })
+            .on("mouseout", function(d) {
+                exit_highlight();
+            });
 
 
-	    function keydown() {
-	        if (d3.event.keyCode == 32) {
-	            force.stop();
-	        } else if (d3.event.keyCode >= 48 && d3.event.keyCode <= 90 && !d3.event.ctrlKey && !d3.event.altKey && !d3.event.metaKey) {
-	            switch (String.fromCharCode(d3.event.keyCode)) {
-	                case "H":
-	                    keyh = !keyh;
-	                    break;
-	            }
-	            link.style("display", function(d) {
-	                var flag = vis_by_type(d.source.special) || vis_by_type(d.target.special);
-	                linkedByIndex[d.source.index + "," + d.target.index] = flag;
-	                return flag ? "inline" : "none";
-	            });
-	            node.style("display", function(d) {
-	                return vis_by_type_and_connection(d) ? "inline" : "none";
-	            	// return (key0 || hasConnections(d)) && vis_by_type(d.special) ? "inline" : "none";
-	            });
-	            text.style("display", function(d) {
-	                return vis_by_type_and_connection(d) ? "inline" : "none";
-	            });
-	            if (highlight_node !== null) {
-	                if ((hasConnections(highlight_node)) && vis_by_type(highlight_node.special)) {
-	                    if (focus_node !== null) set_focus(focus_node);
-	                    set_highlight(highlight_node);
-	                } else {
-	                    exit_highlight();
-	                }
-	            }
-	        }
-	    }
-	});
+        d3.select(window).on("mouseup", function() {
+            if (focus_node !== null) {
+                focus_node = null;
+                if (highlight_trans < 1) {
+                    circle.style("opacity", circle_opacity);
+                    // text.style("opacity", 1);
+                    link.style("opacity", 1);
+                }
+            }
+            if (highlight_node === null) {
+                exit_highlight();
+            }
+        });
 
-	function vis_by_type(special) {
-		if (keyh) {
-			return true;
-		} else {
-			return special;
-		}
-	}
+        exit_highlight = function() {
+            highlight_node = null;
+            if (focus_node === null) {
+                svg.style("cursor", "move");
+                if (highlight_color != "white") {
+                    circle.style(towhite, "white");
+                    text.style("font-weight", "normal");
+                    text.style("opacity", 0);
+                    link.style("stroke", function(o) {
+                        return (isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color
+                    });
+                }
+            }
+        }
 
-	function vis_by_type_and_connection(d) {
-		if (keyh) {
-			return true;
-		} else {
-			if (d.special) {
-				return true;
-			} else {
-				// check if we're connected to any special node
-		        for (var property in graph_linked_by_index) {
-		            s = property.split(",");
-		            var other_node = undefined;
-		            // connection on the left side
-		            if ((s[0] == d.index) && graph_linked_by_index[property]) {
-		                other_node = graph_nodes[s[1]];
-		            }
-		            if ((s[1] == d.index) && graph_linked_by_index[property]) {
-		                other_node = graph_nodes[s[0]];
-		            }
-		            if (other_node !== undefined && other_node.special) {
-		            	return true;
-		            }
-		        }
-		        return false;
-			}
-		}
-	}
+        set_focus = function(d) {
+            if (highlight_trans < 1) {
+                circle.style("opacity", function(o) {
+                    return isConnected(d, o) ? 1 : highlight_trans;
+                });
+                text.style("opacity", function(o) {
+                    if (isConnected(d, o)) {
+                        if (o.name.indexOf("topic")>-1) {
+                            return 1;
+                        } else {
+                            return 0.5;
+                        }
+                    } else {
+                        return highlight_trans;
+                    }
+                });
+                link.style("opacity", function(o) {
+                    return o.source.index == d.index || o.target.index == d.index ? 1 : highlight_trans;
+                });
+            }
+        }
 
-	function isNumber(n) {
-	    return !isNaN(parseFloat(n)) && isFinite(n);
-	}
+        set_highlight = function(d) {
+            svg.style("cursor", "pointer");
+            if (focus_node !== null) d = focus_node;
+            highlight_node = d;
+            if (highlight_color != "white") {
+                circle.style(towhite, function(o) {
+                    return isConnected(d, o) ? highlight_color : "white";
+                });
+                text.style("font-weight", function(o) {
+                    return isConnected(d, o) ? "bold" : "normal";
+                });
+                text.style("opacity", function(o) {
+                    if (isConnected(d, o)) {
+                        if (o.name.indexOf("topic")>-1) {
+                            return 1;
+                        } else {
+                            return 0.5;
+                        }
+                    } else {
+                        return highlight_trans;
+                    }
+                });
+                link.style("stroke", function(o) {
+                    return o.source.index == d.index || o.target.index == d.index ? highlight_color : ((isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color);
+                });
+            }
+        }
+
+        zoom.on("zoom", function() {
+
+            var stroke = nominal_stroke;
+            if (nominal_stroke * zoom.scale() > max_stroke) stroke = max_stroke / zoom.scale();
+            link.style("stroke-width", stroke);
+            circle.style("stroke-width", stroke);
+
+            var base_radius = nominal_base_node_size;
+            if (nominal_base_node_size * zoom.scale() > max_base_node_size) base_radius = max_base_node_size / zoom.scale();
+            circle.attr("d", d3.svg.symbol()
+                .size(function(d) {
+                    return Math.PI * Math.pow(size(d.size) * base_radius / nominal_base_node_size || base_radius, 2);
+                })
+                .type(function(d) {
+                    return d.type;
+                }))
+
+            //circle.attr("r", function(d) { return (size(d.size)*base_radius/nominal_base_node_size||base_radius); })
+            if (!text_center) text.attr("dx", function(d) {
+                return (size(d.size) * base_radius / nominal_base_node_size || base_radius);
+            });
+
+            var text_size = nominal_text_size;
+            if (nominal_text_size * zoom.scale() > max_text_size) text_size = max_text_size / zoom.scale();
+            text.style("font-size", function(d) {
+                if (d.name.indexOf("topic")>-1) {
+                    return max_text_size*2 + "px"
+                } else {
+                    return text_size + "px"
+                }
+            });
+
+            g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        });
+
+        svg.call(zoom);
+
+        resize();
+        //window.focus();
+        d3.select(window).on("resize", resize).on("keydown", keydown);
+
+        force.on("tick", function() {
+
+            node.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+            text.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+
+            link.attr("x1", function(d) {
+                    return d.source.x;
+                })
+                .attr("y1", function(d) {
+                    return d.source.y;
+                })
+                .attr("x2", function(d) {
+                    return d.target.x;
+                })
+                .attr("y2", function(d) {
+                    return d.target.y;
+                });
+
+            node.attr("cx", function(d) {
+                    return d.x;
+                })
+                .attr("cy", function(d) {
+                    return d.y;
+                });
+
+        });
+
+        function resize() {
+            var width = window.innerWidth,
+                height = window.innerHeight;
+            svg.attr("width", width).attr("height", height);
+            force.size([force.size()[0] + (width - w) / zoom.scale(), force.size()[1] + (height - h) / zoom.scale()]).resume();
+            w = width;
+            h = height;
+        }
+
+
+        function keydown() {
+            if (d3.event.keyCode == 32) {
+                force.stop();
+            } else if (d3.event.keyCode >= 48 && d3.event.keyCode <= 90 && !d3.event.ctrlKey && !d3.event.altKey && !d3.event.metaKey) {
+                switch (String.fromCharCode(d3.event.keyCode)) {
+                    case "H":
+                        keyh = !keyh;
+                        break;
+                }
+                link.style("display", function(d) {
+                    var flag = vis_by_type(d.source.special) || vis_by_type(d.target.special);
+                    linkedByIndex[d.source.index + "," + d.target.index] = flag;
+                    return flag ? "inline" : "none";
+                });
+                node.style("display", function(d) {
+                    return vis_by_type_and_connection(d) ? "inline" : "none";
+                    // return (key0 || hasConnections(d)) && vis_by_type(d.special) ? "inline" : "none";
+                });
+                text.style("display", function(d) {
+                    return vis_by_type_and_connection(d) ? "inline" : "none";
+                });
+                if (highlight_node !== null) {
+                    if ((hasConnections(highlight_node)) && vis_by_type(highlight_node.special)) {
+                        if (focus_node !== null) set_focus(focus_node);
+                        set_highlight(highlight_node);
+                    } else {
+                        exit_highlight();
+                    }
+                }
+            }
+        }
+    });
+
+    function vis_by_type(special) {
+        if (keyh) {
+            return true;
+        } else {
+            return special;
+        }
+    }
+
+    function vis_by_type_and_connection(d) {
+        if (keyh) {
+            return true;
+        } else {
+            if (d.special) {
+                return true;
+            } else {
+                // check if we're connected to any special node
+                for (var property in graph_linked_by_index) {
+                    s = property.split(",");
+                    var other_node = undefined;
+                    // connection on the left side
+                    if ((s[0] == d.index) && graph_linked_by_index[property]) {
+                        other_node = graph_nodes[s[1]];
+                    }
+                    if ((s[1] == d.index) && graph_linked_by_index[property]) {
+                        other_node = graph_nodes[s[0]];
+                    }
+                    if (other_node !== undefined && other_node.special) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+    }
+
+    function isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
 
 </script>
 
@@ -497,9 +497,9 @@ body {
 <!-------------------------------------->
 
         <!-- The svg that will be filled by D3 -->
-	<div border="20" padding="20">
-	    <svg width="700" height="0"></svg>  <!-- DEBUG need to fix -->
-	</div>
+    <div border="20" padding="20">
+        <svg width="700" height="0"></svg>  <!-- DEBUG need to fix -->
+    </div>
 
 <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script> -->
 <script src="/static/d3.min.js" charset="utf-8"></script>
@@ -508,7 +508,7 @@ body {
         var peak_index=0					// index of current peak displayed
         var max_index=0   					// number of peaks in current topic
         var current_topic_id=0					// id of current topic displayed
-	var topic_data_dict = {{topic_data}}			// holds the data (mz/rel int pairs) needed for the
+    var topic_data_dict = {{topic_data}}			// holds the data (mz/rel int pairs) needed for the
                                                                 // Spectrum and ion graphs
 
         //shadow filter script
@@ -539,9 +539,9 @@ body {
         // ----------------------------------------------
         function display_parent_ion_topics_graph ( ) {
 
-	    var parentData_list = topic_data_dict[current_topic_id][1]	  //peak data for current topic
+        var parentData_list = topic_data_dict[current_topic_id][1]	  //peak data for current topic
             var dataset_list = topic_data_dict[current_topic_id][2]       //topic fragment data
-	    var parentData = parentData_list[peak_index]	//details of MS1 peak on display
+        var parentData = parentData_list[peak_index]	//details of MS1 peak on display
             var dataset = []                 // holds the lines that have to be displayed
             var topic_colour_range = ["#77aadd","#dddd77","#44aa77","#aa4455","#88ccaa","#cc99bb"]
             //                          red,  yellow, blue/green, sky blue, red purple, mauve
@@ -591,16 +591,16 @@ body {
                 }
             }
 
-	    max_mass = d3.max(dataset,function(d) {return d[0]+50})
-	    if (max_mass < parentData[0][0]+50) {
-		max_mass = parentData[0][0] + 50;
-	    }
-	    // Width and height should correspond to svg element
-	    // ver and hor are the margins
-	    var width=700
-	    var height=300
-	    var ver_margin = 40
-	    var hor_margin = 60
+        max_mass = d3.max(dataset,function(d) {return d[0]+50})
+        if (max_mass < parentData[0][0]+50) {
+        max_mass = parentData[0][0] + 50;
+        }
+        // Width and height should correspond to svg element
+        // ver and hor are the margins
+        var width=700
+        var height=300
+        var ver_margin = 40
+        var hor_margin = 60
 
             // area for title, buttons etc at top of graph
             d3.select("#parent_ion_graph_titlebar_svg").remove();    //clear the existing svg (if it exists)
@@ -629,7 +629,7 @@ body {
                 .attr("y","-5")
                 .attr("stroke","black")
                 .attr("fill","none");
-	    // create space at bottom of screen. Improves the look of screen.
+        // create space at bottom of screen. Improves the look of screen.
             d3.select("#bottom_ion_svg").remove();
             var debug_svg = d3.select("body")
                .append("svg")
@@ -637,149 +637,149 @@ body {
                     .attr("height",120)
                     .attr("id","bottom_ion_svg")
 
-	    // Create the line objects
-	    lines = parent_ion_graph_svg.selectAll("line")
-	            .data(dataset)
-	            .enter()
-	            .append("line")
-	            .on("click",function(d) {
-	        	console.log(d);
-	            })
+        // Create the line objects
+        lines = parent_ion_graph_svg.selectAll("line")
+                .data(dataset)
+                .enter()
+                .append("line")
+                .on("click",function(d) {
+                console.log(d);
+                })
 
-	    // Axis scale objects
-	    var xScale = d3.scale.linear()
-	    xScale.domain([0, max_mass])
-	    xScale.range([ hor_margin,width-hor_margin])
-	    var yScale = d3.scale.linear()
-	    yScale.domain([0,d3.max(dataset,function(d) {return d[1];})])
-	    yScale.range([height-ver_margin,ver_margin])
+        // Axis scale objects
+        var xScale = d3.scale.linear()
+        xScale.domain([0, max_mass])
+        xScale.range([ hor_margin,width-hor_margin])
+        var yScale = d3.scale.linear()
+        yScale.domain([0,d3.max(dataset,function(d) {return d[1];})])
+        yScale.range([height-ver_margin,ver_margin])
 
-	    // Set the line attributes
-	    lines.attr("x1",function(d) {return xScale(d[0]);})
-	         .attr("x2",function(d) {return xScale(d[0]);})
-	         .attr("y1",height-ver_margin)
-	         .attr("y2",function(d) {return yScale(d[1]);})
-	         .attr("stroke",function(d) {return d[3];})
-	         .attr("stroke-width",2)
-	         .on("mouseover",function(d) {
-	      	    d3.select(this)
-	      		.attr("stroke","green")
-	      		.attr("stroke-width",4);
+        // Set the line attributes
+        lines.attr("x1",function(d) {return xScale(d[0]);})
+             .attr("x2",function(d) {return xScale(d[0]);})
+             .attr("y1",height-ver_margin)
+             .attr("y2",function(d) {return yScale(d[1]);})
+             .attr("stroke",function(d) {return d[3];})
+             .attr("stroke-width",2)
+             .on("mouseover",function(d) {
+                d3.select(this)
+                .attr("stroke","green")
+                .attr("stroke-width",4);
 
-	      	    var xPos = parseFloat(d3.select(this).attr("x1"))
-	      	    var yPos = parseFloat(d3.select(this).attr("y2"))
-	      	    parent_ion_graph_svg.append("line")
-	      		.attr("id","lossline")
-	      		.attr("x1",xPos)
-	      		.attr("x2",xScale(parentData[0][0]))
-	      		.attr("y1",yPos+5)
-	      		.attr("y2",yPos+5)
-	      		.attr("stroke","green")
-	      		.attr("stroke-width",2)
-	      		.attr("stroke-dasharray","5,5")
+                var xPos = parseFloat(d3.select(this).attr("x1"))
+                var yPos = parseFloat(d3.select(this).attr("y2"))
+                parent_ion_graph_svg.append("line")
+                .attr("id","lossline")
+                .attr("x1",xPos)
+                .attr("x2",xScale(parentData[0][0]))
+                .attr("y1",yPos+5)
+                .attr("y2",yPos+5)
+                .attr("stroke","green")
+                .attr("stroke-width",2)
+                .attr("stroke-dasharray","5,5")
 
-	      	    parent_ion_graph_svg.append("text")
-	      		.attr("id","losstext")
-	      		.text("Loss mass: " + ((parentData[0][0]-d[0]).toFixed(4)))
-	      		.attr("y",yPos+15)
-	      		.attr("x",xScale(d[0] + 0.5*(parentData[0][0]-d[0]))-20)
-	      		.attr("font-family","sans-serif")
-	      		.attr("font-size","10px")
-	      		.attr("fill","green")
+                parent_ion_graph_svg.append("text")
+                .attr("id","losstext")
+                .text("Loss mass: " + ((parentData[0][0]-d[0]).toFixed(4)))
+                .attr("y",yPos+15)
+                .attr("x",xScale(d[0] + 0.5*(parentData[0][0]-d[0]))-20)
+                .attr("font-family","sans-serif")
+                .attr("font-size","10px")
+                .attr("fill","green")
 
-	      	    parent_ion_graph_svg.append("text")
-	      		.attr("id","tooltip")
-	      		.attr("x",xPos-50)
-	      		.attr("y",yPos-5)
-	      		.attr("font-family","sans-serif")
-	      		.attr("font-size","12px")
-	      		.attr("font-weight","bold")
-	      		.text("Mass:" + (d[0].toFixed(4)) + ", intensity: " + (d[1].toFixed(0)) + "%");
-	          })
-	          .on("mouseout",function() {
-	      	      d3.select(this)
-	      		.transition()
-	      		.duration(250)
-	                .attr("stroke",function(d) {return d[3];})
-	      		.attr("stroke-width",2);
-	      	      d3.select("#tooltip").remove()
-	      	      d3.select("#lossline").remove()
-	      	      d3.select("#losstext").remove()
-	          })
-	         .append("title")
-	            .text(function(d) {
-	               return "MS2 Fragment Spectrum, Mass: " + d[0] + ", Intensity: " + d[1]
-	            })
+                parent_ion_graph_svg.append("text")
+                .attr("id","tooltip")
+                .attr("x",xPos-50)
+                .attr("y",yPos-5)
+                .attr("font-family","sans-serif")
+                .attr("font-size","12px")
+                .attr("font-weight","bold")
+                .text("Mass:" + (d[0].toFixed(4)) + ", intensity: " + (d[1].toFixed(0)) + "%");
+              })
+              .on("mouseout",function() {
+                  d3.select(this)
+                .transition()
+                .duration(250)
+                    .attr("stroke",function(d) {return d[3];})
+                .attr("stroke-width",2);
+                  d3.select("#tooltip").remove()
+                  d3.select("#lossline").remove()
+                  d3.select("#losstext").remove()
+              })
+             .append("title")
+                .text(function(d) {
+                   return "MS2 Fragment Spectrum, Mass: " + d[0] + ", Intensity: " + d[1]
+                })
 
             // Axes
-	    var xAxis = d3.svg.axis()
+        var xAxis = d3.svg.axis()
                .scale(xScale)
                .orient("bottom");
-	    parent_ion_graph_svg.append("g")
-	        .attr("class", "axis")
-	        .attr("transform", "translate(0," + (height-ver_margin) + ")")
-	        .call(xAxis);
+        parent_ion_graph_svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (height-ver_margin) + ")")
+            .call(xAxis);
 
-	    var yAxis = d3.svg.axis()
-	        .scale(yScale)
-	        .orient("left")
-	    parent_ion_graph_svg.append("g")
-		.attr("class","axis")
-		.attr("transform","translate(" + hor_margin + ",0)")
-	  	.call(yAxis)
+        var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("left")
+        parent_ion_graph_svg.append("g")
+        .attr("class","axis")
+        .attr("transform","translate(" + hor_margin + ",0)")
+        .call(yAxis)
 
-	    // Axes labels
-	    parent_ion_graph_svg.append("text")
-	        .text("Mass")
-	        .attr("x",width/2)
-	        .attr("y",height-10)
-	        .attr("class","axis-label")
+        // Axes labels
+        parent_ion_graph_svg.append("text")
+            .text("Mass")
+            .attr("x",width/2)
+            .attr("y",height-10)
+            .attr("class","axis-label")
 
-	    parent_ion_graph_svg.append("text")
-	        .text("Relative Intensity")
-	        .attr("x","-30")
-	        .attr("y",10)
-	        .attr("class","axis-label")
-	        .attr("transform","translate(15," + (30+height/2) + ")rotate(-90)");
+        parent_ion_graph_svg.append("text")
+            .text("Relative Intensity")
+            .attr("x","-30")
+            .attr("y",10)
+            .attr("class","axis-label")
+            .attr("transform","translate(15," + (30+height/2) + ")rotate(-90)");
 
-	    parent_ion_graph_svg.append("line")
-		.attr("x1",xScale(parentData[0][0]))
-		.attr("x2",xScale(parentData[0][0]))
-		.attr("y1",height-ver_margin)
-		.attr("y2",yScale(parentData[0][1]))
-		.attr("stroke","blue")
-		.attr("stroke-width",3)
+        parent_ion_graph_svg.append("line")
+        .attr("x1",xScale(parentData[0][0]))
+        .attr("x2",xScale(parentData[0][0]))
+        .attr("y1",height-ver_margin)
+        .attr("y2",yScale(parentData[0][1]))
+        .attr("stroke","blue")
+        .attr("stroke-width",3)
 
-	    parent_ion_graph_svg.append("text")
-		.text("Parent Ion (" + parentData[0][0].toFixed(4) + ")")
-		.attr("class","axis-label")
-		.attr("transform","translate("+ (xScale(parentData[0][0])-5) + "," + (50+height/2) + ")rotate(-90)")
+        parent_ion_graph_svg.append("text")
+        .text("Parent Ion (" + parentData[0][0].toFixed(4) + ")")
+        .attr("class","axis-label")
+        .attr("transform","translate("+ (xScale(parentData[0][0])-5) + "," + (50+height/2) + ")rotate(-90)")
 
             // Parent Ion Graph title
             parent_ion_graph_titlebar_svg.append("text")
-	        .text("Parent Ion Graph ")
-	        .attr("x",30)
-	        .attr("y",30)
-	      	.style("font-family","sans-serif")
-	      	.style("font-size","16px")
-	      	.style("font-weight","bold")
+            .text("Parent Ion Graph ")
+            .attr("x",30)
+            .attr("y",30)
+            .style("font-family","sans-serif")
+            .style("font-size","16px")
+            .style("font-weight","bold")
                 .style("fill","#08298A");
 
             // topic colour legend
             for (topic=1;topic<=topic_colour_legend.length;topic++) {
                 parent_ion_graph_titlebar_svg.append("text")
-	            .text("Mass2Motif "+(topic_colour_legend[topic-1][0]))
-	            .attr("x",80+((topic+(topic%2))/2)*155 )
-	            .attr("y",42-(20*(topic%2)))
-	    	    .style("font-family","sans-serif")
-	     	    .style("font-size","14px")
+                .text("Mass2Motif "+(topic_colour_legend[topic-1][0]))
+                .attr("x",80+((topic+(topic%2))/2)*155 )
+                .attr("y",42-(20*(topic%2)))
+                .style("font-family","sans-serif")
+                .style("font-size","14px")
                     .style("fill","#08298A");
 
                 parent_ion_graph_titlebar_svg.append("rect")
                     .attr("height",15)
                     .attr("width",30)
-	            .attr("x",195+((topic+(topic%2))/2)*155 )
-	            .attr("y",30-(20*(topic%2)))
+                .attr("x",195+((topic+(topic%2))/2)*155 )
+                .attr("y",30-(20*(topic%2)))
                     .style("fill",topic_colour_range[topic-1])
             }
 
@@ -797,7 +797,7 @@ body {
                current_topic_id=topic_id;			// topic number parameter (optional)
 
             var dataset_list = topic_data_dict[current_topic_id][0]	//frag spectra for topic
-	    var parentData_list = topic_data_dict[current_topic_id][1]	//peak data for this topic
+        var parentData_list = topic_data_dict[current_topic_id][1]	//peak data for this topic
 
             if (peak_selection === "first") {
                 peak_index = 0
@@ -811,18 +811,18 @@ body {
             }
 
             var dataset = dataset_list[peak_index]		//fragment data for this peak
-	    var parentData = parentData_list[peak_index]        //peak data
+        var parentData = parentData_list[peak_index]        //peak data
 
-	    max_mass = d3.max(dataset,function(d) {return d[0]+50})
-	    if (max_mass < parentData[0][0]+50) {
-		max_mass = parentData[0][0] + 50;
-	    }
-	    // Width and height should correspond to svg element
-	    // ver and hor are the margins
-	    var width=700
-	    var height=300
-	    var ver_margin = 40
-	    var hor_margin = 60
+        max_mass = d3.max(dataset,function(d) {return d[0]+50})
+        if (max_mass < parentData[0][0]+50) {
+        max_mass = parentData[0][0] + 50;
+        }
+        // Width and height should correspond to svg element
+        // ver and hor are the margins
+        var width=700
+        var height=300
+        var ver_margin = 40
+        var hor_margin = 60
 
             // area for title, buttons etc at top of graph
             d3.select("#frag_graph_titlebar_svg").remove();    //clear the existing svg (if it exists)
@@ -852,7 +852,7 @@ body {
                 .attr("y","-5")
                 .attr("stroke","black")
                 .attr("fill","none")
-	    // create space at bottom of graph. Improves the look of screen.
+        // create space at bottom of graph. Improves the look of screen.
             d3.select("#bottom_spectra_svg").remove();
             var debug_svg = d3.select("body")
                .append("svg")
@@ -860,133 +860,133 @@ body {
                     .attr("height",30)
                     .attr("id","bottom_spectra_svg")
 
-	    // Create the line objects
-	    lines = frag_graph_svg.selectAll("line")
-	            .data(dataset)
-	            .enter()
-	            .append("line")
-	            .on("click",function(d) {
-	        	console.log(d);
-	            })
+        // Create the line objects
+        lines = frag_graph_svg.selectAll("line")
+                .data(dataset)
+                .enter()
+                .append("line")
+                .on("click",function(d) {
+                console.log(d);
+                })
 
-	    // Axis scale objects
-	    var xScale = d3.scale.linear()
-	    xScale.domain([0, max_mass])
-	    xScale.range([ hor_margin,width-hor_margin])
-	    var yScale = d3.scale.linear()
-	    yScale.domain([0,d3.max(dataset,function(d) {return d[1];})])
-	    yScale.range([height-ver_margin,ver_margin])
+        // Axis scale objects
+        var xScale = d3.scale.linear()
+        xScale.domain([0, max_mass])
+        xScale.range([ hor_margin,width-hor_margin])
+        var yScale = d3.scale.linear()
+        yScale.domain([0,d3.max(dataset,function(d) {return d[1];})])
+        yScale.range([height-ver_margin,ver_margin])
 
-	    // Set the line attributes
-	    lines.attr("x1",function(d) {return xScale(d[0]);})
-	         .attr("x2",function(d) {return xScale(d[0]);})
-	         .attr("y1",height-ver_margin)
-	         .attr("y2",function(d) {return yScale(d[1]);})
-	         .attr("stroke","red")
-	         .attr("stroke-width",2)
-	         .on("mouseover",function(d) {
-	      	    d3.select(this)
-	      		.attr("stroke","green")
-	      		.attr("stroke-width",4);
+        // Set the line attributes
+        lines.attr("x1",function(d) {return xScale(d[0]);})
+             .attr("x2",function(d) {return xScale(d[0]);})
+             .attr("y1",height-ver_margin)
+             .attr("y2",function(d) {return yScale(d[1]);})
+             .attr("stroke","red")
+             .attr("stroke-width",2)
+             .on("mouseover",function(d) {
+                d3.select(this)
+                .attr("stroke","green")
+                .attr("stroke-width",4);
 
-	      	    var xPos = parseFloat(d3.select(this).attr("x1"))
-	      	    var yPos = parseFloat(d3.select(this).attr("y2"))
-	      	    frag_graph_svg.append("line")
-	      		.attr("id","lossline")
-	      		.attr("x1",xPos)
-	      		.attr("x2",xScale(parentData[0][0]))
-	      		.attr("y1",yPos+5)
-	      		.attr("y2",yPos+5)
-	      		.attr("stroke","green")
-	      		.attr("stroke-width",2)
-	      		.attr("stroke-dasharray","5,5")
+                var xPos = parseFloat(d3.select(this).attr("x1"))
+                var yPos = parseFloat(d3.select(this).attr("y2"))
+                frag_graph_svg.append("line")
+                .attr("id","lossline")
+                .attr("x1",xPos)
+                .attr("x2",xScale(parentData[0][0]))
+                .attr("y1",yPos+5)
+                .attr("y2",yPos+5)
+                .attr("stroke","green")
+                .attr("stroke-width",2)
+                .attr("stroke-dasharray","5,5")
 
-	      	    frag_graph_svg.append("text")
-	      		.attr("id","losstext")
-	      		.text("Loss mass: " + ((parentData[0][0]-d[0]).toFixed(4)))
-	      		.attr("y",yPos+15)
-	      		.attr("x",xScale(d[0] + 0.5*(parentData[0][0]-d[0]))-20)
-	      		.attr("font-family","sans-serif")
-	      		.attr("font-size","10px")
-	      		.attr("fill","green")
+                frag_graph_svg.append("text")
+                .attr("id","losstext")
+                .text("Loss mass: " + ((parentData[0][0]-d[0]).toFixed(4)))
+                .attr("y",yPos+15)
+                .attr("x",xScale(d[0] + 0.5*(parentData[0][0]-d[0]))-20)
+                .attr("font-family","sans-serif")
+                .attr("font-size","10px")
+                .attr("fill","green")
 
-	      	    frag_graph_svg.append("text")
-	      		.attr("id","tooltip")
-	      		.attr("x",xPos-50)
-	      		.attr("y",yPos-5)
-	      		.attr("font-family","sans-serif")
-	      		.attr("font-size","12px")
-	      		.attr("font-weight","bold")
-	      		.text("Mass:" + (d[0].toFixed(4)) + ", intensity: " + (d[1].toFixed(0)) + "%");
-	          })
-	          .on("mouseout",function() {
-	      	      d3.select(this)
-	      		.transition()
-	      		.duration(250)
-	      		.attr("stroke","red")
-	      		.attr("stroke-width",2);
-	      	      d3.select("#tooltip").remove()
-	      	      d3.select("#lossline").remove()
-	      	      d3.select("#losstext").remove()
-	          })
-	         .append("title")
-	            .text(function(d) {
-	               return "MS2 Fragment Spectrum, Mass: " + d[0] + ", Intensity: " + d[1]
-	            })
+                frag_graph_svg.append("text")
+                .attr("id","tooltip")
+                .attr("x",xPos-50)
+                .attr("y",yPos-5)
+                .attr("font-family","sans-serif")
+                .attr("font-size","12px")
+                .attr("font-weight","bold")
+                .text("Mass:" + (d[0].toFixed(4)) + ", intensity: " + (d[1].toFixed(0)) + "%");
+              })
+              .on("mouseout",function() {
+                  d3.select(this)
+                .transition()
+                .duration(250)
+                .attr("stroke","red")
+                .attr("stroke-width",2);
+                  d3.select("#tooltip").remove()
+                  d3.select("#lossline").remove()
+                  d3.select("#losstext").remove()
+              })
+             .append("title")
+                .text(function(d) {
+                   return "MS2 Fragment Spectrum, Mass: " + d[0] + ", Intensity: " + d[1]
+                })
 
             // Axes
-	    var xAxis = d3.svg.axis()
+        var xAxis = d3.svg.axis()
                .scale(xScale)
                .orient("bottom");
-	    frag_graph_svg.append("g")
-	        .attr("class", "axis")
-	        .attr("transform", "translate(0," + (height-ver_margin) + ")")
-	        .call(xAxis);
+        frag_graph_svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (height-ver_margin) + ")")
+            .call(xAxis);
 
-	    var yAxis = d3.svg.axis()
-	        .scale(yScale)
-	        .orient("left")
-	    frag_graph_svg.append("g")
-		.attr("class","axis")
-		.attr("transform","translate(" + hor_margin + ",0)")
-	  	.call(yAxis)
+        var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("left")
+        frag_graph_svg.append("g")
+        .attr("class","axis")
+        .attr("transform","translate(" + hor_margin + ",0)")
+        .call(yAxis)
 
-	    // Axes labels
-	    frag_graph_svg.append("text")
-	        .text("Mass")
-	        .attr("x",width/2)
-	        .attr("y",height-10)
-	        .attr("class","axis-label")
+        // Axes labels
+        frag_graph_svg.append("text")
+            .text("Mass")
+            .attr("x",width/2)
+            .attr("y",height-10)
+            .attr("class","axis-label")
 
-	    frag_graph_svg.append("text")
-	        .text("Relative Intensity")
-	        .attr("x","-30")
-	        .attr("y",10)
-	        .attr("class","axis-label")
-	        .attr("transform","translate(15," + (30+height/2) + ")rotate(-90)");
+        frag_graph_svg.append("text")
+            .text("Relative Intensity")
+            .attr("x","-30")
+            .attr("y",10)
+            .attr("class","axis-label")
+            .attr("transform","translate(15," + (30+height/2) + ")rotate(-90)");
 
-	    frag_graph_svg.append("line")
-		.attr("x1",xScale(parentData[0][0]))
-		.attr("x2",xScale(parentData[0][0]))
-		.attr("y1",height-ver_margin)
-		.attr("y2",yScale(parentData[0][1]))
-		.attr("stroke","blue")
-		.attr("stroke-width",3)
+        frag_graph_svg.append("line")
+        .attr("x1",xScale(parentData[0][0]))
+        .attr("x2",xScale(parentData[0][0]))
+        .attr("y1",height-ver_margin)
+        .attr("y2",yScale(parentData[0][1]))
+        .attr("stroke","blue")
+        .attr("stroke-width",3)
 
-	    frag_graph_svg.append("text")
-		.text("Parent Ion (" + parentData[0][0].toFixed(4) + ")")
-		.attr("class","axis-label")
-		.attr("transform","translate("+ (xScale(parentData[0][0])-5) + "," + (50+height/2) + ")rotate(-90)")
+        frag_graph_svg.append("text")
+        .text("Parent Ion (" + parentData[0][0].toFixed(4) + ")")
+        .attr("class","axis-label")
+        .attr("transform","translate("+ (xScale(parentData[0][0])-5) + "," + (50+height/2) + ")rotate(-90)")
 
             // MS2 Fragment Spectrum label
             frag_graph_titlebar_svg.append("text")
-	        .text("MS2 Fragment Spectrum ")
-	        .attr("x",30)
-	        .attr("y",30)
+            .text("MS2 Fragment Spectrum ")
+            .attr("x",30)
+            .attr("y",30)
                 //.attr("class","axis-label")
-	      	.style("font-family","sans-serif")
-	      	.style("font-size","16px")
-	      	.style("font-weight","bold")
+            .style("font-family","sans-serif")
+            .style("font-size","16px")
+            .style("font-weight","bold")
                 .style("fill","#08298A");
 
             // Topic t, Peak m of n label
@@ -997,12 +997,12 @@ body {
                 .attr("y",15)
                 .style("fill","white")
             frag_graph_titlebar_svg.append("text")
-	        .text("Mass2Motif "+current_topic_id+", Peak "+(peak_index+1)+" of "+max_index)
-	        .attr("x",280)
-	        .attr("y",30)
+            .text("Mass2Motif "+current_topic_id+", Peak "+(peak_index+1)+" of "+max_index)
+            .attr("x",280)
+            .attr("y",30)
                 .attr("class","axis-label")
 
-	    // Create the Next MS1 and Prev MS1 buttons
+        // Create the Next MS1 and Prev MS1 buttons
             frag_graph_titlebar_svg.append("rect")
                 .attr("height",30)
                 .attr("width",70)
@@ -1016,14 +1016,14 @@ body {
             frag_graph_titlebar_svg.append("text")
                 .attr("x",610)
                 .attr("y",23)
-	        .attr("font-family","sans-serif")
-	      	.attr("font-size","14px")
+            .attr("font-family","sans-serif")
+            .attr("font-size","14px")
                 .text("Next")
             frag_graph_titlebar_svg.append("text")
                 .attr("x",612)
                 .attr("y",36)
-	        .attr("font-family","sans-serif")
-	      	.attr("font-size","14px")
+            .attr("font-family","sans-serif")
+            .attr("font-size","14px")
                 .text(" MS1")
 
             frag_graph_titlebar_svg.append("rect")
@@ -1039,14 +1039,14 @@ body {
             frag_graph_titlebar_svg.append("text")
                 .attr("x",520)
                 .attr("y",23)
-	        .attr("font-family","sans-serif")
-	      	.attr("font-size","14px")
+            .attr("font-family","sans-serif")
+            .attr("font-size","14px")
                 .text("Prev")
             frag_graph_titlebar_svg.append("text")
                 .attr("x",522)
                 .attr("y",36)
-	        .attr("font-family","sans-serif")
-	      	.attr("font-size","14px")
+            .attr("font-family","sans-serif")
+            .attr("font-size","14px")
                 .text(" MS1")
 
             display_parent_ion_topics_graph ()   // update display on parent ion topics graph so they are aligned

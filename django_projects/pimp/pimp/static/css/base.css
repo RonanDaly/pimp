@@ -13,7 +13,7 @@
 
 
 *{
-	margin: 0;
+    margin: 0;
 }
 html, body{ 
     /*adding-top: 40px;  this is for fixed-top navigation*/
@@ -22,56 +22,56 @@ html, body{
 
 
 body{
-	/*height: auto;*/
-	padding-top: 40px;
-	/*position: absolute;*/
-	position: relative;
-	color: #00355E;
+    /*height: auto;*/
+    padding-top: 40px;
+    /*position: absolute;*/
+    position: relative;
+    color: #00355E;
 }
 
 /*
 .navbar{
-	font-size: 13px;
+    font-size: 13px;
 }*/
 
 .subhead {
-	text-align: left;
-	/*border-bottom: 1px solid #DDD;*/
+    text-align: left;
+    /*border-bottom: 1px solid #DDD;*/
 }
 
 h1 {
-	background: transparent;
+    background: transparent;
 }
 
 .greenlantern {
-	position: relative;
-	/*padding: 20px 0;*/
-	color: white;
-	text-shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 0 30px rgba(0, 0, 0, .075);
-	/*background: #007C85;
-	background: -moz-linear-gradient(45deg, #007C85 0%, #9EC8BA 100%);
-	background: -webkit-gradient(linear, left bottom, right top, color-stop(0%,#007C85), color-stop(100%,#9EC8BA));
-	background: -webkit-linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
-	background-image: -webkit-linear-gradient(45deg, #007C85 0%, #9EC8BA 100%);
-	background: -o-linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
-	background: -ms-linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
-	background: linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#007C85', endColorstr='#6d3353',GradientType=1 );
-	box-shadow: inset 0 3px 7px rgba(0, 0, 0, .2), inset 0 -3px 7px rgba(0, 0, 0, .2);*/
+    position: relative;
+    /*padding: 20px 0;*/
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 0 30px rgba(0, 0, 0, .075);
+    /*background: #007C85;
+    background: -moz-linear-gradient(45deg, #007C85 0%, #9EC8BA 100%);
+    background: -webkit-gradient(linear, left bottom, right top, color-stop(0%,#007C85), color-stop(100%,#9EC8BA));
+    background: -webkit-linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
+    background-image: -webkit-linear-gradient(45deg, #007C85 0%, #9EC8BA 100%);
+    background: -o-linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
+    background: -ms-linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
+    background: linear-gradient(45deg, #007C85 0%,#9EC8BA 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#007C85', endColorstr='#6d3353',GradientType=1 );
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, .2), inset 0 -3px 7px rgba(0, 0, 0, .2);*/
 }
 
 
 .greenlantern::after{
-	content: '';
-	display: block;
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	background: url(../img/pattern.png) no-repeat right top;
-	background-size: 218px;
-	opacity: .6;
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: url(../img/pattern.png) no-repeat right top;
+    background-size: 218px;
+    opacity: .6;
 }
 
 .footer {
@@ -94,29 +94,29 @@ padding: 0 2px;
 }
 
 .wrapper {
-	top: 41px;
-	min-height: 100%;
-	height: auto !important;
-	height: 100%;
-	margin: 0 auto -140px; /* the bottom margin is the negative value of the footer's height */
+    top: 41px;
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    margin: 0 auto -140px; /* the bottom margin is the negative value of the footer's height */
 }
 .push {
-	height: 130px; /* .push must be the same height as .footer */
-	clear: both;
+    height: 130px; /* .push must be the same height as .footer */
+    clear: both;
 }
 
 .btn-create-project{
-	float:right;
-	vertical-align: middle;
+    float:right;
+    vertical-align: middle;
 }
 
 .span-create-project{
-	padding-top: 20px
+    padding-top: 20px
 }
 
 .center-span{
-	float: none;
-	margin: 0 auto;
+    float: none;
+    margin: 0 auto;
 }
 
 #pimp_icon:hover {
@@ -124,16 +124,16 @@ padding: 0 2px;
 }
 
 #base_container::before{
-	content: '';
-	display: block;
-	position: absolute;
-	top: 51px;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	background: url(../img/pattern.png) no-repeat right top;
-	background-size: 218px;
-	opacity: .6;
+    content: '';
+    display: block;
+    position: absolute;
+    top: 51px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: url(../img/pattern.png) no-repeat right top;
+    background-size: 218px;
+    opacity: .6;
 }
 
 .panel-title {
@@ -141,6 +141,6 @@ padding: 0 2px;
 }
 
 label.error {
-	color: #F44336;
+    color: #F44336;
 }
 

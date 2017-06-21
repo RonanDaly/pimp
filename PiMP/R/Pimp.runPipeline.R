@@ -43,8 +43,8 @@ getDatabaseConnection <- function() {
         dbhost=getString('PIMP_DATABASE_HOST', ''),
         dbport=getInteger('PIMP_DATABASE_PORT', 0),
         dbtype=DATABASE_TYPE
-	)
-	return(db)
+    )
+    return(db)
 }
 
 # TODO: this can be done in Python
@@ -328,39 +328,39 @@ Pimp.runStats <- function(raw.data.pos, raw.data.neg,
     low_level = 1
   }
 
-	##select only columns of samples of interest i.e. no QC, blanks, stds
+    ##select only columns of samples of interest i.e. no QC, blanks, stds
   intensities.idx = match(row.names(sample.metadata), colnames(raw.data))
 
-	#get rows containing basepeaks or match to standard
-	basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
-	stds <- which(!is.na(raw.data$stds_db_identification))
+    #get rows containing basepeaks or match to standard
+    basepeaks <- which(raw.data$relation.ship=="bp" | raw.data$relation.ship=="potential bp")
+    stds <- which(!is.na(raw.data$stds_db_identification))
 
-	# If _all_ the replicates in a group are NA or 0, then replace with low level
-	# Else leave alone
-	smd = as.data.table(sample.metadata, keep.rownames=TRUE)
-	count = smd[, list(Rows=list(.I)), by = eval(factorNames)]
-	for (group in count$Rows) {
+    # If _all_ the replicates in a group are NA or 0, then replace with low level
+    # Else leave alone
+    smd = as.data.table(sample.metadata, keep.rownames=TRUE)
+    count = smd[, list(Rows=list(.I)), by = eval(factorNames)]
+    for (group in count$Rows) {
       samples = smd$rn[group]
-	  for (i in 1:nrow(raw.data)) {
-	    if ( all(raw.data[i,samples] == 0 | is.na(raw.data[i,samples])) ) {
-	      raw.data[i,samples] = low_level
-	    }
-	  }
-	}
+      for (i in 1:nrow(raw.data)) {
+        if ( all(raw.data[i,samples] == 0 | is.na(raw.data[i,samples])) ) {
+          raw.data[i,samples] = low_level
+        }
+      }
+    }
 
-	data <- as.matrix(raw.data[unique(basepeaks,stds),intensities.idx]) #subset to produce data for statistical analysis
-	# NB The gap filler must have fillAll=TRUE to make sure we aren't setting missing peaks to 1, i.e. the only
-	# peaks that should be set to 1 are those that have levels too low to detect.
-	data[data==0] <- NA ##convert 0s to NAs
+    data <- as.matrix(raw.data[unique(basepeaks,stds),intensities.idx]) #subset to produce data for statistical analysis
+    # NB The gap filler must have fillAll=TRUE to make sure we aren't setting missing peaks to 1, i.e. the only
+    # peaks that should be set to 1 are those that have levels too low to detect.
+    data[data==0] <- NA ##convert 0s to NAs
 
-	Mass <- raw.data[unique(basepeaks,stds),'Mass']
-	RT <- raw.data[unique(basepeaks,stds),'RT']
+    Mass <- raw.data[unique(basepeaks,stds),'Mass']
+    RT <- raw.data[unique(basepeaks,stds),'RT']
 
-	return(list(data=data, Mass=Mass, RT=RT))
+    return(list(data=data, Mass=Mass, RT=RT))
 }
 
 Pimp.my.metabolome <- function(..., seconds=5, interval=0.5) {
-	.welcome(interval, seconds)
-	Pimp.runPipeline(...)
-	.goodbye(interval, seconds)
+    .welcome(interval, seconds)
+    Pimp.runPipeline(...)
+    .goodbye(interval, seconds)
 }

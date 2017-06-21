@@ -16,15 +16,15 @@
 #' @export
 
 setMethod("initialize", "PiMPDB", function(.Object, dbname="character", dbuser="character", dbpassword="character", dbhost="character", dbport=0, dbtype="character", ...) {
-	if(dbtype=="mysql") {
-		con <- dbConnect(RMySQL::MySQL(), user=dbuser, password=dbpassword, dbname=dbname, host=dbhost, port=dbport)
-	}
-	else if(dbtype=="sqlite") {
-		con <- dbConnect(RSQLite::SQLite(), dbname=dbname)
-	}
-	else {
-		stop(paste(dbtype, "is not a recognised DBMS."))
-	}
-	.Object@dbconnection <- con
-	callNextMethod(.Object)
+    if(dbtype=="mysql") {
+        con <- dbConnect(RMySQL::MySQL(), user=dbuser, password=dbpassword, dbname=dbname, host=dbhost, port=dbport)
+    }
+    else if(dbtype=="sqlite") {
+        con <- dbConnect(RSQLite::SQLite(), dbname=dbname)
+    }
+    else {
+        stop(paste(dbtype, "is not a recognised DBMS."))
+    }
+    .Object@dbconnection <- con
+    callNextMethod(.Object)
 })

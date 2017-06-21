@@ -4,20 +4,20 @@
 
 {% block content %}
 
-		<div>
-			<h2>FrAnK - Fragment Annotation Kit</h2>
-        		{% if user.is_authenticated %}
-			<h3>Welcome, {{ user.username }}!</h3>
-			{% else %}
-        		<!--otherwise just show the heading-->
-			<h4>Please sign-up or login to begin annotating</h4>
-			{% endif %}
+        <div>
+            <h2>FrAnK - Fragment Annotation Kit</h2>
+                {% if user.is_authenticated %}
+            <h3>Welcome, {{ user.username }}!</h3>
+            {% else %}
+                <!--otherwise just show the heading-->
+            <h4>Please sign-up or login to begin annotating</h4>
+            {% endif %}
 
-    		</div>
-		<table>
-		{% if user.is_authenticated %}
-		<tr><td><a href="{% url 'my_experiments' %}">My Experiments</a></td></tr>
-		<tr><td><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></td></tr>
-		{% endif %}
-		</table>
+            </div>
+        <table>
+        {% if user.is_authenticated %}
+        <tr><td><a href="{% url 'my_experiments' %}">My Experiments</a></td></tr>
+        <tr><td><a href="{% url 'fragmentation_set_summary'%}">My Fragmentation Sets</a></td></tr>
+        {% endif %}
+        </table>
 {% endblock %}

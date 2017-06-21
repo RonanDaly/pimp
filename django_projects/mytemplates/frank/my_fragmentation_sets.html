@@ -15,37 +15,37 @@
 
     <h2>My Fragmentation Sets</h2>
     {% if fragmentation_sets %}
-		<table class="table" id="fragmentation-set">
+        <table class="table" id="fragmentation-set">
       <thead>
-  			<tr>
-  				<th>Name</th>
-  				<th>Experiment</th>
-  				<th>Created</th>
-  				<th>Current Status</th>
-  			</tr>
+            <tr>
+                <th>Name</th>
+                <th>Experiment</th>
+                <th>Created</th>
+                <th>Current Status</th>
+            </tr>
       </thead>
       <tbody>
-  			{% for fragment_set in fragmentation_sets %}
-  				<tr>
-  					{% if fragment_set.status == 'Completed Successfully' %}
-  						<td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>
-  					{% else %}
-  						<td>{{fragment_set.name}}</a></td>
-  					{% endif %}
-  						<td>{{fragment_set.experiment}}</td>
-  						<td>{{fragment_set.status}}</td>
-  						<td>{{fragment_set.time_created}}</td>
-  			{% endfor %}
+            {% for fragment_set in fragmentation_sets %}
+                <tr>
+                    {% if fragment_set.status == 'Completed Successfully' %}
+                        <td><a href="{% url 'fragmentation_set' fragment_set.slug %}">{{fragment_set.name}}</a></td>
+                    {% else %}
+                        <td>{{fragment_set.name}}</a></td>
+                    {% endif %}
+                        <td>{{fragment_set.experiment}}</td>
+                        <td>{{fragment_set.status}}</td>
+                        <td>{{fragment_set.time_created}}</td>
+            {% endfor %}
       </tbody>
-		</table>
-	{% else %}
-		<p>No existing fragmentation sets</p>
-	{% endif %}
-	</br>
-	<table>
-		<tr>
-			<td><a href="{% url 'frank_index' %}">Home</a></td>
-		</tr>
-	</table>
+        </table>
+    {% else %}
+        <p>No existing fragmentation sets</p>
+    {% endif %}
+    </br>
+    <table>
+        <tr>
+            <td><a href="{% url 'frank_index' %}">Home</a></td>
+        </tr>
+    </table>
 
 {% endblock %}

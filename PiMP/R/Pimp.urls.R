@@ -10,11 +10,11 @@ get.db.url <- function(id=NULL, db=NULL) {
 }
 
 get.kegg.url <- function(id=NULL) {
-	return(sprintf("http://www.genome.jp/dbget-bin/www_bget?%s", id))
+    return(sprintf("http://www.genome.jp/dbget-bin/www_bget?%s", id))
 }
 
 get.hmdb.url <- function(id=NULL) {
-	return(sprintf("http://www.hmdb.ca/metabolites/%s", id))
+    return(sprintf("http://www.hmdb.ca/metabolites/%s", id))
 }
 
 get.lipidmaps.url <- function(id=NULL) {
@@ -80,7 +80,7 @@ get.bitly.access_token <- function() {
 
 get.kegg.pathway.url <- function(pathway.id, object.id.list, fg.color.list, bg.color.list) {
     pathway.id <- sub("path:", "", pathway.id)
-	url <- sprintf("http://www.kegg.jp/kegg-bin/show_pathway?%s/",#default%%3dpink/", 
+    url <- sprintf("http://www.kegg.jp/kegg-bin/show_pathway?%s/",#default%%3dpink/",
         pathway.id)
     segs <- sprintf("%s%%09%s,%s", object.id.list, fg.color.list, 
         bg.color.list)

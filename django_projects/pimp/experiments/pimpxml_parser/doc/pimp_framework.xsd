@@ -1,389 +1,389 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <xs:schema
-	xmlns:xs="http://www.w3.org/2001/XMLSchema"
-	xmlns= "http://puma.ibls.gla.ac.uk/ns/gpimp/1.0"
-	targetNamespace="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0">
-
-	<xs:annotation>
-		<xs:documentation>
-			Description: This XML Schema relates to PiMP Frameworks defined for the Glasgow Polyomics Metabolomics Pipeline project.
-			Acknowledgement: This project is funded Glasgow Polyomics.
-			Author: YG, University of Glasgow for the Glasgow Polyomics bioinformatician best team ever.
-			Date Released: 13 November 2013.
-		</xs:documentation>
-	</xs:annotation>
-
-	 <!-- Types for simple elements such as identifiers, names, descriptions, and levels. -->
-
-	<xs:simpleType name="name_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="250" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="identifier_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="250" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="formula_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="100" />
-		</xs:restriction>
-	</xs:simpleType>
-
-
-	<xs:simpleType name="dbid_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="100" />
-		</xs:restriction>
-	</xs:simpleType>
-
-
-	<xs:simpleType name="ppm_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="5" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="adduct_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="100" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="identified_type">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="True" />
-			<xs:enumeration value="False" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="mass_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="10" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="retention_time_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="10" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="polarity_type">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="positive" />
-			<xs:enumeration value="negative" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="logfc_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="5" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="pvalue_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="5" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="adjpvalue_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="5" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="intensity_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="5" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="compound_number_type">
-		<xs:restriction base="xs:positiveInteger">
-			<xs:minInclusive value="1" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="pathway_map_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="250" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="parameter_attribute_type">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="conditional_parameter" />
-			<xs:enumeration value="numeric_parameter" />
-			<xs:enumeration value="numeric_conditional_parameter" />
-			<xs:enumeration value="string_parameter" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="state_type">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="on" />
-			<xs:enumeration value="off" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="value_type">
-		<xs:restriction base="xs:decimal">
-			<xs:fractionDigits value="5" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<xs:simpleType name="statement_type">
-		<xs:restriction base="xs:string">
-			<xs:maxLength value="250" />
-		</xs:restriction>
-	</xs:simpleType>
-
-	<!-- Types for the hierarchy of components defined in settings. -->
-
-	<xs:complexType name="settings_type">
-		<xs:sequence>
-			<xs:element name="groupset" type="groupset_type" />
-			<xs:element name="member_comparison_set" type="member_comparison_set_type" /> 
-			<xs:element name="parameterset" type="parameterset_type" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="groupset_type">
-		<xs:sequence>
-			<xs:element name="group" type="group_type" minOccurs="1" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="group_type">
-		<xs:sequence>
-			<xs:element name="name" type="name_type" />
-			<xs:element name="memberset" type="memberset_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="memberset_type">
-		<xs:sequence>
-			<xs:element name="member" type="member_type" minOccurs="2" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="member_type">
-		<xs:sequence>
-			<xs:element name="name" type="name_type" />
-			<xs:element name="sampleset" type="sampleset_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="sampleset_type">
-		<xs:sequence>
-			<xs:element name="sample" type="sample_type" minOccurs="1" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="sample_type">
-		<xs:sequence>
-			<xs:element name="name" type="name_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="member_comparison_set_type">
-		<xs:sequence>
-			<xs:element name="member_comparison" type="member_comparison_type" minOccurs="1" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="member_comparison_type">
-		<xs:sequence>
-			<xs:element name="member_reference" type="member_reference_type" minOccurs="2" maxOccurs="2"/>
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="member_reference_type" >
-		<xs:attribute name="id" type="xs:positiveInteger" use="required" />
-	</xs:complexType>
-
-	<xs:complexType name="parameterset_type">
-		<xs:sequence>
-			<xs:element name="parameter" type="parameter_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="parameter_type">
-		<xs:sequence>
-			<xs:element name="name" type="name_type" />
-			<xs:choice>
-				<xs:element name="conditional_parameter" type="conditional_parameter_type" />
-				<xs:element name="numeric_parameter" type="numeric_parameter_type" />
-				<xs:element name="numeric_conditional_parameter" type="numeric_conditional_parameter_type" />
-				<xs:element name="string_parameter" type="string_parameter_type" />
-			</xs:choice>
-		</xs:sequence>
-		<xs:attribute name="type" type="parameter_attribute_type" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="conditional_parameter_type">
-		<xs:sequence>
-			<xs:element name="state" type="state_type" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="numeric_parameter_type">
-		<xs:sequence>
-			<xs:element name="value" type="value_type" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="numeric_conditional_parameter_type">
-		<xs:sequence>
-			<xs:element name="state" type="state_type" />
-			<xs:element name="value" type="value_type" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="string_parameter_type">
-		<xs:sequence>
-			<xs:element name="statement" type="statement_type" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<!-- Types for the hierarchy of components defined in a peak set. -->
-
-	<xs:complexType name="peakset_type">
-		<xs:sequence>
-			<xs:element name="peak" type="peak_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="peak_type">
-		<xs:sequence>
-			<xs:element name="mass" type="mass_type" />
-			<xs:element name="retention_time" type="retention_time_type" />
-			<xs:element name="polarity" type="polarity_type" />
-			<xs:element name="compoundset" type="compoundset_type" />
-			<xs:element name="comparisonset" type="comparisonset_type" />
-			<xs:element name="sample_intensity_set" type="sample_intensity_set_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="compoundset_type">
-		<xs:sequence>
-			<xs:element name="compound" type="compound_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="comparisonset_type">
-		<xs:sequence>
-			<xs:element name="comparison" type="comparison_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="sample_intensity_set_type">
-		<xs:sequence>
-			<xs:element name="sample_reference" type="sample_reference_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<!-- Types for the hierarchy of components defined in a compound. -->
-
-	<xs:complexType name="compound_type" >
-		<xs:sequence>
-			<xs:element name="formula" type="formula_type" />
-			<xs:element name="ppm" type="ppm_type" />
-			<xs:element name="adduct" type="adduct_type" />
-			<xs:element name="identified" type="identified_type" />
-			<xs:element name="dbset" type="dbset_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="dbset_type">
-		<xs:sequence>
-			<xs:element name="db" type="db_type" minOccurs="1" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<!-- Types for hierarchy of components defined in a db. -->
-
-	<xs:complexType name="db_type" >
-		<xs:sequence>
-			<xs:element name="db_name" type="name_type" />
-			<xs:element name="identifier" type="identifier_type" />
-			<xs:element name="compound_name" type="name_type" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<!-- Types for the hierarchy of components defined in a comparison. -->
-
-	<xs:complexType name="comparison_type">
-		<xs:sequence>
-			<xs:element name="logfc" type="logfc_type" />
-			<xs:element name="pvalue" type="pvalue_type" />
-			<xs:element name="adjpvalue" type="adjpvalue_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<!-- Types for the hierarchy of components defined in a comparison. -->
-
-	<xs:complexType name="sample_reference_type">
-		<xs:sequence>
-			<xs:element name="intensity" type="intensity_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<!-- Types for the hierarchy of components defined in a peak set. -->
-
-	<xs:complexType name="pathwayset_type">
-		<xs:sequence>
-			<xs:element name="pathway" type="pathway_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="pathway_type">
-		<xs:sequence>
-			<xs:element name="name" type="name_type" />
-			<xs:element name="compound_number" type="compound_number_type" />
-			<xs:element name="pathway_map" type="pathway_map_type" />
-			<xs:element name="compound_in_pathwayset" type="compound_in_pathwayset_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" use="required"/>
-	</xs:complexType>
-
-	<xs:complexType name="compound_in_pathwayset_type">
-		<xs:sequence>
-			<xs:element name="compound_in_pathway" type="compound_in_pathway_type" minOccurs="0" maxOccurs="unbounded" />
-		</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="compound_in_pathway_type" >
-		<xs:attribute name="id" type="xs:positiveInteger" use="required" />
-	</xs:complexType>
-
-	<!-- Types for the hierarchy of components in a pimp_analysis definition. -->
-
-	<xs:complexType name="pimp_analysis_type">
-		<xs:sequence>
-			<xs:element name="settings" type="settings_type" />
-			<xs:element name="peakset" type="peakset_type" />
-			<xs:element name="pathwayset" type="pathwayset_type" />
-		</xs:sequence>
-		<xs:attribute name="id" type="xs:positiveInteger" />
-	</xs:complexType>
-
-	<!-- Root element for the PiMP framework. -->
-
-	<xs:element name="pimp_analysis" type="pimp_analysis_type" />
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns= "http://puma.ibls.gla.ac.uk/ns/gpimp/1.0"
+    targetNamespace="http://puma.ibls.gla.ac.uk/ns/gpimp/1.0">
+
+    <xs:annotation>
+        <xs:documentation>
+            Description: This XML Schema relates to PiMP Frameworks defined for the Glasgow Polyomics Metabolomics Pipeline project.
+            Acknowledgement: This project is funded Glasgow Polyomics.
+            Author: YG, University of Glasgow for the Glasgow Polyomics bioinformatician best team ever.
+            Date Released: 13 November 2013.
+        </xs:documentation>
+    </xs:annotation>
+
+     <!-- Types for simple elements such as identifiers, names, descriptions, and levels. -->
+
+    <xs:simpleType name="name_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="250" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="identifier_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="250" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="formula_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="100" />
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <xs:simpleType name="dbid_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="100" />
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <xs:simpleType name="ppm_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="adduct_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="100" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="identified_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="True" />
+            <xs:enumeration value="False" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="mass_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="10" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="retention_time_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="10" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="polarity_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="positive" />
+            <xs:enumeration value="negative" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="logfc_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="pvalue_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="adjpvalue_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="intensity_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="compound_number_type">
+        <xs:restriction base="xs:positiveInteger">
+            <xs:minInclusive value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="pathway_map_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="250" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="parameter_attribute_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="conditional_parameter" />
+            <xs:enumeration value="numeric_parameter" />
+            <xs:enumeration value="numeric_conditional_parameter" />
+            <xs:enumeration value="string_parameter" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="state_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="on" />
+            <xs:enumeration value="off" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="value_type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="statement_type">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="250" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Types for the hierarchy of components defined in settings. -->
+
+    <xs:complexType name="settings_type">
+        <xs:sequence>
+            <xs:element name="groupset" type="groupset_type" />
+            <xs:element name="member_comparison_set" type="member_comparison_set_type" />
+            <xs:element name="parameterset" type="parameterset_type" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="groupset_type">
+        <xs:sequence>
+            <xs:element name="group" type="group_type" minOccurs="1" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="group_type">
+        <xs:sequence>
+            <xs:element name="name" type="name_type" />
+            <xs:element name="memberset" type="memberset_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="memberset_type">
+        <xs:sequence>
+            <xs:element name="member" type="member_type" minOccurs="2" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="member_type">
+        <xs:sequence>
+            <xs:element name="name" type="name_type" />
+            <xs:element name="sampleset" type="sampleset_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="sampleset_type">
+        <xs:sequence>
+            <xs:element name="sample" type="sample_type" minOccurs="1" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="sample_type">
+        <xs:sequence>
+            <xs:element name="name" type="name_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="member_comparison_set_type">
+        <xs:sequence>
+            <xs:element name="member_comparison" type="member_comparison_type" minOccurs="1" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="member_comparison_type">
+        <xs:sequence>
+            <xs:element name="member_reference" type="member_reference_type" minOccurs="2" maxOccurs="2"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="member_reference_type" >
+        <xs:attribute name="id" type="xs:positiveInteger" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="parameterset_type">
+        <xs:sequence>
+            <xs:element name="parameter" type="parameter_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="parameter_type">
+        <xs:sequence>
+            <xs:element name="name" type="name_type" />
+            <xs:choice>
+                <xs:element name="conditional_parameter" type="conditional_parameter_type" />
+                <xs:element name="numeric_parameter" type="numeric_parameter_type" />
+                <xs:element name="numeric_conditional_parameter" type="numeric_conditional_parameter_type" />
+                <xs:element name="string_parameter" type="string_parameter_type" />
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="type" type="parameter_attribute_type" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="conditional_parameter_type">
+        <xs:sequence>
+            <xs:element name="state" type="state_type" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="numeric_parameter_type">
+        <xs:sequence>
+            <xs:element name="value" type="value_type" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="numeric_conditional_parameter_type">
+        <xs:sequence>
+            <xs:element name="state" type="state_type" />
+            <xs:element name="value" type="value_type" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="string_parameter_type">
+        <xs:sequence>
+            <xs:element name="statement" type="statement_type" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Types for the hierarchy of components defined in a peak set. -->
+
+    <xs:complexType name="peakset_type">
+        <xs:sequence>
+            <xs:element name="peak" type="peak_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="peak_type">
+        <xs:sequence>
+            <xs:element name="mass" type="mass_type" />
+            <xs:element name="retention_time" type="retention_time_type" />
+            <xs:element name="polarity" type="polarity_type" />
+            <xs:element name="compoundset" type="compoundset_type" />
+            <xs:element name="comparisonset" type="comparisonset_type" />
+            <xs:element name="sample_intensity_set" type="sample_intensity_set_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="compoundset_type">
+        <xs:sequence>
+            <xs:element name="compound" type="compound_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="comparisonset_type">
+        <xs:sequence>
+            <xs:element name="comparison" type="comparison_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="sample_intensity_set_type">
+        <xs:sequence>
+            <xs:element name="sample_reference" type="sample_reference_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Types for the hierarchy of components defined in a compound. -->
+
+    <xs:complexType name="compound_type" >
+        <xs:sequence>
+            <xs:element name="formula" type="formula_type" />
+            <xs:element name="ppm" type="ppm_type" />
+            <xs:element name="adduct" type="adduct_type" />
+            <xs:element name="identified" type="identified_type" />
+            <xs:element name="dbset" type="dbset_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="dbset_type">
+        <xs:sequence>
+            <xs:element name="db" type="db_type" minOccurs="1" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Types for hierarchy of components defined in a db. -->
+
+    <xs:complexType name="db_type" >
+        <xs:sequence>
+            <xs:element name="db_name" type="name_type" />
+            <xs:element name="identifier" type="identifier_type" />
+            <xs:element name="compound_name" type="name_type" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Types for the hierarchy of components defined in a comparison. -->
+
+    <xs:complexType name="comparison_type">
+        <xs:sequence>
+            <xs:element name="logfc" type="logfc_type" />
+            <xs:element name="pvalue" type="pvalue_type" />
+            <xs:element name="adjpvalue" type="adjpvalue_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <!-- Types for the hierarchy of components defined in a comparison. -->
+
+    <xs:complexType name="sample_reference_type">
+        <xs:sequence>
+            <xs:element name="intensity" type="intensity_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <!-- Types for the hierarchy of components defined in a peak set. -->
+
+    <xs:complexType name="pathwayset_type">
+        <xs:sequence>
+            <xs:element name="pathway" type="pathway_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="pathway_type">
+        <xs:sequence>
+            <xs:element name="name" type="name_type" />
+            <xs:element name="compound_number" type="compound_number_type" />
+            <xs:element name="pathway_map" type="pathway_map_type" />
+            <xs:element name="compound_in_pathwayset" type="compound_in_pathwayset_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="compound_in_pathwayset_type">
+        <xs:sequence>
+            <xs:element name="compound_in_pathway" type="compound_in_pathway_type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="compound_in_pathway_type" >
+        <xs:attribute name="id" type="xs:positiveInteger" use="required" />
+    </xs:complexType>
+
+    <!-- Types for the hierarchy of components in a pimp_analysis definition. -->
+
+    <xs:complexType name="pimp_analysis_type">
+        <xs:sequence>
+            <xs:element name="settings" type="settings_type" />
+            <xs:element name="peakset" type="peakset_type" />
+            <xs:element name="pathwayset" type="pathwayset_type" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:positiveInteger" />
+    </xs:complexType>
+
+    <!-- Root element for the PiMP framework. -->
+
+    <xs:element name="pimp_analysis" type="pimp_analysis_type" />
 
 </xs:schema>

@@ -16,11 +16,11 @@
 
             {% for field in user_form.visible_fields %}
                 {{ field.errors }}
-		<br>
+        <br>
                 {{ field.help_text }}
-		<br>
+        <br>
                 {{ field }}
-		<br>
+        <br>
             {% endfor %}
 
             <input type="submit" name="submit" value="Sign Up" />

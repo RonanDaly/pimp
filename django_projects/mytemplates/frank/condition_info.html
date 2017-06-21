@@ -1,44 +1,44 @@
 <div class="row-fluid">
-	<div class="span12 white-span" style="padding-bottom:5px;">
-		<div class="row-fluid">
-			<div class="span6">
-				{% if user.is_staff %}
-					<a class="project-title-link" href="{% url 'condition_summary' condition.experiment.slug condition.slug %}">{{ condition.name }}</a>
-				{% else %}
-					<p class="project-title-link-no-link" >{{ condition.title }}</p>
-				{% endif %}
-			</div>
-		</div>
-		<div class="row-fluid">
-			<div class="span12 description-span">
-				<p class="introduction_text">{% if  condition.description %}{{ condition.description|truncatewords:"20" }}{% else %}No description available{% endif %}</p>
-			</div>
-		</div>
-		{% if condition.sample_set.all.0.samplefile_set.all %}
-		<div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
-			<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
-				<p class="text-in-table">Sample</p>
-			</div>
-			<div class="span4 center-text"style="min-height:10px;">
-				<p class="text-in-table">Organism</p>
-			</div>
-			<div class="span4 center-text" style="min-height:10px;">
-				<p class="text-in-table">Files</p>
-			</div>
-		</div>
-		{% for sample in condition.sample_set.all %}
-		<div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
-			<div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
-				<p class="text-in-table introduction_text">{{ sample.name }}</p>
-			</div>
-			<div class="span4 center-text"style="min-height:10px;">
-				<p class="text-in-table introduction_text">{% if sample.organism %}{{ sample.organism|truncatewords:"20" }}{% else %}None{% endif %}</p>
-			</div>
-			<div class="span4 center-text" style="min-height:10px;">
-				<p class="text-in-table introduction_text">{{ sample.samplefile_set.all|length }}</p>
-			</div>
-		</div>
-		{% endfor %}
-		{% endif %}
- 	</div>
+    <div class="span12 white-span" style="padding-bottom:5px;">
+        <div class="row-fluid">
+            <div class="span6">
+                {% if user.is_staff %}
+                    <a class="project-title-link" href="{% url 'condition_summary' condition.experiment.slug condition.slug %}">{{ condition.name }}</a>
+                {% else %}
+                    <p class="project-title-link-no-link" >{{ condition.title }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12 description-span">
+                <p class="introduction_text">{% if  condition.description %}{{ condition.description|truncatewords:"20" }}{% else %}No description available{% endif %}</p>
+            </div>
+        </div>
+        {% if condition.sample_set.all.0.samplefile_set.all %}
+        <div class="row-fluid" style="margin-top: 10px;padding-top: 5px;padding-bottom: 5px;border-top: solid 2px rgba(0, 53, 94, 0.7);border-bottom: solid 2px rgba(0, 53, 94, 0.7);">
+            <div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+                <p class="text-in-table">Sample</p>
+            </div>
+            <div class="span4 center-text"style="min-height:10px;">
+                <p class="text-in-table">Organism</p>
+            </div>
+            <div class="span4 center-text" style="min-height:10px;">
+                <p class="text-in-table">Files</p>
+            </div>
+        </div>
+        {% for sample in condition.sample_set.all %}
+        <div class="row-fluid" style="margin-top: 0px;padding-top: 5px;padding-bottom: 5px;{% if not forloop.counter|divisibleby:2 %}background-color: rgb(253, 253, 253);{% endif %}{% if forloop.last %}border-bottom-left-radius: 5px;border-bottom-right-radius: 5px;{% endif %}">
+            <div class="span4 center-text" style="margin-left: 0px;min-height:10px;">
+                <p class="text-in-table introduction_text">{{ sample.name }}</p>
+            </div>
+            <div class="span4 center-text"style="min-height:10px;">
+                <p class="text-in-table introduction_text">{% if sample.organism %}{{ sample.organism|truncatewords:"20" }}{% else %}None{% endif %}</p>
+            </div>
+            <div class="span4 center-text" style="min-height:10px;">
+                <p class="text-in-table introduction_text">{{ sample.samplefile_set.all|length }}</p>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
 </div>

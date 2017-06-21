@@ -19,7 +19,7 @@
                     {{ field.errors }}
                     <br>
                     {{ field.help_text }}
-		    <br>
+            <br>
                     {# <br>   DEBUG #}
                     {{field.label}} {{ field }}
                     {# <br>   DEBUG #}
@@ -30,16 +30,16 @@
                     {{ field.errors }}
                     <br>
                     {{ field.help_text }}
-		    <br>
+            <br>
                     <br>
                     {{field.label}} {{ field }}
                     <br>
                 {% endfor %}
             {% endif %}
             <br>
-	<button class="btn btn-large btn-primary" type="submit">Retrieve Annotations</button>
-	<a href="{% url 'fragmentation_set' fragmentation_set.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+    <button class="btn btn-large btn-primary" type="submit">Retrieve Annotations</button>
+    <a href="{% url 'fragmentation_set' fragmentation_set.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
         <br>
-	</form>
+    </form>
 
 {% endblock %}

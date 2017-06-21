@@ -122,14 +122,14 @@ $(function() {
 </div>
 
 <div class="row" style="margin-bottom: 10p;">
-	<div class="span10">
-	<table>
-		<tr><td>Description: {% if  experiment.description %}{{ experiment.description}}{% else %}No description available{% endif %}</td></tr>
-		<tr><td>Date Created: {{experiment.time_created}}</td></tr>
-		<tr><td>Ionisation Method: {{experiment.get_ionisation_method_display}}</td></tr>
-		<tr><td>Experiment Type: {{experiment.detection_method}}</td></tr>
-	</table>
-	</div>
+    <div class="span10">
+    <table>
+        <tr><td>Description: {% if  experiment.description %}{{ experiment.description}}{% else %}No description available{% endif %}</td></tr>
+        <tr><td>Date Created: {{experiment.time_created}}</td></tr>
+        <tr><td>Ionisation Method: {{experiment.get_ionisation_method_display}}</td></tr>
+        <tr><td>Experiment Type: {{experiment.detection_method}}</td></tr>
+    </table>
+    </div>
 </div>
 
 {% if user.is_authenticated %}

@@ -5,7 +5,7 @@
 #' @slot dbconnection A DBMS specific DBIConnection e.g. RSQLite or RMySQL
 #' @export
 setClass("PiMPDB",
-	slots = c(
-		dbconnection = "DBIConnection"
-	)
+    slots = c(
+        dbconnection = "DBIConnection"
+    )
 )

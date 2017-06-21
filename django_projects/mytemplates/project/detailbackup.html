@@ -16,7 +16,7 @@
 <script type="text/javascript">
 $(document).ready(function() {
 
-	$('.modal') 
+    $('.modal')
     .on('shown', function(){ 
       console.log('show'); 
       $('body').css({overflow: 'hidden'}); 
@@ -25,513 +25,513 @@ $(document).ready(function() {
       $('body').css({overflow: ''}); 
     }); 
 
-	function massSpectra(sample_id, polarity, retentionTime){
-		console.log(sample_id + " " + polarity + " " + retentionTime);
-		var data = {"id": sample_id, "polarity": polarity, "rt":retentionTime};
-		var chartWidth = $('#main-container').width();
-		var url = "{% url project_detail project.id %}" + "sample/" + sample_id + "/scan/";
-		if (polarity == "NEG"){
-			var scan = $("#full-width").find('#tab2').find('#scan');
-		}
-		else{
-			var scan = $("#full-width").find('#tab1').find('#scan');
-		}
+    function massSpectra(sample_id, polarity, retentionTime){
+        console.log(sample_id + " " + polarity + " " + retentionTime);
+        var data = {"id": sample_id, "polarity": polarity, "rt":retentionTime};
+        var chartWidth = $('#main-container').width();
+        var url = "{% url project_detail project.id %}" + "sample/" + sample_id + "/scan/";
+        if (polarity == "NEG"){
+            var scan = $("#full-width").find('#tab2').find('#scan');
+        }
+        else{
+            var scan = $("#full-width").find('#tab1').find('#scan');
+        }
 
-		// var $modal = $('#full-width');
-		// $modal.modal('loading');
-		$("#full-width").find('.modal-body').modalmanager('loading');
+        // var $modal = $('#full-width');
+        // $modal.modal('loading');
+        $("#full-width").find('.modal-body').modalmanager('loading');
 
-		$.ajax({
-			type: "GET",
+        $.ajax({
+            type: "GET",
             url: url,
             data: data,
             success: function(response){
-            	// alert(response);
-            	$(scan).highcharts({
-            			credits : {
-    						enabled : false
-    					},
-			        	chart: {
-			                zoomType: 'x',
-			                spacingRight: 20,
-			                width: chartWidth
-			            },
-			            title: {
-			                text: 'Mass spectra for RT ' + retentionTime
-			            },
-			            subtitle: {
-			                text: document.ontouchstart === undefined ?
-			                    'Click and drag in the plot area to zoom in' :
-			                    'Drag your finger over the plot to zoom in'
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: retentionTime.toString().replace(".","_") + "_" + polarity + "_mass_spectra"
-			            },
-			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
-			                title: {
-			                    text: 'm/z'
-			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
-	                		showLastLabel: true
-			            },
-			            yAxis: {
-			                title: {
-			                    text: 'Intensity'
-			                },
-			                // min: 0,
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '<span style="font-size: 10px">Mass : {point.key}</span><br/>'
-			            },
-			            legend: {
-			                enabled: false
-			            },
-			            plotOptions: {
-			                area: {
-			                    fillColor: {
-			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			                        stops: [
-			                            [0, Highcharts.getOptions().colors[0]],
-			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			                        ]
-			                    },
-			                    lineWidth: 1,
-			                    marker: {
-			                        enabled: false
-			                    },
-			                    shadow: false,
-			                    states: {
-			                        hover: {
-			                            lineWidth: 1
-			                        }
-			                    },
-			                    threshold: null
-			                },
-			                // series: {
-			                //     cursor: 'pointer',
-			                //     point: {
-			                //         events: {
-			                //             click: function() {
-			                //                 hs.htmlExpand(null, {
-			                //                     pageOrigin: {
-			                //                         x: this.pageX,
-			                //                         y: this.pageY
-			                //                     },
-			                //                     headingText: 'Retention Time: ' + retentionTime,
-			                //                     maincontentText: 'Mass: '+ this.x +':<br/> '+
-			                //                         'Intensity: '+ this.y,
-			                //                     width: 200
-			                //                 });
-			                //             }
-			                //         }
-			                // 	}
-			                // },
-			                scatter: {
-			                    marker: {
-			                        radius: 5,
-			                        states: {
-			                            hover: {
-			                                enabled: true,
-			                                lineColor: 'rgb(100,100,100)'
-			                            }
-			                        }
-			                    }
-			                    // states: {
-			                    //     hover: {
-			                    //         marker: {
-			                    //             enabled: false
-			                    //         }
-			                    //     }
-			                    // },
-			                    // tooltip: {
-			                    //     headerFormat: '<b>{series.name}</b><br>',
-			                    //     pointFormat: '{point.x} cm, {point.y} kg'
-			                    // }
-			                }
-			            },
-			    
-			            series: [{
-			                type: 'area',
-			                name: 'Intensity',
-			                data : response
-			            }]
-		    		});
-					$("#full-width").find('.modal-body').modalmanager('loading','false');;
-					// $modal.modal('loading','false');
+                // alert(response);
+                $(scan).highcharts({
+                        credits : {
+                            enabled : false
+                        },
+                        chart: {
+                            zoomType: 'x',
+                            spacingRight: 20,
+                            width: chartWidth
+                        },
+                        title: {
+                            text: 'Mass spectra for RT ' + retentionTime
+                        },
+                        subtitle: {
+                            text: document.ontouchstart === undefined ?
+                                'Click and drag in the plot area to zoom in' :
+                                'Drag your finger over the plot to zoom in'
+                        },
+                        exporting: {
+                            enabled: true,
+                            filename: retentionTime.toString().replace(".","_") + "_" + polarity + "_mass_spectra"
+                        },
+                        xAxis: {
+                            // type: 'linear',
+                            // categories: response[1][1],
+                            // maxZoom: 14 * response[1][0].length, // fourteen days
+                            title: {
+                                text: 'm/z'
+                            },
+                            // startOnTick: true,
+                            // endOnTick: true,
+                            showLastLabel: true
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Intensity'
+                            },
+                            // min: 0,
+                        },
+                        tooltip: {
+                            shared: true,
+                            headerFormat: '<span style="font-size: 10px">Mass : {point.key}</span><br/>'
+                        },
+                        legend: {
+                            enabled: false
+                        },
+                        plotOptions: {
+                            area: {
+                                fillColor: {
+                                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                                    stops: [
+                                        [0, Highcharts.getOptions().colors[0]],
+                                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                                    ]
+                                },
+                                lineWidth: 1,
+                                marker: {
+                                    enabled: false
+                                },
+                                shadow: false,
+                                states: {
+                                    hover: {
+                                        lineWidth: 1
+                                    }
+                                },
+                                threshold: null
+                            },
+                            // series: {
+                            //     cursor: 'pointer',
+                            //     point: {
+                            //         events: {
+                            //             click: function() {
+                            //                 hs.htmlExpand(null, {
+                            //                     pageOrigin: {
+                            //                         x: this.pageX,
+                            //                         y: this.pageY
+                            //                     },
+                            //                     headingText: 'Retention Time: ' + retentionTime,
+                            //                     maincontentText: 'Mass: '+ this.x +':<br/> '+
+                            //                         'Intensity: '+ this.y,
+                            //                     width: 200
+                            //                 });
+                            //             }
+                            //         }
+                            // 	}
+                            // },
+                            scatter: {
+                                marker: {
+                                    radius: 5,
+                                    states: {
+                                        hover: {
+                                            enabled: true,
+                                            lineColor: 'rgb(100,100,100)'
+                                        }
+                                    }
+                                }
+                                // states: {
+                                //     hover: {
+                                //         marker: {
+                                //             enabled: false
+                                //         }
+                                //     }
+                                // },
+                                // tooltip: {
+                                //     headerFormat: '<b>{series.name}</b><br>',
+                                //     pointFormat: '{point.x} cm, {point.y} kg'
+                                // }
+                            }
+                        },
+
+                        series: [{
+                            type: 'area',
+                            name: 'Intensity',
+                            data : response
+                        }]
+                    });
+                    $("#full-width").find('.modal-body').modalmanager('loading','false');;
+                    // $modal.modal('loading','false');
 
             },
             error: function(){
-        		alert("Error");
-        	}
-		});
+                alert("Error");
+            }
+        });
 
-	}
+    }
 
-	$('.mzxml-viewer').click(function (e){
-		var $modal = $("#full-width");
-		var modalLabel = $modal.find('#myModalLabel');
-		var modalBody = $modal.find('.modal-body');
-		
-		$(modalLabel).empty();
-		$(modalBody).empty();
+    $('.mzxml-viewer').click(function (e){
+        var $modal = $("#full-width");
+        var modalLabel = $modal.find('#myModalLabel');
+        var modalBody = $modal.find('.modal-body');
 
-		$(modalLabel).text("mzxml viewer")
-		
-		var sampleId = $(this).attr('id').split("-")[1];
-		console.log(sampleId);
+        $(modalLabel).empty();
+        $(modalBody).empty();
 
-		var url = "{% url project_detail project.id %}" + "sample/" + sampleId + "/";
-		var sample_id = {"id": sampleId};
+        $(modalLabel).text("mzxml viewer")
 
-		$('body').modalmanager('loading');
-		// console.log('window height: ' + $(window).height());
+        var sampleId = $(this).attr('id').split("-")[1];
+        console.log(sampleId);
 
-		$.ajax({
+        var url = "{% url project_detail project.id %}" + "sample/" + sampleId + "/";
+        var sample_id = {"id": sampleId};
+
+        $('body').modalmanager('loading');
+        // console.log('window height: ' + $(window).height());
+
+        $.ajax({
             type: "GET",
             url: url,
             data: sample_id,
             success: function(response){
-            	console.log(response);
-            	console.log(response[1].length);
-            	console.log(response[1][1].length);
-            	// $(modalLabel).text("TIC : " + response[0])
-            	// if (response[1] == "None" || response[2] == "None"){
-            	// 	console.log("1 polarity missing");
-            	if (response[1] == "None" || response[2] == "None"){
-            		console.log("1 polarity missing");
-            	}
-            	else{
-            		console.log("both polarity present, all good!!");
-            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+                console.log(response);
+                console.log(response[1].length);
+                console.log(response[1][1].length);
+                // $(modalLabel).text("TIC : " + response[0])
+                // if (response[1] == "None" || response[2] == "None"){
+                // 	console.log("1 polarity missing");
+                if (response[1] == "None" || response[2] == "None"){
+                    console.log("1 polarity missing");
+                }
+                else{
+                    console.log("both polarity present, all good!!");
+                    var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
 
-            		$(ul).appendTo($(modalBody));
-            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
-            		
-
-            		var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
-            		var tab2 = $('<div class="tab-pane" id="tab2"></div>');
-
-            		var posTIC = $('<div id="tic"></div>');
-            		var posScan = $('<div id="scan"></div>');
-
-            		var negTIC = $('<div id="tic"></div>');
-            		var negScan = $('<div id="scan"></div>');
+                    $(ul).appendTo($(modalBody));
+                    var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
 
 
-            		var chartWidth = $('#main-container').width(); 
-    				// $("#full-width").find('.modal-body').prepend(content);
-    				// $("#full-width").find('.modal-body').highcharts({
-	            	$(posTIC).highcharts({
-	            		credits : {
-    						enabled : false
-    					},
-			        	chart: {
-			                zoomType: 'x',
-			                spacingRight: 20,
-			                width: chartWidth
-			            },
-			            title: {
-			                text: response[0] +' positive Total Ion Current'
-			            },
-			            subtitle: {
-			                text: document.ontouchstart === undefined ?
-			                    'Click and drag in the plot area to zoom in' :
-			                    'Drag your finger over the plot to zoom in'
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: response[0].split(".")[0] + "_positive_TIC"
-			            },
-			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
-			                title: {
-			                    text: 'Retention time'
-			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
-	                		showLastLabel: true
-			            },
-			            yAxis: {
-			                title: {
-			                    text: 'Intensity'
-			                },
-			                // min: 0,
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
-			            },
-			            legend: {
-			                enabled: false
-			            },
-			            plotOptions: {
-			                area: {
-			                    fillColor: {
-			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			                        stops: [
-			                            [0, Highcharts.getOptions().colors[0]],
-			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			                        ]
-			                    },
-			                    lineWidth: 1,
-			                    marker: {
-			                        enabled: false
-			                    },
-			                    shadow: false,
-			                    states: {
-			                        hover: {
-			                            lineWidth: 1
-			                        }
-			                    },
-			                    threshold: null
-			                },
-			                scatter: {
-			                    marker: {
-			                        radius: 5,
-			                        states: {
-			                            hover: {
-			                                enabled: true,
-			                                lineColor: 'rgb(100,100,100)'
-			                            }
-			                        }
-			                    }
-			                    // states: {
-			                    //     hover: {
-			                    //         marker: {
-			                    //             enabled: false
-			                    //         }
-			                    //     }
-			                    // },
-			                    // tooltip: {
-			                    //     headerFormat: '<b>{series.name}</b><br>',
-			                    //     pointFormat: '{point.x} cm, {point.y} kg'
-			                    // }
-			                },
-			                series: {
-				                cursor: 'pointer',
-				                point: {
-			                        events: {
-			                            click: function() {
-			                            	console.log("retention time :" + this.x);
-			                            	massSpectra(sampleId, "POS", this.x);
-			                            	// alert('You just clicked the graph');
-			                                // hs.htmlExpand(null, {
-			                                //     pageOrigin: {
-			                                //         x: this.pageX,
-			                                //         y: this.pageY
-			                                //     },
-			                                //     headingText: this.series.name,
-			                                //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
-			                                //         this.y +' visits',
-			                                //     width: 200
-			                                // });
-			                            }
-			                        }
-			                    },
-				                // events: {
-				                //     click: function() {
-				                //         alert('You just clicked the graph');
-				                //     }
-				                // }
-				            }
+                    var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
+                    var tab2 = $('<div class="tab-pane" id="tab2"></div>');
 
-			            },
-			    
-			            series: [{
-			                type: 'area',
-			                name: 'Intensity',
-			                data : response[1]
-			            }]
-		    		});
-					$(negTIC).highcharts({
-						credits : {
-    						enabled : false
-    					},
-			        	chart: {
-			                zoomType: 'x',
-			                spacingRight: 20,
-			                width: chartWidth
-			            },
-			            title: {
-			                text: response[0] +' negative Total Ion Current'
-			            },
-			            subtitle: {
-			                text: document.ontouchstart === undefined ?
-			                    'Click and drag in the plot area to zoom in' :
-			                    'Drag your finger over the plot to zoom in'
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: response[0].split(".")[0] + "_negative_TIC" 
-			            },
-			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
-			                title: {
-			                    text: 'Retention time'
-			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
-	                		showLastLabel: true
-			            },
-			            yAxis: {
-			                title: {
-			                    text: 'Intensity'
-			                },
-			                // min: 0,
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
-			            },
-			            legend: {
-			                enabled: false
-			            },
-			            plotOptions: {
-			                area: {
-			                    fillColor: {
-			                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			                        stops: [
-			                            [0, Highcharts.getOptions().colors[0]],
-			                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			                        ]
-			                    },
-			                    lineWidth: 1,
-			                    marker: {
-			                        enabled: false
-			                    },
-			                    shadow: false,
-			                    states: {
-			                        hover: {
-			                            lineWidth: 1
-			                        }
-			                    },
-			                    threshold: null
-			                },
-			                scatter: {
-			                    marker: {
-			                        radius: 5,
-			                        states: {
-			                            hover: {
-			                                enabled: true,
-			                                lineColor: 'rgb(100,100,100)'
-			                            }
-			                        }
-			                    }
-			                    // states: {
-			                    //     hover: {
-			                    //         marker: {
-			                    //             enabled: false
-			                    //         }
-			                    //     }
-			                    // },
-			                    // tooltip: {
-			                    //     headerFormat: '<b>{series.name}</b><br>',
-			                    //     pointFormat: '{point.x} cm, {point.y} kg'
-			                    // }
-			                },
-			                series: {
-				                cursor: 'pointer',
-				                point: {
-			                        events: {
-			                            click: function() {
-			                            	console.log("retention time :" + this.x);
-			                            	massSpectra(sampleId, "NEG", this.x);
-			                            	// alert('You just clicked the graph');
-			                                // hs.htmlExpand(null, {
-			                                //     pageOrigin: {
-			                                //         x: this.pageX,
-			                                //         y: this.pageY
-			                                //     },
-			                                //     headingText: this.series.name,
-			                                //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
-			                                //         this.y +' visits',
-			                                //     width: 200
-			                                // });
-			                            }
-			                        }
-			                    },
-				                // events: {
-				                //     click: function() {
-				                //         alert('You just clicked the graph');
-				                //     }
-				                // }
-				            }
-			            },
-			    
-			            series: [{
-			                type: 'area',
-			                name: 'Intensity',
-			                data : response[2]
-			            }]
-		    		});
-				}
+                    var posTIC = $('<div id="tic"></div>');
+                    var posScan = $('<div id="scan"></div>');
 
-            	$(posTIC).appendTo($(tab1));
-            	$(posScan).appendTo($(tab1));
-            	$(negTIC).appendTo($(tab2));
-            	$(negScan).appendTo($(tab2));
-            	$(tab1).appendTo($(tabContent));
-            	$(tab2).appendTo($(tabContent));
-            	$(tabContent).appendTo($(modalBody));
-				$('body').modalmanager('loading','false');
-				$(modalBody).width($('#main-container').width());
-				$(tabContent).width($('#main-container').width());
-				$(tab1).width($('#main-container').width());
-				$(tab2).width($('#main-container').width());
-				console.log('modal height: '+$modal.height())
-				var maxModalHeight = $modal.height() + 401;
-				console.log("max modal height: "+maxModalHeight);
-				console.log("modal top: "+$modal.css('top'));
-				if (maxModalHeight < $(window).height()){
-					$modal.css('max-height', 'none');
-					$(modalBody).css('max-height', 'none');
-				}
-				// console.log('TIC height: '+$(negTIC).height());
-				$modal.modal();
-				// console.log('TIC height: '+$(posTIC).height());
+                    var negTIC = $('<div id="tic"></div>');
+                    var negScan = $('<div id="scan"></div>');
+
+
+                    var chartWidth = $('#main-container').width();
+                    // $("#full-width").find('.modal-body').prepend(content);
+                    // $("#full-width").find('.modal-body').highcharts({
+                    $(posTIC).highcharts({
+                        credits : {
+                            enabled : false
+                        },
+                        chart: {
+                            zoomType: 'x',
+                            spacingRight: 20,
+                            width: chartWidth
+                        },
+                        title: {
+                            text: response[0] +' positive Total Ion Current'
+                        },
+                        subtitle: {
+                            text: document.ontouchstart === undefined ?
+                                'Click and drag in the plot area to zoom in' :
+                                'Drag your finger over the plot to zoom in'
+                        },
+                        exporting: {
+                            enabled: true,
+                            filename: response[0].split(".")[0] + "_positive_TIC"
+                        },
+                        xAxis: {
+                            // type: 'linear',
+                            // categories: response[1][1],
+                            // maxZoom: 14 * response[1][0].length, // fourteen days
+                            title: {
+                                text: 'Retention time'
+                            },
+                            // startOnTick: true,
+                            // endOnTick: true,
+                            showLastLabel: true
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Intensity'
+                            },
+                            // min: 0,
+                        },
+                        tooltip: {
+                            shared: true,
+                            headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
+                        },
+                        legend: {
+                            enabled: false
+                        },
+                        plotOptions: {
+                            area: {
+                                fillColor: {
+                                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                                    stops: [
+                                        [0, Highcharts.getOptions().colors[0]],
+                                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                                    ]
+                                },
+                                lineWidth: 1,
+                                marker: {
+                                    enabled: false
+                                },
+                                shadow: false,
+                                states: {
+                                    hover: {
+                                        lineWidth: 1
+                                    }
+                                },
+                                threshold: null
+                            },
+                            scatter: {
+                                marker: {
+                                    radius: 5,
+                                    states: {
+                                        hover: {
+                                            enabled: true,
+                                            lineColor: 'rgb(100,100,100)'
+                                        }
+                                    }
+                                }
+                                // states: {
+                                //     hover: {
+                                //         marker: {
+                                //             enabled: false
+                                //         }
+                                //     }
+                                // },
+                                // tooltip: {
+                                //     headerFormat: '<b>{series.name}</b><br>',
+                                //     pointFormat: '{point.x} cm, {point.y} kg'
+                                // }
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function() {
+                                            console.log("retention time :" + this.x);
+                                            massSpectra(sampleId, "POS", this.x);
+                                            // alert('You just clicked the graph');
+                                            // hs.htmlExpand(null, {
+                                            //     pageOrigin: {
+                                            //         x: this.pageX,
+                                            //         y: this.pageY
+                                            //     },
+                                            //     headingText: this.series.name,
+                                            //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+                                            //         this.y +' visits',
+                                            //     width: 200
+                                            // });
+                                        }
+                                    }
+                                },
+                                // events: {
+                                //     click: function() {
+                                //         alert('You just clicked the graph');
+                                //     }
+                                // }
+                            }
+
+                        },
+
+                        series: [{
+                            type: 'area',
+                            name: 'Intensity',
+                            data : response[1]
+                        }]
+                    });
+                    $(negTIC).highcharts({
+                        credits : {
+                            enabled : false
+                        },
+                        chart: {
+                            zoomType: 'x',
+                            spacingRight: 20,
+                            width: chartWidth
+                        },
+                        title: {
+                            text: response[0] +' negative Total Ion Current'
+                        },
+                        subtitle: {
+                            text: document.ontouchstart === undefined ?
+                                'Click and drag in the plot area to zoom in' :
+                                'Drag your finger over the plot to zoom in'
+                        },
+                        exporting: {
+                            enabled: true,
+                            filename: response[0].split(".")[0] + "_negative_TIC"
+                        },
+                        xAxis: {
+                            // type: 'linear',
+                            // categories: response[1][1],
+                            // maxZoom: 14 * response[1][0].length, // fourteen days
+                            title: {
+                                text: 'Retention time'
+                            },
+                            // startOnTick: true,
+                            // endOnTick: true,
+                            showLastLabel: true
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Intensity'
+                            },
+                            // min: 0,
+                        },
+                        tooltip: {
+                            shared: true,
+                            headerFormat: '<span style="font-size: 10px">Retention time: {point.key}</span><br/>'
+                        },
+                        legend: {
+                            enabled: false
+                        },
+                        plotOptions: {
+                            area: {
+                                fillColor: {
+                                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                                    stops: [
+                                        [0, Highcharts.getOptions().colors[0]],
+                                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                                    ]
+                                },
+                                lineWidth: 1,
+                                marker: {
+                                    enabled: false
+                                },
+                                shadow: false,
+                                states: {
+                                    hover: {
+                                        lineWidth: 1
+                                    }
+                                },
+                                threshold: null
+                            },
+                            scatter: {
+                                marker: {
+                                    radius: 5,
+                                    states: {
+                                        hover: {
+                                            enabled: true,
+                                            lineColor: 'rgb(100,100,100)'
+                                        }
+                                    }
+                                }
+                                // states: {
+                                //     hover: {
+                                //         marker: {
+                                //             enabled: false
+                                //         }
+                                //     }
+                                // },
+                                // tooltip: {
+                                //     headerFormat: '<b>{series.name}</b><br>',
+                                //     pointFormat: '{point.x} cm, {point.y} kg'
+                                // }
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function() {
+                                            console.log("retention time :" + this.x);
+                                            massSpectra(sampleId, "NEG", this.x);
+                                            // alert('You just clicked the graph');
+                                            // hs.htmlExpand(null, {
+                                            //     pageOrigin: {
+                                            //         x: this.pageX,
+                                            //         y: this.pageY
+                                            //     },
+                                            //     headingText: this.series.name,
+                                            //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+                                            //         this.y +' visits',
+                                            //     width: 200
+                                            // });
+                                        }
+                                    }
+                                },
+                                // events: {
+                                //     click: function() {
+                                //         alert('You just clicked the graph');
+                                //     }
+                                // }
+                            }
+                        },
+
+                        series: [{
+                            type: 'area',
+                            name: 'Intensity',
+                            data : response[2]
+                        }]
+                    });
+                }
+
+                $(posTIC).appendTo($(tab1));
+                $(posScan).appendTo($(tab1));
+                $(negTIC).appendTo($(tab2));
+                $(negScan).appendTo($(tab2));
+                $(tab1).appendTo($(tabContent));
+                $(tab2).appendTo($(tabContent));
+                $(tabContent).appendTo($(modalBody));
+                $('body').modalmanager('loading','false');
+                $(modalBody).width($('#main-container').width());
+                $(tabContent).width($('#main-container').width());
+                $(tab1).width($('#main-container').width());
+                $(tab2).width($('#main-container').width());
+                console.log('modal height: '+$modal.height())
+                var maxModalHeight = $modal.height() + 401;
+                console.log("max modal height: "+maxModalHeight);
+                console.log("modal top: "+$modal.css('top'));
+                if (maxModalHeight < $(window).height()){
+                    $modal.css('max-height', 'none');
+                    $(modalBody).css('max-height', 'none');
+                }
+                // console.log('TIC height: '+$(negTIC).height());
+                $modal.modal();
+                // console.log('TIC height: '+$(posTIC).height());
             },
-     		error: function(){
-        		alert("Error");
-        	}
-    	});
-		
-		// calculate and set width to display chart
-		// console.log($('#main-container').width());
-		// $("#full-width").find('.modal-body').width($('#main-container').width());
-		// console.log($("#full-width").find('.modal-body').width());
+            error: function(){
+                alert("Error");
+            }
+        });
 
-		// chart creation and render
-		
-	})
+        // calculate and set width to display chart
+        // console.log($('#main-container').width());
+        // $("#full-width").find('.modal-body').width($('#main-container').width());
+        // console.log($("#full-width").find('.modal-body').width());
 
-	// +++++++++++++++++++++++++++++++++++++++++++ Total Ion Current Viewer +++++++++++++++++++++++++++++++++++++++
-	// $('.tic-viewer').click(function (e){
-	// 	e.preventDefault();
-		
-	// 	var attributeId = $(this).attr('id').split("-")[1]
-	// 	var $modal = $("#full-width");
-	// 	var modalLabel = $modal.find('#myModalLabel');
-	// 	var modalBody = $modal.find('.modal-body');
-		
-	// 	$(modalLabel).empty();
-	// 	$(modalBody).empty();
-		
-	// 	var url = "{% url project_detail project.id %}" + attributeId + "/";
-	// 	var attribute_id = {"id": attributeId};
-		
-	// 	$('body').modalmanager('loading');
-		
-	// 	$.ajax({
+        // chart creation and render
+
+    })
+
+    // +++++++++++++++++++++++++++++++++++++++++++ Total Ion Current Viewer +++++++++++++++++++++++++++++++++++++++
+    // $('.tic-viewer').click(function (e){
+    // 	e.preventDefault();
+
+    // 	var attributeId = $(this).attr('id').split("-")[1]
+    // 	var $modal = $("#full-width");
+    // 	var modalLabel = $modal.find('#myModalLabel');
+    // 	var modalBody = $modal.find('.modal-body');
+
+    // 	$(modalLabel).empty();
+    // 	$(modalBody).empty();
+
+    // 	var url = "{% url project_detail project.id %}" + attributeId + "/";
+    // 	var attribute_id = {"id": attributeId};
+
+    // 	$('body').modalmanager('loading');
+
+    // 	$.ajax({
  //            type: "GET",
  //            url: url,
  //            data: attribute_id,
@@ -545,8 +545,8 @@ $(document).ready(function() {
  //            		console.log("both polarity present, all good!!");
  //            		var content = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive Total Ion Current</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative Total Ion Current</a></li></ul><div class="tab-content" style="max-height: none;"><div class="tab-pane active" id="tab1"><embed src="' + response[1] + '" type="image/svg+xml" id="myviewport"/></div><div class="tab-pane" id="tab2"><embed src="' + response[2] + '" type="image/svg+xml" id="myviewport"/></div></div>');
  //    				$modal.find('.modal-body').prepend(content);
-	// 			    $modal.modal();
-	// 			    $('body').modalmanager('loading','false');
+    // 			    $modal.modal();
+    // 			    $('body').modalmanager('loading','false');
  //            		// $(content).appendTo($(modalBody));
  //            	}
  //            	console.log("modal body height : " + $modal.height());
@@ -556,464 +556,464 @@ $(document).ready(function() {
  //        	}
  //    	});
 
-	// })
-	$('.tic-viewer').click(function (e){
-		e.preventDefault();
-		var $modal = $("#full-width");
-		var modalLabel = $modal.find('#myModalLabel');
-		var modalBody = $modal.find('.modal-body');
-		
-		$(modalLabel).empty();
-		$(modalBody).empty();
+    // })
+    $('.tic-viewer').click(function (e){
+        e.preventDefault();
+        var $modal = $("#full-width");
+        var modalLabel = $modal.find('#myModalLabel');
+        var modalBody = $modal.find('.modal-body');
 
-		$(modalLabel).text("Total Ion Current");
-		
-		var attributeId = $(this).attr('id').split("-")[1];
+        $(modalLabel).empty();
+        $(modalBody).empty();
 
-		var url = "{% url project_detail project.id %}" + attributeId + "/";
-		var attribute_id = {"id": attributeId};
+        $(modalLabel).text("Total Ion Current");
 
-		$('body').modalmanager('loading');
-		// console.log('window height: ' + $(window).height());
-		$.ajax({
+        var attributeId = $(this).attr('id').split("-")[1];
+
+        var url = "{% url project_detail project.id %}" + attributeId + "/";
+        var attribute_id = {"id": attributeId};
+
+        $('body').modalmanager('loading');
+        // console.log('window height: ' + $(window).height());
+        $.ajax({
             type: "GET",
             url: url,
             data: attribute_id,
             success: function(response){
-            	console.log(response);
-            	console.log("samples : "+response[1].length);
-            	// console.log(response[1][1].length);
-            	var neg = false;
-            	var pos = false;
-            	var posIndex;
-            	var negIndex;
-            	for (var i=0;i<response[1].length;i++){
-            		if (pos == false && response[1][i][1] != "None"){
-            			pos = true;
-            			
-            			posIndex = i;
-            		}
-            		if (neg == false && response[1][i][2] != "None"){
-            			neg = true;
-            			negIndex = i;
-            		}
-            		// console.log(i);
-            		if (pos && neg){
-            			console.log("ca marche bulle de savon!");
-            			break;
-            		}
-            	}
-            		
-            	// response = response[1][0]
-            	// console.log(response);
-            	// $(modalLabel).text("TIC : " + response[0])
-            	// if (response[1] == "None" || response[2] == "None"){
-            	// 	console.log("1 polarity missing");
-            	if (pos == false || neg == false){
-            		console.log("1 polarity missing");
-            	}
-            	else{
-            		console.log("both polarity present, all good!!");
-            		var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
+                console.log(response);
+                console.log("samples : "+response[1].length);
+                // console.log(response[1][1].length);
+                var neg = false;
+                var pos = false;
+                var posIndex;
+                var negIndex;
+                for (var i=0;i<response[1].length;i++){
+                    if (pos == false && response[1][i][1] != "None"){
+                        pos = true;
 
-            		$(ul).appendTo($(modalBody));
-            		var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
-            		
+                        posIndex = i;
+                    }
+                    if (neg == false && response[1][i][2] != "None"){
+                        neg = true;
+                        negIndex = i;
+                    }
+                    // console.log(i);
+                    if (pos && neg){
+                        console.log("ca marche bulle de savon!");
+                        break;
+                    }
+                }
 
-            		var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
-            		var tab2 = $('<div class="tab-pane" id="tab2"></div>');
+                // response = response[1][0]
+                // console.log(response);
+                // $(modalLabel).text("TIC : " + response[0])
+                // if (response[1] == "None" || response[2] == "None"){
+                // 	console.log("1 polarity missing");
+                if (pos == false || neg == false){
+                    console.log("1 polarity missing");
+                }
+                else{
+                    console.log("both polarity present, all good!!");
+                    var ul = $('<ul class="nav nav-tabs" style="text-align: center; display: block; margin-left: auto; margin-right: auto;"><li class="active" style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab1" data-toggle="tab">Positive polarity</a></li><li style="float:none; display:inline-block; *display:inline; zoom:1;"><a href="#tab2" data-toggle="tab">Negative polarity</a></li></ul>');
 
-            		var posTIC = $('<div id="tic"></div>');
-            		var posScan = $('<div id="scan"></div>');
-
-            		var negTIC = $('<div id="tic"></div>');
-            		var negScan = $('<div id="scan"></div>');
+                    $(ul).appendTo($(modalBody));
+                    var tabContent = $('<div class="tab-content" style="max-height: none;"></div>');
 
 
-            		var chartWidth = $('#main-container').width(); 
-    				// $("#full-width").find('.modal-body').prepend(content);
-    				// $("#full-width").find('.modal-body').highcharts({
-	            	$(posTIC).highcharts({
-	            		credits : {
-    						enabled : false
-    					},
-			        	chart: {
-			                zoomType: 'x',
-			                spacingRight: 20,
-			                width: chartWidth
-			            },
-			            title: {
-			                text: response[0] +' positive Total Ion Current'
-			            },
-			            subtitle: {
-			                text: document.ontouchstart === undefined ?
-			                    'Click and drag in the plot area to zoom in' :
-			                    'Drag your finger over the plot to zoom in'
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: response[0] + "_positive_TIC",
-			       //      	buttons: {
-						    //     'myButton': {
-						    //         _id: 'myButton',
-						    //         symbol: 'diamond',
-						    //         x: -62,
-						    //         symbolFill: '#B5C9DF',
-						    //         hoverSymbolFill: '#779ABF',
-						    //         onclick: function() {
-						    //             console.log("click!");
-						    //             console.log(this.options.plotOptions.series.fillOpacity);
-						    //             this.options.plotOptions.series.fillOpacity = 0;
-						    //             console.log(this.options);
-						    //             this.options.chart.redraw();
-						    //         }
-						    //     }
-						    // }
-			            },
-			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
-			                title: {
-			                    text: 'Retention time'
-			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
-	                		showLastLabel: true
-			            },
-			            yAxis: {
-			                title: {
-			                    text: 'Intensity'
-			                },
-			                // min: 0,
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '',
-			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+                    var tab1 = $('<div class="tab-pane active" id="tab1"></div>');
+                    var tab2 = $('<div class="tab-pane" id="tab2"></div>');
 
-			            },
-			            legend: {
-			                enabled: true
-			            },
-			            // plotOptions: {
-			            //     area: {
-			            //         fillColor: {
-			            //             linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			            //             stops: [
-			            //                 [0, Highcharts.getOptions().colors[0]],
-			            //                 [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			            //             ]
-			            //         },
-			            //         lineWidth: 1,
-			            //         marker: {
-			            //             enabled: false
-			            //         },
-			            //         shadow: false,
-			            //         states: {
-			            //             hover: {
-			            //                 lineWidth: 1
-			            //             }
-			            //         },
-			            //         threshold: null
-			            //     },
-			            //     scatter: {
-			            //         marker: {
-			            //             radius: 5,
-			            //             states: {
-			            //                 hover: {
-			            //                     enabled: true,
-			            //                     lineColor: 'rgb(100,100,100)'
-			            //                 }
-			            //             }
-			            //         }
-			            //         // states: {
-			            //         //     hover: {
-			            //         //         marker: {
-			            //         //             enabled: false
-			            //         //         }
-			            //         //     }
-			            //         // },
-			            //         // tooltip: {
-			            //         //     headerFormat: '<b>{series.name}</b><br>',
-			            //         //     pointFormat: '{point.x} cm, {point.y} kg'
-			            //         // }
-			            //     },
-			            //     series: {
-				           //      cursor: 'pointer',
-				           //      point: {
-			            //             events: {
-			            //                 click: function() {
-			            //                 	console.log("retention time :" + this.x);
-			            //                 	// massSpectra(sampleId, "POS", this.x);
-			            //                 	// alert('You just clicked the graph');
-			            //                     // hs.htmlExpand(null, {
-			            //                     //     pageOrigin: {
-			            //                     //         x: this.pageX,
-			            //                     //         y: this.pageY
-			            //                     //     },
-			            //                     //     headingText: this.series.name,
-			            //                     //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
-			            //                     //         this.y +' visits',
-			            //                     //     width: 200
-			            //                     // });
-			            //                 }
-			            //             }
-			            //         },
-				           //      // events: {
-				           //      //     click: function() {
-				           //      //         alert('You just clicked the graph');
-				           //      //     }
-				           //      // }
-				           //  }
+                    var posTIC = $('<div id="tic"></div>');
+                    var posScan = $('<div id="scan"></div>');
 
-			            // },
-			    		plotOptions: {
-			                area: {
-			                    // pointStart: 1940,
-			                    marker: {
-			                        enabled: false,
-			                        symbol: 'circle',
-			                        radius: 2,
-			                        states: {
-			                            hover: {
-			                                enabled: true
-			                            }
-			                        }
-			                    },
-			                    // fillColor: {
-			                    //     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-			                    //     stops: [
-			                    //         // [0, Highcharts.getOptions().colors[0]],
-			                    //         [0, this.lineColor],
-			                    //     //     [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-			                    //     	[1, Highcharts.Color(this.LineColor).setOpacity(0).get('rgba')]
-			                    //     ]
-			                    // },
-			                    lineWidth: 1,
-			                    // marker: {
-			                    //     enabled: false
-			                    // },
-			                    shadow: false,
-			                    states: {
-			                        hover: {
-			                            lineWidth: 1
-			                        }
-			                    },
-			                    threshold: null
-			                },
-			                series: {
-                				fillOpacity: 0.1
-	               //  			fillColor: {
-				            //         linearGradient: [0, 0, 0, 300],
-				            //         stops: [
-				            //             // [0, 'rgb(69, 114, 167)'],
-				            //             [0, this.color],
-				            //             [1, 'rgba(2,0,0,0)']
-				            //         ]
-	            			// 	}
-	            			}
-			            },
-			            series: [{
-			                type: 'area',
-			                name: response[1][posIndex][0],
-			                data : response[1][posIndex][1]
-			            }]
-		    		});
-					console.log($(posTIC).highcharts().series);
-					for (var i=0;i<response[1].length;i++){
-	            		if (response[1][i][1] != "None" && i != posIndex){
-	            			console.log("on ajoute une serie!!!");
-	            			$(posTIC).highcharts().addSeries({
-	            				type: 'area',
-			                	name: response[1][i][0],
-			                	data : response[1][i][1]
-	            			});
-	            		}
-	            	}
-	            	console.log($(posTIC).highcharts().series);
-					$(negTIC).highcharts({
-						credits : {
-    						enabled : false
-    					},
-			        	chart: {
-			                zoomType: 'x',
-			                spacingRight: 20,
-			                width: chartWidth
-			            },
-			            title: {
-			                text: response[0] +' negative Total Ion Current'
-			            },
-			            subtitle: {
-			                text: document.ontouchstart === undefined ?
-			                    'Click and drag in the plot area to zoom in' :
-			                    'Drag your finger over the plot to zoom in'
-			            },
-			            exporting: {
-			            	enabled: true,
-			            	filename: response[0] + "_negative_TIC" 
-			            },
-			            xAxis: {
-			                // type: 'linear',
-			                // categories: response[1][1],
-			                // maxZoom: 14 * response[1][0].length, // fourteen days
-			                title: {
-			                    text: 'Retention time'
-			                },
-			                // startOnTick: true,
-	                		// endOnTick: true,
-	                		showLastLabel: true
-			            },
-			            yAxis: {
-			                title: {
-			                    text: 'Intensity'
-			                },
-			                // min: 0,
-			            },
-			            tooltip: {
-			                shared: true,
-			                headerFormat: '',
-			                pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+                    var negTIC = $('<div id="tic"></div>');
+                    var negScan = $('<div id="scan"></div>');
 
-			            },
-			            legend: {
-			                enabled: true
-			            },
-			            plotOptions: {
-			                area: {
-			                    // pointStart: 1940,
-			                    marker: {
-			                        enabled: false,
-			                        symbol: 'circle',
-			                        radius: 2,
-			                        states: {
-			                            hover: {
-			                                enabled: true
-			                            }
-			                        }
-			                    },
-			                    lineWidth: 1,
-			                    shadow: false,
-			                    states: {
-			                        hover: {
-			                            lineWidth: 1
-			                        }
-			                    },
-			                    threshold: null
-			                },
-			                series: {
-                			fillOpacity: 0.1
-	            			}
-			            },
-			    
-			            series: [{
-			                type: 'area',
-			                name: response[1][negIndex][0],
-			                data : response[1][negIndex][2]
-			            }]
-		    		});
-					for (var i=0;i<response[1].length;i++){
-	            		if (response[1][i][2] != "None" && i != negIndex){
-	            			console.log("on ajoute une serie!!!");
-	            			$(negTIC).highcharts().addSeries({
-	            				type: 'area',
-			                	name: response[1][i][0],
-			                	data : response[1][i][2]
-	            			});
-	            		}
-	            	}
-				}
 
-            	$(posTIC).appendTo($(tab1));
-            	$(posScan).appendTo($(tab1));
-            	$(negTIC).appendTo($(tab2));
-            	$(negScan).appendTo($(tab2));
-            	$(tab1).appendTo($(tabContent));
-            	$(tab2).appendTo($(tabContent));
-            	$(tabContent).appendTo($(modalBody));
-				$('body').modalmanager('loading','false');
-				$(modalBody).width($('#main-container').width());
-				$(tabContent).width($('#main-container').width());
-				$(tab1).width($('#main-container').width());
-				$(tab2).width($('#main-container').width());
-				console.log('modal height: '+$modal.height())
-				var maxModalHeight = $modal.height() + 401;
-				console.log("max modal height: "+maxModalHeight);
-				console.log("modal top: "+$modal.css('top'));
-				$(modalBody).css('max-height', 470);
-				if (maxModalHeight < $(window).height()){
-					$modal.css('max-height', 'none');
-					$(modalBody).css('max-height', 'none');
-				}
-				// console.log('TIC height: '+$(negTIC).height());
-				$modal.modal();
-				// console.log('TIC height: '+$(posTIC).height());
+                    var chartWidth = $('#main-container').width();
+                    // $("#full-width").find('.modal-body').prepend(content);
+                    // $("#full-width").find('.modal-body').highcharts({
+                    $(posTIC).highcharts({
+                        credits : {
+                            enabled : false
+                        },
+                        chart: {
+                            zoomType: 'x',
+                            spacingRight: 20,
+                            width: chartWidth
+                        },
+                        title: {
+                            text: response[0] +' positive Total Ion Current'
+                        },
+                        subtitle: {
+                            text: document.ontouchstart === undefined ?
+                                'Click and drag in the plot area to zoom in' :
+                                'Drag your finger over the plot to zoom in'
+                        },
+                        exporting: {
+                            enabled: true,
+                            filename: response[0] + "_positive_TIC",
+                   //      	buttons: {
+                            //     'myButton': {
+                            //         _id: 'myButton',
+                            //         symbol: 'diamond',
+                            //         x: -62,
+                            //         symbolFill: '#B5C9DF',
+                            //         hoverSymbolFill: '#779ABF',
+                            //         onclick: function() {
+                            //             console.log("click!");
+                            //             console.log(this.options.plotOptions.series.fillOpacity);
+                            //             this.options.plotOptions.series.fillOpacity = 0;
+                            //             console.log(this.options);
+                            //             this.options.chart.redraw();
+                            //         }
+                            //     }
+                            // }
+                        },
+                        xAxis: {
+                            // type: 'linear',
+                            // categories: response[1][1],
+                            // maxZoom: 14 * response[1][0].length, // fourteen days
+                            title: {
+                                text: 'Retention time'
+                            },
+                            // startOnTick: true,
+                            // endOnTick: true,
+                            showLastLabel: true
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Intensity'
+                            },
+                            // min: 0,
+                        },
+                        tooltip: {
+                            shared: true,
+                            headerFormat: '',
+                            pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        // plotOptions: {
+                        //     area: {
+                        //         fillColor: {
+                        //             linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                        //             stops: [
+                        //                 [0, Highcharts.getOptions().colors[0]],
+                        //                 [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                        //             ]
+                        //         },
+                        //         lineWidth: 1,
+                        //         marker: {
+                        //             enabled: false
+                        //         },
+                        //         shadow: false,
+                        //         states: {
+                        //             hover: {
+                        //                 lineWidth: 1
+                        //             }
+                        //         },
+                        //         threshold: null
+                        //     },
+                        //     scatter: {
+                        //         marker: {
+                        //             radius: 5,
+                        //             states: {
+                        //                 hover: {
+                        //                     enabled: true,
+                        //                     lineColor: 'rgb(100,100,100)'
+                        //                 }
+                        //             }
+                        //         }
+                        //         // states: {
+                        //         //     hover: {
+                        //         //         marker: {
+                        //         //             enabled: false
+                        //         //         }
+                        //         //     }
+                        //         // },
+                        //         // tooltip: {
+                        //         //     headerFormat: '<b>{series.name}</b><br>',
+                        //         //     pointFormat: '{point.x} cm, {point.y} kg'
+                        //         // }
+                        //     },
+                        //     series: {
+                           //      cursor: 'pointer',
+                           //      point: {
+                        //             events: {
+                        //                 click: function() {
+                        //                 	console.log("retention time :" + this.x);
+                        //                 	// massSpectra(sampleId, "POS", this.x);
+                        //                 	// alert('You just clicked the graph');
+                        //                     // hs.htmlExpand(null, {
+                        //                     //     pageOrigin: {
+                        //                     //         x: this.pageX,
+                        //                     //         y: this.pageY
+                        //                     //     },
+                        //                     //     headingText: this.series.name,
+                        //                     //     maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+                        //                     //         this.y +' visits',
+                        //                     //     width: 200
+                        //                     // });
+                        //                 }
+                        //             }
+                        //         },
+                           //      // events: {
+                           //      //     click: function() {
+                           //      //         alert('You just clicked the graph');
+                           //      //     }
+                           //      // }
+                           //  }
+
+                        // },
+                        plotOptions: {
+                            area: {
+                                // pointStart: 1940,
+                                marker: {
+                                    enabled: false,
+                                    symbol: 'circle',
+                                    radius: 2,
+                                    states: {
+                                        hover: {
+                                            enabled: true
+                                        }
+                                    }
+                                },
+                                // fillColor: {
+                                //     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                                //     stops: [
+                                //         // [0, Highcharts.getOptions().colors[0]],
+                                //         [0, this.lineColor],
+                                //     //     [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                                //     	[1, Highcharts.Color(this.LineColor).setOpacity(0).get('rgba')]
+                                //     ]
+                                // },
+                                lineWidth: 1,
+                                // marker: {
+                                //     enabled: false
+                                // },
+                                shadow: false,
+                                states: {
+                                    hover: {
+                                        lineWidth: 1
+                                    }
+                                },
+                                threshold: null
+                            },
+                            series: {
+                                fillOpacity: 0.1
+                   //  			fillColor: {
+                            //         linearGradient: [0, 0, 0, 300],
+                            //         stops: [
+                            //             // [0, 'rgb(69, 114, 167)'],
+                            //             [0, this.color],
+                            //             [1, 'rgba(2,0,0,0)']
+                            //         ]
+                            // 	}
+                            }
+                        },
+                        series: [{
+                            type: 'area',
+                            name: response[1][posIndex][0],
+                            data : response[1][posIndex][1]
+                        }]
+                    });
+                    console.log($(posTIC).highcharts().series);
+                    for (var i=0;i<response[1].length;i++){
+                        if (response[1][i][1] != "None" && i != posIndex){
+                            console.log("on ajoute une serie!!!");
+                            $(posTIC).highcharts().addSeries({
+                                type: 'area',
+                                name: response[1][i][0],
+                                data : response[1][i][1]
+                            });
+                        }
+                    }
+                    console.log($(posTIC).highcharts().series);
+                    $(negTIC).highcharts({
+                        credits : {
+                            enabled : false
+                        },
+                        chart: {
+                            zoomType: 'x',
+                            spacingRight: 20,
+                            width: chartWidth
+                        },
+                        title: {
+                            text: response[0] +' negative Total Ion Current'
+                        },
+                        subtitle: {
+                            text: document.ontouchstart === undefined ?
+                                'Click and drag in the plot area to zoom in' :
+                                'Drag your finger over the plot to zoom in'
+                        },
+                        exporting: {
+                            enabled: true,
+                            filename: response[0] + "_negative_TIC"
+                        },
+                        xAxis: {
+                            // type: 'linear',
+                            // categories: response[1][1],
+                            // maxZoom: 14 * response[1][0].length, // fourteen days
+                            title: {
+                                text: 'Retention time'
+                            },
+                            // startOnTick: true,
+                            // endOnTick: true,
+                            showLastLabel: true
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Intensity'
+                            },
+                            // min: 0,
+                        },
+                        tooltip: {
+                            shared: true,
+                            headerFormat: '',
+                            pointFormat: '<span style="font-size: 10px;font-weight: bold;color:{point.series.color}">{series.name}</span><br/>Retention time: {point.x}<br/>Intensity: {point.y}<br/>'
+
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        plotOptions: {
+                            area: {
+                                // pointStart: 1940,
+                                marker: {
+                                    enabled: false,
+                                    symbol: 'circle',
+                                    radius: 2,
+                                    states: {
+                                        hover: {
+                                            enabled: true
+                                        }
+                                    }
+                                },
+                                lineWidth: 1,
+                                shadow: false,
+                                states: {
+                                    hover: {
+                                        lineWidth: 1
+                                    }
+                                },
+                                threshold: null
+                            },
+                            series: {
+                            fillOpacity: 0.1
+                            }
+                        },
+
+                        series: [{
+                            type: 'area',
+                            name: response[1][negIndex][0],
+                            data : response[1][negIndex][2]
+                        }]
+                    });
+                    for (var i=0;i<response[1].length;i++){
+                        if (response[1][i][2] != "None" && i != negIndex){
+                            console.log("on ajoute une serie!!!");
+                            $(negTIC).highcharts().addSeries({
+                                type: 'area',
+                                name: response[1][i][0],
+                                data : response[1][i][2]
+                            });
+                        }
+                    }
+                }
+
+                $(posTIC).appendTo($(tab1));
+                $(posScan).appendTo($(tab1));
+                $(negTIC).appendTo($(tab2));
+                $(negScan).appendTo($(tab2));
+                $(tab1).appendTo($(tabContent));
+                $(tab2).appendTo($(tabContent));
+                $(tabContent).appendTo($(modalBody));
+                $('body').modalmanager('loading','false');
+                $(modalBody).width($('#main-container').width());
+                $(tabContent).width($('#main-container').width());
+                $(tab1).width($('#main-container').width());
+                $(tab2).width($('#main-container').width());
+                console.log('modal height: '+$modal.height())
+                var maxModalHeight = $modal.height() + 401;
+                console.log("max modal height: "+maxModalHeight);
+                console.log("modal top: "+$modal.css('top'));
+                $(modalBody).css('max-height', 470);
+                if (maxModalHeight < $(window).height()){
+                    $modal.css('max-height', 'none');
+                    $(modalBody).css('max-height', 'none');
+                }
+                // console.log('TIC height: '+$(negTIC).height());
+                $modal.modal();
+                // console.log('TIC height: '+$(posTIC).height());
             },
-     		error: function(){
-        		alert("Error");
-        	}
-    	});
+            error: function(){
+                alert("Error");
+            }
+        });
 
-	})
-	// ++++++++++++++++++++++++++++++++++++++ End TIC Viewer +++++++++++++++++++++++++++++++++++++++
+    })
+    // ++++++++++++++++++++++++++++++++++++++ End TIC Viewer +++++++++++++++++++++++++++++++++++++++
 
-	$('#group-tab a').click(function (e) {
-  		e.preventDefault();
-  		$(this).tab('show');
-	})
+    $('#group-tab a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    })
 
-	$('#comparison-tab a').click(function (e) {
-  		e.preventDefault();
-  		$(this).tab('show');
-	})
+    $('#comparison-tab a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    })
 
-	$('#experiment-tab a').click(function (e) {
-  		e.preventDefault();
-  		$(this).tab('show');
-	})
+    $('#experiment-tab a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    })
 
-	$('#projfile-attribute-tab a').click(function (e) {
-  		e.preventDefault();
-  		$(this).tab('show');
-	})
-	
+    $('#projfile-attribute-tab a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    })
 
-	$('#upload-btn').mouseenter(function (){
-		$('#upload-btn').tooltip('show');
-	})
-	// $('#upload-btn').mouseleave(function (){
-	// 	$('#upload-btn').tooltip('hide');
-	// })
-	$('.mzxml-viewer').mouseenter(function (){
-		$(this).tooltip('show');
-	})
-	$('.mzxml-viewer').mouseleave(function (){
-		$(this).tooltip('hide');
-	})
 
-	$('.tic-viewer').mouseenter(function (){
-		$(this).tooltip('show');
-	})
-	
-	$('.mzxml-viewer').mouseleave(function (){
-		$(this).tooltip('hide');
-	})
+    $('#upload-btn').mouseenter(function (){
+        $('#upload-btn').tooltip('show');
+    })
+    // $('#upload-btn').mouseleave(function (){
+    // 	$('#upload-btn').tooltip('hide');
+    // })
+    $('.mzxml-viewer').mouseenter(function (){
+        $(this).tooltip('show');
+    })
+    $('.mzxml-viewer').mouseleave(function (){
+        $(this).tooltip('hide');
+    })
 
-	$('#dlt-btn').mouseenter(function (){
-		$('#dlt-btn').tooltip('show');
-	})
-	$('#dlt-btn').mouseleave(function (){
-		$('#dlt-btn').tooltip('hide');
-	})
-	$('#edit-btn').mouseenter(function (){
-		$('#edit-btn').tooltip('show');
-	})
-	$('#edit-btn').mouseleave(function (){
-		$('#edit-btn').tooltip('hide');
-	})
+    $('.tic-viewer').mouseenter(function (){
+        $(this).tooltip('show');
+    })
 
-	var isVisible = false;
-	var id;
+    $('.mzxml-viewer').mouseleave(function (){
+        $(this).tooltip('hide');
+    })
+
+    $('#dlt-btn').mouseenter(function (){
+        $('#dlt-btn').tooltip('show');
+    })
+    $('#dlt-btn').mouseleave(function (){
+        $('#dlt-btn').tooltip('hide');
+    })
+    $('#edit-btn').mouseenter(function (){
+        $('#edit-btn').tooltip('show');
+    })
+    $('#edit-btn').mouseleave(function (){
+        $('#edit-btn').tooltip('hide');
+    })
+
+    var isVisible = false;
+    var id;
 
     var hideAllPopovers = function() {
        $('.popup-marker').each(function() {
@@ -1032,17 +1032,17 @@ $(document).ready(function() {
 
         console.log("avant test");
         if (isVisible && $(this).attr('id')==id){
-        	console.log("visible et id");
-        	$(this).popover('hide');
-        	id = null;
-        	isVisible = false;
-    	}
-    	else{
-    		console.log("else");
-    		$(this).popover('show');
-        	id = $(this).attr('id');
-        	isVisible = true;
-    	}
+            console.log("visible et id");
+            $(this).popover('hide');
+            id = null;
+            isVisible = false;
+        }
+        else{
+            console.log("else");
+            $(this).popover('show');
+            id = $(this).attr('id');
+            isVisible = true;
+        }
 
         // handle clicking on the popover itself
         $('.popover').off('click').on('click', function(e) {
@@ -1054,104 +1054,104 @@ $(document).ready(function() {
     });
 
     $('.arrow-top').each(function(){
-    	var offset = $(this).parent().offset();
-    	var width = $(this).parent().width();
-    	var centerX = offset.left + width / 2;
-    	var centerY = offset.top - 8;
-    	$(this).css('left',centerX);
-    	$(this).css('top',centerY);
-    	console.log(offset.top);
+        var offset = $(this).parent().offset();
+        var width = $(this).parent().width();
+        var centerX = offset.left + width / 2;
+        var centerY = offset.top - 8;
+        $(this).css('left',centerX);
+        $(this).css('top',centerY);
+        console.log(offset.top);
     });
 
     $('.arrow-bottom').each(function(){
-    	var offset = $(this).parent().offset();
-    	var width = $(this).parent().width();
-    	var height = $(this).parent().height();
-    	var centerX = offset.left + width / 2;
-    	var centerY = offset.top + height + 4;
-    	$(this).css('left',centerX);
-    	$(this).css('top',centerY);
-    	console.log(offset.top);
+        var offset = $(this).parent().offset();
+        var width = $(this).parent().width();
+        var height = $(this).parent().height();
+        var centerX = offset.left + width / 2;
+        var centerY = offset.top + height + 4;
+        $(this).css('left',centerX);
+        $(this).css('top',centerY);
+        console.log(offset.top);
     });
 
     $(document).on('click', function(e) {
         hideAllPopovers();
         isVisible = false;
     });
-	// $('#experiment-breadcrumbs').click(function (){
-	// 	// console.log($(this).popover());
-	// 	$(this).popover('show');
-	// })
-	// $('#experiment-breadcrumbs').mouseleave(function (){
-	// 	$(this).popover('show');
-	// })
+    // $('#experiment-breadcrumbs').click(function (){
+    // 	// console.log($(this).popover());
+    // 	$(this).popover('show');
+    // })
+    // $('#experiment-breadcrumbs').mouseleave(function (){
+    // 	$(this).popover('show');
+    // })
 
-	$('#plus-btn').mouseleave(function (){
-		$('#plus-btn').tooltip('hide');
-	})
+    $('#plus-btn').mouseleave(function (){
+        $('#plus-btn').tooltip('hide');
+    })
 
-	$('#change-display').mouseenter(function (){
-		$('#change-display').tooltip('show');
-	})
-	$('#change-display').mouseleave(function (){
-		$('#change-display').tooltip('hide');
-	})
+    $('#change-display').mouseenter(function (){
+        $('#change-display').tooltip('show');
+    })
+    $('#change-display').mouseleave(function (){
+        $('#change-display').tooltip('hide');
+    })
 
-	$("#change-display").click(function() {
-    	return changeDisplay($(this));
-  	});
+    $("#change-display").click(function() {
+        return changeDisplay($(this));
+    });
 
-	$('#breadcrumbs-span a').click(function (e) {
-  		e.preventDefault();
-  		$(this).tab('show');
-	});
+    $('#breadcrumbs-span a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
 
 
-  	function changeDisplay(a){
-  		if(!tab){
-  			$(a).attr('data-original-title','Forum display');
-  			$('#page-tab').css('display','block');
-  			$('#project-administration').addClass("tab-pane");
-  			$('#sample-management').addClass("tab-pane");
-  			$('#experiment').addClass("tab-pane");
-  			tab = true;
-  			$('#breadcrumbs-span a').click(function (e) {
-  				e.preventDefault();
-  				$(this).tab('show');
-			})
-  		}
-  		else {
-  			$(a).attr('data-original-title','Tab display');
-  			$('#page-tab').css('display','none');
-  			$('#project-administration').removeClass("tab-pane");
-  			$('#sample-management').removeClass("tab-pane");
-  			$('#experiment').removeClass("tab-pane");
-  			tab = false;
-  		}
-  	}
+    function changeDisplay(a){
+        if(!tab){
+            $(a).attr('data-original-title','Forum display');
+            $('#page-tab').css('display','block');
+            $('#project-administration').addClass("tab-pane");
+            $('#sample-management').addClass("tab-pane");
+            $('#experiment').addClass("tab-pane");
+            tab = true;
+            $('#breadcrumbs-span a').click(function (e) {
+                e.preventDefault();
+                $(this).tab('show');
+            })
+        }
+        else {
+            $(a).attr('data-original-title','Tab display');
+            $('#page-tab').css('display','none');
+            $('#project-administration').removeClass("tab-pane");
+            $('#sample-management').removeClass("tab-pane");
+            $('#experiment').removeClass("tab-pane");
+            tab = false;
+        }
+    }
 
-  	var tab = false;
+    var tab = false;
 
-	$(".expend-experiment").click(function() {
-    	return expendExperiment($(this));
-  	});
+    $(".expend-experiment").click(function() {
+        return expendExperiment($(this));
+    });
 
-  	function expendExperiment(a){
-  		var experimentContent = $(a).parent().parent().parent().find(".experiment-content")[0];
-  		console.log($(a).parent())
-  		console.log(experimentContent);
-  		if($(experimentContent).css('display') == 'none'){
-  			console.log("here we go");
-  			// $(experimentContent).css('display','block');
-  			$(experimentContent).slideDown();
-  			$(a).addClass('experiment-open');
-  		}
-  		else{
-  			// $(experimentContent).css('display','none');
-  			$(experimentContent).slideUp();
-  			$(a).removeClass('experiment-open');
-  		}
-  	}
+    function expendExperiment(a){
+        var experimentContent = $(a).parent().parent().parent().find(".experiment-content")[0];
+        console.log($(a).parent())
+        console.log(experimentContent);
+        if($(experimentContent).css('display') == 'none'){
+            console.log("here we go");
+            // $(experimentContent).css('display','block');
+            $(experimentContent).slideDown();
+            $(a).addClass('experiment-open');
+        }
+        else{
+            // $(experimentContent).css('display','none');
+            $(experimentContent).slideUp();
+            $(a).removeClass('experiment-open');
+        }
+    }
 
 });
 </script>
@@ -1160,710 +1160,710 @@ $(document).ready(function() {
 {% block content %}
 {% if user.is_authenticated %}
 <div class="row">
-	{% ifequal permission 'read' %}
-	<div class="alert alert-block">
-  		<button type="button" class="close" data-dismiss="alert">&times;</button>
-  		<h4>Warning!</h4>
-  		You only have read access on this project, you are not permitted to edit anything.
-	</div>
-	{% endifequal %}
-	{% ifequal permission 'edit' %}
-	<div class="alert alert-block">
-  		<button type="button" class="close" data-dismiss="alert">&times;</button>
-  		<h4>Warning!</h4>
-  		You have edit access on this project, you can edit anything except adding new user or delete the project.
-	</div>
-	{% endifequal %}
-	<div class="span12" id="breadcrumbs-span">
-    	<ul id="breadcrumbs-one">
-	        <li class="active" id="first-active"><a href="#project-administration" class="{% if project.description %}done{% else %}process{% endif %}">Project Administration</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
-	        <li><a href="#calibration-samples" class="{% if projfileattributes|length > 0 %}done{% elif project.sample_set.all %}process{% endif %}">Calibration samples</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
-	        <li><a href="#sample-management" class="{% if groups|length > 0 %}done{% elif project.calibrationsample_set.all %}process{% endif %}">Samples management</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
-	        <li>
-	        	{% if groups|length > 0 %}
-	        	<a href="#experiment">Experiment design</a><div class="arrow-top"></div><div class="arrow-bottom"></div>
-	        	{% else %}
-	        	<p id="experiment-breadcrumbs" class="popup-marker" data-toggle="popover" data-placement="bottom" data-content="Sample management is required to access this section." title="This section is not available" data-original-title="" data-animation="delay: { show: 500, hide: 100 }">Experiment design</p>
-	        	{% endif %}
-	        </li>
-    	</ul>
-	</div>
-	<div class="span8"><h1>{{ project }}</h1></div>
-	{% ifequal permission 'admin' %}
-	<div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#"><i class="icon-trash icon-white"></i> Delete project</a></div>
-	{% endifequal %}
+    {% ifequal permission 'read' %}
+    <div class="alert alert-block">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <h4>Warning!</h4>
+        You only have read access on this project, you are not permitted to edit anything.
+    </div>
+    {% endifequal %}
+    {% ifequal permission 'edit' %}
+    <div class="alert alert-block">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <h4>Warning!</h4>
+        You have edit access on this project, you can edit anything except adding new user or delete the project.
+    </div>
+    {% endifequal %}
+    <div class="span12" id="breadcrumbs-span">
+        <ul id="breadcrumbs-one">
+            <li class="active" id="first-active"><a href="#project-administration" class="{% if project.description %}done{% else %}process{% endif %}">Project Administration</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
+            <li><a href="#calibration-samples" class="{% if projfileattributes|length > 0 %}done{% elif project.sample_set.all %}process{% endif %}">Calibration samples</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
+            <li><a href="#sample-management" class="{% if groups|length > 0 %}done{% elif project.calibrationsample_set.all %}process{% endif %}">Samples management</a><div class="arrow-top"></div><div class="arrow-bottom"></div></li>
+            <li>
+                {% if groups|length > 0 %}
+                <a href="#experiment">Experiment design</a><div class="arrow-top"></div><div class="arrow-bottom"></div>
+                {% else %}
+                <p id="experiment-breadcrumbs" class="popup-marker" data-toggle="popover" data-placement="bottom" data-content="Sample management is required to access this section." title="This section is not available" data-original-title="" data-animation="delay: { show: 500, hide: 100 }">Experiment design</p>
+                {% endif %}
+            </li>
+        </ul>
+    </div>
+    <div class="span8"><h1>{{ project }}</h1></div>
+    {% ifequal permission 'admin' %}
+    <div class="span4 span-create-project"><a class="btn btn-danger btn-create-project" href="#"><i class="icon-trash icon-white"></i> Delete project</a></div>
+    {% endifequal %}
 </div>
 <div class="row">
-	<div class="span6 list-span">
-		<ul>
-			<li>Created by : {{ project.owner }}</li>
-			<li><a class="" id="change-display" data-toggle="tooltip" title="Tab display" data-placement="right"></a></li>
-		</ul>
-	</div>
-	<div class="span6 list-span date-span">
-		<ul>
-			<li>Created : {{ project.created }}</li>
-			<li>Modified : {{ project.modified}}</li>
-		</ul>
-	</div>
+    <div class="span6 list-span">
+        <ul>
+            <li>Created by : {{ project.owner }}</li>
+            <li><a class="" id="change-display" data-toggle="tooltip" title="Tab display" data-placement="right"></a></li>
+        </ul>
+    </div>
+    <div class="span6 list-span date-span">
+        <ul>
+            <li>Created : {{ project.created }}</li>
+            <li>Modified : {{ project.modified}}</li>
+        </ul>
+    </div>
 </div>
 <hr class="soften" id="project-hr">
 <div class="row-fluid" id="main-container">
-	<!-- <ul class="nav nav-tabs" id="page-tab" style="display: none;">
-		<li class="active" id="first-active">
-	  		<a href="#project-administration">Project Administration</a>
-	  	</li>
-	  	<li>
-	  		<a href="#sample-management">Sample Management</a>
-	  	</li>
-	  	<li>
-	  		<a href="#experiment">Experiment</a>
-	  	</li>
-	</ul> -->
-	<div class="tab-content-test">
-	<div id="project-administration" class="tab-pane active">
-		<div class="span8 paddingleft"><h2>Project administration</h2></div>
-		{% ifnotequal permission 'read' %}
-		<div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit title</a></div>
-		{% endifnotequal %}
-		<div class="container-fluid">
-			<div class="row-fluid">
-				<div class="span6 white-span" id="white-span-summary">
-					<div class="row-fluid">
-						<div class="span12">
-			  				<div class="row-fluid">
-								<div class="span4 description-span"><h3>Share :</h3></div>
-								{% ifequal permission 'admin' %}
-								<div class="span8 span-btn">
-									<a class="btn btn-primary btn-create-project" href="{% url add_user project.id %}"><i class="icon-share icon-white"></i> Add user</a>
-									{% if project.users.all|length > 1 %}
-									<a class="btn btn-success btn-create-project" href="{% url add_user project.id %}" style="margin-right: 5px;"><i class="icon-lock icon-white"></i> Permissions</a>
-									{% endif %}
-								</div>
-								{% endifequal %}
-							</div>
-							{% if project.users.all|length > 1 %}
-							<div class="row-fluid">
-								<div class="span12 project-span" id="file-table-span">
-									<div class="row-fluid bold">
-										<div class="span4 user-span">
-											<ul>
-												<li>User</li>
-											</ul>
-										</div>
-										<div class="span4 user-span">
-											<ul>
-												<li>Permission</li>
-											</ul>
-										</div>
-										<div class="span4 user-span">
-											<ul>
-												<li>Date joined</li>
-											</ul>
-										</div>
-									</div>
-									<div class="row-fluid">
-										<div class="span12 tab-pane">
-											{% for user in project.users.all %}
-											<div class="row-fluid">
-												<div class="span4 user-span">
-													<ul>
-														<li>{{ user }}</li>
-													</ul>
-												</div>
-												{% for userpro in user.userproject_set.all %}
-												{% if userpro.project == project %}
-												<div class="span4 list-span">
-													<ul>
-														<li>{{ userpro.permission }}</li>
-													</ul>
-												</div>
-												<div class="span4 list-span">
-													<ul>
-														<li>{{ userpro.date_joined|truncatewords:"1"|slice:":-3" }}</li>
-													</ul>
-												</div>
-												{% endif %}
-												{% endfor %}
-											</div>
-											{% endfor %}
-										</div>
-									</div>
-								</div>
-							</div>
-							{% else %}
-							<div class="row-fluid">
-								<div class="span12">
-									<p>You are the only user on this project</p>
-								</div>
-							</div>
-							{% endif %}
-						</div>
-					</div>
-			  	</div>
-			  	<div class="span6 white-span" id="white-span-summary">
-			  		<div class="row-fluid">
-			  			<div class="span12">
-			  				<div class="row-fluid">
-								<div class="span6 description-span"><h3>Description :</h3></div>
-								{% ifnotequal permission 'read' %}
-								<div class="span6 span-btn"><a class="btn btn-success btn-create-project" href="{% url edit_description project.id %}"><i class="icon-edit icon-white"></i> Edit</a></div>
-								{% endifnotequal %}
-							</div>
-							<div class="row-fluid">
-								<div class="span12 project-span" id="file-table-span">
-									<div class="row-fluid bold">
-										<div class="span12">
-											<p>{{ project }}</p>
-										</div>
-									</div>
-									<div class="row-fluid">
-										<div class="tab-content">
-											<div class="span12 description-span tab-pane active">
-												{% if not project.description %}
-												<p style="color: #77797A;">No description<p>
-												{% else %}
-												<p>{{ project.description }}</p>
-												{% endif %}
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-			  	</div>
-			</div>
-		</div>
-	</div>
-	<div id="calibration-samples" class="tab-pane">	
-		<div class="container-fluid">
-			<div class="row-fluid">
-			  	<div class="span12 white-span" id="white-span-summary">
-			  		<div class="row-fluid">
-			  			<div class="span12">
-			  				<div class="row-fluid">
-								<div class="span6 description-span"><h3>Calibration : </h3></div><div class="span6 span-btn"><a class="btn btn-info btn-create-project" href="#myModalInfo" role="button" data-toggle="modal"><i class="icon-info-sign icon-white"></i> Info</a></div>
-							</div>
-						</div>
-					</div>
-					<div class="row-fluid">
-						<div class="span6 project-span" id="file-table-span">
-							<div class="row-fluid bold">
-								<div class="span12">
-									<p>Available Samples</p>
-								</div>
-							</div>
-							<div class="row-fluid">
-								<div class="tab-content">
-									<div class="tab-pane active">
-										<div class="row-fluid">
-											<div class="span4 user-span bold" style="padding-top: 10px;">
-												<ul>
-													<li>Total samples :</li>
-												</ul>
-											</div>
-											<div class="span4 user-span bold" style="padding-top: 10px;">
-												<ul>
-													{% if project.calibrationsample_set.all %}
-													<li>{{ project.calibrationsample_set.all|length }}</li>
-													{% else %}
-													<li>0</li>
-													{% endif %}
-												</ul>
-											</div>
-											<div class="span4 span-btn">
-												<a class="btn btn-danger btn-create-project" href="{% url delete-projectfile project.id %}" data-toggle="tooltip" title="Delete Files" id="dlt-btn"><i class="icon-trash icon-white"></i></a>
-												<a class="btn btn-primary btn-create-project" href="{% url upload-new-projFile project.id %}" style="margin-right: 5px;" data-toggle="tooltip" title="Upload Files" id="upload-btn"><i class="icon-upload icon-white"></i></a>
-											</div>
-										</div>
-										<div class="row-fluid">
-											<div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
-												<img id="pic" src="{{ STATIC_URL }}/img/mzxml-icon.png" alt="The Scream" width="45">
-											</div>
-											<div class="span4 user-span bold" style="padding-top: 10px;">
-												{% if project.calibrationsample_set.all %}
-												{% with project.calibrationsample_set.all|count:"." as parts %}
-												<ul>
-													<li style="padding-top:10px;">{{ parts.0 }}</li>
-												</ul>
-												{% endwith %}
-												{% endif %}
-											</div>
-										</div>
-										<div class="row-fluid">
-											<div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
-												<img id="pic" src="{{ STATIC_URL }}/img/icon-csv.png" alt="The Scream" width="45">
-											</div>
-											<div class="span4 user-span bold" style="padding-top: 10px;">
-												{% if project.calibrationsample_set.all %}
-												{% with project.calibrationsample_set.all|count:"." as parts %}
-												<ul>
-													<li style="padding-top:10px;">{{ parts.1 }}</li>
-												</ul>
-												{% endwith %}
-												{% endif %}
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="span6">
-							<div class="span12 center-span project-span" style="float: none;margin: 0 auto;">
-								<div class="row-fluid">
-									<div class="span6 bold">
-										<p>Categories</p>
-									</div>
-									<div class="span6 span-btn">
-										{% if project.calibrationsample_set.all %}
-										{% if projfileattributes|length > 0 %}
-										<a class="btn btn-success btn-create-project" href="{% url projfile_attribute project.id %}" data-toggle="tooltip" title="Edit categories" data-placement="bottom" id="edit-btn"><i class="icon-edit icon-white"></i></a>
-										{% endif %}
-										<a class="btn btn-primary btn-create-project" href="{% url projfile_attribute project.id %}" data-toggle="tooltip" title="Create categories" data-placement="bottom" id="plus-btn" style="margin-right: 5px;"><i class="icon-plus icon-white"></i></a>
-										{% endif %}
-									</div>
-								</div>
-								{% if projfileattributes|length > 0 %}
-								<ul class="nav nav-tabs" id="projfile-attribute-tab">
-								{% for attribute in projfileattributes %}
-									{% if forloop.counter == 1 %}
-									<li class="active">
-									{% else %}
-									<li>
-									{% endif %}
-	  								<a href="#{{ attribute.name }}">{{ attribute.name }}</a></li>
-	  							{% endfor %}
-								</ul>
-								<div class="tab-content">
-								{% for attribute in projfileattributes %}
-								{% if forloop.counter == 1 %}
-		  							<div class="tab-pane active" id="{{ attribute.name }}">
-		  							{% else %}
-		  							<div class="tab-pane" id="{{ attribute.name }}">
-			  						{% endif %}
-			  							<div class="row-fluid">
-											<div class="span4 user-span bold">
-												<ul>
-													<li>Sample Name</li>
-												</ul>
-											</div>
-											<div class="span4 user-span bold">
-												<ul style="text-align:center;">
-													<li>Polarity</li>
-												</ul>
-											</div>
-											<div class="span4 user-span bold">
-												<ul style="text-align:center;">
-													<li>TIC</li>
-												</ul>
-											</div>
-										</div>
-										{% for sample in attribute.calibrationsample.all %}
-										<div class="row-fluid">
-											<div class="span4 user-span">
-												<ul>
-													<li>{{ sample.name|truncatechars:20 }}</li>
-												</ul>
-											</div>
-											<div class="span4 user-span">
-												<ul style="text-align:center;">
-													<li>{% if sample.standardFile.posdata %}+{% endif %}{% if sample.standardFile.posdata and sample.standardFile.negdata%} {% endif %}{% if sample.standardFile.negdata %}-{% endif %}{% if sample.standardFile.data %}Std{% endif %}</li>
-												</ul>
-											</div>
-											<div class="span4 user-span">
-												<ul>
-													<li><a class="mzxml-viewer" id="mzxml-viewer{{ sample.id }}" data-toggle="tooltip" title="tic viewer soon" data-placement="left"></a></li>
-												</ul>
-											</div>
-	  									</div>
-	  									{% endfor %}
-	  								</div>
-	  								{% endfor %}
-	  							</div>
-								{% else %}
-								<p class="not-available">No category available</p>
-								{% endif %}
-							</div>
-						</div>
-					</div>
-			  	</div>
-			</div>
-		</div>
-	</div>
-	<div class="tab-pane" id="sample-management">
-	<!hr class="soften">
-		<div class="row-fluid">
-		<div class="span8 paddingleft"><h2>Sample management</h2></div>
-		</div>
-		<div class="container-fluid">	
-			<div class="row-fluid">
-				<div class="span6 white-span" id="white-span-summary">
-					<div class="row-fluid">
-						<div class="span6 description-span"><h3>Samples :</h3></div>
-						{% ifnotequal permission 'read' %}
-						<div class="span6 span-btn"><a class="btn btn-primary btn-create-project" href="{% url upload-new project.id %}"><i class="icon-upload icon-white"></i> Upload files</a></div>
-						{% endifnotequal %}
-						<div class="row-fluid">
-							<div class="span12 project-span" id="file-table-span">
-								{% if project.sample_set.all %}
-								<div class="row-fluid">
-									<div class="grid_8 height250">
-										<table class="table table-hover file-table fancyTable" id="myTable02">
-			          						<thead>
-			            						<tr>
-			              							<th id="th-hidden" style="font-size:13px">Sample Name</th>
-			              							<th id="th-hidden" style="font-size:13px">Polarity</th>
-			              							<th id="th-hidden" style="font-size:13px">Viewer</th>
-			            						</tr>
-			          						</thead>
-			          						<tbody>
-											{% for sample in project.sample_set.all %}
-												<tr>
-			                  						<td style="font-size:13px">{{ sample.name|truncatechars:25 }}</td>
-			                  						<td style="font-size:13px">{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.posdata and sample.samplefile.negdata%} {% endif %}{% if sample.samplefile.negdata %}-{% endif %}</td>
-			                  						<td style="font-size:13px"><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}" href="#" title="mzxml viewer" data-placement="left" role="button" data-toggle="modal"></a></td>
-			                					</tr>
-											{% endfor %}
-											</tbody>
-			        					</table>
-		        					</div>
-		        				</div>
-								{% else %}
-								<p class="not-available">No files available</p>
-								{% endif %}
-							</div>
-						</div>
-						{% if project.sample_set.all|length >= 1 %}
-						<div class="row-fluid">
-		        			<div class="span12 span-btn btn-del-file">
-	        					<a class="btn btn-danger btn-create-project" href="{% url delete-sample project.id %}"><i class="icon-trash icon-white"></i> Delete files</a>
-		        			</div>
-		        		</div>
-		        		{% endif %}
-					</div>
-			  	</div>
-			  	<div class="span6 white-span" id="white-span-summary">
-			  		<div class="row-fluid">
-						<div class="span8 description-span"><h3>Groups :</h3></div>
-						<div class="span4 span-btn">
-							{% if project.sample_set.all|length >= 3 %}
-							{% ifnotequal permission 'read' %}
-							<a class="btn btn-primary btn-create-project" href="{% url add_group project.id %}"><i class="icon-plus icon-white"></i> Create</a>
-							{% endifnotequal %}
-							{% endif %}
-						</div>
-					</div>
-					<div class="row-fluid">
-						<div class="span12 center-span project-span" style="float: none;margin: 0 auto;">
-							{% if groups|length > 0 %}
-							<!div class="span10">
-								{% if groups|length <= 3 %}
-								<ul class="nav nav-tabs" id="group-tab">
-									{% for group in groups %}
-										{% if forloop.counter == 1 %}
-										<li id="group-{{ group.id }}" class="active">
-										{% else %}
-										<li>
-										{% endif %}
-		  								<a href="#{{ group.name }}">{{ group.name }}</a></li>
-		  							{% endfor %}
-		  							<div class="tic-viewer" style="margin-right: 5px;margin-top: 5px;" id="ticviewer" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></div>
-								</ul>
-								{% else %}
-								<ul class="nav nav-tabs" id="group-tab">
-									{% for group in groups %}
-									{% if forloop.counter == 1 %}
-									<li class="active">
-									{% elif forloop.counter == 3 %}
-									<li class="dropdown">
-		            					<a href="#" class="dropdown-toggle" data-toggle="dropdown">More <b class="caret"></b></a>
-		            					<ul class="dropdown-menu">
-											<li>
-									{% else %}
-									<li>
-									{% endif %}
-										<a href="#{{ group.name }}" data-toggle="tab">{{ group.name }}</a></li>
-									{% endfor %}
-										</ul>
-									</li>
-		  						</ul>	
-								{% endif %}
-							<!/div>
-							<!div class="span2">
-							<!/div>
-							<div class="tab-content">
-								{% for group in groups %}
-								{% if forloop.counter == 1 %}
-	  							<div class="tab-pane active" id="{{ group.name }}">
-	  							{% else %}
-	  							<div class="tab-pane" id="{{ group.name }}">
-		  						{% endif %}
-		  							<div class="row-fluid">
-										<div class="span4 user-span bold">
-											<ul style="text-align: center;">
-												<li>Member</li>
-											</ul>
-										</div>
-										<div class="span4 user-span bold">
-											<ul style="text-align: center;">
-												<li>Samples</li>
-											</ul>
-										</div>
-										<div class="span4 user-span bold">
-											<ul style="text-align: center;">
-												<li>TIC</li>
-											</ul>
-										</div>
-									</div>
-									{% for attribute in group.attribute_set.all %}
-									<div class="row-fluid">
-										<div class="span4 user-span">
-											<ul style="text-align: center;">
-												<li>{{ attribute.name }}</li>
-											</ul>
-										</div>
-										<div class="span4 user-span">
-											<ul style="text-align: center;">
-												<li>{{ attribute.sample.all|length }}</li>
-											</ul>
-										</div>
-										<div class="span4 user-span">
-											<ul style="text-align: center;">
-												<li><a class="tic-viewer" id="ticviewer-{{ attribute.id }}" href="#" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></a></li>
-											</ul>
-										</div>
-	  								</div>
-	  								{% endfor %}
-	  							</div>
-	  							{% endfor %}
+    <!-- <ul class="nav nav-tabs" id="page-tab" style="display: none;">
+        <li class="active" id="first-active">
+            <a href="#project-administration">Project Administration</a>
+        </li>
+        <li>
+            <a href="#sample-management">Sample Management</a>
+        </li>
+        <li>
+            <a href="#experiment">Experiment</a>
+        </li>
+    </ul> -->
+    <div class="tab-content-test">
+    <div id="project-administration" class="tab-pane active">
+        <div class="span8 paddingleft"><h2>Project administration</h2></div>
+        {% ifnotequal permission 'read' %}
+        <div class="span4 span-create-project paddingight"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit title</a></div>
+        {% endifnotequal %}
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span6 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span4 description-span"><h3>Share :</h3></div>
+                                {% ifequal permission 'admin' %}
+                                <div class="span8 span-btn">
+                                    <a class="btn btn-primary btn-create-project" href="{% url add_user project.id %}"><i class="icon-share icon-white"></i> Add user</a>
+                                    {% if project.users.all|length > 1 %}
+                                    <a class="btn btn-success btn-create-project" href="{% url add_user project.id %}" style="margin-right: 5px;"><i class="icon-lock icon-white"></i> Permissions</a>
+                                    {% endif %}
+                                </div>
+                                {% endifequal %}
+                            </div>
+                            {% if project.users.all|length > 1 %}
+                            <div class="row-fluid">
+                                <div class="span12 project-span" id="file-table-span">
+                                    <div class="row-fluid bold">
+                                        <div class="span4 user-span">
+                                            <ul>
+                                                <li>User</li>
+                                            </ul>
+                                        </div>
+                                        <div class="span4 user-span">
+                                            <ul>
+                                                <li>Permission</li>
+                                            </ul>
+                                        </div>
+                                        <div class="span4 user-span">
+                                            <ul>
+                                                <li>Date joined</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="row-fluid">
+                                        <div class="span12 tab-pane">
+                                            {% for user in project.users.all %}
+                                            <div class="row-fluid">
+                                                <div class="span4 user-span">
+                                                    <ul>
+                                                        <li>{{ user }}</li>
+                                                    </ul>
+                                                </div>
+                                                {% for userpro in user.userproject_set.all %}
+                                                {% if userpro.project == project %}
+                                                <div class="span4 list-span">
+                                                    <ul>
+                                                        <li>{{ userpro.permission }}</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="span4 list-span">
+                                                    <ul>
+                                                        <li>{{ userpro.date_joined|truncatewords:"1"|slice:":-3" }}</li>
+                                                    </ul>
+                                                </div>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row-fluid">
+                                <div class="span12">
+                                    <p>You are the only user on this project</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="span6 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span6 description-span"><h3>Description :</h3></div>
+                                {% ifnotequal permission 'read' %}
+                                <div class="span6 span-btn"><a class="btn btn-success btn-create-project" href="{% url edit_description project.id %}"><i class="icon-edit icon-white"></i> Edit</a></div>
+                                {% endifnotequal %}
+                            </div>
+                            <div class="row-fluid">
+                                <div class="span12 project-span" id="file-table-span">
+                                    <div class="row-fluid bold">
+                                        <div class="span12">
+                                            <p>{{ project }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="row-fluid">
+                                        <div class="tab-content">
+                                            <div class="span12 description-span tab-pane active">
+                                                {% if not project.description %}
+                                                <p style="color: #77797A;">No description<p>
+                                                {% else %}
+                                                <p>{{ project.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="calibration-samples" class="tab-pane">
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span12 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span6 description-span"><h3>Calibration : </h3></div><div class="span6 span-btn"><a class="btn btn-info btn-create-project" href="#myModalInfo" role="button" data-toggle="modal"><i class="icon-info-sign icon-white"></i> Info</a></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span6 project-span" id="file-table-span">
+                            <div class="row-fluid bold">
+                                <div class="span12">
+                                    <p>Available Samples</p>
+                                </div>
+                            </div>
+                            <div class="row-fluid">
+                                <div class="tab-content">
+                                    <div class="tab-pane active">
+                                        <div class="row-fluid">
+                                            <div class="span4 user-span bold" style="padding-top: 10px;">
+                                                <ul>
+                                                    <li>Total samples :</li>
+                                                </ul>
+                                            </div>
+                                            <div class="span4 user-span bold" style="padding-top: 10px;">
+                                                <ul>
+                                                    {% if project.calibrationsample_set.all %}
+                                                    <li>{{ project.calibrationsample_set.all|length }}</li>
+                                                    {% else %}
+                                                    <li>0</li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                            <div class="span4 span-btn">
+                                                <a class="btn btn-danger btn-create-project" href="{% url delete-projectfile project.id %}" data-toggle="tooltip" title="Delete Files" id="dlt-btn"><i class="icon-trash icon-white"></i></a>
+                                                <a class="btn btn-primary btn-create-project" href="{% url upload-new-projFile project.id %}" style="margin-right: 5px;" data-toggle="tooltip" title="Upload Files" id="upload-btn"><i class="icon-upload icon-white"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="row-fluid">
+                                            <div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
+                                                <img id="pic" src="{{ STATIC_URL }}/img/mzxml-icon.png" alt="The Scream" width="45">
+                                            </div>
+                                            <div class="span4 user-span bold" style="padding-top: 10px;">
+                                                {% if project.calibrationsample_set.all %}
+                                                {% with project.calibrationsample_set.all|count:"." as parts %}
+                                                <ul>
+                                                    <li style="padding-top:10px;">{{ parts.0 }}</li>
+                                                </ul>
+                                                {% endwith %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row-fluid">
+                                            <div class="span4 user-span bold" style="padding-top: 10px;padding-left:20px;">
+                                                <img id="pic" src="{{ STATIC_URL }}/img/icon-csv.png" alt="The Scream" width="45">
+                                            </div>
+                                            <div class="span4 user-span bold" style="padding-top: 10px;">
+                                                {% if project.calibrationsample_set.all %}
+                                                {% with project.calibrationsample_set.all|count:"." as parts %}
+                                                <ul>
+                                                    <li style="padding-top:10px;">{{ parts.1 }}</li>
+                                                </ul>
+                                                {% endwith %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="span6">
+                            <div class="span12 center-span project-span" style="float: none;margin: 0 auto;">
+                                <div class="row-fluid">
+                                    <div class="span6 bold">
+                                        <p>Categories</p>
+                                    </div>
+                                    <div class="span6 span-btn">
+                                        {% if project.calibrationsample_set.all %}
+                                        {% if projfileattributes|length > 0 %}
+                                        <a class="btn btn-success btn-create-project" href="{% url projfile_attribute project.id %}" data-toggle="tooltip" title="Edit categories" data-placement="bottom" id="edit-btn"><i class="icon-edit icon-white"></i></a>
+                                        {% endif %}
+                                        <a class="btn btn-primary btn-create-project" href="{% url projfile_attribute project.id %}" data-toggle="tooltip" title="Create categories" data-placement="bottom" id="plus-btn" style="margin-right: 5px;"><i class="icon-plus icon-white"></i></a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if projfileattributes|length > 0 %}
+                                <ul class="nav nav-tabs" id="projfile-attribute-tab">
+                                {% for attribute in projfileattributes %}
+                                    {% if forloop.counter == 1 %}
+                                    <li class="active">
+                                    {% else %}
+                                    <li>
+                                    {% endif %}
+                                    <a href="#{{ attribute.name }}">{{ attribute.name }}</a></li>
+                                {% endfor %}
+                                </ul>
+                                <div class="tab-content">
+                                {% for attribute in projfileattributes %}
+                                {% if forloop.counter == 1 %}
+                                    <div class="tab-pane active" id="{{ attribute.name }}">
+                                    {% else %}
+                                    <div class="tab-pane" id="{{ attribute.name }}">
+                                    {% endif %}
+                                        <div class="row-fluid">
+                                            <div class="span4 user-span bold">
+                                                <ul>
+                                                    <li>Sample Name</li>
+                                                </ul>
+                                            </div>
+                                            <div class="span4 user-span bold">
+                                                <ul style="text-align:center;">
+                                                    <li>Polarity</li>
+                                                </ul>
+                                            </div>
+                                            <div class="span4 user-span bold">
+                                                <ul style="text-align:center;">
+                                                    <li>TIC</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        {% for sample in attribute.calibrationsample.all %}
+                                        <div class="row-fluid">
+                                            <div class="span4 user-span">
+                                                <ul>
+                                                    <li>{{ sample.name|truncatechars:20 }}</li>
+                                                </ul>
+                                            </div>
+                                            <div class="span4 user-span">
+                                                <ul style="text-align:center;">
+                                                    <li>{% if sample.standardFile.posdata %}+{% endif %}{% if sample.standardFile.posdata and sample.standardFile.negdata%} {% endif %}{% if sample.standardFile.negdata %}-{% endif %}{% if sample.standardFile.data %}Std{% endif %}</li>
+                                                </ul>
+                                            </div>
+                                            <div class="span4 user-span">
+                                                <ul>
+                                                    <li><a class="mzxml-viewer" id="mzxml-viewer{{ sample.id }}" data-toggle="tooltip" title="tic viewer soon" data-placement="left"></a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <p class="not-available">No category available</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="sample-management">
+    <!hr class="soften">
+        <div class="row-fluid">
+        <div class="span8 paddingleft"><h2>Sample management</h2></div>
+        </div>
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span6 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span6 description-span"><h3>Samples :</h3></div>
+                        {% ifnotequal permission 'read' %}
+                        <div class="span6 span-btn"><a class="btn btn-primary btn-create-project" href="{% url upload-new project.id %}"><i class="icon-upload icon-white"></i> Upload files</a></div>
+                        {% endifnotequal %}
+                        <div class="row-fluid">
+                            <div class="span12 project-span" id="file-table-span">
+                                {% if project.sample_set.all %}
+                                <div class="row-fluid">
+                                    <div class="grid_8 height250">
+                                        <table class="table table-hover file-table fancyTable" id="myTable02">
+                                            <thead>
+                                                <tr>
+                                                    <th id="th-hidden" style="font-size:13px">Sample Name</th>
+                                                    <th id="th-hidden" style="font-size:13px">Polarity</th>
+                                                    <th id="th-hidden" style="font-size:13px">Viewer</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for sample in project.sample_set.all %}
+                                                <tr>
+                                                    <td style="font-size:13px">{{ sample.name|truncatechars:25 }}</td>
+                                                    <td style="font-size:13px">{% if sample.samplefile.posdata %}+{% endif %}{% if sample.samplefile.posdata and sample.samplefile.negdata%} {% endif %}{% if sample.samplefile.negdata %}-{% endif %}</td>
+                                                    <td style="font-size:13px"><a class="mzxml-viewer" id="mzxmlviewer-{{ sample.id }}" href="#" title="mzxml viewer" data-placement="left" role="button" data-toggle="modal"></a></td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <p class="not-available">No files available</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if project.sample_set.all|length >= 1 %}
+                        <div class="row-fluid">
+                            <div class="span12 span-btn btn-del-file">
+                                <a class="btn btn-danger btn-create-project" href="{% url delete-sample project.id %}"><i class="icon-trash icon-white"></i> Delete files</a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="span6 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span8 description-span"><h3>Groups :</h3></div>
+                        <div class="span4 span-btn">
+                            {% if project.sample_set.all|length >= 3 %}
+                            {% ifnotequal permission 'read' %}
+                            <a class="btn btn-primary btn-create-project" href="{% url add_group project.id %}"><i class="icon-plus icon-white"></i> Create</a>
+                            {% endifnotequal %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12 center-span project-span" style="float: none;margin: 0 auto;">
+                            {% if groups|length > 0 %}
+                            <!div class="span10">
+                                {% if groups|length <= 3 %}
+                                <ul class="nav nav-tabs" id="group-tab">
+                                    {% for group in groups %}
+                                        {% if forloop.counter == 1 %}
+                                        <li id="group-{{ group.id }}" class="active">
+                                        {% else %}
+                                        <li>
+                                        {% endif %}
+                                        <a href="#{{ group.name }}">{{ group.name }}</a></li>
+                                    {% endfor %}
+                                    <div class="tic-viewer" style="margin-right: 5px;margin-top: 5px;" id="ticviewer" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></div>
+                                </ul>
+                                {% else %}
+                                <ul class="nav nav-tabs" id="group-tab">
+                                    {% for group in groups %}
+                                    {% if forloop.counter == 1 %}
+                                    <li class="active">
+                                    {% elif forloop.counter == 3 %}
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">More <b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                    {% else %}
+                                    <li>
+                                    {% endif %}
+                                        <a href="#{{ group.name }}" data-toggle="tab">{{ group.name }}</a></li>
+                                    {% endfor %}
+                                        </ul>
+                                    </li>
+                                </ul>
+                                {% endif %}
+                            <!/div>
+                            <!div class="span2">
+                            <!/div>
+                            <div class="tab-content">
+                                {% for group in groups %}
+                                {% if forloop.counter == 1 %}
+                                <div class="tab-pane active" id="{{ group.name }}">
+                                {% else %}
+                                <div class="tab-pane" id="{{ group.name }}">
+                                {% endif %}
+                                    <div class="row-fluid">
+                                        <div class="span4 user-span bold">
+                                            <ul style="text-align: center;">
+                                                <li>Member</li>
+                                            </ul>
+                                        </div>
+                                        <div class="span4 user-span bold">
+                                            <ul style="text-align: center;">
+                                                <li>Samples</li>
+                                            </ul>
+                                        </div>
+                                        <div class="span4 user-span bold">
+                                            <ul style="text-align: center;">
+                                                <li>TIC</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    {% for attribute in group.attribute_set.all %}
+                                    <div class="row-fluid">
+                                        <div class="span4 user-span">
+                                            <ul style="text-align: center;">
+                                                <li>{{ attribute.name }}</li>
+                                            </ul>
+                                        </div>
+                                        <div class="span4 user-span">
+                                            <ul style="text-align: center;">
+                                                <li>{{ attribute.sample.all|length }}</li>
+                                            </ul>
+                                        </div>
+                                        <div class="span4 user-span">
+                                            <ul style="text-align: center;">
+                                                <li><a class="tic-viewer" id="ticviewer-{{ attribute.id }}" href="#" title="Total Ion Current" data-placement="left" role="button" data-toggle="modal"></a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
 
-	  						</div>
-							{% else %}
-							<p class="not-available">No group available</p>
-							{% endif %}
-						</div>
-					</div>
-			  	</div>
-			</div>
-		</div>
-	</div>
-	<div class="tab-pane" id="experiment">
-		<div class="row-fluid">
-		<div class="span8 paddingleft"><h2>Experiment</h2></div>
-		{% ifnotequal permission 'read' %}
-		<div class="span4 span-create-project paddingight"><a class="btn btn-primary btn-create-project" href="{% url create_experiment project.id %}"><i class="icon-plus icon-white"></i> Create new</a></div>
-		{% endifnotequal %}
-		</div>
-		<div class="container-fluid">
-			{% if not experiments %}
-			<div class="row-fluid">
-				<div class="span12 white-span" id="white-span-summary">
-					<div class="row-fluid">
-			  			<div class="span12">
-							<div class="row-fluid">
-								<div class="span12 project-span" style="margin-bottom:0px;">
-									<p class="not-available">No experiment available</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			{% else %}
-			{% for experiment in experiments %}
-			<div class="row-fluid">
-				<div class="span12 white-span" id="white-span-summary">
-					<div class="row-fluid">
-			  			<div class="span12">
-			  				<div class="row-fluid">
-								<div class="span10 description-span"><h3>{{ experiment.title }}</h3></div>
-								<div class="span2"><a class="expend-experiment"></a></div>
-							</div>
-							<div class="row-fluid experiment-content">
-								<div class="span12">
-									<ul class="nav nav-tabs" id="experiment-tab">
-										<li class="active">
-											<a href="#comparisons{{ experiment.id }}">Comparisons</a>
-										</li>
-										<li>
-											<a href="#analyses{{ experiment.id }}">Analyses</a>
-										</li>
-									</ul>
-									<div class="tab-content-test">
-										<div class="tab-pane active" id="comparisons{{ experiment.id }}">
-											{% for comparison in experiment.comparison_set.all %}
-											{% if not forloop.counter|divisibleby:'2'  %}
-											<div class="row-fluid">
-											{% endif %}
-												<div class="span6 project-span" style="{% if not forloop.counter|divisibleby:'2' and forloop.last %}float:none;margin: 0 auto;{% endif %}" >
-													<div class="row-fluid">
-														<div class="span6 description-span"><h4>{{ comparison.attribute.all.0.group }}</h4></div>
-														<div class="span6 description-span"><h4 style="float:right;">{{ comparison.name }}</h4></div>
-													</div>
-													<div class="row-fluid">
-														<div class="span6 user-span bold">
-															<ul>
-																<li>Member</li>
-															</ul>
-														</div>
-														<div class="span6 user-span bold">
-															<ul>
-																<li>Replicates</li>
-															</ul>
-														</div>
-													</div>
-													<div class="row-fluid">
-							  							<div class="tab-pane" id="{{ comparison.name }}{{ experiment.id }}">
-															{% for attribute in comparison.attribute.all %}
-															<div class="row-fluid">
-																<div class="span6 user-span">
-																	<ul>
-																		<li>{{ attribute.name }}</li>
-																	</ul>
-																</div>
-																<div class="span6 user-span">
-																	<ul>
-																		<li>{{ attribute.sample.all|length }}</li>
-																	</ul>
-																</div>
-							  								</div>
-							  								{% endfor %}
-							  							</div>
-							  						</div>
-												</div>
-											{% if forloop.counter|divisibleby:'2' or forloop.last %}
-											</div>
-											{% endif %}
-											{% endfor %}
-										</div>
-										<div class="tab-pane" id="analyses{{ experiment.id }}">
-											{% for analysis in experiment.analysis_set.all %}
-											<div class="row-fluid">
-												<div class="span12 project-span" style="{% if not forloop.counter|divisibleby:'2' and forloop.last %}float:none;margin: 0 auto;{% endif %}" >
-													<div class="row-fluid">
-														<div class="span8 description-span"><h4>{{ experiment }} {{ forloop.counter }}</h4></div>
-														<div class="span4" style="padding-top:3px"><a class="btn btn-primary btn-create-project" href="{% url create_experiment project.id %}"><i class="icon-plus icon-white"></i> Create new</a></div>
-													</div>
-													<div class="row-fluid">
-														<div class="span12">
-															<div class="row-fluid">
-																<div class="span6">
-																	<div class="span4 user-span bold">
-																		<ul>
-																			<li>Parameter</li>
-																		</ul>
-																	</div>
-																	<div class="span4 user-span bold">
-																		<ul>
-																			<li>On | Off</li>
-																		</ul>
-																	</div>
-																	<div class="span4 user-span bold">
-																		<ul>
-																			<li>Value</li>
-																		</ul>
-																	</div>
-																</div>
-															</div>
-														</div>
-													</div>
-													<div class="row-fluid">
-														<div class="span6">
-															<div class="row-fluid">
-									  							<div class="tab-pane" id="{{ analysis.id }}{{ experiment.id }}">
-									  								{% for  parameter in analysis.params.param.all %}
-																	<div class="row-fluid">
-																		<div class="span4 user-span bold">
-																			<ul>
-																				<li>{{ parameter.name }}</li>
-																			</ul>
-																		</div>
-																		{% if parameter.state %}
-																		<div class="span4 div-on user-span">
-																			<ul>
-																				<li><span class="on-active"></span><span class="off"></span></li>
-																			</ul>
-																		</div>
-																		{% else %}
-																		<div class="span4 div-off user-span">
-																			<ul>
-																				<li><span class="on"></span><span class="off-active"></span></li>
-																			</ul>
-																		</div>
-																		{% endif %}
-																		{% if parameter.value and parameter.state %}
-																		<div class="span4 user-span">
-																			<ul>
-																				<li>{{ parameter.value }}</li>
-																			</ul>
-																		</div>
-																		{% endif %}
-																	</div>
-									  								{% endfor %}
-									  							</div>
-									  						</div>
-									  					</div>
-									  					<div class="span6">
-									  						<div class="row-fluid">
-									  							<div class="tab-pane">
-									  								<div class="row">
-																		<div class="span6 list-span">
-																			<ul>
-																				<li>Created by : {{ analysis.owner }}</li>
-																			</ul>
-																		</div>
-																		<div class="span6 list-span date-span" style="padding-right: 5px;">
-																			<ul>
-																				<li>Created : {{ analysis.created|truncatewords:"1"|slice:":-3" }}</li>
-																				<li>Submited : {% if analysis.submited %}{{ analysis.submited|truncatewords:"1"|slice:":-3" }}{% endif %}</li>
-																			</ul>
-																		</div>
-																	</div>
-									  							</div>
-									  						</div>
-									  						<div class="row-fluid">
-									  							<div class="tab-pane">
-									  								<div class="row-fluid">
-									  									<div class="span6" style="padding-left:5px;">
-									  										<h4>Analysis status: <span style="{% ifequal analysis.status 'Ready' %}color:#228B22;{% endifequal %}{% ifequal analysis.status 'Submited' %}color:#FF9A0B;{% endifequal %}">{{analysis.status}}<span></h4>
-									  									</div>
-									  									{% ifequal analysis.status "Ready" %}
-									  									<div class="span6 span-btn"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit</a>
-									  									</div>
-									  									{% endifequal %}
-									  								</div>
-									  								{% ifequal analysis.status "Ready" %}
-									  								<div class="row-fluid">
-									  									<div class="span12 span-btn"><a class="btn btn-primary btn-create-project" href="#"><i class="icon-play icon-white"></i> Submit</a>
-									  									</div>
-									  								</div>
-									  								{% endifequal %}
-									  							</div>
-									  						</div>
-									  						<div class="row-fluid">
-									  							<div class="span12 span-btn btn-del-file" style="margin-top:35px;">
-										        					<a class="btn btn-danger btn-create-project" href="#"><i class="icon-trash icon-white"></i> Delete analysis</a>
-											        			</div>
-									  						</div>
-									  					</div>
-									  				</div>
-							  					</div>
-											</div>
-											{% endfor %}
-										</div>		
-				  					</div>
+                            </div>
+                            {% else %}
+                            <p class="not-available">No group available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="experiment">
+        <div class="row-fluid">
+        <div class="span8 paddingleft"><h2>Experiment</h2></div>
+        {% ifnotequal permission 'read' %}
+        <div class="span4 span-create-project paddingight"><a class="btn btn-primary btn-create-project" href="{% url create_experiment project.id %}"><i class="icon-plus icon-white"></i> Create new</a></div>
+        {% endifnotequal %}
+        </div>
+        <div class="container-fluid">
+            {% if not experiments %}
+            <div class="row-fluid">
+                <div class="span12 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span12 project-span" style="margin-bottom:0px;">
+                                    <p class="not-available">No experiment available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            {% for experiment in experiments %}
+            <div class="row-fluid">
+                <div class="span12 white-span" id="white-span-summary">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span10 description-span"><h3>{{ experiment.title }}</h3></div>
+                                <div class="span2"><a class="expend-experiment"></a></div>
+                            </div>
+                            <div class="row-fluid experiment-content">
+                                <div class="span12">
+                                    <ul class="nav nav-tabs" id="experiment-tab">
+                                        <li class="active">
+                                            <a href="#comparisons{{ experiment.id }}">Comparisons</a>
+                                        </li>
+                                        <li>
+                                            <a href="#analyses{{ experiment.id }}">Analyses</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content-test">
+                                        <div class="tab-pane active" id="comparisons{{ experiment.id }}">
+                                            {% for comparison in experiment.comparison_set.all %}
+                                            {% if not forloop.counter|divisibleby:'2'  %}
+                                            <div class="row-fluid">
+                                            {% endif %}
+                                                <div class="span6 project-span" style="{% if not forloop.counter|divisibleby:'2' and forloop.last %}float:none;margin: 0 auto;{% endif %}" >
+                                                    <div class="row-fluid">
+                                                        <div class="span6 description-span"><h4>{{ comparison.attribute.all.0.group }}</h4></div>
+                                                        <div class="span6 description-span"><h4 style="float:right;">{{ comparison.name }}</h4></div>
+                                                    </div>
+                                                    <div class="row-fluid">
+                                                        <div class="span6 user-span bold">
+                                                            <ul>
+                                                                <li>Member</li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="span6 user-span bold">
+                                                            <ul>
+                                                                <li>Replicates</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row-fluid">
+                                                        <div class="tab-pane" id="{{ comparison.name }}{{ experiment.id }}">
+                                                            {% for attribute in comparison.attribute.all %}
+                                                            <div class="row-fluid">
+                                                                <div class="span6 user-span">
+                                                                    <ul>
+                                                                        <li>{{ attribute.name }}</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <div class="span6 user-span">
+                                                                    <ul>
+                                                                        <li>{{ attribute.sample.all|length }}</li>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% if forloop.counter|divisibleby:'2' or forloop.last %}
+                                            </div>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <div class="tab-pane" id="analyses{{ experiment.id }}">
+                                            {% for analysis in experiment.analysis_set.all %}
+                                            <div class="row-fluid">
+                                                <div class="span12 project-span" style="{% if not forloop.counter|divisibleby:'2' and forloop.last %}float:none;margin: 0 auto;{% endif %}" >
+                                                    <div class="row-fluid">
+                                                        <div class="span8 description-span"><h4>{{ experiment }} {{ forloop.counter }}</h4></div>
+                                                        <div class="span4" style="padding-top:3px"><a class="btn btn-primary btn-create-project" href="{% url create_experiment project.id %}"><i class="icon-plus icon-white"></i> Create new</a></div>
+                                                    </div>
+                                                    <div class="row-fluid">
+                                                        <div class="span12">
+                                                            <div class="row-fluid">
+                                                                <div class="span6">
+                                                                    <div class="span4 user-span bold">
+                                                                        <ul>
+                                                                            <li>Parameter</li>
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class="span4 user-span bold">
+                                                                        <ul>
+                                                                            <li>On | Off</li>
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class="span4 user-span bold">
+                                                                        <ul>
+                                                                            <li>Value</li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row-fluid">
+                                                        <div class="span6">
+                                                            <div class="row-fluid">
+                                                                <div class="tab-pane" id="{{ analysis.id }}{{ experiment.id }}">
+                                                                    {% for  parameter in analysis.params.param.all %}
+                                                                    <div class="row-fluid">
+                                                                        <div class="span4 user-span bold">
+                                                                            <ul>
+                                                                                <li>{{ parameter.name }}</li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        {% if parameter.state %}
+                                                                        <div class="span4 div-on user-span">
+                                                                            <ul>
+                                                                                <li><span class="on-active"></span><span class="off"></span></li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        {% else %}
+                                                                        <div class="span4 div-off user-span">
+                                                                            <ul>
+                                                                                <li><span class="on"></span><span class="off-active"></span></li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                        {% if parameter.value and parameter.state %}
+                                                                        <div class="span4 user-span">
+                                                                            <ul>
+                                                                                <li>{{ parameter.value }}</li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="span6">
+                                                            <div class="row-fluid">
+                                                                <div class="tab-pane">
+                                                                    <div class="row">
+                                                                        <div class="span6 list-span">
+                                                                            <ul>
+                                                                                <li>Created by : {{ analysis.owner }}</li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        <div class="span6 list-span date-span" style="padding-right: 5px;">
+                                                                            <ul>
+                                                                                <li>Created : {{ analysis.created|truncatewords:"1"|slice:":-3" }}</li>
+                                                                                <li>Submited : {% if analysis.submited %}{{ analysis.submited|truncatewords:"1"|slice:":-3" }}{% endif %}</li>
+                                                                            </ul>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row-fluid">
+                                                                <div class="tab-pane">
+                                                                    <div class="row-fluid">
+                                                                        <div class="span6" style="padding-left:5px;">
+                                                                            <h4>Analysis status: <span style="{% ifequal analysis.status 'Ready' %}color:#228B22;{% endifequal %}{% ifequal analysis.status 'Submited' %}color:#FF9A0B;{% endifequal %}">{{analysis.status}}<span></h4>
+                                                                        </div>
+                                                                        {% ifequal analysis.status "Ready" %}
+                                                                        <div class="span6 span-btn"><a class="btn btn-success btn-create-project" href="#"><i class="icon-edit icon-white"></i> Edit</a>
+                                                                        </div>
+                                                                        {% endifequal %}
+                                                                    </div>
+                                                                    {% ifequal analysis.status "Ready" %}
+                                                                    <div class="row-fluid">
+                                                                        <div class="span12 span-btn"><a class="btn btn-primary btn-create-project" href="#"><i class="icon-play icon-white"></i> Submit</a>
+                                                                        </div>
+                                                                    </div>
+                                                                    {% endifequal %}
+                                                                </div>
+                                                            </div>
+                                                            <div class="row-fluid">
+                                                                <div class="span12 span-btn btn-del-file" style="margin-top:35px;">
+                                                                    <a class="btn btn-danger btn-create-project" href="#"><i class="icon-trash icon-white"></i> Delete analysis</a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
 
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			{% endfor %}
-			{% endif %}
-		</div>
-	</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
 </div>
  </div>
  
@@ -1887,12 +1887,12 @@ $(document).ready(function() {
   </div>
   <!div class="modal-body" style="max-height: none;padding: 0px;">
   <div class="modal-body" style="padding: 0px;">
-  	<!div style="height:100%, width:100%">
-  	<!embed src="{{ groups.0.attribute_set.all.0.ticgroup.negtic.ticplot }}" type="image/svg+xml" id="myviewport"/>
+    <!div style="height:100%, width:100%">
+    <!embed src="{{ groups.0.attribute_set.all.0.ticgroup.negtic.ticplot }}" type="image/svg+xml" id="myviewport"/>
   <!/div>
     <!svg id="circle" height="260" width="260" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" >
-  		<!image x="0" y="0" height="560" width="560"  xlink:href="{{ STATIC_URL }}chart.svg" />
-	<!/svg>
+        <!image x="0" y="0" height="560" width="560"  xlink:href="{{ STATIC_URL }}chart.svg" />
+    <!/svg>
   </div>
   <div class="modal-footer">
     <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>

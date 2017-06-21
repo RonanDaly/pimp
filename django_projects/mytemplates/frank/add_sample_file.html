@@ -15,15 +15,15 @@
 
             {% for field in sample_file_form.visible_fields %}
                 {{ field.errors }}
-		<br>
+        <br>
                 {{ field.help_text }}
-		<br>
+        <br>
                 {{ field }}
-		<br>
+        <br>
             {% endfor %}
-	</br>
-	</br>
-	<button class="btn btn-large btn-primary" type="submit">Upload Sample File</button>
-	<a href="{% url 'condition_summary' experiment.slug condition.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
-	</form>
+    </br>
+    </br>
+    <button class="btn btn-large btn-primary" type="submit">Upload Sample File</button>
+    <a href="{% url 'condition_summary' experiment.slug condition.slug %}"><input type="button" class="btn btn-large btn-primary" value ="Cancel"></input></a>
+    </form>
 {% endblock %}
