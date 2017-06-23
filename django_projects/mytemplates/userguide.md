@@ -34,8 +34,7 @@ Prerequisites
 
 To analyse your data, you first need:
 1. Your data in MzXML format
-2. Three retention time standards files in the appropriate format (click here for downloadable examples (<a href="http://polyomics.mvls.gla.ac.uk/static/userguide/stds1.csv" title="Standards 1">Standards 1</a>, <a href="http://polyomics.mvls.gla.ac.uk/static/userguide/stds2.csv" title="Standards 2">Standards 2</a>, <a href="http://polyomics.mvls.gla.ac.uk/static/userguide/stds3.csv" title="Standards 3">Standards 3</a>)).
-3. Your experimental design
+2. Your experimental design
 
 Once you have these things available, please click on ‘Create Project’.
 
@@ -72,7 +71,7 @@ Once you have performed any desired administration in this page, enter calibrati
 
 ## Calibration Samples:
 
-To successfully enter a metabolomics experiment, you must first provide a group of supporting data files. These consist of blanks, standards files and pooled/QC files. The blanks and pooled/QCs must be in MzXML format and the standards files must be in CSV format using the default Polyomics standards mixes. MzXML files must be uploaded in pairs: both a positive ionization mode and negative ionization mode version of each file. The pair of files must have the same name. Once a pair is uploaded, this is denoted by + - symbols next to the filename.
+To start creating a metabolomics experiment, you can first provide a group of supporting data files. Note that files are not necessary for the analysis to run. These supporting files consist of blanks, standards files and pooled/QC files. The blanks and pooled/QCs must be in MzXML format and the standards files must be in CSV format using the default Polyomics standards mixes (click here for downloadable examples; <a href="http://polyomics.mvls.gla.ac.uk/static/userguide/stds1.csv" title="Standards 1">Standards 1</a>, <a href="http://polyomics.mvls.gla.ac.uk/static/userguide/stds2.csv" title="Standards 2">Standards 2</a>, <a href="http://polyomics.mvls.gla.ac.uk/static/userguide/stds3.csv" title="Standards 3">Standards 3</a>). MzXML files must be uploaded in pairs: both a positive ionization mode and negative ionization mode version of each file. The pair of files must have the same name. Once a pair is uploaded, this is denoted by + - symbols next to the filename.
 
 <!-- ![Calibration Samples][calibration_samples] -->
 <p class="centered">
@@ -155,14 +154,28 @@ Once you have defined a project and set up the calibration and experimental samp
 <img src="{% static 'userguide/img/analysis_list.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
-You may provide an experiment name, and define the comparisons to be made. A comparison is simply a statistical comparison between two experimental groups, e.g. wild type vs mutant, or time 90 vs time 0. You can create as many comparisons as you like: click ‘Add Comparison’ to add another to the list for this experiment. When you have created the comparisons that you are interested in, click ‘Save'.
+You may provide an experiment name, and define the comparisons to be made. A comparison is simply a statistical comparison between two experimental groups, e.g. wild type vs mutant, or time 90 vs time 0. You can create as many comparisons as you like: click ‘Add Comparison’ to add another to the list for this experiment. It is also possible to change the default parameters to XCMS and mzMatch, by clicking the Change Parameters tab. When you have created the comparisons that you are interested in, click ‘Save'.
 
 <!-- ![Analysis Definition][analysis_definition] -->
 <p class="centered">
 <img src="{% static 'userguide/img/analysis_definition.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
- You are returned to the ‘Analysis’ tab. Your newly created analysis will be at the bottom of the list of current analyses. Simply click ‘Submit analysis’ to submit the analysis to the server. A lot of computational analysis is now performed on the data – please refer to this paper for a description of the analytical process. When the analysis is finished, you can click on the ‘access result’ button, which will bring you to the data exploration environment.
+ You are returned to the ‘Analysis’ tab. Your newly created analysis will be at the bottom of the list of current analyses. Simply click ‘Submit analysis’ to submit the analysis to the server. A lot of computational analysis is now performed on the data – please refer to [this paper](http://pubs.acs.org/doi/abs/10.1021/ac2000994) for a description of the analytical process. When the analysis is finished, you can click on the ‘access result’ button, which will bring you to the data exploration environment.
+
+### Analysis Performance
+
+It might be wondered at what speed the analysis proceeds at. The following plot
+shows performance at sample sizes of 6, 12, 24, 48, 96 and 132. These runs
+were completed on a computer with two Intel Xeon E5-2698 CPUs running at 2.3 Ghz,
+totalling 32 cores with two Hyper-threads per core and 256 GB of RAM. As can be
+seen, the runtime for the analysis in this case is roughly linear, with a rate
+of roughly 10 samples per hour.
+
+<!-- ![Analysis Performance][analysis_performance] -->
+<p class="centered">
+<img src="{% static 'userguide/img/performance_plot.png' %}" class="img-thumbnail" alt="Profile page" width="50%" style="float:none;margin:auto;">
+</p>
 
 ---
 
@@ -231,7 +244,7 @@ Total ion chromatograms give an overview of the total detected masses from the i
 
 ## Summary Page
 
-Results provides a summary of the key findings from the data for each comparison selected by the user. Data from identified (matched by retention time and mass to a standard) compounds are shown separately from annotated (assigned putatively on the basis of mass) compounds. Only significantly changing compounds are listed here for each group.
+Results provides a summary of the key findings from the data for each comparison selected by the user. Data from identified (matched by retention time and mass to a standard) compounds are shown separately from annotated (assigned putatively on the basis of mass) compounds. Only significantly changing compounds are listed here for each group. Peaks are matched by mass by seeing if the peak is within the user definable (in the Change Parameters tab) ppm range and are matched by RT by seeing if the peak is within a user definable percentage of the standard compound.
 
 <!-- ![Result Histgrams][results] -->
 <p class="centered">
@@ -391,7 +404,7 @@ The more tab provides a drop down menu of each comparison. This provides the sta
 <img src="{% static 'userguide/img/more_comparison.png' %}" class="img-thumbnail" alt="Profile page" width="70%" style="float:none;margin:auto;">
 </p>
 
-You can sort and filter by log fold change, raw p-value, Benjemini and Hochberg corrected p-value and log odds by using the two text boxes at the top of each column (left being the minimum filter and right being the maximum filter).
+You can sort and filter by log fold change, raw p-value, Benjamini and Hochberg corrected p-value and log odds by using the two text boxes at the top of each column (left being the minimum filter and right being the maximum filter).
 
 <!-- ![Filters][more_comparison_filters] -->
 <p class="centered">
